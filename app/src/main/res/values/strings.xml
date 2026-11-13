@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">HA Батарея</string>
+    <string name="widget_name">Акумулятор EVE 8S (HA)</string>
+    <string name="widget_description">Заряд %, потужність W/kW, залишок часу, загальна напруга, комірки та дельта</string>
+    <string name="notification_channel_name">Заряд батареї 100%</string>
+    <string name="notification_channel_description">Сповіщення про досягнення 100% заряду акумулятора</string>
+    <string name="notification_full_title">Батарея заряджена до 100%</string>
+</resources>
