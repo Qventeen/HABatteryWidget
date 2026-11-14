@@ -41,8 +41,8 @@ multi-module here).
 - KISS: add an interface only when it has a second implementation or a test fake.
 - Every visible text lives in `res/values/strings.xml` (English) with
   translations in `values-uk/`. No user text in Kotlin; no logic on translated text.
-- One sync path (`SyncBattery`). The widget renders from the cache only;
-  no network calls in `provideGlance`.
+- One sync path (`SyncBattery`). The widget renders from local data only
+  (cache and settings); no network calls in `provideGlance`.
 - The HA token goes only through `TokenStore` (Keystore-encrypted). Never log
   it, and never put it in errors or UI state.
 - Code, comments and docs are in English.

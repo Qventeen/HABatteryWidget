@@ -92,7 +92,9 @@ clean foundation for future releases.
   launcher icons to them; Google's Gratitude case study (2026) reports that a
   package refactor removed widgets from users' home screens. Before that
   release, renames are free. App ID and package: `io.lumensync.habattery`
-  (owner decision, 2026-11-14).
+  (owner decision, 2026-11-14). Component names *(call 20)*:
+  `io.lumensync.habattery.MainActivity` and
+  `io.lumensync.habattery.widget.BatteryWidgetReceiver`.
 
 ## 5a. References
 
@@ -118,7 +120,8 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 - **Widget:** charge % with a progress bar coloured by level; power (W/kW);
   current (A); total voltage (V); time to empty / to full; cell voltages in two
   columns with min/max cells highlighted; cell delta (mV) coloured by size;
-  last update time; ↻ button with a "refreshing" state; tap opens the app;
+  last update time; refresh mode line ("auto, every N min" / "manual");
+  ↻ button with a "refreshing" state; tap opens the app;
   size tiers by widget height (`WidgetLayoutSpec` logic); light/dark theme.
 - **App screen:** battery preview card; "Refresh now"; "Add widget" (pin);
   auto-refresh on/off and interval; full-charge notification switch with the
@@ -139,7 +142,7 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 | Delta, min cell, max cell | three HA entities + fallback math | computed from cell voltages *(call 5)* |
 | Settings storage | SharedPreferences, token in plain text | typed DataStore: one `@Serializable` data class per file, JSON serializer, no string keys *(call 17)*; token encrypted (section 10) |
 | Plain HTTP | allowed to any host | allowed only to local/private hosts (section 11) |
-| Widget data | widget fetches in `provideGlance` | widget only reads the cache |
+| Widget data | widget fetches in `provideGlance` | widget reads only local data: cache and settings *(call 20)* |
 | Language | Ukrainian, hard-coded | English default + Ukrainian, resources only |
 | Widget crash fallback | own `onCompositionError` with hard-coded Ukrainian `RemoteViews` | Glance `errorUiLayout` with a translated layout *(call 16)* |
 | Picker preview layout | hard-coded Ukrainian sample texts | same layout, texts from resources (sample numbers as `translatable="false"`) |
@@ -201,7 +204,7 @@ io.lumensync.habattery  (app ID = package, section 5)
 │   ├── secure/         Keystore crypto + TokenStore
 │   └── cache/          typed DataStore reading cache
 ├── system/             SyncWorker, WorkManager scheduler, notifier
-├── widget/             Glance widget, receiver (final name, section 5), ↻ action, refresher
+├── widget/             Glance widget, BatteryWidgetReceiver (final name, section 5), ↻ action, refresher
 └── ui/                 screen sections, ViewModel, theme
 ```
 
@@ -230,12 +233,12 @@ domain must not see Android:
 trigger: SyncWorker | widget ↻ | app "Refresh now" | app start
   └─ SyncBattery()
        settings = SettingsRepository; token = TokenStore
-       if not configured            → result NotConfigured
-       reading = BatterySource.fetch(...)   (primary URL, then fallback URL)
+       if not configured → error NotConfigured (no request)
+       else reading = BatterySource.fetch(...)   (primary URL, then fallback URL)
        on success → ReadingCache.saveReading(reading)
                     FullChargeRule → FullChargeNotifier (if needed)
        on failure → ReadingCache.saveError(error)   (last good reading kept)
-       WidgetRefresher.refreshAll()
+       always     → clear "refreshing"; WidgetRefresher.refreshAll()
        return SyncResult
 ```
 
@@ -243,9 +246,15 @@ trigger: SyncWorker | widget ↻ | app "Refresh now" | app start
   one-time work request (REPLACE). It does no network work itself.
 - The app screen calls `SyncBattery` directly in `viewModelScope` (the user is
   waiting for the result).
-- The widget renders from `ReadingCache.flow` only.
-- Writing the cache does not redraw a widget by itself. Every cache change
-  (reading, error, "refreshing" flag) is followed by `WidgetRefresher.refreshAll()`,
+- The widget renders from local data only: `ReadingCache` (reading, error,
+  "refreshing") and `SettingsRepository` (capacity, refresh mode). No network
+  calls *(call 20)*.
+- **Fallback URL** *(call 20)*: tried after any primary failure, when set. If
+  both fail, the saved error is the more specific one: any error beats
+  `Unreachable`; between two other errors, the primary's wins.
+- Writing the cache or the settings does not redraw a widget by itself. Every
+  cache change (reading, error, "refreshing" flag) and every settings save is
+  followed by `WidgetRefresher.refreshAll()`,
   which calls Glance `updateAll()`. Source: Google's Glance updates skill
   (`references/android-skills/...`).
 
@@ -276,7 +285,10 @@ string resource. The worker retries only on `Unreachable`.
   "fallback power if primary is unknown/unavailable" logic; it returns
   `{soc, power, current, total_v, cells[]}` as JSON. Parse with
   kotlinx.serialization.
-- **State** (sign: power > 0 = charging):
+- **Power sign** *(call 21)*: power > 0 means charging, for both power
+  entities. If an entity uses the other sign, the owner fixes it in HA (a
+  template sensor). The app has no "invert" setting (KISS).
+- **State:**
   - `FULL` — charge rounds to 100 and (power ≥ −20 W or power missing)
   - `DISCHARGING` — power < −20 W
   - `CHARGING` — power > 20 W
@@ -300,8 +312,8 @@ string resource. The worker retries only on `Unreachable`.
   user authentication, so the background worker can use it). Random IV per
   encryption; store `IV + ciphertext` as Base64.
 - `TokenStore` uses `KeystoreCrypto` and its own typed DataStore file
-  (`secure_settings`, holds only `iv + ciphertext`), separate from normal
-  settings.
+  (`secure_settings`, holds only `schemaVersion` and `iv + ciphertext`),
+  separate from normal settings.
 - `secure_settings` is excluded from cloud backup and device transfer
   (`backup_rules.xml` and `data_extraction_rules.xml`, now wired in the
   manifest). Keystore keys never leave the device anyway.
@@ -423,7 +435,9 @@ must be able to change safely after the first production release *(call 9)*:
   The owner reviews screenshots (en, uk, pseudo-locale, light/dark).
 - **Instrumented tests** (on the emulator): `KeystoreCrypto` round trip;
   main screen smoke test.
-- **Fresh install test:** uninstall the old app, install the new release
+- **Fresh install test** *(call 20)*: on the emulator with the mock HA. It
+  needs the owner's new key (section 11); until the key exists, all other
+  checks use the debug build. Uninstall the old app, install the new release
   build (signed with the new key), enter settings, place the widget, check ↻ and auto-refresh.
 - **Mock HA for manual checks:** a small local mock of `/api/template` (builder
   picks the form) that can return any reading, e.g. 100% for the notification
@@ -472,6 +486,13 @@ must be able to change safely after the first production release *(call 9)*:
 19. Missing values come back as `null`, not `0`; missing charge is an error;
     missing power gives state `UNKNOWN` (or `FULL` at 100%), so the 100%
     alert still works without a power entity.
+20. Settled from the second builder check: component names (section 5);
+    the widget reads cache and settings, both local; `NotConfigured` is saved
+    as an error and the sync ends normally; the fallback URL rule;
+    `schemaVersion` in `secure_settings`; the fresh install test on the
+    emulator with the mock HA.
+21. Power sign: both power entities report power > 0 as charging; no
+    invert setting (owner, please confirm, section 18).
 
 ## 17. Left to the builder
 
@@ -489,3 +510,6 @@ guard; colours and spacing within the current look.
 2. **Signing key.** Decided (owner, 2026-11-14): a new key outside the repo
    (section 11). The old key's file is in git history on GitHub, so it is
    not trusted.
+3. **Power sign.** Please confirm that both power entities report power > 0
+   as charging (call 21). If the fallback inverter sensor uses the other
+   sign, fix it in HA with a template sensor.
