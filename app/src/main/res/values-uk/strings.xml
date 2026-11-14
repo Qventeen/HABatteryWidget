@@ -55,7 +55,7 @@
     <string name="connection_fallback">Резервний URL (необов’язково)</string>
 
     <string name="token_title">Токен доступу</string>
-    <string name="token_label">Довготривалий токен доступу</string>
+    <string name="token_label">Довгостроковий токен доступу</string>
     <string name="token_saved">Токен збережено</string>
     <string name="token_show">Показати токен</string>
     <string name="token_hide">Сховати токен</string>
@@ -93,7 +93,7 @@
     <string name="field_cells_too_many">Максимальна кількість комірок: %1$d</string>
     <string name="field_interval_invalid">Введіть ціле число хвилин</string>
     <string name="field_capacity_invalid">Введіть число</string>
-    <string name="field_capacity_range">Введіть більше 0 і не більше %1$d А·год</string>
+    <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
 
     <string name="preview_voltage">26,56 В</string>
     <string name="preview_current">0,4 А</string>
