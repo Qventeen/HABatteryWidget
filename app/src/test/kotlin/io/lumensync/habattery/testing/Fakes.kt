@@ -22,7 +22,11 @@ class FakeSettingsRepository(initial: Settings = Settings()) : SettingsRepositor
   private val state = MutableStateFlow(initial)
   override val settings = state
 
+  /** When set, [update] throws it, like a failing disk. */
+  var updateFailure: Throwable? = null
+
   override suspend fun update(transform: (Settings) -> Settings) {
+    updateFailure?.let { throw it }
     state.update(transform)
   }
 }

@@ -139,6 +139,23 @@ class MainViewModelTest {
     assertFalse(state.syncing)
   }
 
+  @Test fun saveSettings_writeFails_keepsSettingsWithoutCrash() = runTest(dispatcher) {
+    val vm = start()
+    settings.updateFailure = IOException("disk")
+    vm.saveConnection("http://192.168.1.2:8123", "")
+    vm.saveCapacity("100", Locale.US)
+    vm.setNotifyOnFull(true)
+    advanceUntilIdle()
+    assertEquals("http://ha.local:8123", state.settings.connection.primaryUrl)
+    assertNull(state.settings.capacityAh)
+    assertFalse(state.settings.notifyOnFull)
+    assertEquals(1, source.calls)
+    settings.updateFailure = null
+    vm.saveCapacity("100", Locale.US)
+    advanceUntilIdle()
+    assertEquals(100.0, state.settings.capacityAh)
+  }
+
   @Test fun saveRefresh_requiresInterval() = runTest(dispatcher) {
     val vm = start()
     vm.saveRefresh(true, "")

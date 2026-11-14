@@ -1,6 +1,7 @@
 package io.lumensync.habattery
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.dataStoreFile
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import io.lumensync.habattery.data.cache.DataStoreReadingCache
@@ -25,6 +26,7 @@ import io.lumensync.habattery.system.AndroidFullChargeNotifier
 import io.lumensync.habattery.system.WorkManagerSyncScheduler
 import io.lumensync.habattery.widget.BatteryWidget
 import io.lumensync.habattery.widget.GlanceWidgetRefresher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,8 +35,16 @@ import kotlinx.coroutines.SupervisorJob
 class AppContainer(context: Context) {
   private val appContext = context.applicationContext
 
-  /** Work that must outlive a screen or a broadcast, such as re-applying the schedule. */
-  val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  /**
+   * Work that must outlive a screen or a broadcast, such as re-applying the schedule. A failure
+   * there is logged by class name only (a message could carry data) and never crashes the app.
+   */
+  val appScope: CoroutineScope =
+    CoroutineScope(
+      SupervisorJob() +
+        Dispatchers.Default +
+        CoroutineExceptionHandler { _, e -> Log.w(TAG, e.javaClass.name) }
+    )
 
   /** DataStore does file I/O on this scope. */
   private val storeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -79,6 +89,7 @@ class AppContainer(context: Context) {
     )
 
   private companion object {
+    const val TAG = "HaBattery"
     const val SETTINGS_FILE = "settings.json"
     const val CACHE_FILE = "reading_cache.json"
   }

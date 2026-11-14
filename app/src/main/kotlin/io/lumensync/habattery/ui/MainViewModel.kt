@@ -63,11 +63,8 @@ class MainViewModel(
     viewModelScope.launch {
       local.update { it.copy(running = it.running + 1) }
       try {
-        sync()
-      } catch (e: CancellationException) {
-        throw e
-      } catch (_: Exception) {
-        // The cache already holds the last state; the screen only stops "syncing".
+        // On failure the cache already holds the last state; the screen only stops "syncing".
+        guarded { sync() }
       } finally {
         local.update { it.copy(running = it.running - 1) }
       }
@@ -91,7 +88,7 @@ class MainViewModel(
         // GeneralSecurityException / ProviderException from the Keystore. No message in state.
         return@launch fail(FieldError(Field.TOKEN, Problem.INVALID))
       }
-      afterSave(syncAfter = true)
+      guarded { afterSave(syncAfter = true) }
     }
   }
 
@@ -142,8 +139,22 @@ class MainViewModel(
   ) {
     if (errors.isNotEmpty()) return fail(*errors.toTypedArray())
     viewModelScope.launch {
-      settings.update(transform)
-      afterSave(syncAfter)
+      // A failed write keeps the stored settings as they were.
+      guarded {
+        settings.update(transform)
+        afterSave(syncAfter)
+      }
+    }
+  }
+
+  /** Runs [block]; a storage or system failure ends it quietly instead of crashing the app. */
+  private suspend fun guarded(block: suspend () -> Unit) {
+    try {
+      block()
+    } catch (e: CancellationException) {
+      throw e
+    } catch (_: Exception) {
+      // No message: it could carry stored data.
     }
   }
 
