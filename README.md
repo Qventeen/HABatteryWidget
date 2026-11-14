@@ -45,8 +45,8 @@ cannot update installed apps.
 
 ## Try it with the mock HA
 
-`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`
-and ignores the token:
+`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`.
+Local testing only — it accepts any token:
 
 ```bash
 python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \

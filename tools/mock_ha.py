@@ -52,7 +52,8 @@ def make_handler(args):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--host", default="0.0.0.0")
+    # Loopback only by default: it accepts any token. The emulator reaches it at 10.0.2.2.
+    p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8123)
     p.add_argument("--soc", type=float)
     p.add_argument("--power", type=float)
