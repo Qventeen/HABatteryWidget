@@ -114,7 +114,6 @@ dependencies {
 
   // Widget, background sync, storage, network
   implementation(libs.androidx.glance.appwidget)
-  implementation(libs.androidx.glance.material3)
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.datastore)
   implementation(libs.kotlinx.serialization.json)
