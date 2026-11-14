@@ -17,6 +17,11 @@ The owner allowed removing all current code and starting again.
 The app is a personal tool: an Android home-screen widget and a settings
 screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
 
+**No upgrade path from the old app** (owner decision, 2026-11-14). The old app
+is uninstalled once; the new app starts with empty settings. The rewrite may
+change anything, including the build setup, package and app ID. It must be a
+clean foundation for future releases.
+
 ## 2. Goals
 
 1. **Clean structure.** Clear layers, one way to do each thing, small files,
@@ -47,9 +52,8 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
 - No move to `targetSdk 37`. If it comes later, follow the Android 17 widget
   memory rules in `references/android-skills/system/glance-appwidget-updates-and-memory/`.
 - No git history rewrite (owner decision: untrack only, done in `7c7151b`).
-  The old key stays in local use; key rotation is a later owner decision.
-- `applicationId` stays `com.homeassistant.batterywidget`, so the update can
-  install over the old app if the signing key is the same.
+- No migration of the old app's data (owner decision). Versioning of the new
+  app's own data is in section 14.
 
 ## 4. Anti-goals (a failure even if the app works)
 
@@ -60,8 +64,8 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
 - A second copy of the sync logic anywhere.
 - Over-engineering: interfaces or layers that have only one caller and no
   test value.
-- Renaming the widget receiver or `MainActivity` (see section 5): placed
-  widgets and the launcher icon would disappear after the update.
+- After the first production release: renaming the app ID, the widget
+  receiver or the launcher activity (see section 5).
 - Copying the shape of a reference repo (Hilt, Room, many modules) instead of
   its idea.
 
@@ -78,11 +82,12 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
   one request returns all values as JSON (keep this — it is efficient).
 - Build and tests must run on Linux: `./gradlew lint testDebugUnitTest assembleRelease`
   (through `bash ./gradlew` until the exec bit is fixed, section 11).
-- **Stable component names.** Keep these class names and packages exactly:
-  `com.homeassistant.batterywidget.widget.BatteryGlanceWidgetReceiver` and
-  `com.homeassistant.batterywidget.MainActivity`. Android binds placed widgets
-  and launcher icons to them. Google's Gratitude case study (2026) reports
-  that a package refactor removed widgets from users' home screens.
+- **Final component names from the first release.** Choose the app ID, the
+  widget receiver and the launcher activity names now, and never rename them
+  after the first production release. Android binds placed widgets and
+  launcher icons to them; Google's Gratitude case study (2026) reports that a
+  package refactor removed widgets from users' home screens. Before that
+  release, renames are free. The app ID is open (section 18).
 
 ## 5a. References
 
@@ -141,6 +146,8 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 - Entities: delta voltage, min cell, max cell, time status.
 - Progress-bar bitmap and its memory-cap check (use Glance
   `LinearProgressIndicator`) *(call 12)*.
+- All old code, build scripts and resources (rewritten from zero), and the old
+  app's stored data (no migration).
 - The signing passwords in `app/build.gradle.kts` and `HA-Battery-Widget.apk`
   from the working tree. (`app/release.keystore` is already untracked in
   `7c7151b`; the file stays on disk, ignored by git.)
@@ -168,10 +175,10 @@ where logic is shared (`SyncBattery`).
 ### Packages (single `:app` module)
 
 ```
-com.homeassistant.batterywidget
+<app package>           (open, section 18)
 ├── App.kt              Application; owns AppContainer
 ├── AppContainer.kt     manual DI: builds and wires all objects once
-├── MainActivity.kt     stays here: stable component name (section 5)
+├── MainActivity.kt     launcher + widget configure activity (final name, section 5)
 ├── domain/             pure Kotlin, no android.* imports
 │   ├── model/          BatteryReading, BatteryState, Settings types, SyncError
 │   ├── BatteryMath     state, delta, min/max cell, time remaining
@@ -181,11 +188,11 @@ com.homeassistant.batterywidget
 │   └── SyncBattery     the one sync use case
 ├── data/
 │   ├── ha/             HomeAssistantSource (HTTP), TemplateBuilder, DTO, UrlPolicy
-│   ├── settings/       typed DataStore settings repository + legacy migration
+│   ├── settings/       typed DataStore settings repository (versioned, section 14)
 │   ├── secure/         Keystore crypto + TokenStore
 │   └── cache/          typed DataStore reading cache
 ├── system/             SyncWorker, WorkManager scheduler, notifier
-├── widget/             Glance widget, BatteryGlanceWidgetReceiver (name kept), ↻ action, refresher
+├── widget/             Glance widget, receiver (final name, section 5), ↻ action, refresher
 └── ui/                 screen sections, ViewModel, theme
 ```
 
@@ -203,7 +210,7 @@ domain must not see Android:
 - `TokenStore` — `get()`, `set(token)`, `clear()`.
 - `ReadingCache` — runtime state, not settings: last good reading, last
   error, `refreshingSince` time, and the full-charge "already notified" flag;
-  `Flow`. The old notified flag is migrated (section 14).
+  `Flow`.
 - `WidgetRefresher` — redraw all widgets.
 - `FullChargeNotifier` — show the 100% notification.
 - `SyncScheduler` — apply the refresh schedule.
@@ -295,8 +302,9 @@ string resource. The worker retries only on `Unreachable`.
   the real guard.
 - **Signing:** release signing reads `storeFile`, passwords and alias from
   `~/.gradle/gradle.properties` or environment variables. When they are
-  missing, the release build is unsigned; debug always works. The existing
-  key file (kept locally) is used, so the new app installs over the old one.
+  missing, the release build is unsigned; debug always works. Which key to use
+  is open (section 18): no upgrade over the old app is needed, so a new key
+  is possible.
 - `.gitignore` already ignores `*.keystore`, `*.jks`; add `*.apk`, `*.aab`.
 - Fix the exec bit of `gradlew` in git; README gets the Linux build command.
 
@@ -350,21 +358,28 @@ string resource. The worker retries only on `Unreachable`.
 - Progress bar: Glance `LinearProgressIndicator`, colour by charge band
   *(call 12)*.
 
-## 14. Settings migration (one time)
+## 14. Stored data versioning (for releases after the first)
 
-On first start of the new version: copy URLs, entities, refresh and
-notification settings from the old `ha_battery_widget_prefs` file into the
-typed DataStore (`androidx.datastore.migrations.SharedPreferencesMigration`
-with a `migrate` lambda that builds the data class); encrypt the old token into
-`TokenStore`; then delete the old file, so no plain-text token stays on disk
-*(call 9)*.
+No migration from the old app (owner decision). The new app's own stored data
+must be able to change safely after the first production release *(call 9)*:
+
+- JSON settings: `ignoreUnknownKeys = true`, `encodeDefaults = true`, and a
+  default value for every field. Adding or removing a field then needs no
+  migration.
+- Every stored data class has `schemaVersion: Int`, starting at `1`. Every
+  DataStore gets a `migrations` list (DataStore `DataMigration`), empty in v1.
+- After the first release, a breaking change (rename, type or meaning change)
+  bumps `schemaVersion` and adds a `DataMigration` with a test that loads a
+  saved JSON sample of the old version.
+- Before the first release, stored data may change freely (reinstall).
 
 ## 15. Testing and done
 
 - **JVM unit tests:** `BatteryMath`, `FullChargeRule`, `Validation`,
   `UrlPolicy`, `TemplateBuilder` (quoting), response parsing, `SyncBattery`
   with fakes, `WidgetLayoutSpec`, ViewModel with fakes, DataStore repositories
-  with a temp file, legacy migration, `TokenStore` with a fake crypto.
+  with a temp file, `TokenStore` with a fake crypto, versioning (stored JSON
+  has `schemaVersion: 1`; unknown fields are ignored).
 - **HTTP tests:** OkHttp `MockWebServer` — success, 401, 500, timeout, bad
   JSON, fallback URL used after primary fails.
 - **Widget UI tests:** `glance-appwidget-testing`
@@ -379,19 +394,13 @@ with a `migrate` lambda that builds the data class); encrypt the old token into
   The owner reviews screenshots (en, uk, pseudo-locale, light/dark).
 - **Instrumented tests** (on the emulator): `KeystoreCrypto` round trip;
   main screen smoke test.
-- **Upgrade test:** install the old `HA-Battery-Widget.apk` (from `main`,
-  commit `5e25173`), enter settings, place the widget, then install the new
-  release build signed with the same key. The widget must stay on the home
-  screen and keep working.
-- **Migration test:** instrumented test with seeded old prefs (URLs, entities,
-  refresh, notification flag, token) → values in DataStore, token decrypts,
-  old file gone.
+- **Fresh install test:** uninstall the old app, install the new release
+  build, enter settings, place the widget, check ↻ and auto-refresh.
 - **Mock HA for manual checks:** a small local mock of `/api/template` (builder
   picks the form) that can return any reading, e.g. 100% for the notification
   check. No real HA token is needed for development.
 - **Manual check:** widget and screen in English, Ukrainian and a
-  pseudo-locale; light/dark; ↻; notification at 100%; update over the old
-  version keeps settings and removes the old prefs file.
+  pseudo-locale; light/dark; ↻; notification at 100%.
 - **Done when:** `./gradlew lint testDebugUnitTest assembleRelease` is green,
   instrumented tests pass, the manual check passes, no anti-goal from
   section 4 is present, and `CLAUDE.md` is updated: new architecture added
@@ -411,18 +420,18 @@ with a `migrate` lambda that builds the data class); encrypt the old token into
    13+ system settings.
 7. Token: Keystore AES-GCM + DataStore; masked field, not pre-filled.
 8. Plain HTTP only to local/private hosts.
-9. One-time migration of old settings, then delete the old prefs file.
+9. Stored data versioned from v1 (`schemaVersion`, empty migration lists,
+   tolerant JSON). No migration from the old app (owner decision).
 10. Single module, manual DI.
 11. OkHttp + kotlinx.serialization for HTTP and JSON.
 12. Glance `LinearProgressIndicator` instead of a drawn bitmap.
-13. Keep using the old signing key (owner kept the file and chose no history
-    rewrite); rotation stays a later owner decision.
+13. Signing key: open (section 18).
 14. Settled from the builder check: time direction from state, not current
     sign; units as today; "notified" flag in `ReadingCache`; "refreshing" as
     a timestamp with a 2-minute limit; time computed at render time; a mock HA
     for manual checks.
-15. Keep the receiver and `MainActivity` class names and packages (from the
-    references research).
+15. Final names for the app ID, receiver and launcher activity are chosen
+    now and frozen from the first production release (references research).
 16. Glance `errorUiLayout` instead of a custom `onCompositionError`.
 17. Typed DataStore with a JSON serializer instead of key-value Preferences
     DataStore. Not chosen: Room (no relational data), Proto DataStore (needs
@@ -435,3 +444,13 @@ Exact class and file names (except the two in section 5); how to split the scree
 composables; library versions (check with Context7 / official docs);
 worker backoff values; `MeasureFormat` width; the form of the hard-coded-text
 guard; colours and spacing within the current look.
+
+## 18. Open questions (owner)
+
+1. **App ID and package.** Today: `com.homeassistant.batterywidget`, which
+   uses the Home Assistant project's domain. Options: keep it, or take one in
+   the owner's own namespace (for example `io.github.<github-user>.<app>`).
+   It is free to change now and frozen after the first release (section 5).
+2. **Signing key.** Options: keep the old key (its file is in git history on
+   GitHub), or create a new key outside the repo. No upgrade from the old app
+   is needed, so a new key costs nothing now.
