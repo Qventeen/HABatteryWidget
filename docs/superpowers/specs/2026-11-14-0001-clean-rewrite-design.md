@@ -131,7 +131,7 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 |---|---|---|
 | Refresh interval | 1–1440 min (AlarmManager below 15) | 15–1440 min, WorkManager only *(call 2)* |
 | Charge state | parses Ukrainian text of `sensor.battery_time_status` | from power sign and charge % *(call 3)* |
-| Time remaining | text from `sensor.battery_time_status` | computed in app from charge %, current and capacity (default 314 Ah, editable) *(call 4)* |
+| Time remaining | text from `sensor.battery_time_status` | computed in app from charge %, current and a capacity setting (starts empty) *(call 4)* |
 | Delta, min cell, max cell | three HA entities + fallback math | computed from cell voltages *(call 5)* |
 | Settings storage | SharedPreferences, token in plain text | typed DataStore: one `@Serializable` data class per file, JSON serializer, no string keys *(call 17)*; token encrypted (section 10) |
 | Plain HTTP | allowed to any host | allowed only to local/private hosts (section 11) |
@@ -145,8 +145,10 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 - AlarmManager path and `SyncAlarmReceiver`.
 - Navigation3 (one screen does not need it).
 - Entities: delta voltage, min cell, max cell, time status.
-- All default entity IDs (`espjkbms…`) and "reset entities to defaults"
-  (owner decision). Every entity field starts empty.
+- All old config defaults (owner decision): entity IDs (`espjkbms…`), the
+  8-cell list, primary URL `http://homeassistant.local:8123`, auto-refresh on
+  every 15 min, and "reset entities to defaults". Every config field starts
+  empty; every switch starts off *(call 18)*.
 - Progress-bar bitmap and its memory-cap check (use Glance
   `LinearProgressIndicator`) *(call 12)*.
 - All old code, build scripts and resources (rewritten from zero), and the old
@@ -253,9 +255,12 @@ string resource. The worker retries only on `Unreachable`.
 ## 9. HA data and battery math
 
 - **Entities in settings:** charge %, power, fallback power, current, total
-  voltage, cells (list). **No default IDs:** every field starts empty. Until
-  the URL, token and charge entity are set, sync returns `NotConfigured` and
-  the widget and screen show a "set up in the app" state.
+  voltage, cells (list).
+- **No config defaults:** URLs, token, entities, cell list and capacity all
+  start empty. Until the URL, token and charge entity are set, sync returns
+  `NotConfigured` and the widget and screen show a "set up in the app"
+  state. An empty optional field hides its part of the widget (no cells →
+  no cell block; no capacity → no time remaining).
 - **Request:** the template builder keeps today's safe quoting and the
   "fallback power if primary is unknown/unavailable" logic; it returns
   `{soc, power, current, total_v, cells[]}` as JSON. Parse with
@@ -273,8 +278,8 @@ string resource. The worker retries only on `Unreachable`.
   current), so the current's sign convention does not matter. To empty =
   `soc/100 × capacityAh / |current|`; to full =
   `(100 − soc)/100 × capacityAh / |current|`. Hidden when |current| < 0.5 A
-  (both directions) or state is FULL/IDLE. Capacity default 314 Ah, editable
-  in settings. Computed at render time from the cached reading (pure function);
+  (both directions) or state is FULL/IDLE, or while the capacity setting is
+  empty. Computed at render time from the cached reading (pure function);
   the widget already shows the reading's update time, so no extra staleness rule.
 
 ## 10. Secure token storage
@@ -341,6 +346,8 @@ string resource. The worker retries only on `Unreachable`.
 
 ## 13. Refresh and widget
 
+- Auto-refresh starts off and the interval field starts empty; auto-refresh
+  can be turned on only with a valid interval *(call 18)*.
 - Auto mode: `PeriodicWorkRequest` with the chosen interval (15–1440 min),
   network required, unique name; policy UPDATE when settings change, KEEP on
   app start / widget enable. Manual mode: cancel the periodic work.
@@ -370,7 +377,8 @@ must be able to change safely after the first production release *(call 9)*:
 
 - JSON settings: `ignoreUnknownKeys = true`, `encodeDefaults = true`, and a
   default value for every field. Adding or removing a field then needs no
-  migration.
+  migration. These defaults are empty values only (`""`, empty list, `null`,
+  `false`), never a real host, entity, interval or capacity.
 - Every stored data class has `schemaVersion: Int`, starting at `1`. Every
   DataStore gets a `migrations` list (DataStore `DataMigration`), empty in v1.
 - After the first release, a breaking change (rename, type or meaning change)
@@ -417,7 +425,7 @@ must be able to change safely after the first production release *(call 9)*:
 1. Approach A: rewrite from scratch.
 2. Drop refresh faster than 15 min.
 3. Charge state from power sign and charge %, not from sensor text.
-4. Time remaining computed in the app from a capacity setting (default 314 Ah);
+4. Time remaining computed in the app from a capacity setting (starts empty);
    `sensor.battery_time_status` is no longer used.
 5. Delta, min and max cell computed from cell voltages; their three entities
    are dropped.
@@ -443,6 +451,8 @@ must be able to change safely after the first production release *(call 9)*:
     DataStore. Not chosen: Room (no relational data), Proto DataStore (needs
     a protobuf build plugin), Hilt/Koin, Retrofit, Ktor, WebSocket (needs an
     always-on connection), multi-module.
+18. With no config defaults (owner): both switches start off, the interval
+    starts empty, and auto-refresh needs a valid interval before it turns on.
 
 ## 17. Left to the builder
 
