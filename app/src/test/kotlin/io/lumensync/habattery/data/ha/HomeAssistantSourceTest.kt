@@ -54,8 +54,8 @@ class HomeAssistantSourceTest {
   private fun reply(code: Int, body: String = "") =
     MockResponse.Builder().code(code).body(body).build()
 
-  private suspend fun fetch(primary: String, fallback: String = ""): SyncResult =
-    source.fetch(ConnectionSettings(primary, fallback), entities, "t0ken")
+  private suspend fun fetch(primary: String, fallback: String = "", token: String = "t0ken"): SyncResult =
+    source.fetch(ConnectionSettings(primary, fallback), entities, token)
 
   private fun SyncResult.error(): SyncError = (this as SyncResult.Failure).error
 
@@ -88,6 +88,15 @@ class HomeAssistantSourceTest {
       MockResponse.Builder().code(302).addHeader("Location", target.base() + "api/template").build()
     assertEquals(SyncError.HttpError(302), fetch(server(redirect).base()).error())
     assertEquals(0, target.requestCount)
+  }
+
+  @Test
+  fun tokenOkHttpCannotSend_isUnauthorized() = runTest {
+    listOf("ab\u0001c", "ab\ncd", "токен").forEach { token ->
+      val s = server(reply(200, okBody))
+      assertEquals(token, SyncError.Unauthorized, fetch(s.base(), token = token).error())
+      assertEquals(0, s.requestCount)
+    }
   }
 
   @Test

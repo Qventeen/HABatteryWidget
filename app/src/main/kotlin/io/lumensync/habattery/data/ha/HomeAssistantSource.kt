@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -75,15 +76,15 @@ class HomeAssistantSource(
       buildJsonObject { put("template", template) }
         .toString()
         .toRequestBody("application/json".toMediaType())
+    val url =
+      (baseUrl.trim().trimEnd('/') + "/api/template").toHttpUrlOrNull()
+        ?: return SyncResult.Failure(SyncError.Unreachable)
     val request =
       try {
-        Request.Builder()
-          .url(baseUrl.trim().trimEnd('/') + "/api/template")
-          .header("Authorization", "Bearer $token")
-          .post(body)
-          .build()
+        Request.Builder().url(url).header("Authorization", "Bearer $token").post(body).build()
       } catch (_: IllegalArgumentException) {
-        return SyncResult.Failure(SyncError.Unreachable)
+        // OkHttp refuses control or non-ASCII characters in a header: no server accepts this token.
+        return SyncResult.Failure(SyncError.Unauthorized)
       }
     return try {
       client.newCall(request).execute().use { response ->
