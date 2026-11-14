@@ -46,6 +46,9 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
   var calls = 0
     private set
 
+  /** When set, [fetch] throws it instead of returning a result. */
+  var failWith: Throwable? = null
+
   override suspend fun fetch(
     connection: ConnectionSettings,
     entities: EntitySettings,
@@ -54,6 +57,7 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
     val result = results[minOf(calls, results.lastIndex)]
     calls++
     yield()
+    failWith?.let { throw it }
     return result
   }
 }

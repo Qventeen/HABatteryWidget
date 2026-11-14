@@ -14,10 +14,13 @@ import io.lumensync.habattery.testing.configuredSettings
 import io.lumensync.habattery.testing.reading
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import java.io.IOException
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -125,5 +128,18 @@ class SyncBatteryTest {
     listOf(async { useCase() }, async { useCase() }).awaitAll()
 
     assertEquals(1, notifier.shown)
+  }
+
+  @Test
+  fun sourceThrows_rethrowsButStillClearsRefreshingAndRedraws() = runTest {
+    val source = FakeBatterySource(SyncResult.Success(reading())).apply { failWith = IOException("disk") }
+    val cache = FakeReadingCache(CacheState(refreshingSinceMillis = 5L))
+    val useCase = sync(source, cache, configuredSettings(notifyOnFull = true))
+
+    assertThrows(IOException::class.java) { runBlocking { useCase() } }
+
+    assertNull(cache.current.refreshingSinceMillis)
+    assertEquals(1, widgets.refreshes)
+    assertEquals(0, notifier.shown)
   }
 }
