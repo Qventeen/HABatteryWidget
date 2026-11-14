@@ -29,16 +29,21 @@ object UrlPolicy {
 
   private fun isLocalHost(host: String): Boolean {
     if (':' in host) return isLocalIpv6(host)
-    parseIpv4(host)?.let { return isLocalIpv4(it) }
+    val labels = host.split('.')
+    // The system resolver (inet_aton) reads "134744072", "0x08080808" or "010.0.0.1" as some
+    // IPv4 address. Only the plain dotted-decimal form is trusted; every other numeric form is not.
+    if (labels.all { NUMERIC_LABEL.matches(it) }) {
+      val octets = labels.takeIf { it.size == 4 && it.all { l -> OCTET.matches(l) } }
+      return octets != null && isLocalIpv4(octets.map(String::toInt))
+    }
     return host == "localhost" || '.' !in host || host.endsWith(".local")
   }
 
-  private fun parseIpv4(host: String): List<Int>? {
-    val parts = host.split('.')
-    if (parts.size != 4) return null
-    val octets = parts.map { p -> p.takeIf { it.isNotEmpty() && it.all(Char::isDigit) }?.toIntOrNull() }
-    return if (octets.all { it != null && it in 0..255 }) octets.filterNotNull() else null
-  }
+  /** A decimal, octal or hex number, as inet_aton reads it. */
+  private val NUMERIC_LABEL = Regex("[0-9]+|0x[0-9a-f]*")
+
+  /** A plain decimal octet: 0–255, no leading zero. */
+  private val OCTET = Regex("0|[1-9][0-9]?|1[0-9]{2}|2[0-4][0-9]|25[0-5]")
 
   private fun isLocalIpv4(o: List<Int>): Boolean =
     when (o[0]) {
