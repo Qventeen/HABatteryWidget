@@ -168,7 +168,7 @@ private fun ColumnScope.ReadingContent(
     modifier = GlanceModifier.fillMaxWidth().padding(vertical = dimens.infoPadV),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    val updatedAt = formatters.clock(reading.updatedAtMillis)
+    val updatedAt = formatters.updatedAt(reading.updatedAtMillis)
     Text(
       text = context.getString(R.string.widget_updated_at, updatedAt),
       modifier = GlanceModifier.defaultWeight(),

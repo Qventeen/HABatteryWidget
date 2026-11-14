@@ -13,9 +13,14 @@ import io.lumensync.habattery.domain.model.SyncError.NotConfigured
 import io.lumensync.habattery.domain.model.SyncError.Unauthorized
 import io.lumensync.habattery.domain.model.SyncError.Unreachable
 import io.lumensync.habattery.domain.model.TimeRemaining
+import java.util.TimeZone
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -25,6 +30,12 @@ import org.robolectric.annotation.Config
 @Config(qualifiers = "en")
 class FormattersTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
+
+    private val zone: TimeZone = TimeZone.getDefault()
+
+    @Before fun utc() = TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+
+    @After fun restoreZone() = TimeZone.setDefault(zone)
 
     @Test
     fun numbers_en() {
@@ -85,9 +96,32 @@ class FormattersTest {
     }
 
     @Test
+    fun updatedAt_today_showsTimeOnly() {
+        val text = Formatters(context).updatedAt(MORNING, nowMillis = MORNING + 4 * HOUR)
+        assertTrue(text, text.contains("8:00"))
+        assertFalse(text, text.contains("Jan"))
+    }
+
+    @Test
+    fun updatedAt_olderDay_showsDateAndTime() {
+        val f = Formatters(context)
+        val twoDaysAgo = f.updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING)
+        assertTrue(twoDaysAgo, twoDaysAgo.contains("Jan 13") && twoDaysAgo.contains("8:00"))
+        // One minute before midnight is already "yesterday".
+        val lateYesterday = f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING)
+        assertTrue(lateYesterday, lateYesterday.contains("Jan 14") && lateYesterday.contains("11:59"))
+    }
+
+    @Test
     fun duration_hoursAndMinutes() {
         val f = Formatters(context)
         assertTrue(f.duration(90.minutes).contains("30"))
         assertTrue(f.duration(45.minutes).contains("45"))
+    }
+
+    private companion object {
+        /** 2027-01-15 08:00 UTC. */
+        const val MORNING = 1_800_000_000_000L
+        const val HOUR = 3_600_000L
     }
 }

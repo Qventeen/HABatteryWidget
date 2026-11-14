@@ -83,7 +83,7 @@ private fun ReadingDetails(
   )
   Row(Modifier.fillMaxWidth()) {
     Text(
-      stringResource(R.string.widget_updated_at, formatters.clock(reading.updatedAtMillis)),
+      stringResource(R.string.widget_updated_at, formatters.updatedAt(reading.updatedAtMillis)),
       modifier = Modifier.weight(1f),
       style = MaterialTheme.typography.bodySmall,
       color = secondary,

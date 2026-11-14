@@ -5,6 +5,7 @@ import android.icu.text.MeasureFormat
 import android.icu.util.Measure
 import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
+import android.text.format.DateUtils
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.BatteryState
 import io.lumensync.habattery.domain.model.Direction
@@ -12,6 +13,9 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.TimeRemaining
 import java.text.NumberFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
@@ -65,7 +69,16 @@ class Formatters(private val context: Context) {
         }
     }
 
-    fun clock(millis: Long): String = DateFormat.getTimeFormat(context).format(Date(millis))
+    /** When a reading was taken: the time for today, else the date and the time. */
+    fun updatedAt(millis: Long, nowMillis: Long = System.currentTimeMillis()): String =
+        if (localDate(millis) == localDate(nowMillis)) {
+            DateFormat.getTimeFormat(context).format(Date(millis))
+        } else {
+            DateUtils.formatDateTime(context, millis, DATE_AND_TIME)
+        }
+
+    private fun localDate(millis: Long): LocalDate =
+        Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
 
     fun status(state: BatteryState, powerW: Double?, time: TimeRemaining?): String {
         val base = when (state) {
@@ -106,5 +119,9 @@ class Formatters(private val context: Context) {
 
     private companion object {
         const val KILO = 1000.0
+
+        /** "Jan 14, 11:59 PM" style; the year only when it is not this year. */
+        const val DATE_AND_TIME =
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH
     }
 }
