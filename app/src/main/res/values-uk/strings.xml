@@ -1,2 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources />
+<resources>
+    <string name="unit_watts">%1$s Вт</string>
+    <string name="unit_kilowatts">%1$s кВт</string>
+    <string name="unit_volts">%1$s В</string>
+    <string name="unit_amps">%1$s А</string>
+    <string name="unit_millivolts">%1$s мВ</string>
+    <string name="charge_percent">%1$d%%</string>
+
+    <string name="status_charging">Заряджається %1$s</string>
+    <string name="status_discharging">Розряджається %1$s</string>
+    <string name="status_idle">Очікування</string>
+    <string name="status_full">Повна</string>
+    <string name="status_unknown">Невідомо</string>
+    <string name="time_to_full">Повна за %1$s</string>
+    <string name="time_to_empty">Порожня за %1$s</string>
+    <string name="status_with_time">%1$s · %2$s</string>
+
+    <string name="error_not_configured">Налаштуйте в застосунку</string>
+    <string name="error_insecure">Незахищений HTTP працює лише в локальній мережі</string>
+    <string name="error_unauthorized">Токен відхилено</string>
+    <string name="error_unreachable">Home Assistant недоступний</string>
+    <string name="error_http">Помилка Home Assistant %1$d</string>
+    <string name="error_bad_response">Несподівана відповідь від Home Assistant</string>
+
+    <plurals name="refresh_mode_auto">
+        <item quantity="one">авто, кожну %d хв</item>
+        <item quantity="few">авто, кожні %d хв</item>
+        <item quantity="many">авто, кожні %d хв</item>
+        <item quantity="other">авто, кожні %d хв</item>
+    </plurals>
+    <string name="refresh_mode_manual">вручну</string>
+</resources>

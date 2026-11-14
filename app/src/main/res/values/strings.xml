@@ -1,4 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">HA Battery Widget</string>
+
+    <!-- Units live inside the string so each language can place them. -->
+    <string name="unit_watts">%1$s W</string>
+    <string name="unit_kilowatts">%1$s kW</string>
+    <string name="unit_volts">%1$s V</string>
+    <string name="unit_amps">%1$s A</string>
+    <string name="unit_millivolts">%1$s mV</string>
+    <string name="charge_percent">%1$d%%</string>
+    <string name="value_missing" translatable="false">—</string>
+
+    <string name="status_charging">Charging %1$s</string>
+    <string name="status_discharging">Discharging %1$s</string>
+    <string name="status_idle">Idle</string>
+    <string name="status_full">Full</string>
+    <string name="status_unknown">Unknown</string>
+    <string name="time_to_full">Full in %1$s</string>
+    <string name="time_to_empty">Empty in %1$s</string>
+    <string name="status_with_time">%1$s · %2$s</string>
+
+    <string name="error_not_configured">Set up in the app</string>
+    <string name="error_insecure">Plain HTTP works only on a local network</string>
+    <string name="error_unauthorized">Token rejected</string>
+    <string name="error_unreachable">Home Assistant is unreachable</string>
+    <string name="error_http">Home Assistant error %1$d</string>
+    <string name="error_bad_response">Unexpected answer from Home Assistant</string>
+
+    <plurals name="refresh_mode_auto">
+        <item quantity="one">auto, every %d min</item>
+        <item quantity="other">auto, every %d min</item>
+    </plurals>
+    <string name="refresh_mode_manual">manual</string>
 </resources>
