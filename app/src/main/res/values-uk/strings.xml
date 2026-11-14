@@ -30,4 +30,17 @@
         <item quantity="other">авто, кожні %d хв</item>
     </plurals>
     <string name="refresh_mode_manual">вручну</string>
+
+    <string name="widget_name">Батарея HA</string>
+    <string name="widget_description">Заряд, потужність, струм, напруга, залишок часу та комірки з Home Assistant</string>
+    <string name="widget_refreshing">Оновлення…</string>
+    <string name="widget_no_data">Немає даних від Home Assistant</string>
+    <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
+    <string name="widget_updated_at">Оновлено %1$s</string>
+    <string name="cell_label">%1$d</string>
+    <string name="delta_label">Δ %1$s</string>
+
+    <string name="preview_voltage">26,56 В</string>
+    <string name="preview_current">0,4 А</string>
+    <string name="preview_delta">Δ 3 мВ</string>
 </resources>
