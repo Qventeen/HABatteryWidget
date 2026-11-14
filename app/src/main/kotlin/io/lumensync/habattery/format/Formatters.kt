@@ -30,8 +30,10 @@ class Formatters(private val context: Context) {
 
     fun power(watts: Double): String {
         val absolute = abs(watts)
-        return if (absolute < KILO) {
-            context.getString(R.string.unit_watts, number(absolute, 0, 0))
+        // Round first, so 999.6 W becomes "1 kW" and not "1,000 W".
+        val rounded = Math.round(absolute).toDouble()
+        return if (rounded < KILO) {
+            context.getString(R.string.unit_watts, number(rounded, 0, 0))
         } else {
             context.getString(R.string.unit_kilowatts, number(absolute / KILO, 0, 2))
         }

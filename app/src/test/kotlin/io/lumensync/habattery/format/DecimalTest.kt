@@ -16,4 +16,10 @@ class DecimalTest {
     @Test
     fun parseDecimal_rejectsJunk() =
         listOf("", "abc", "12abc", " ").forEach { assertNull(parseDecimal(it, Locale.US)) }
+
+    @Test
+    fun parseDecimal_isStrict() {
+        listOf("NaN", "∞", "1,2,3", "314,5", "1.5.2").forEach { assertNull(it, parseDecimal(it, Locale.US)) }
+        assertEquals(-5.0, parseDecimal("-5", Locale.US)!!, 0.0)
+    }
 }

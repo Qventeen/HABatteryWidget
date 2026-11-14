@@ -41,6 +41,14 @@ class FormattersTest {
     }
 
     @Test
+    fun power_roundsBeforePickingUnit() {
+        val f = Formatters(context)
+        assertEquals("999 W", f.power(999.4))
+        assertEquals("1 kW", f.power(999.5))
+        assertEquals("1 kW", f.power(999.6))
+    }
+
+    @Test
     @Config(qualifiers = "uk")
     fun numbers_uk() {
         val f = Formatters(context)

@@ -1,5 +1,6 @@
 package io.lumensync.habattery.format
 
+import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.text.ParsePosition
 import java.util.Locale
@@ -9,6 +10,8 @@ fun parseDecimal(text: String, locale: Locale): Double? {
     val trimmed = text.trim()
     if (trimmed.isEmpty()) return null
     val position = ParsePosition(0)
-    val number = NumberFormat.getInstance(locale).parse(trimmed, position) ?: return null
-    return if (position.index == trimmed.length) number.toDouble() else null
+    val format = NumberFormat.getInstance(locale)
+    (format as? DecimalFormat)?.isGroupingUsed = false
+    val number = format.parse(trimmed, position)?.toDouble() ?: return null
+    return if (position.index == trimmed.length && number.isFinite()) number else null
 }
