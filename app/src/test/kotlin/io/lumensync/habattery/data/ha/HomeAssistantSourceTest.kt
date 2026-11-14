@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,8 +18,10 @@ import org.junit.Test
 
 class HomeAssistantSourceTest {
   private val servers = mutableListOf<MockWebServer>()
+  // The app's client with short timeouts, so the tests keep its other rules (no redirects).
   private val client =
-    OkHttpClient.Builder()
+    defaultHttpClient()
+      .newBuilder()
       .connectTimeout(300, TimeUnit.MILLISECONDS)
       .readTimeout(300, TimeUnit.MILLISECONDS)
       .callTimeout(2, TimeUnit.SECONDS)
@@ -77,6 +78,16 @@ class HomeAssistantSourceTest {
   fun status401_isUnauthorized() = runTest {
     assertEquals(SyncError.Unauthorized, fetch(server(reply(401)).base()).error())
     assertEquals(SyncError.Unauthorized, fetch(server(reply(403)).base()).error())
+  }
+
+  @Test
+  fun redirect_isNotFollowed() = runTest {
+    // A redirect target would skip UrlPolicy, so the source stops at the redirect.
+    val target = server(reply(200, okBody))
+    val redirect =
+      MockResponse.Builder().code(302).addHeader("Location", target.base() + "api/template").build()
+    assertEquals(SyncError.HttpError(302), fetch(server(redirect).base()).error())
+    assertEquals(0, target.requestCount)
   }
 
   @Test

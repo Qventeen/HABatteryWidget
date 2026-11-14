@@ -24,6 +24,9 @@ fun defaultHttpClient(): OkHttpClient =
     .connectTimeout(4, TimeUnit.SECONDS)
     .readTimeout(5, TimeUnit.SECONDS)
     .callTimeout(10, TimeUnit.SECONDS)
+    // A redirect target would skip UrlPolicy (and could take the token to plain HTTP).
+    .followRedirects(false)
+    .followSslRedirects(false)
     .build()
 
 internal fun pickError(primary: SyncError, fallback: SyncError): SyncError =
