@@ -119,7 +119,7 @@ Read only; take the idea, not the shape (anti-goals, section 4).
   auto-refresh on/off and interval; full-charge notification switch with the
   permission flow; connection settings (primary URL, fallback URL, token);
   entity editor (charge, power, fallback power, current, total voltage, cell
-  list with add/remove, max 32); reset entities to defaults.
+  list with add/remove, max 32). Entity setup may be redesigned later (owner).
 - **Notification:** one alert when the battery reaches 100%; re-arms when
   charge drops to ≤ 98% (same rule as today).
 - **Widget configure activity:** returns `RESULT_OK` so the widget is placed.
@@ -144,6 +144,8 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 - AlarmManager path and `SyncAlarmReceiver`.
 - Navigation3 (one screen does not need it).
 - Entities: delta voltage, min cell, max cell, time status.
+- All default entity IDs (`espjkbms…`) and "reset entities to defaults"
+  (owner decision). Every entity field starts empty.
 - Progress-bar bitmap and its memory-cap check (use Glance
   `LinearProgressIndicator`) *(call 12)*.
 - All old code, build scripts and resources (rewritten from zero), and the old
@@ -250,7 +252,9 @@ string resource. The worker retries only on `Unreachable`.
 ## 9. HA data and battery math
 
 - **Entities in settings:** charge %, power, fallback power, current, total
-  voltage, cells (list). Defaults are the current `espjkbms` IDs.
+  voltage, cells (list). **No default IDs:** every field starts empty. Until
+  the URL, token and charge entity are set, sync returns `NotConfigured` and
+  the widget and screen show a "set up in the app" state.
 - **Request:** the template builder keeps today's safe quoting and the
   "fallback power if primary is unknown/unavailable" logic; it returns
   `{soc, power, current, total_v, cells[]}` as JSON. Parse with
