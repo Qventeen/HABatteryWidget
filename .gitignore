@@ -20,6 +20,6 @@ local.properties
 *.keystore
 *.jks
 
-# Third-party reference code, read-only (see references/README.md)
-/references/*
-!/references/README.md
+# Third-party reference clones, read-only (see references/README.md).
+# Our own notes (references/*.md) stay tracked.
+/references/*/
