@@ -67,8 +67,9 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
 
 ## 5. Constraints
 
-- Kotlin, Jetpack Compose, Glance 1.2, WorkManager, DataStore. Keep the
-  current versions in `gradle/libs.versions.toml` unless a newer stable one
+- Stack: Kotlin, Jetpack Compose + Material 3, Glance 1.2, WorkManager,
+  typed DataStore (`androidx.datastore:datastore`) with a kotlinx.serialization
+  JSON serializer, OkHttp, kotlinx.serialization. Keep the current versions in `gradle/libs.versions.toml` unless a newer stable one
   is needed. Check library docs with Context7 when it is connected (it was
   not on 2026-11-14); fallback: developer.android.com and the Glance source in
   `references/androidx-glance/`.
@@ -126,7 +127,7 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 | Charge state | parses Ukrainian text of `sensor.battery_time_status` | from power sign and charge % *(call 3)* |
 | Time remaining | text from `sensor.battery_time_status` | computed in app from charge %, current and capacity (default 314 Ah, editable) *(call 4)* |
 | Delta, min cell, max cell | three HA entities + fallback math | computed from cell voltages *(call 5)* |
-| Settings storage | SharedPreferences, token in plain text | DataStore; token encrypted (section 10) |
+| Settings storage | SharedPreferences, token in plain text | typed DataStore: one `@Serializable` data class per file, JSON serializer, no string keys *(call 17)*; token encrypted (section 10) |
 | Plain HTTP | allowed to any host | allowed only to local/private hosts (section 11) |
 | Widget data | widget fetches in `provideGlance` | widget only reads the cache |
 | Language | Ukrainian, hard-coded | English default + Ukrainian, resources only |
@@ -151,10 +152,16 @@ Read only; take the idea, not the shape (anti-goals, section 4).
 | **A** | **Rewrite from scratch** on `develop`, reusing only the proven pure logic (template quoting, entity-ID check, full-charge rule, `WidgetLayoutSpec`) | Cleanest result; old shapes do not leak in. Higher short-term cost. |
 | B | Step-by-step refactor of the current code | Lower risk per step, but the current shape (three fetch paths, text parsing, nullable store) pulls the design back. Slower to reach "clean". |
 | C | Rewrite as several Gradle modules (`:domain`, `:data`, …) | Strong boundaries, but too much setup for ~3k lines. Breaks KISS. |
+| 0 | No custom app: the HA Companion app's **Template widget** (renders a Jinja template as simple HTML) plus an HA automation for the 100% alert | Zero code, no token handling here. Likely lacks the progress bar, cell grid and size tiers. |
+
+**Gate before building:** the owner tries option 0 for about 10 minutes with
+the current template. If it is enough, this rewrite stops. If not, build A.
 
 **Picked: A** *(call 1)*. The owner allowed removing all code, and the goal is
 "maximum clean". Layer rules are kept by package structure and review, not by
-modules.
+modules. The layers follow Google's recommended app architecture (UI → small
+domain → data), not "Clean Architecture by the book": a use case exists only
+where logic is shared (`SyncBattery`).
 
 ## 8. Architecture
 
@@ -174,9 +181,9 @@ com.homeassistant.batterywidget
 │   └── SyncBattery     the one sync use case
 ├── data/
 │   ├── ha/             HomeAssistantSource (HTTP), TemplateBuilder, DTO, UrlPolicy
-│   ├── settings/       DataStore settings repository + legacy migration
+│   ├── settings/       typed DataStore settings repository + legacy migration
 │   ├── secure/         Keystore crypto + TokenStore
-│   └── cache/          DataStore reading cache
+│   └── cache/          typed DataStore reading cache
 ├── system/             SyncWorker, WorkManager scheduler, notifier
 ├── widget/             Glance widget, BatteryGlanceWidgetReceiver (name kept), ↻ action, refresher
 └── ui/                 screen sections, ViewModel, theme
@@ -263,8 +270,9 @@ string resource. The worker retries only on `Unreachable`.
 - `KeystoreCrypto`: AES-256-GCM key in `AndroidKeyStore` (fixed alias, no
   user authentication, so the background worker can use it). Random IV per
   encryption; store `IV + ciphertext` as Base64.
-- `TokenStore` uses `KeystoreCrypto` and its own DataStore file
-  (`secure_settings`), separate from normal settings.
+- `TokenStore` uses `KeystoreCrypto` and its own typed DataStore file
+  (`secure_settings`, holds only `iv + ciphertext`), separate from normal
+  settings.
 - `secure_settings` is excluded from cloud backup and device transfer
   (`backup_rules.xml` and `data_extraction_rules.xml`, now wired in the
   manifest). Keystore keys never leave the device anyway.
@@ -345,8 +353,9 @@ string resource. The worker retries only on `Unreachable`.
 ## 14. Settings migration (one time)
 
 On first start of the new version: copy URLs, entities, refresh and
-notification settings from the old `ha_battery_widget_prefs` file into
-DataStore (`SharedPreferencesMigration`); encrypt the old token into
+notification settings from the old `ha_battery_widget_prefs` file into the
+typed DataStore (`androidx.datastore.migrations.SharedPreferencesMigration`
+with a `migrate` lambda that builds the data class); encrypt the old token into
 `TokenStore`; then delete the old file, so no plain-text token stays on disk
 *(call 9)*.
 
@@ -415,6 +424,10 @@ DataStore (`SharedPreferencesMigration`); encrypt the old token into
 15. Keep the receiver and `MainActivity` class names and packages (from the
     references research).
 16. Glance `errorUiLayout` instead of a custom `onCompositionError`.
+17. Typed DataStore with a JSON serializer instead of key-value Preferences
+    DataStore. Not chosen: Room (no relational data), Proto DataStore (needs
+    a protobuf build plugin), Hilt/Koin, Retrofit, Ktor, WebSocket (needs an
+    always-on connection), multi-module.
 
 ## 17. Left to the builder
 
