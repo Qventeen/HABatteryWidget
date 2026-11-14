@@ -12,6 +12,8 @@ internal data class WidgetDimens(
   val chargeText: TextUnit,
   val metricsText: TextUnit,
   val statusText: TextUnit,
+  /** The status line may wrap, so a long translation keeps the time left visible. */
+  val statusLines: Int,
   val smallText: TextUnit,
   val gap: Dp,
   val statusTop: Dp,
@@ -58,6 +60,7 @@ internal data class WidgetDimens(
         metricsText =
           if (compact && narrow) 11.sp else if (compact) 12.sp else if (large) 13.5.sp else 13.sp,
         statusText = if (compact) 10.5.sp else if (large) 12.5.sp else 12.sp,
+        statusLines = if (tier == WidgetDensityTier.SUMMARY_ONLY) 1 else 2,
         smallText = if (compact) 9.5.sp else 11.sp,
         gap = if (compact || narrow) 6.dp else 10.dp,
         statusTop = if (compact) 1.dp else 4.dp,

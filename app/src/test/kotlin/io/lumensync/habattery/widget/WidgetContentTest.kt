@@ -22,7 +22,9 @@ import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.model.BatteryReading
+import io.lumensync.habattery.domain.model.BatteryState
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.testing.configuredSettings
@@ -118,6 +120,27 @@ class WidgetContentTest {
     }
 
   @Test
+  @Config(qualifiers = "uk")
+  fun ukrainianCompact_statusKeepsTimeLeft() {
+    val overview = overview(settings = configuredSettings().copy(capacityAh = 314.0))
+    val time = checkNotNull(overview.timeRemaining)
+    assertEquals(WidgetDensityTier.COMPACT, WidgetLayoutSpec.fromSize(160f, CELLS.size).tier)
+    render(overview, widthDp = 230, heightDp = 160) {
+      onNode(hasTextEqualTo(formatters.status(BatteryState.DISCHARGING, -207.0, time)))
+        .assert(hasText(formatters.duration(time.duration)))
+    }
+  }
+
+  @Test
+  fun statusLine_wrapsToTwoLinesBelowSummaryTier() =
+    WidgetDensityTier.entries.forEach { tier ->
+      val expected = if (tier == WidgetDensityTier.SUMMARY_ONLY) 1 else 2
+      listOf(true, false).forEach { narrow ->
+        assertEquals("$tier", expected, WidgetDimens.of(tier, narrow).statusLines)
+      }
+    }
+
+  @Test
   fun summaryOnlyTier_110dp_hidesCells() =
     assertCellsAtHeight(110, WidgetDensityTier.SUMMARY_ONLY, shown = false)
 
@@ -168,10 +191,11 @@ class WidgetContentTest {
     error: SyncError? = null,
     refreshingSinceMillis: Long? = null,
     hasToken: Boolean = true,
+    settings: Settings = configuredSettings(),
   ): BatteryOverview =
     BatteryOverview.build(
       cache = CacheState(reading, error, refreshingSinceMillis),
-      settings = configuredSettings(),
+      settings = settings,
       hasToken = hasToken,
       nowMillis = NOW,
     )

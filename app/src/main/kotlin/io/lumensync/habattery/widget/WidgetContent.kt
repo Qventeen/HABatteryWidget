@@ -147,7 +147,7 @@ private fun ColumnScope.ReadingContent(
           fontSize = dimens.statusText,
           fontWeight = FontWeight.Medium,
         ),
-      maxLines = 1,
+      maxLines = dimens.statusLines,
     )
   }
 
