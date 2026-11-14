@@ -15,6 +15,7 @@ import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.yield
 
 class FakeSettingsRepository(initial: Settings = Settings()) : SettingsRepository {
@@ -22,7 +23,7 @@ class FakeSettingsRepository(initial: Settings = Settings()) : SettingsRepositor
   override val settings = state
 
   override suspend fun update(transform: (Settings) -> Settings) {
-    state.value = transform(state.value)
+    state.update(transform)
   }
 }
 
@@ -32,7 +33,11 @@ class FakeTokenStore(initial: String? = null) : TokenStore {
 
   override suspend fun get(): String? = token.value
 
+  /** When set, [set] throws it, like a failing Keystore. */
+  var setFailure: Throwable? = null
+
   override suspend fun set(token: String) {
+    setFailure?.let { throw it }
     this.token.value = token.trim().takeIf { it.isNotEmpty() }
   }
 
@@ -69,7 +74,7 @@ class FakeReadingCache(initial: CacheState = CacheState()) : ReadingCache {
     get() = flow.value
 
   override suspend fun update(transform: (CacheState) -> CacheState) {
-    flow.value = transform(flow.value)
+    flow.update(transform)
   }
 }
 
