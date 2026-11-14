@@ -2,6 +2,8 @@ package io.lumensync.habattery.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -48,15 +50,32 @@ class MainScreenTest {
       .onNodeWithText(text(R.string.connection_primary))
       .performScrollTo()
       .performTextReplacement("http://10.0.2.2:8123")
+    saveConnection()
+
+    listOf(R.string.field_required, R.string.field_url_invalid, R.string.field_url_insecure).forEach {
+      compose.onNodeWithText(text(it)).assertDoesNotExist()
+    }
+  }
+
+  @Test
+  fun save_clearsFocus() {
+    waitForContent()
+    val field = compose.onNodeWithText(text(R.string.connection_primary))
+    field.performScrollTo().performClick().performTextReplacement("http://10.0.2.2:8123")
+    field.assertIsFocused()
+
+    saveConnection()
+
+    // No focused field: the keyboard does not open again when the user comes back.
+    field.assertIsNotFocused()
+  }
+
+  private fun saveConnection() {
     compose
       .onNode(hasText(text(R.string.action_save)) and hasAnyAncestor(hasTestTag(CONNECTION_SECTION_TAG)))
       .performScrollTo()
       .performClick()
     compose.waitForIdle()
-
-    listOf(R.string.field_required, R.string.field_url_invalid, R.string.field_url_insecure).forEach {
-      compose.onNodeWithText(text(it)).assertDoesNotExist()
-    }
   }
 
   private companion object {

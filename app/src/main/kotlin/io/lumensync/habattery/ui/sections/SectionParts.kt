@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,9 +46,21 @@ internal fun SectionCard(
   }
 }
 
+/**
+ * Saves the section. It also clears focus, which hides the keyboard: a field left focused would open
+ * it again when the user comes back to the app. A validation error stays visible below its field.
+ */
 @Composable
 internal fun SaveButton(onClick: () -> Unit) {
-  Button(onClick = onClick) { Text(stringResource(R.string.action_save)) }
+  val focusManager = LocalFocusManager.current
+  Button(
+    onClick = {
+      focusManager.clearFocus()
+      onClick()
+    }
+  ) {
+    Text(stringResource(R.string.action_save))
+  }
 }
 
 /** A one-line input. Below it: the error from the last save, else the [hint]. */
