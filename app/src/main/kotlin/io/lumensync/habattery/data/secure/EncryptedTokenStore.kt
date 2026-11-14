@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.domain.port.TokenStore
 import java.security.GeneralSecurityException
+import java.security.ProviderException
 import java.util.Base64
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -21,6 +22,9 @@ class EncryptedTokenStore(
     return try {
       crypto.decrypt(Base64.getDecoder().decode(encoded)).decodeToString()
     } catch (_: GeneralSecurityException) {
+      clear()
+      null
+    } catch (_: ProviderException) {
       clear()
       null
     } catch (_: IllegalArgumentException) {

@@ -4,6 +4,7 @@ import io.lumensync.habattery.data.store.JsonSerializer
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import java.io.File
+import java.security.ProviderException
 import javax.crypto.AEADBadTagException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -29,6 +30,12 @@ private object BrokenCrypto : Crypto {
   override fun encrypt(plain: ByteArray) = plain
 
   override fun decrypt(data: ByteArray): ByteArray = throw AEADBadTagException()
+}
+
+private object ProviderFailingCrypto : Crypto {
+  override fun encrypt(plain: ByteArray) = plain
+
+  override fun decrypt(data: ByteArray): ByteArray = throw ProviderException()
 }
 
 class EncryptedTokenStoreTest {
@@ -74,6 +81,14 @@ class EncryptedTokenStoreTest {
   @Test
   fun decryptFailure_clearsAndReturnsNull() = runTest {
     val s = EncryptedTokenStore(dataStore(), BrokenCrypto)
+    s.set("abc")
+    assertNull(s.get())
+    assertFalse(s.hasToken.first())
+  }
+
+  @Test
+  fun providerFailure_clearsAndReturnsNull() = runTest {
+    val s = EncryptedTokenStore(dataStore(), ProviderFailingCrypto)
     s.set("abc")
     assertNull(s.get())
     assertFalse(s.hasToken.first())

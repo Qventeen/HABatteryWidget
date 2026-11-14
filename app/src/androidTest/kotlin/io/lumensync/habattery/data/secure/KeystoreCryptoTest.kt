@@ -2,6 +2,7 @@ package io.lumensync.habattery.data.secure
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.security.GeneralSecurityException
+import java.security.KeyStore
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.fail
@@ -29,6 +30,16 @@ class KeystoreCryptoTest {
     data[data.size - 1] = (data[data.size - 1].toInt() xor 1).toByte()
     try {
       crypto.decrypt(data)
+      fail("Expected GeneralSecurityException")
+    } catch (_: GeneralSecurityException) {}
+  }
+
+  @Test
+  fun missingKeyFailsToDecrypt() {
+    val blob = crypto.encrypt(plain)
+    KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.deleteEntry("habattery_test_key")
+    try {
+      crypto.decrypt(blob)
       fail("Expected GeneralSecurityException")
     } catch (_: GeneralSecurityException) {}
   }
