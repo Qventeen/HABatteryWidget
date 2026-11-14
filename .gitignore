@@ -19,3 +19,7 @@ local.properties
 # Signing keys (never commit)
 *.keystore
 *.jks
+
+# Third-party reference code, read-only (see references/README.md)
+/references/*
+!/references/README.md
