@@ -1,9 +1,11 @@
 # Clean rewrite of HA Battery Widget — design
 
-- **Date:** 2026-11-14
+- **Date:** 2026-11-14 (v2: updated after the references research)
 - **Status:** draft, waiting for owner approval
 - **Branch:** `develop`
 - **Set:** `0001` (the plan will be `plans/2026-11-14-0001-clean-rewrite.md`)
+- **Related:** `CLAUDE.md` (project rules), `references/README.md` (expert
+  examples)
 
 ## 1. Intent
 
@@ -38,7 +40,12 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
   close to today).
 - No multi-module Gradle setup, no DI framework (Hilt/Koin).
 - No in-app language picker (system per-app language is enough).
-- No CI pipeline, no project `CLAUDE.md` (separate tasks).
+- No CI pipeline (separate task). `CLAUDE.md` already exists with stable
+  facts only (`d27ca46`); this rewrite updates it at the end (section 15).
+- No generated widget previews (`providePreview`, Android 15+). The static
+  picker preview stays, with its texts moved to resources. A later option.
+- No move to `targetSdk 37`. If it comes later, follow the Android 17 widget
+  memory rules in `references/android-skills/system/glance-appwidget-updates-and-memory/`.
 - No git history rewrite (owner decision: untrack only, done in `7c7151b`).
   The old key stays in local use; key rotation is a later owner decision.
 - `applicationId` stays `com.homeassistant.batterywidget`, so the update can
@@ -53,16 +60,45 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
 - A second copy of the sync logic anywhere.
 - Over-engineering: interfaces or layers that have only one caller and no
   test value.
+- Renaming the widget receiver or `MainActivity` (see section 5): placed
+  widgets and the launcher icon would disappear after the update.
+- Copying the shape of a reference repo (Hilt, Room, many modules) instead of
+  its idea.
 
 ## 5. Constraints
 
 - Kotlin, Jetpack Compose, Glance 1.2, WorkManager, DataStore. Keep the
   current versions in `gradle/libs.versions.toml` unless a newer stable one
-  is needed; check library docs with Context7 (fallback: developer.android.com).
+  is needed. Check library docs with Context7 when it is connected (it was
+  not on 2026-11-14); fallback: developer.android.com and the Glance source in
+  `references/androidx-glance/`.
 - `minSdk 26`, `targetSdk 36`, JDK 17 for the build.
 - HA API: `POST {baseUrl}/api/template` with a Long-Lived Access Token,
   one request returns all values as JSON (keep this — it is efficient).
-- Build and tests must run on Linux: `./gradlew lint testDebugUnitTest assembleRelease`.
+- Build and tests must run on Linux: `./gradlew lint testDebugUnitTest assembleRelease`
+  (through `bash ./gradlew` until the exec bit is fixed, section 11).
+- **Stable component names.** Keep these class names and packages exactly:
+  `com.homeassistant.batterywidget.widget.BatteryGlanceWidgetReceiver` and
+  `com.homeassistant.batterywidget.MainActivity`. Android binds placed widgets
+  and launcher icons to them. Google's Gratitude case study (2026) reports
+  that a package refactor removed widgets from users' home screens.
+
+## 5a. References
+
+`references/` holds 7 expert repos chosen and checked on 2026-11-14 (index and
+rules: `references/README.md`). Before building a part, read its reference in
+the README's "What to study, by topic" table. Key ones for this spec:
+
+| Spec part | Reference |
+|---|---|
+| Widget update after a cache change | `android-skills/system/glance-appwidget-updates-and-memory/` |
+| Progress bar *(call 12)* | `androidx-glance/.../demos/ProgressIndicatorAppWidget.kt` |
+| Error UI *(call 16)* | `androidx-glance/.../demos/ErrorUiAppWidget.kt` |
+| Widget UI tests | `androidx-glance/glance/glance-appwidget-testing/` |
+| Layers and fakes at our size | `architecture-samples/` |
+| Periodic sync | `nowinandroid/sync/work/` |
+
+Read only; take the idea, not the shape (anti-goals, section 4).
 
 ## 6. Scope: what stays, changes and goes
 
@@ -94,6 +130,8 @@ screen that show a JK-BMS battery (8 cells, EVE 314 Ah) read from HA.
 | Plain HTTP | allowed to any host | allowed only to local/private hosts (section 11) |
 | Widget data | widget fetches in `provideGlance` | widget only reads the cache |
 | Language | Ukrainian, hard-coded | English default + Ukrainian, resources only |
+| Widget crash fallback | own `onCompositionError` with hard-coded Ukrainian `RemoteViews` | Glance `errorUiLayout` with a translated layout *(call 16)* |
+| Picker preview layout | hard-coded Ukrainian sample texts | same layout, texts from resources (sample numbers as `translatable="false"`) |
 
 ### Goes
 
@@ -126,6 +164,7 @@ modules.
 com.homeassistant.batterywidget
 ├── App.kt              Application; owns AppContainer
 ├── AppContainer.kt     manual DI: builds and wires all objects once
+├── MainActivity.kt     stays here: stable component name (section 5)
 ├── domain/             pure Kotlin, no android.* imports
 │   ├── model/          BatteryReading, BatteryState, Settings types, SyncError
 │   ├── BatteryMath     state, delta, min/max cell, time remaining
@@ -139,8 +178,8 @@ com.homeassistant.batterywidget
 │   ├── secure/         Keystore crypto + TokenStore
 │   └── cache/          DataStore reading cache
 ├── system/             SyncWorker, WorkManager scheduler, notifier
-├── widget/             Glance widget, receiver, ↻ action, widget refresher
-└── ui/                 MainActivity, screen sections, ViewModel, theme
+├── widget/             Glance widget, BatteryGlanceWidgetReceiver (name kept), ↻ action, refresher
+└── ui/                 screen sections, ViewModel, theme
 ```
 
 **Dependency rule:** `ui`, `widget`, `system`, `data` → `domain`. `domain`
@@ -182,6 +221,10 @@ trigger: SyncWorker | widget ↻ | app "Refresh now" | app start
 - The app screen calls `SyncBattery` directly in `viewModelScope` (the user is
   waiting for the result).
 - The widget renders from `ReadingCache.flow` only.
+- Writing the cache does not redraw a widget by itself. Every cache change
+  (reading, error, "refreshing" flag) is followed by `WidgetRefresher.refreshAll()`,
+  which calls Glance `updateAll()`. Source: Google's Glance updates skill
+  (`references/android-skills/...`).
 
 ### Error model
 
@@ -292,6 +335,12 @@ string resource. The worker retries only on `Unreachable`.
   error line from `SyncError`. Without any reading it shows an empty state
   with ↻.
 - Keep `SizeMode.Exact` and the `WidgetLayoutSpec` tiers; keep their tests.
+- Composition errors show our own small translated layout ("Widget error,
+  tap to open the app"), passed as `GlanceAppWidget(errorUiLayout = …)`.
+  Glance's default `onCompositionError` then shows it; we do not override
+  that method *(call 16)*.
+- Progress bar: Glance `LinearProgressIndicator`, colour by charge band
+  *(call 12)*.
 
 ## 14. Settings migration (one time)
 
@@ -309,7 +358,10 @@ DataStore (`SharedPreferencesMigration`); encrypt the old token into
   with a temp file, legacy migration, `TokenStore` with a fake crypto.
 - **HTTP tests:** OkHttp `MockWebServer` — success, 401, 500, timeout, bad
   JSON, fallback URL used after primary fails.
-- **Device: an emulator on this machine** (owner decision). The builder sets
+- **Widget UI tests:** `glance-appwidget-testing`
+  (`runGlanceAppWidgetUnitTest`) for each size tier and for the empty and
+  error states.
+- **Device: an emulator on this machine** (owner decision). The builder
   uses the AVD `Pixel_8_API_37` (Android 17, Google APIs, x86_64; KVM works)
   and runs instrumented tests and manual checks there. `Pixel_6` (API 31,
   Android 12) is a second, older target. The SDK is shared with Android Studio
@@ -318,8 +370,10 @@ DataStore (`SharedPreferencesMigration`); encrypt the old token into
   The owner reviews screenshots (en, uk, pseudo-locale, light/dark).
 - **Instrumented tests** (on the emulator): `KeystoreCrypto` round trip;
   main screen smoke test.
-- **Upgrade test:** install the old `HA-Battery-Widget.apk`, enter settings,
-  then install the new release build signed with the same key.
+- **Upgrade test:** install the old `HA-Battery-Widget.apk` (from `main`,
+  commit `5e25173`), enter settings, place the widget, then install the new
+  release build signed with the same key. The widget must stay on the home
+  screen and keep working.
 - **Migration test:** instrumented test with seeded old prefs (URLs, entities,
   refresh, notification flag, token) → values in DataStore, token decrypts,
   old file gone.
@@ -330,8 +384,10 @@ DataStore (`SharedPreferencesMigration`); encrypt the old token into
   pseudo-locale; light/dark; ↻; notification at 100%; update over the old
   version keeps settings and removes the old prefs file.
 - **Done when:** `./gradlew lint testDebugUnitTest assembleRelease` is green,
-  instrumented tests pass, the manual check passes, and no anti-goal from
-  section 4 is present.
+  instrumented tests pass, the manual check passes, no anti-goal from
+  section 4 is present, and `CLAUDE.md` is updated: new architecture added
+  (with the `agents-docs` skill), the "legacy code" and `bash ./gradlew`
+  notes removed.
 
 ## 16. Calls made by Claude (owner, please check)
 
@@ -356,10 +412,13 @@ DataStore (`SharedPreferencesMigration`); encrypt the old token into
     sign; units as today; "notified" flag in `ReadingCache`; "refreshing" as
     a timestamp with a 2-minute limit; time computed at render time; a mock HA
     for manual checks.
+15. Keep the receiver and `MainActivity` class names and packages (from the
+    references research).
+16. Glance `errorUiLayout` instead of a custom `onCompositionError`.
 
 ## 17. Left to the builder
 
-Exact class and file names; how to split the screen into section
+Exact class and file names (except the two in section 5); how to split the screen into section
 composables; library versions (check with Context7 / official docs);
 worker backoff values; `MeasureFormat` width; the form of the hard-coded-text
 guard; colours and spacing within the current look.
