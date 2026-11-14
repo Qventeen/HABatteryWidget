@@ -15,3 +15,12 @@ fun parseDecimal(text: String, locale: Locale): Double? {
     val number = format.parse(trimmed, position)?.toDouble() ?: return null
     return if (position.index == trimmed.length && number.isFinite()) number else null
 }
+
+/** Formats [value] for an input field, so [parseDecimal] with the same [locale] reads it back. */
+fun formatDecimal(value: Double, locale: Locale): String =
+    NumberFormat.getInstance(locale).apply {
+        isGroupingUsed = false
+        maximumFractionDigits = MAX_INPUT_FRACTION_DIGITS
+    }.format(value)
+
+private const val MAX_INPUT_FRACTION_DIGITS = 3

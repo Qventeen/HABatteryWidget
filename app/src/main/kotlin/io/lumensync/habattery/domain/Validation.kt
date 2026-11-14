@@ -32,7 +32,7 @@ data class FieldError(val field: Field, val problem: Problem, val cellIndex: Int
 /** Pure validation of already-trimmed settings values. */
 object Validation {
   private val ENTITY_ID = Regex("^[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+$")
-  private const val MAX_CAPACITY_AH = 10_000.0
+  const val MAX_CAPACITY_AH = 10_000.0
 
   fun connection(c: ConnectionSettings): List<FieldError> =
     listOfNotNull(
