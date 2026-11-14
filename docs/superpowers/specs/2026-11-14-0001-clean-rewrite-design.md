@@ -87,7 +87,8 @@ clean foundation for future releases.
   after the first production release. Android binds placed widgets and
   launcher icons to them; Google's Gratitude case study (2026) reports that a
   package refactor removed widgets from users' home screens. Before that
-  release, renames are free. The app ID is open (section 18).
+  release, renames are free. App ID and package: `io.lumensync.habattery`
+  (owner decision, 2026-11-14).
 
 ## 5a. References
 
@@ -177,7 +178,7 @@ where logic is shared (`SyncBattery`).
 ### Packages (single `:app` module)
 
 ```
-<app package>           (open, section 18)
+io.lumensync.habattery  (app ID = package, section 5)
 ├── App.kt              Application; owns AppContainer
 ├── AppContainer.kt     manual DI: builds and wires all objects once
 ├── MainActivity.kt     launcher + widget configure activity (final name, section 5)
@@ -436,6 +437,7 @@ must be able to change safely after the first production release *(call 9)*:
     for manual checks.
 15. Final names for the app ID, receiver and launcher activity are chosen
     now and frozen from the first production release (references research).
+    App ID and package: `io.lumensync.habattery` (owner).
 16. Glance `errorUiLayout` instead of a custom `onCompositionError`.
 17. Typed DataStore with a JSON serializer instead of key-value Preferences
     DataStore. Not chosen: Room (no relational data), Proto DataStore (needs
@@ -451,10 +453,10 @@ guard; colours and spacing within the current look.
 
 ## 18. Open questions (owner)
 
-1. **App ID and package.** Today: `com.homeassistant.batterywidget`, which
-   uses the Home Assistant project's domain. Options: keep it, or take one in
-   the owner's own namespace (for example `io.github.<github-user>.<app>`).
-   It is free to change now and frozen after the first release (section 5).
+1. **App ID and package.** Decided (owner, 2026-11-14):
+   `io.lumensync.habattery` for both the app ID and the Kotlin package. It
+   replaces `com.homeassistant.batterywidget`, which used the Home Assistant
+   project's domain. Frozen after the first release (section 5).
 2. **Signing key.** Options: keep the old key (its file is in git history on
    GitHub), or create a new key outside the repo. No upgrade from the old app
    is needed, so a new key costs nothing now.
