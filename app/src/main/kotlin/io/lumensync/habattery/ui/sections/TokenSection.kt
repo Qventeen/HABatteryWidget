@@ -6,6 +6,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,7 +33,8 @@ fun TokenSection(
   onSave: (token: String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  var draft by rememberSaveable { mutableStateOf("") }
+  // Plain remember: a typed token must never enter the saved-state Bundle (lost on rotation).
+  var draft by remember { mutableStateOf("") }
   var visible by rememberSaveable { mutableStateOf(false) }
 
   SectionCard(R.string.token_title, modifier) {
