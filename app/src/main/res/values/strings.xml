@@ -44,6 +44,10 @@
     <string name="cell_label">%1$d</string>
     <string name="delta_label">Δ %1$s</string>
 
+    <string name="notification_channel_full">Full charge</string>
+    <string name="notification_full_title">Battery full</string>
+    <string name="notification_full_text">The battery is fully charged.</string>
+
     <!-- Sample values for the widget picker preview. -->
     <string name="preview_charge" translatable="false">89%</string>
     <string name="preview_voltage">26.56 V</string>

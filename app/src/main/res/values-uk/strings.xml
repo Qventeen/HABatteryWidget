@@ -41,6 +41,10 @@
     <string name="cell_label">%1$d</string>
     <string name="delta_label">Δ %1$s</string>
 
+    <string name="notification_channel_full">Повний заряд</string>
+    <string name="notification_full_title">Батарея заряджена</string>
+    <string name="notification_full_text">Батарею повністю заряджено.</string>
+
     <string name="preview_voltage">26,56 В</string>
     <string name="preview_current">0,4 А</string>
     <string name="preview_delta">Δ 3 мВ</string>
