@@ -55,8 +55,8 @@ internal fun WidgetHeader(
 }
 
 /**
- * Shows ↻, or the "refreshing" text while a sync runs. The bare ↻ gets a spoken label for screen
- * readers; the "refreshing" text is read as it is.
+ * The ↻ chip. While a sync runs it stays ↻ but dimmed, so its width never changes and it never cuts
+ * the metrics. Screen readers hear "Refresh" or "Refreshing…".
  */
 @Composable
 internal fun RefreshChip(
@@ -66,18 +66,23 @@ internal fun RefreshChip(
   textColor: ColorProvider,
 ) {
   val context = LocalContext.current
-  val label = if (refreshing) R.string.widget_refreshing else R.string.widget_refresh_symbol
-  val chip =
+  val description =
+    context.getString(if (refreshing) R.string.widget_refreshing else R.string.widget_refresh_action)
+  Box(
     GlanceModifier.background(WidgetColors.chipBackground)
       .cornerRadius(dimens.chipCorner)
       .clickable(refreshAction)
       .padding(horizontal = dimens.chipPadH, vertical = dimens.chipPadV)
-  val actionLabel = context.getString(R.string.widget_refresh_action)
-  Box(if (refreshing) chip else chip.semantics { contentDescription = actionLabel }) {
+      .semantics { contentDescription = description }
+  ) {
     Text(
-      text = context.getString(label),
+      text = context.getString(R.string.widget_refresh_symbol),
       style =
-        TextStyle(color = textColor, fontSize = dimens.chipText, fontWeight = FontWeight.Bold),
+        TextStyle(
+          color = if (refreshing) WidgetColors.dimmedText else textColor,
+          fontSize = dimens.chipText,
+          fontWeight = FontWeight.Bold,
+        ),
       maxLines = 1,
     )
   }

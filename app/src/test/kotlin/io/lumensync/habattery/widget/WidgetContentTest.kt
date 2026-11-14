@@ -113,11 +113,18 @@ class WidgetContentTest {
     }
 
   @Test
-  fun refreshing_showsRefreshingText() =
-    render(overview(refreshingSinceMillis = NOW - 1_000L)) {
-      onNode(hasText(context.getString(R.string.widget_refreshing))).assertExists()
-      onAllNodes(hasText(context.getString(R.string.widget_refresh_symbol))).assertCountEquals(0)
-    }
+  fun refreshing_keepsSymbolWithRefreshingDescription() =
+    listOf(sample(), null)
+      .map { overview(reading = it, refreshingSinceMillis = NOW - 1_000L) }
+      .forEach { refreshing ->
+        render(refreshing) {
+          // The symbol stays (no wider text label that cuts the metrics); only its description changes.
+          onNode(hasRunCallbackClickAction<NoOpRefresh>())
+            .assert(hasAnyDescendant(hasTextEqualTo(context.getString(R.string.widget_refresh_symbol))))
+            .assert(hasContentDescription(context.getString(R.string.widget_refreshing)))
+          onAllNodes(hasText(context.getString(R.string.widget_refreshing))).assertCountEquals(0)
+        }
+      }
 
   @Test
   @Config(qualifiers = "uk")

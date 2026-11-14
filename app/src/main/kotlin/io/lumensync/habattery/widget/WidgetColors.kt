@@ -10,6 +10,8 @@ object WidgetColors {
   val border = ColorProvider(day = Color(0xFFE0E0E0), night = Color(0xFF2E2E32))
   val primaryText = ColorProvider(day = Color(0xFF1C1C1F), night = Color(0xFFF2F2F7))
   val secondaryText = ColorProvider(day = Color(0xFF5F6368), night = Color(0xFFA0A4AB))
+  /** A control that is busy, such as ↻ during a sync. */
+  val dimmedText = ColorProvider(day = Color(0xFFB4B8BE), night = Color(0xFF5F636A))
   val divider = ColorProvider(day = Color(0xFFEAECEF), night = Color(0xFF2C2C30))
   val chipBackground = ColorProvider(day = Color(0xFFEEF1F4), night = Color(0xFF2C2E33))
   val cellTileBackground = ColorProvider(day = Color(0xFFF5F7F9), night = Color(0xFF25262B))
