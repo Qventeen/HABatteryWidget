@@ -14,6 +14,7 @@ import androidx.glance.appwidget.testing.unit.hasRunCallbackClickAction
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.testing.unit.hasAnyDescendant
 import androidx.glance.testing.unit.hasClickAction
+import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasStartActivityClickAction
 import androidx.glance.testing.unit.hasText
 import androidx.glance.testing.unit.hasTextEqualTo
@@ -57,6 +58,7 @@ class WidgetContentTest {
       onNode(hasText(context.getString(R.string.widget_no_data))).assertExists()
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
         .assert(hasAnyDescendant(hasText(context.getString(R.string.widget_refresh_symbol))))
+        .assert(hasContentDescription(context.getString(R.string.widget_refresh_action)))
     }
 
   @Test
@@ -64,11 +66,12 @@ class WidgetContentTest {
     render(overview()) {
       onNode(hasText("55%")).assertExists()
       onNode(hasText("3.300")).assertExists()
-      onNode(hasTextEqualTo(formatters.power(-207.0))).assertExists()
+      assertPowerOnlyInStatus()
       onNode(hasTextEqualTo(formatters.current(-7.8))).assertExists()
       onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
         .assert(hasAnyDescendant(hasText(context.getString(R.string.widget_refresh_symbol))))
+        .assert(hasContentDescription(context.getString(R.string.widget_refresh_action)))
     }
 
   @Test
@@ -88,7 +91,7 @@ class WidgetContentTest {
   @Test
   fun missingCurrentAndVoltage_hideTheirLines() =
     render(overview(sample(currentA = null, totalVoltageV = null))) {
-      onNode(hasTextEqualTo(formatters.power(-207.0))).assertExists()
+      assertPowerOnlyInStatus()
       onAllNodes(hasTextEqualTo(formatters.current(-7.8))).assertCountEquals(0)
       onAllNodes(hasTextEqualTo(formatters.voltage(26.5))).assertCountEquals(0)
     }
@@ -137,6 +140,13 @@ class WidgetContentTest {
       // Every sample cell starts with "3.30" and no other text does.
       onAllNodes(hasText("3.30")).assertCountEquals(if (shown) CELLS.size else 0)
     }
+  }
+
+  /** The sample's power shows exactly once: inside the status line, not in the metrics row. */
+  private fun GlanceAppWidgetUnitTest.assertPowerOnlyInStatus() {
+    val power = formatters.power(-207.0)
+    onNode(hasText(power))
+      .assert(hasTextEqualTo(context.getString(R.string.status_discharging, power)))
   }
 
   private fun render(

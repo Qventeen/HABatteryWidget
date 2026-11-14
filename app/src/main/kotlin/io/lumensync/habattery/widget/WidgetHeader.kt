@@ -14,6 +14,8 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -52,7 +54,10 @@ internal fun WidgetHeader(
   }
 }
 
-/** Shows ↻, or the "refreshing" text while a sync runs. */
+/**
+ * Shows ↻, or the "refreshing" text while a sync runs. The bare ↻ gets a spoken label for screen
+ * readers; the "refreshing" text is read as it is.
+ */
 @Composable
 internal fun RefreshChip(
   refreshing: Boolean,
@@ -60,15 +65,17 @@ internal fun RefreshChip(
   dimens: WidgetDimens,
   textColor: ColorProvider,
 ) {
+  val context = LocalContext.current
   val label = if (refreshing) R.string.widget_refreshing else R.string.widget_refresh_symbol
-  Box(
+  val chip =
     GlanceModifier.background(WidgetColors.chipBackground)
       .cornerRadius(dimens.chipCorner)
       .clickable(refreshAction)
       .padding(horizontal = dimens.chipPadH, vertical = dimens.chipPadV)
-  ) {
+  val actionLabel = context.getString(R.string.widget_refresh_action)
+  Box(if (refreshing) chip else chip.semantics { contentDescription = actionLabel }) {
     Text(
-      text = LocalContext.current.getString(label),
+      text = context.getString(label),
       style =
         TextStyle(color = textColor, fontSize = dimens.chipText, fontWeight = FontWeight.Bold),
       maxLines = 1,
@@ -76,12 +83,14 @@ internal fun RefreshChip(
   }
 }
 
-/** Power, current and total voltage in one row; a missing value is left out. */
+/**
+ * Current and total voltage in one row; a missing value is left out. Power is not here: the status
+ * line already shows it.
+ */
 @Composable
 private fun Metrics(reading: BatteryReading, formatters: Formatters, dimens: WidgetDimens) {
   val values =
     listOfNotNull(
-      reading.powerW?.let(formatters::power),
       reading.currentA?.let(formatters::current),
       reading.totalVoltageV?.let(formatters::voltage),
     )
