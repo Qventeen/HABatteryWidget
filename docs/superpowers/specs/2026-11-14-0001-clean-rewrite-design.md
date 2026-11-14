@@ -1,6 +1,7 @@
 # Clean rewrite of HA Battery Widget — design
 
-- **Date:** 2026-11-14 (v2: updated after the references research)
+- **Date:** 2026-11-14 (v3: owner decisions on defaults, app ID and signing;
+  missing values defined; second builder check)
 - **Status:** draft, waiting for owner approval
 - **Branch:** `develop`
 - **Set:** `0001` (the plan will be `plans/2026-11-14-0001-clean-rewrite.md`)
@@ -45,6 +46,9 @@ clean foundation for future releases.
   close to today).
 - No multi-module Gradle setup, no DI framework (Hilt/Koin).
 - No in-app language picker (system per-app language is enough).
+- No entity picker or auto-discovery from HA. First setup means typing each
+  entity ID by hand (about 13 with 8 cells). Accepted for now; entity setup
+  may be redesigned later (owner).
 - No CI pipeline (separate task). `CLAUDE.md` already exists with stable
   facts only (`d27ca46`); this rewrite updates it at the end (section 15).
 - No generated widget previews (`providePreview`, Android 15+). The static
@@ -121,8 +125,8 @@ Read only; take the idea, not the shape (anti-goals, section 4).
   permission flow; connection settings (primary URL, fallback URL, token);
   entity editor (charge, power, fallback power, current, total voltage, cell
   list with add/remove, max 32). Entity setup may be redesigned later (owner).
-- **Notification:** one alert when the battery reaches 100%; re-arms when
-  charge drops to ≤ 98% (same rule as today).
+- **Notification:** one alert when the state becomes `FULL` (section 9);
+  re-arms when charge drops to ≤ 98% (same rule as today).
 - **Widget configure activity:** returns `RESULT_OK` so the widget is placed.
 
 ### Changes
@@ -261,15 +265,23 @@ string resource. The worker retries only on `Unreachable`.
   `NotConfigured` and the widget and screen show a "set up in the app"
   state. An empty optional field hides its part of the widget (no cells →
   no cell block; no capacity → no time remaining).
+- **Missing values** *(call 19)*: a value is missing when its entity is empty
+  in settings, or HA reports it as `unknown`, `unavailable` or not a number.
+  The template returns JSON `null` for it, never `0` (today's `float(0)`
+  turns a missing power into "idle"). Charge is required: a missing charge
+  gives `BadResponse`, and the last good reading stays. Any other missing
+  value hides its line. A missing cell shows a dash and is left out of
+  delta/min/max.
 - **Request:** the template builder keeps today's safe quoting and the
   "fallback power if primary is unknown/unavailable" logic; it returns
   `{soc, power, current, total_v, cells[]}` as JSON. Parse with
   kotlinx.serialization.
 - **State** (sign: power > 0 = charging):
-  - `FULL` — charge rounds to 100 and power ≥ −20 W
+  - `FULL` — charge rounds to 100 and (power ≥ −20 W or power missing)
   - `DISCHARGING` — power < −20 W
   - `CHARGING` — power > 20 W
-  - `IDLE` — otherwise
+  - `IDLE` — power within ±20 W
+  - `UNKNOWN` — power missing and charge below 100
 - **Delta / min / max:** from the cell list (1-based indices); hidden when
   fewer than 2 cells.
 - **Units** stay as today: power in W, current in A, voltages in V; delta is
@@ -278,8 +290,8 @@ string resource. The worker retries only on `Unreachable`.
   current), so the current's sign convention does not matter. To empty =
   `soc/100 × capacityAh / |current|`; to full =
   `(100 − soc)/100 × capacityAh / |current|`. Hidden when |current| < 0.5 A
-  (both directions) or state is FULL/IDLE, or while the capacity setting is
-  empty. Computed at render time from the cached reading (pure function);
+  (both directions), when current is missing, when state is
+  FULL/IDLE/UNKNOWN, or while the capacity setting is empty. Computed at render time from the cached reading (pure function);
   the widget already shows the reading's update time, so no extra staleness rule.
 
 ## 10. Secure token storage
@@ -312,9 +324,13 @@ string resource. The worker retries only on `Unreachable`.
   the real guard.
 - **Signing:** release signing reads `storeFile`, passwords and alias from
   `~/.gradle/gradle.properties` or environment variables. When they are
-  missing, the release build is unsigned; debug always works. Which key to use
-  is open (section 18): no upgrade over the old app is needed, so a new key
-  is possible.
+  missing, the release build is unsigned; debug always works.
+- **New signing key** (owner decision, 2026-11-14): the owner creates it with
+  `keytool` outside the repo (the README gives the command) and puts its
+  path, alias and passwords in `~/.gradle/gradle.properties`. Claude never
+  sees or stores the passwords. The owner keeps a backup of the key: without
+  it, an update needs an uninstall. The old `app/release.keystore` is not
+  used; it stays on disk until the owner deletes it.
 - `.gitignore` already ignores `*.keystore`, `*.jks`; add `*.apk`, `*.aab`.
 - Fix the exec bit of `gradlew` in git; README gets the Linux build command.
 
@@ -388,7 +404,7 @@ must be able to change safely after the first production release *(call 9)*:
 
 ## 15. Testing and done
 
-- **JVM unit tests:** `BatteryMath`, `FullChargeRule`, `Validation`,
+- **JVM unit tests:** `BatteryMath` (including missing values), `FullChargeRule`, `Validation`,
   `UrlPolicy`, `TemplateBuilder` (quoting), response parsing, `SyncBattery`
   with fakes, `WidgetLayoutSpec`, ViewModel with fakes, DataStore repositories
   with a temp file, `TokenStore` with a fake crypto, versioning (stored JSON
@@ -408,7 +424,7 @@ must be able to change safely after the first production release *(call 9)*:
 - **Instrumented tests** (on the emulator): `KeystoreCrypto` round trip;
   main screen smoke test.
 - **Fresh install test:** uninstall the old app, install the new release
-  build, enter settings, place the widget, check ↻ and auto-refresh.
+  build (signed with the new key), enter settings, place the widget, check ↻ and auto-refresh.
 - **Mock HA for manual checks:** a small local mock of `/api/template` (builder
   picks the form) that can return any reading, e.g. 100% for the notification
   check. No real HA token is needed for development.
@@ -438,7 +454,7 @@ must be able to change safely after the first production release *(call 9)*:
 10. Single module, manual DI.
 11. OkHttp + kotlinx.serialization for HTTP and JSON.
 12. Glance `LinearProgressIndicator` instead of a drawn bitmap.
-13. Signing key: open (section 18).
+13. Signing key: a new key outside the repo (owner, section 11).
 14. Settled from the builder check: time direction from state, not current
     sign; units as today; "notified" flag in `ReadingCache`; "refreshing" as
     a timestamp with a 2-minute limit; time computed at render time; a mock HA
@@ -453,6 +469,9 @@ must be able to change safely after the first production release *(call 9)*:
     always-on connection), multi-module.
 18. With no config defaults (owner): both switches start off, the interval
     starts empty, and auto-refresh needs a valid interval before it turns on.
+19. Missing values come back as `null`, not `0`; missing charge is an error;
+    missing power gives state `UNKNOWN` (or `FULL` at 100%), so the 100%
+    alert still works without a power entity.
 
 ## 17. Left to the builder
 
@@ -467,6 +486,6 @@ guard; colours and spacing within the current look.
    `io.lumensync.habattery` for both the app ID and the Kotlin package. It
    replaces `com.homeassistant.batterywidget`, which used the Home Assistant
    project's domain. Frozen after the first release (section 5).
-2. **Signing key.** Options: keep the old key (its file is in git history on
-   GitHub), or create a new key outside the repo. No upgrade from the old app
-   is needed, so a new key costs nothing now.
+2. **Signing key.** Decided (owner, 2026-11-14): a new key outside the repo
+   (section 11). The old key's file is in git history on GitHub, so it is
+   not trusted.
