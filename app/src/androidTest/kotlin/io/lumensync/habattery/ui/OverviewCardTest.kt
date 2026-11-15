@@ -61,7 +61,7 @@ class OverviewCardTest {
     compose.onNodeWithText("55").assertExists()
     compose.onNodeWithText(Formatters(context).voltage(26.5)).assertExists()
     compose
-      .onNodeWithContentDescription(context.getString(R.string.widget_soc_description, 55))
+      .onNodeWithContentDescription(context.resources.getQuantityString(R.plurals.widget_soc_description, 55, 55))
       .assertExists()
     compose.onNodeWithContentDescription(context.getString(R.string.widget_auto_off)).performClick()
     compose.onNodeWithContentDescription(context.getString(R.string.widget_refresh_action)).performClick()

@@ -22,7 +22,12 @@
     <string name="widget_no_data">Немає даних від Home Assistant</string>
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
     <string name="widget_refresh_action">Оновити</string>
-    <string name="widget_soc_description">Рівень заряду %1$d відсотків</string>
+    <plurals name="widget_soc_description">
+        <item quantity="one">Рівень заряду %1$d відсоток</item>
+        <item quantity="few">Рівень заряду %1$d відсотки</item>
+        <item quantity="many">Рівень заряду %1$d відсотків</item>
+        <item quantity="other">Рівень заряду %1$d відсотка</item>
+    </plurals>
     <string name="widget_charging">Заряджається</string>
     <string name="widget_discharging">Розряджається</string>
     <string name="widget_balancing_on">Балансування увімкнено</string>

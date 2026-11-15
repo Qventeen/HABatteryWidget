@@ -164,7 +164,7 @@ class WidgetContentTest {
   @Test
   fun ring_isDescribed() =
     render(model()) {
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_soc_description, 55))).assertExists()
+      onNode(hasContentDescriptionEqualTo(context.resources.getQuantityString(R.plurals.widget_soc_description, 55, 55))).assertExists()
     }
 
   @Test

@@ -28,7 +28,10 @@
     <string name="widget_refresh_action">Refresh</string>
     <string name="delta_label">Δ %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
-    <string name="widget_soc_description">State of charge %1$d percent</string>
+    <plurals name="widget_soc_description">
+        <item quantity="one">State of charge %1$d percent</item>
+        <item quantity="other">State of charge %1$d percent</item>
+    </plurals>
     <string name="widget_charging">Charging</string>
     <string name="widget_discharging">Discharging</string>
     <string name="widget_balancing_on">Balancing on</string>

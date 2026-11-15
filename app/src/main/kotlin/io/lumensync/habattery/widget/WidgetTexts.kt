@@ -46,7 +46,7 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
   fun temperature(celsius: Double?): String = celsius?.let(formatters::temperature) ?: missing
 
   fun ringDescription(m: WidgetModel.Data): String =
-    context.getString(R.string.widget_soc_description, m.socPercent)
+    context.resources.getQuantityString(R.plurals.widget_soc_description, m.socPercent, m.socPercent)
 
   companion object {
     @StringRes
