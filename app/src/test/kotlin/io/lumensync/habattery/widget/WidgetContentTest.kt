@@ -2,6 +2,7 @@ package io.lumensync.habattery.widget
 
 import android.content.ComponentName
 import android.content.Context
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
@@ -12,6 +13,9 @@ import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
 import androidx.glance.appwidget.testing.unit.hasRunCallbackClickAction
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
+import androidx.glance.testing.GlanceNodeMatcher
+import androidx.glance.testing.unit.MappedNode
+import androidx.glance.text.EmittableText
 import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasContentDescriptionEqualTo
 import androidx.glance.testing.unit.hasStartActivityClickAction
@@ -209,11 +213,32 @@ class WidgetContentTest {
       onNode(hasTextEqualTo("55")).assertExists()
     }
 
+  /** The chosen theme reaches the drawing: the SOC number takes the palette's text colour. */
+  @Test
+  @Config(qualifiers = "en-notnight")
+  fun darkTheme_drawsDarkColoursByDay() =
+    render(model(), colors = WidgetColors(ThemeChoice.DARK)) {
+      onNode(hasTextEqualTo("55") and hasTextColor(WidgetPalette.Dark.text)).assertExists()
+    }
+
+  @Test
+  @Config(qualifiers = "en-notnight")
+  fun systemTheme_drawsLightColoursByDay() =
+    render(model(), colors = WidgetColors(ThemeChoice.SYSTEM)) {
+      onNode(hasTextEqualTo("55") and hasTextColor(WidgetPalette.Light.text)).assertExists()
+    }
+
+  private fun hasTextColor(expected: Color) =
+    GlanceNodeMatcher<MappedNode>("has text colour $expected") { node ->
+      (node.value.emittable as? EmittableText)?.style?.color?.getColor(context) == expected
+    }
+
   private fun render(
     model: WidgetModel,
     widthDp: Int = 360,
     heightDp: Int = 180,
     fontSizes: FontSizes = FontSizes(),
+    colors: WidgetColors = WidgetColors(ThemeChoice.SYSTEM),
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
   ) = runGlanceAppWidgetUnitTest {
     setContext(context)
@@ -224,7 +249,7 @@ class WidgetContentTest {
         refresh = actionRunCallback<NoOpRefresh>(),
         toggleAuto = actionRunCallback<NoOpToggle>(),
       )
-    provideComposable { WidgetContent(model, fontSizes, WidgetColors(ThemeChoice.SYSTEM), actions) }
+    provideComposable { WidgetContent(model, fontSizes, colors, actions) }
     assertions()
   }
 
