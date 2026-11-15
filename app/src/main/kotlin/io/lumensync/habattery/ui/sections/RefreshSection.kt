@@ -21,8 +21,8 @@ fun RefreshSection(
   refresh: RefreshSettings,
   errors: List<FieldError>,
   onSave: (auto: Boolean, intervalText: String) -> Unit,
-  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   var auto by rememberSaveable(refresh) { mutableStateOf(refresh.auto) }
   var interval by

@@ -31,8 +31,8 @@ fun TokenSection(
   hasToken: Boolean,
   errors: List<FieldError>,
   onSave: (token: String) -> Unit,
-  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   // Plain remember: a typed token must never enter the saved-state Bundle (lost on rotation).
   var draft by remember { mutableStateOf("") }

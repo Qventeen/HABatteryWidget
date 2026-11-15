@@ -25,8 +25,8 @@ fun NotificationSection(
   enabled: Boolean,
   onSetEnabled: (Boolean) -> Unit,
   onOpenSettings: () -> Unit,
-  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   var denied by rememberSaveable { mutableStateOf(false) }
   val permission =

@@ -22,8 +22,8 @@ fun CapacitySection(
   capacityAh: Double?,
   errors: List<FieldError>,
   onSave: (text: String, locale: Locale) -> Unit,
-  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   val locale = LocalConfiguration.current.locales[0]
   var text by

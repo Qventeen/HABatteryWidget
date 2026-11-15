@@ -68,8 +68,8 @@ fun EntitiesSection(
   entities: EntitySettings,
   errors: List<FieldError>,
   onSave: (EntitySettings) -> Unit,
-  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   var draft by rememberSaveable(entities, stateSaver = draftSaver(entities)) { mutableStateOf(entities) }
 

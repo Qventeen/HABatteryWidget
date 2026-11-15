@@ -25,8 +25,8 @@ fun ConnectionSection(
   connection: ConnectionSettings,
   errors: List<FieldError>,
   onSave: (url: String) -> Unit,
-  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   var url by rememberSaveable(connection) { mutableStateOf(connection.url) }
   val warning =
