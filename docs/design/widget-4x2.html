@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Widget 4×2 design</title>
+<!-- Static copy of the approved widget design (see README.md). 1 px here = 1 dp on the device. -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 24px; background: #CDD3CB; font-family: Roboto, system-ui, sans-serif; }
+  .board { display: flex; flex-wrap: wrap; gap: 24px; }
+  .frame { padding: 30px; border-radius: 16px; background: var(--backdrop); }
+  .caption { margin: 0 0 12px; font-size: 13px; color: var(--sub); }
+
+  .light {
+    --backdrop: #D9DFD7; --card: #FFFFFF; --text: #1B1D1C; --sub: #5C625E; --dim: #B9C0BA;
+    --tile: #F1F4F1; --track: #E1E6E1; --accent: #2E7D32; --ok-bg: #E5F3E6; --bar: #43A047;
+    --warn: #A05A00; --warn-bg: #FFF1E0; --warn-ring: #F59E0B; --bad: #D32F2F; --bad-bg: #FDE7E7;
+  }
+  .dark {
+    --backdrop: #0E110F; --card: #1A1D1B; --text: #F1F4F1; --sub: #A3ABA5; --dim: #4E5651;
+    --tile: #242926; --track: #2E3530; --accent: #7BC67E; --ok-bg: #1E3320; --bar: #66BB6A;
+    --warn: #FFB869; --warn-bg: #3A2A12; --warn-ring: #FFB74D; --bad: #EF7070; --bad-bg: #3D1E1E;
+  }
+
+  .card { width: 360px; height: 180px; box-sizing: border-box; padding: 12px; border-radius: 24px;
+          background: var(--card); display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; gap: 10px; height: 44px; flex-shrink: 0; }
+  .small { font-size: 10.5px; color: var(--sub); white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+  .spacer { flex-grow: 1; }
+  /* 44 dp touch area, 36 dp visible circle */
+  .btn { width: 44px; height: 44px; flex-shrink: 0; border: none; padding: 0; background: none;
+         display: flex; align-items: center; justify-content: center; color: var(--sub); }
+  .btn .face { width: 36px; height: 36px; border-radius: 18px; background: var(--tile);
+               display: flex; align-items: center; justify-content: center; }
+  .btn.on { color: var(--accent); }
+  .btn.on .face { background: var(--ok-bg); }
+  .btn.off { color: var(--dim); }
+
+  .body { flex-grow: 1; display: flex; gap: 10px; min-height: 0; margin-top: 4px; }
+  .ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; align-self: center; }
+  .ring svg { position: absolute; inset: 0; }
+  .ring .inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+                 justify-content: center; gap: 2px; color: var(--text); }
+  .ring .label { font-size: 10.5px; letter-spacing: 1px; color: var(--sub); }
+  .ring .soc { font-size: 40px; font-weight: 700; line-height: 1; }
+  .ring .kwh { font-size: 12px; font-weight: 500; }
+
+  .cols { flex-grow: 1; min-width: 0; display: flex; gap: 6px; }
+  .col { min-width: 0; display: flex; flex-direction: column; }
+  .col.main { flex: 1 1 0; gap: 6px; }                             /* pack: voltage, current */
+  .col.cells { flex: 0 0 90px; justify-content: space-between; }   /* cell details */
+  .pill { height: 19px; box-sizing: border-box; border-radius: 9.5px; padding: 0 8px; display: flex;
+          align-items: center; justify-content: center; gap: 2px; font-size: 14px; font-weight: 500;
+          white-space: nowrap; overflow: hidden; background: var(--tile); color: var(--text); }
+  .pill.big { flex: 1 1 0; height: auto; border-radius: 25px; padding: 0 6px; gap: 4px; font-size: 22px; }
+  .pill.ok { background: var(--ok-bg); color: var(--accent); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .pill.idle { color: var(--sub); }
+  .no-arrow { width: 10px; margin-right: 3px; flex-shrink: 0; } /* empty ↑/↓ slot: temperature numbers line up */
+</style>
+</head>
+<body>
+<div class="board" id="board"></div>
+<script>
+  // Icons: 24×24 stroke paths.
+  const ICON = {
+    hourglass: '<path d="M6 3h12"/><path d="M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 5-10 9s10 4 10 9"/>',
+    balance: '<path d="M12 4v16"/><path d="M5 8h14"/><path d="M5 8l-3 6h6z"/><path d="M19 8l-3 6h6z"/><path d="M8 20h8"/>',
+    refresh: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/>',
+    auto: '<path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M12 7v5l3 2"/>',
+    slash: '<path d="M4 4l16 16"/>',
+    down: '<path d="M12 5v14"/><path d="M6 13l6 6 6-6"/>',
+    up: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
+    chip: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+    thermo: '<path d="M10 14V5a2 2 0 1 1 4 0v9"/><circle cx="12" cy="17" r="3"/>',
+  };
+  const svg = (paths, size, label, extra = '') =>
+    `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'} ${extra}>${paths}</svg>`;
+
+  // Preview states. Battery: 8S, 314 Ah.
+  const VARIANTS = [
+    { theme: 'light', caption: 'Light · discharging · auto refresh on',
+      soc: 55, volts: 26.5, amps: -10, deltaMv: 40, cellV: 3.312, mos: 27, tMax: 25, tMin: 23,
+      balancing: false, auto: true, updated: '11:29' },
+    { theme: 'dark', caption: 'Dark · charging · balancing · auto refresh off',
+      soc: 82, volts: 27.2, amps: 25, deltaMv: 12, cellV: 3.400, mos: 31, tMax: 26, tMin: 24,
+      balancing: true, auto: false, updated: '14:05' },
+  ];
+  const CAPACITY_AH = 314;
+  const R = 48, CIRC = 2 * Math.PI * R;
+
+  function widget(v) {
+    const ah = CAPACITY_AH * v.soc / 100;
+    const kwh = ah * v.volts / 1000;
+    const state = v.amps < 0 ? 'down' : v.amps > 0 ? 'up' : 'idle';
+    const hours = state === 'down' ? ah / -v.amps : state === 'up' ? (CAPACITY_AH - ah) / v.amps : null;
+    const mins = hours === null ? null : Math.round(hours * 60);
+    const timeLeft = mins === null ? '—' : `${Math.floor(mins / 60)} h ${mins % 60} min`;
+    const ring = v.soc < 15 ? 'var(--bad)' : v.soc < 25 ? 'var(--warn-ring)' : 'var(--bar)';
+    const curTone = state === 'down' ? 'warn' : state === 'up' ? 'ok' : 'idle';
+    const deltaTone = v.deltaMv > 40 ? 'bad' : v.deltaMv > 15 ? 'warn' : '';
+    const arrow = state === 'idle' ? '' : svg(ICON[state], 16, state === 'down' ? 'Discharging' : 'Charging', 'stroke-width="2.6"');
+    const c = (n) => (n < 0 ? '−' + Math.abs(n) : n) + ' °C';
+
+    return `
+    <div class="${v.theme}">
+      <div class="frame">
+        <p class="caption">${v.caption}</p>
+        <div class="card">
+          <div class="top">
+            <div class="small">${svg(ICON.hourglass, 12)}${timeLeft}</div>
+            <span style="color: ${v.balancing ? 'var(--accent)' : 'var(--dim)'}; display: flex">
+              ${svg(ICON.balance, 16, v.balancing ? 'Balancing on' : 'Balancing off')}</span>
+            <div class="spacer"></div>
+            <div class="small" style="margin-right: -4px">${v.updated}</div>
+            <button class="btn ${v.auto ? 'on' : 'off'}" aria-label="${v.auto ? 'Auto refresh on' : 'Auto refresh off'}" aria-pressed="${v.auto}">
+              <span class="face">${svg(ICON.auto + (v.auto ? '' : ICON.slash), 18)}</span></button>
+            <button class="btn" aria-label="Refresh"><span class="face">${svg(ICON.refresh, 18)}</span></button>
+          </div>
+          <div class="body">
+            <div class="ring">
+              <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="State of charge ${v.soc} percent">
+                <circle cx="52" cy="52" r="${R}" fill="none" stroke="var(--track)" stroke-width="8"/>
+                <circle cx="52" cy="52" r="${R}" fill="none" stroke="${ring}" stroke-width="8" stroke-linecap="round"
+                  stroke-dasharray="${Math.max(0.001, CIRC * v.soc / 100)} ${CIRC}" transform="rotate(-90 52 52)"/>
+              </svg>
+              <div class="inner">
+                <div class="label">SOC</div>
+                <div class="soc">${v.soc}</div>
+                <div class="kwh">${kwh.toFixed(2)} kWh</div>
+              </div>
+            </div>
+            <div class="cols">
+              <div class="col main">
+                <div class="pill big">${v.volts.toFixed(2)} V</div>
+                <div class="pill big ${curTone}">${arrow}${Math.abs(v.amps).toFixed(1)} A</div>
+              </div>
+              <div class="col cells">
+                <div class="pill">${v.cellV.toFixed(3)} V</div>
+                <div class="pill ${deltaTone}">Δ ${v.deltaMv} mV</div>
+                <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.up, 10, 'Highest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMax)}</div>
+                <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.down, 10, 'Lowest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMin)}</div>
+                <div class="pill" style="gap: 0">${svg(ICON.chip, 13, 'MOSFET temperature')}<span class="no-arrow" aria-hidden="true"></span>${c(v.mos)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('board').innerHTML = VARIANTS.map(widget).join('');
+</script>
+</body>
+</html>
