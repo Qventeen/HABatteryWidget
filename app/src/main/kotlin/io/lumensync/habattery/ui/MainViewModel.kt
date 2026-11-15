@@ -131,19 +131,30 @@ class MainViewModel(
    * temperature sensor of [prefix]. It changes nothing; the section puts the ids in its draft.
    * [stillCurrent] tells whether the draft prefix is still the one asked for.
    */
-  suspend fun findTemperatureSensors(prefix: String, stillCurrent: () -> Boolean): SensorSearch {
-    val connection = settings.settings.first().connection
-    val token = tokens.get()
-    if (connection.url.isBlank() || token == null) return SensorSearch.Skipped
-    val list = source.listTemperatureSensors(connection, prefix, token)
-    return when {
-      !stillCurrent() -> SensorSearch.Superseded
-      list is SensorList.Failed -> SensorSearch.Failed(list.error)
-      list is SensorList.Found && list.ids.isEmpty() -> SensorSearch.NoneFound
-      list is SensorList.Found -> SensorSearch.Found(list.ids)
-      else -> SensorSearch.NoneFound
+  suspend fun findTemperatureSensors(prefix: String, stillCurrent: () -> Boolean): SensorSearch =
+    try {
+      val connection = settings.settings.first().connection
+      val token = tokens.get()
+      if (connection.url.isBlank() || token == null) {
+        SensorSearch.Skipped
+      } else {
+        val list = source.listTemperatureSensors(connection, prefix, token)
+        if (!stillCurrent()) {
+          SensorSearch.Superseded
+        } else {
+          when (list) {
+            is SensorList.Failed -> SensorSearch.Failed(list.error)
+            is SensorList.Found ->
+              if (list.ids.isEmpty()) SensorSearch.NoneFound else SensorSearch.Found(list.ids)
+          }
+        }
+      }
+    } catch (e: CancellationException) {
+      throw e
+    } catch (_: Exception) {
+      // Storage or Keystore failure: no note and no crash (the message could carry stored data).
+      SensorSearch.Skipped
     }
-  }
 
   fun saveRefresh(auto: Boolean, intervalText: String) {
     val text = intervalText.trim()

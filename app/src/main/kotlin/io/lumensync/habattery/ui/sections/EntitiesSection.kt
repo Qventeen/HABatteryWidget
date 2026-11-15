@@ -33,6 +33,7 @@ import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.format.Formatters
+import io.lumensync.habattery.ui.SensorFill
 import io.lumensync.habattery.ui.SensorSearch
 import kotlinx.coroutines.launch
 
@@ -109,7 +110,10 @@ fun EntitiesSection(
   SectionCard(R.string.entities_title, summary, initiallyExpanded, modifier) {
     SettingsTextField(
       value = draft.prefix,
-      onValueChange = { draft = draft.copy(prefix = it) },
+      onValueChange = {
+        draft = draft.copy(prefix = it)
+        note = null
+      },
       label = stringResource(R.string.entities_prefix),
       error = errors.errorFor(Field.PREFIX) ?: liveError,
       hint = stringResource(R.string.entities_fill_hint),
@@ -120,16 +124,15 @@ fun EntitiesSection(
           draft = EntityFill.fromPrefix(draft.prefix, draft)
           note = null
           val asked = draft.prefix
+          val filled = draft.temperatures
           searching = true
           scope.launch {
             try {
-              when (val found = onFindSensors(asked) { draft.prefix == asked }) {
-                is SensorSearch.Found -> draft = draft.copy(temperatures = found.ids)
-                SensorSearch.NoneFound,
-                is SensorSearch.Failed -> note = found
-                SensorSearch.Skipped,
-                SensorSearch.Superseded -> Unit
-              }
+              val found =
+                onFindSensors(asked) { SensorFill.isCurrent(draft, asked, filled) }
+              val outcome = SensorFill.apply(draft, asked, filled, found)
+              draft = outcome.draft
+              note = outcome.note
             } finally {
               searching = false
             }
@@ -211,7 +214,7 @@ fun EntitiesSection(
       note = note,
     )
 
-    SaveButton { onSave(draft) }
+    SaveButton(enabled = !searching) { onSave(draft) }
   }
 }
 

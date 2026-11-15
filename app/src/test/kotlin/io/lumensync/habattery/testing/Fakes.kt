@@ -36,7 +36,13 @@ class FakeTokenStore(initial: String? = null) : TokenStore {
   private val token = MutableStateFlow(initial?.trim()?.takeIf { it.isNotEmpty() })
   override val hasToken = token.map { it != null }
 
-  override suspend fun get(): String? = token.value
+  /** When set, [get] throws it, like a failing Keystore. */
+  var getFailure: Throwable? = null
+
+  override suspend fun get(): String? {
+    getFailure?.let { throw it }
+    return token.value
+  }
 
   /** When set, [set] throws it, like a failing Keystore. */
   var setFailure: Throwable? = null
@@ -76,6 +82,9 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
   val sensorCalls = mutableListOf<String>()
 
   /** When set, the sensor-list call suspends on it first, so a test can change state mid-request. */
+  /** When set, the sensor-list call throws it. */
+  var sensorFailure: Throwable? = null
+
   var sensorGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
 
   override suspend fun listTemperatureSensors(
@@ -85,6 +94,7 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
   ): SensorList {
     sensorCalls += prefix
     sensorGate?.await()
+    sensorFailure?.let { throw it }
     return sensors
   }
 }

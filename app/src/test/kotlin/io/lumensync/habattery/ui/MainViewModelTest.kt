@@ -357,14 +357,45 @@ class MainViewModelTest {
       }
   }
 
-  @Test fun findTemperatureSensors_droppedWhenThePrefixChanged() = runTest(dispatcher) {
+  @Test fun findTemperatureSensors_droppedWhenTheDraftChangedDuringTheRequest() = runTest(dispatcher) {
     val vm = start()
     source.sensors = SensorList.Found(listOf("sensor.bms_temperature_sensor_1"))
+    val gate = CompletableDeferred<Unit>()
+    source.sensorGate = gate
     var current = true
     val result = async { vm.findTemperatureSensors("bms") { current } }
+    advanceUntilIdle()
+    assertEquals(listOf("bms"), source.sensorCalls) // the request is in flight
     current = false
+    gate.complete(Unit)
     advanceUntilIdle()
     assertEquals(SensorSearch.Superseded, result.await())
+  }
+
+  @Test fun findTemperatureSensors_failingStorageIsSkippedQuietly() = runTest(dispatcher) {
+    val vm = start()
+    source.sensorFailure = IllegalStateException("disk")
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Skipped, result.await())
+  }
+
+  @Test fun findTemperatureSensors_failingTokenStoreIsSkippedQuietly() = runTest(dispatcher) {
+    val vm = start()
+    tokens.getFailure = java.security.GeneralSecurityException("keystore")
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Skipped, result.await())
+  }
+
+  @Test fun findTemperatureSensors_cancellationIsNotSwallowed() = runTest(dispatcher) {
+    val vm = start()
+    source.sensorGate = CompletableDeferred()
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    result.cancel()
+    advanceUntilIdle()
+    assertTrue(result.isCancelled)
   }
 
   @Test fun findTemperatureSensors_changesNothingUntilSave() = runTest(dispatcher) {

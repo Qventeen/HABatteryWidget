@@ -93,9 +93,10 @@ internal fun SectionCard(
  * it again when the user comes back to the app. A validation error stays visible below its field.
  */
 @Composable
-internal fun SaveButton(onClick: () -> Unit) {
+internal fun SaveButton(enabled: Boolean = true, onClick: () -> Unit) {
   val focusManager = LocalFocusManager.current
   Button(
+    enabled = enabled,
     onClick = {
       focusManager.clearFocus()
       onClick()
