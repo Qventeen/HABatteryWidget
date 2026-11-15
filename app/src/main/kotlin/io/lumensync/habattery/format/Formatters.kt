@@ -47,8 +47,9 @@ class Formatters(private val context: Context) {
 
     fun deltaMv(mv: Int): String = context.getString(R.string.unit_millivolts, number(mv.toDouble(), 0, 0))
 
+    /** Whole degrees, as the widget design shows them. Rounded first, so -0.4 is "0", not "-0". */
     fun temperature(celsius: Double): String =
-        context.getString(R.string.unit_celsius, number(celsius, 0, 1))
+        context.getString(R.string.unit_celsius, number(Math.round(celsius).toDouble(), 0, 0))
 
     fun kilowattHours(kwh: Double): String =
         context.getString(R.string.unit_kilowatt_hours, number(kwh, 2, 2))

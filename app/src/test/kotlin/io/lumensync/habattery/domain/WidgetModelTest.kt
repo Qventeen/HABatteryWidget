@@ -161,6 +161,15 @@ class WidgetModelTest {
   }
 
   @Test
+  fun `temperature levels follow the shown whole degrees`() {
+    fun one(c: Double) = data(sample.copy(temperaturesC = listOf(c))).temperatures
+    assertEquals(Temperatures.One(0.4, Level.BAD), one(0.4)) // shown as 0 °C
+    assertEquals(Temperatures.One(45.4, Level.PLAIN), one(45.4)) // shown as 45 °C
+    assertEquals(Temperatures.One(55.4, Level.WARN), one(55.4)) // shown as 55 °C
+    assertEquals(Level.PLAIN, data(sample.copy(mosfetTemperatureC = 65.4)).mosfetLevel)
+  }
+
+  @Test
   fun `null inputs give null values`() {
     val bare = data(BatteryReading(chargePercent = 50.0, updatedAtMillis = 1L))
     assertNull(bare.voltage)

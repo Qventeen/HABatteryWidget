@@ -49,7 +49,10 @@ class FormattersTest {
     fun newValues_en() {
         val f = Formatters(context)
         assertEquals("25 °C", f.temperature(25.0))
-        assertEquals("25.4 °C", f.temperature(25.35))
+        // Whole degrees: a decimal or negative value fits the 90 dp pill.
+        assertEquals("25 °C", f.temperature(25.35))
+        assertEquals("-13 °C", f.temperature(-12.6))
+        assertEquals("0 °C", f.temperature(-0.4))
         assertEquals("157.0 Ah", f.ampHours(157.0))
         // number() rounds half-even, so the brief's tie value 3.3125 gives 3.312; use a clear case.
         assertEquals("3.313 V", f.cellVoltage(3.3126))

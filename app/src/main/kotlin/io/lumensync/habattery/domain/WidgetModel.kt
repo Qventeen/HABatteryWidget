@@ -102,9 +102,12 @@ sealed interface WidgetModel {
         deltaLevel = deltaMv?.let(WidgetLevels::delta) ?: Level.PLAIN,
         temperatures = temperatures(r.temperaturesC, settings.entities.temperatures.size),
         mosfet = r.mosfetTemperatureC,
-        mosfetLevel = r.mosfetTemperatureC?.let(WidgetLevels::mosfet) ?: Level.PLAIN,
+        mosfetLevel = r.mosfetTemperatureC?.let { WidgetLevels.mosfet(shown(it)) } ?: Level.PLAIN,
       )
     }
+
+    /** Temperatures show in whole degrees; levels use the same value, so colour and number agree. */
+    private fun shown(celsius: Double): Double = celsius.roundToInt().toDouble()
 
     private fun flow(currentA: Double?): Flow =
       when {
@@ -123,7 +126,7 @@ sealed interface WidgetModel {
     }
 
     private fun temperatures(values: List<Double?>, configured: Int): Temperatures {
-      fun level(c: Double?) = c?.let(WidgetLevels::battery) ?: Level.PLAIN
+      fun level(c: Double?) = c?.let { WidgetLevels.battery(shown(it)) } ?: Level.PLAIN
       return when (configured) {
         0 -> Temperatures.None
         1 -> values.firstOrNull().let { Temperatures.One(it, level(it)) }
