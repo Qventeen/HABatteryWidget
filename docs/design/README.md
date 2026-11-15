@@ -1,4 +1,4 @@
-# Widget design — 5×2, 4×3, 5×3
+# Widget design — 4×2, 5×2, 4×3, 5×3
 
 Status: approved (v5), to be built in spec 0004. Built before: v4 (one 4×2
 layout, spec 0003).
@@ -6,17 +6,19 @@ layout, spec 0003).
 The design was made on a design canvas; this folder keeps the latest
 version in the repo. Current version: **v5**. On the canvas the v5 row has
 one column per size: light, dark, sync error light, sync error dark. Git
-keeps the older versions of this folder (v4: `widget-4x2.html`,
-`widget-4x2.png`).
+keeps the older versions of this folder (v4 up to commit d1cf5fc:
+`widget-4x2.html` and an older `widget-4x2.png`).
 
 | File | What it is |
 |---|---|
-| `widget-5x2.png` | 5×2, card 340 × 132 dp: light, dark, sync error light and dark |
+| `widget-4x2.png` | 4×2, card 267 × 132 dp: light, dark, sync error light and dark |
+| `widget-5x2.png` | 5×2, card 340 × 132 dp: the same four frames |
 | `widget-4x3.png` | 4×3, card 267 × 205 dp: the same four frames |
 | `widget-5x3.png` | 5×3, card 340 × 205 dp: the same four frames |
 
 The PNGs are rendered at 2× scale; 1 px of the design = 1 dp.
 
+![Widget 4×2](widget-4x2.png)
 ![Widget 5×2](widget-5x2.png)
 ![Widget 4×3](widget-4x3.png)
 ![Widget 5×3](widget-5x3.png)
@@ -30,18 +32,20 @@ Main rule (as in v4): the most important data sits on the left, and
 importance drops to the right, then down: SOC, then pack voltage and
 current, then cell details.
 
-| | 5×2 | 4×3 | 5×3 |
-|---|---|---|---|
-| Card | 340 × 132 | 267 × 205 | 340 × 205 |
-| Padding, corner | 10, 24 | 10, 24 | 10, 24 |
-| Top row | 32 high, beside the ring | 44 high, full width | 48 high, full width |
-| Buttons (touch / circle / icon) | 32 / 30 / 16 | 44 / 36 / 18 | 48 / 40 / 20 |
-| Ring (size, stroke) | 112, 8 — full card height, left | 86, 7 | 108, 8 |
-| Pack pills (voltage, current) | 2 stacked, 6 gap, 108 wide | 2 stacked, 6 gap, fill the width | 2 stacked, 7 gap, fill the width |
-| Cell pills | column 84 wide, 4 gap | 2 × 2 grid under ring and pack, 20 high, 5 / 4 gap | column 84 wide, 6 gap |
+| | 4×2 | 5×2 | 4×3 | 5×3 |
+|---|---|---|---|---|
+| Card | 267 × 132 | 340 × 132 | 267 × 205 | 340 × 205 |
+| Padding, corner | 10, 24 | 10, 24 | 10, 24 | 10, 24 |
+| Top row | 32 high, full width | 32 high, beside the ring | 44 high, full width | 48 high, full width |
+| Buttons (touch / circle / icon) | 32 / 30 / 16 | 32 / 30 / 16 | 44 / 36 / 18 | 48 / 40 / 20 |
+| Ring (size, stroke) | 76, 7 | 112, 8 — full card height, left | 86, 7 | 108, 8 |
+| Pack pills (voltage, current) | 2 stacked, 6 gap, 89 wide | 2 stacked, 6 gap, 108 wide | 2 stacked, 6 gap, fill the width | 2 stacked, 7 gap, fill the width |
+| Cell pills | column 66 wide, 4 gap | column 84 wide, 4 gap | 2 × 2 grid under ring and pack, 20 high, 5 / 4 gap | column 84 wide, 6 gap |
 
 All sizes in dp. Gaps: 8 between ring, pack and cells; 4 under the top row
-(4×3: 7 between the upper part and the cell grid).
+(4×3: 7 between the upper part and the cell grid). 4×2 is too narrow for
+the 5×2 layout (the top row needs about 200 dp beside the ring), so its top
+row spans the full width and the ring sits below it.
 
 ```
 5×2                                 4×3                     5×3
@@ -55,8 +59,9 @@ All sizes in dp. Gaps: 8 between ring, pack and cells; 4 under the top row
 
 - **Top row:** time left, balancing icon, last update time (or the error
   icon, see States), auto-refresh toggle, manual refresh (right corner).
-  The two button touch areas touch each other. 5×2 buttons are 32 dp:
-  below Android's 48 dp advice; the owner chose a 32 dp top row at 2 rows.
+  The two button touch areas touch each other. 4×2 and 5×2 buttons are
+  32 dp: below Android's 48 dp advice; the owner chose a 32 dp top row at
+  2 rows.
 - **Pack pills** fill their column. Neither value has a sign: the arrow and
   the colour show the direction. Checked: "↓ 125.5 A" and "↑ 3.98 kW" fit
   at every size.
@@ -74,14 +79,14 @@ All sizes in dp. Gaps: 8 between ring, pack and cells; 4 under the top row
 Defaults per size (sp). These are the groups of the widget font-size
 settings.
 
-| Group | 5×2 | 4×3 | 5×3 |
-|---|---|---|---|
-| SOC number | 40 | 32 | 42 |
-| kWh / Ah under SOC | 12 | 11 | 12.5 |
-| "SOC" label in the ring | 10.5 | 9.5 | 11 |
-| Main values (voltage, current or power) | 21 | 22 | 22 |
-| Cell pill values | 12 | 13.5 | 15.5 |
-| Small text (time left, update time) | 10.5 | 10.5 | 11 |
+| Group | 4×2 | 5×2 | 4×3 | 5×3 |
+|---|---|---|---|---|
+| SOC number | 28 | 40 | 32 | 42 |
+| kWh / Ah under SOC | 10 | 12 | 11 | 12.5 |
+| "SOC" label in the ring | 8.5 | 10.5 | 9.5 | 11 |
+| Main values (voltage, current or power) | 17 | 21 | 22 | 22 |
+| Cell pill values | 11 | 12 | 13.5 | 15.5 |
+| Small text (time left, update time) | 10.5 | 10.5 | 10.5 | 11 |
 
 ## States
 
