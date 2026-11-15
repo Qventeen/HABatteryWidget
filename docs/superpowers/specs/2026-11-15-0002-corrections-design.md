@@ -198,8 +198,9 @@ One `POST /api/template` as today. The template returns one JSON object:
 4. CHARGING — current > 0.1 A;
 5. IDLE — otherwise.
 
-The sign rule (negative = discharging) is the ESPHome JK-BMS convention
-(likely); the owner checks it on the real BMS during review.
+The sign rule (negative = discharging) is the ESPHome JK-BMS convention;
+confirmed on the owner's BMS on 2026-11-15 (negative while discharging,
+positive while charging).
 
 `BatteryMath.timeRemaining(reading, capacityAh)`:
 

@@ -63,7 +63,8 @@ the host) and use any token.
 
 The **current** sign sets the state: negative = discharging, positive =
 charging, |I| <= 0.1 A = idle. Power is shown as an absolute value, so its sign
-does not matter. Check the current sign on your real BMS.
+does not matter. This matches a JK-BMS read through ESPHome (checked on the
+owner's BMS, 2026-11-15); another BMS integration may use the opposite sign.
 
 ## Languages
 

@@ -86,7 +86,7 @@ every id can also be typed by hand.
 | kWh left | computed | Ah left × total voltage / 1000; shown when "kWh" is chosen |
 | Ah left | `sensor.<p>_capacity_remaining` | Shown when "Ah" is chosen; also input for kWh and time left |
 | Voltage | `sensor.<p>_total_voltage` | |
-| Current | `sensor.<p>_current` | Sets the state: idle when \|I\| ≤ 0.1 A, discharging below −0.1 A, charging above 0.1 A. The sign on the real BMS is still to be confirmed |
+| Current | `sensor.<p>_current` | Sets the state: idle when \|I\| ≤ 0.1 A, discharging below −0.1 A, charging above 0.1 A. Sign confirmed on the owner's BMS (negative while discharging) |
 | Power | `sensor.<p>_power` | Shown when "power" is chosen, without the sign |
 | Time left | computed | Discharging: Ah left / \|I\|. Charging: (full − Ah left) / I. From 0.5 A |
 | Full capacity | `sensor.<p>_total_battery_capacity` | Optional; when empty or unavailable, the capacity typed in the app is used |
