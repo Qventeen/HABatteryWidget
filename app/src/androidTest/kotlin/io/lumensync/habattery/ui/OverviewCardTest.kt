@@ -1,6 +1,16 @@
 package io.lumensync.habattery.ui
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,6 +29,7 @@ import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,6 +78,29 @@ class OverviewCardTest {
     compose.onNodeWithContentDescription(context.getString(R.string.widget_refresh_action)).performClick()
     assertEquals(1, toggles)
     assertEquals(1, refreshes)
+  }
+
+  /** The message without data follows the system text size, like the rest of the screen. */
+  @Test
+  fun emptyMessage_followsLargeSystemText() {
+    compose.setContent {
+      val density = LocalDensity.current
+      HaBatteryTheme {
+        Column {
+          listOf(1f to "normal", 2f to "large").forEach { (scale, tag) ->
+            CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
+              OverviewCard(model(null, hasToken = false), FontSizes(), false, {}, {}, Modifier.testTag(tag))
+            }
+          }
+        }
+      }
+    }
+    fun textHeight(tag: String) =
+      compose
+        .onNode(hasText(context.getString(R.string.overview_setup)) and hasAnyAncestor(hasTestTag(tag)))
+        .getBoundsInRoot()
+        .let { it.bottom - it.top }
+    assertTrue(textHeight("large") > textHeight("normal"))
   }
 
   @Test

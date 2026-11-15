@@ -70,13 +70,14 @@ fun OverviewCard(
 
   BoxWithConstraints(modifier.fillMaxWidth()) {
     val look = CardLook(WidgetScale.of(maxWidth.value), fontSizes, density.fontScale, palette, texts)
-    // Sizes below already include the system font scale (capped), so the card turns it off.
-    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
-      val shape = RoundedCornerShape(look.dp(24f))
-      when (model) {
-        is WidgetModel.Empty ->
-          EmptyCard(model, look, Modifier.fillMaxWidth().background(palette.card, shape))
-        is WidgetModel.Data ->
+    val shape = RoundedCornerShape(look.dp(24f))
+    when (model) {
+      // A plain message: it follows the system text size like the rest of the screen.
+      is WidgetModel.Empty ->
+        EmptyCard(model, look, Modifier.fillMaxWidth().background(palette.card, shape))
+      is WidgetModel.Data ->
+        // The widget layout's sizes already include the system font scale (capped): turn it off.
+        CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
           Column(
             Modifier.fillMaxWidth()
               .height(WidgetScale.heightDp(look.s).dp)
@@ -86,7 +87,7 @@ fun OverviewCard(
             TopRow(model, look, syncing, onRefresh, onToggleAuto)
             CardBody(model, look, Modifier.weight(1f).fillMaxWidth().padding(top = look.dp(4f)))
           }
-      }
+        }
     }
   }
 }
