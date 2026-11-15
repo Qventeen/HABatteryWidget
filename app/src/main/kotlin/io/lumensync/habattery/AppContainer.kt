@@ -17,6 +17,7 @@ import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import io.lumensync.habattery.domain.SyncBattery
+import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
@@ -87,6 +88,9 @@ class AppContainer(context: Context) {
       notifier = AndroidFullChargeNotifier(appContext),
       widgets = widgetRefresher,
     )
+
+  val toggleAutoRefresh: ToggleAutoRefresh =
+    ToggleAutoRefresh(settingsRepository, syncScheduler, widgetRefresher)
 
   private companion object {
     const val TAG = "HaBattery"

@@ -43,9 +43,18 @@ data class EntitySettings(
 
 @Serializable
 data class RefreshSettings(val auto: Boolean = false, val intervalMinutes: Int? = null) {
+  /**
+   * The widget's auto toggle. Turning on keeps a valid interval, brings one out of range into range,
+   * and uses [DEFAULT_INTERVAL] when none is set. Turning off keeps the interval.
+   */
+  fun toggled(): RefreshSettings =
+    if (auto) copy(auto = false)
+    else RefreshSettings(true, intervalMinutes?.coerceIn(MIN_INTERVAL, MAX_INTERVAL) ?: DEFAULT_INTERVAL)
+
   companion object {
     const val MIN_INTERVAL = 15
     const val MAX_INTERVAL = 1440
+    const val DEFAULT_INTERVAL = 15
   }
 }
 
