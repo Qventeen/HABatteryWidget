@@ -19,6 +19,9 @@ import androidx.glance.text.EmittableText
 import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasContentDescriptionEqualTo
 import androidx.glance.testing.unit.hasStartActivityClickAction
+import androidx.glance.testing.unit.hasTestTag
+import androidx.glance.testing.unit.hasAnyDescendant
+import androidx.glance.layout.EmittableRow
 import androidx.glance.testing.unit.hasText
 import androidx.glance.testing.unit.hasTextEqualTo
 import androidx.test.core.app.ApplicationProvider
@@ -119,13 +122,16 @@ class WidgetContentTest {
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
+  /** Spec 0005, 5.3: a red icon only, the reason in its content description, no error text. */
   @Test
-  fun error_replacesUpdateTime() =
-    render(model(error = SyncError.Unreachable)) {
-      onNode(hasTextEqualTo(text(R.string.error_unreachable))).assertExists()
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_sync_error))).assertExists()
-      onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
-      onNode(hasTextEqualTo("55")).assertExists()
+  fun error_showsIconOnly() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(error = SyncError.Unreachable), spec.bucketWidth, spec.bucketHeight) {
+        onNode(hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable")).assertExists()
+        onAllNodes(hasText(text(R.string.error_unreachable))).assertCountEquals(0)
+        onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
+        onNode(hasTextEqualTo("55")).assertExists()
+      }
     }
 
   @Test
@@ -200,11 +206,38 @@ class WidgetContentTest {
     }
 
   @Test
-  fun belowMinimumSize_stillRendersEverything() =
-    render(model(), widthDp = 276, heightDp = 140) {
-      onNode(hasTextEqualTo("55")).assertExists()
-      onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
-      onNode(hasTextEqualTo(formatters.temperature(27.0))).assertExists()
+  fun eachBucket_drawsItsLayout() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight) {
+        onNode(hasTestTag("layout_${spec.name}")).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+        onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
+        onNode(hasTextEqualTo(formatters.temperature(27.0))).assertExists()
+      }
+    }
+
+  @Test
+  fun fiveByFour_stretchesFiveByThree() =
+    render(model(), 340f, 278f) { onNode(hasTestTag("layout_5x3")).assertExists() }
+
+  @Test
+  fun belowMinimumSize_drawsFourByTwo() =
+    render(model(), 240f, 110f) { onNode(hasTestTag("layout_4x2")).assertExists() }
+
+  @Test
+  fun grid_noSensor_mosfetAloneInRowTwo() =
+    render(model(settings = settings(sensors = 0)), LayoutSpec.L4x3.bucketWidth, LayoutSpec.L4x3.bucketHeight) {
+      val mosfet = hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))
+      onNode(rowWithChildren(1) and hasAnyDescendant(mosfet)).assertExists()
+      onAllNodes(rowWithChildren(3) and hasAnyDescendant(hasText("mV"))).assertCountEquals(1)
+    }
+
+  @Test
+  fun grid_twoRowsOfTwo() =
+    render(model(), LayoutSpec.L4x3.bucketWidth, LayoutSpec.L4x3.bucketHeight) {
+      val mosfet = hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))
+      val battery = hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature))
+      onNode(rowWithChildren(3) and hasAnyDescendant(mosfet) and hasAnyDescendant(battery)).assertExists()
     }
 
   @Test
@@ -228,6 +261,12 @@ class WidgetContentTest {
       onNode(hasTextEqualTo("55") and hasTextColor(WidgetPalette.Light.text)).assertExists()
     }
 
+  /** A Row with [n] children (pills and the spacers between them). */
+  private fun rowWithChildren(n: Int) =
+    GlanceNodeMatcher<MappedNode>("row with $n children") { node ->
+      (node.value.emittable as? EmittableRow)?.children?.size == n
+    }
+
   private fun hasTextColor(expected: Color) =
     GlanceNodeMatcher<MappedNode>("has text colour $expected") { node ->
       (node.value.emittable as? EmittableText)?.style?.color?.getColor(context) == expected
@@ -235,8 +274,8 @@ class WidgetContentTest {
 
   private fun render(
     model: WidgetModel,
-    widthDp: Int = 360,
-    heightDp: Int = 180,
+    widthDp: Float = LayoutSpec.L4x2.bucketWidth,
+    heightDp: Float = LayoutSpec.L4x2.bucketHeight,
     fontPercents: FontPercents = FontPercents(),
     colors: WidgetColors = WidgetColors(ThemeChoice.SYSTEM),
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
@@ -249,7 +288,7 @@ class WidgetContentTest {
         refresh = actionRunCallback<NoOpRefresh>(),
         toggleAuto = actionRunCallback<NoOpToggle>(),
       )
-    provideComposable { WidgetContent(model, fontPercents, colors, actions) }
+    provideComposable { WidgetContent(model, fontPercents, colors, actions, FakeMeasurer) }
     assertions()
   }
 

@@ -186,7 +186,7 @@ private fun TopRow(
             R.drawable.ic_alert,
             look.dp(12f),
             palette.bad,
-            stringResource(R.string.widget_sync_error),
+            texts.syncErrorDescription(error),
           )
           Spacer(Modifier.width(look.dp(3f)))
           Text(

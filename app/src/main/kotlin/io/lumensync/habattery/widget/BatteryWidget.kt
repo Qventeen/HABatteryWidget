@@ -20,7 +20,11 @@ import kotlinx.coroutines.flow.first
 
 /** Renders from local data only (cache, settings, token presence). No network here. */
 class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
-  override val sizeMode: SizeMode = SizeMode.Exact
+  /**
+   * One drawing per v5 layout; the home screen shows the one made for the widget's real size
+   * (spec 0005, A1; checked on the owner's phone, 5.0).
+   */
+  override val sizeMode: SizeMode = SizeMode.Responsive(LayoutSpec.all.map { it.bucket }.toSet())
 
   override suspend fun provideGlance(context: Context, id: GlanceId) {
     val container = context.container

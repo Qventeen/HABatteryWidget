@@ -36,11 +36,26 @@ import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.Flow
 import io.lumensync.habattery.domain.WidgetModel.Temperatures
 import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.widget.RingLayout
 import io.lumensync.habattery.widget.WidgetTexts
 
 /** At 0 % a dot stays, as on the widget. */
 private const val MIN_SWEEP = 0.01f
+
+/** Roboto's normal line height, per unit of font size. */
+private const val LINE_HEIGHT = 1.17f
+
+/** Offsets (dp) of the label's and the under-SOC line's centres from the ring centre. */
+private data class RingTextOffsets(val label: Float, val under: Float)
+
+/**
+ * The v4 ring text (CSS: SOC number with line-height 1, 2 dp gaps): each line is placed by its
+ * offset from the number, because Android text boxes are taller than the CSS lines.
+ */
+private fun cardRingOffsets(socDp: Float, labelDp: Float, underDp: Float, gapDp: Float) =
+  RingTextOffsets(
+    label = socDp / 2 + gapDp + labelDp * LINE_HEIGHT / 2,
+    under = socDp / 2 + gapDp + underDp * LINE_HEIGHT / 2,
+  )
 
 /** Ring, pack column and cell column, as on the widget. */
 @Composable
@@ -86,7 +101,7 @@ private fun Ring(model: WidgetModel.Data, look: CardLook) {
   val texts = look.texts
   val description = texts.ringDescription(model)
   val offsets =
-    RingLayout.offsets(
+    cardRingOffsets(
       socDp = look.shownSize(FontGroup.SOC),
       labelDp = look.shownSize(FontGroup.SMALL),
       underDp = look.shownSize(FontGroup.UNDER_SOC),

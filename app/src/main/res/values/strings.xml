@@ -37,7 +37,7 @@
     <string name="widget_balancing_on">Balancing on</string>
     <string name="widget_balancing_off">Balancing off</string>
     <string name="widget_balancing_unknown">Balancing unknown</string>
-    <string name="widget_sync_error">Sync error</string>
+    <string name="widget_sync_error">Sync error: %1$s</string>
     <string name="widget_battery_temperature">Battery temperature</string>
     <string name="widget_average_temperature">Average battery temperature</string>
     <string name="widget_mosfet_temperature">MOSFET temperature</string>

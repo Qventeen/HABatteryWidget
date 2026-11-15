@@ -4,18 +4,28 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class RingLayoutTest {
+  private val lines =
+    listOf(
+      RingLine("SOC", 8.5f, TextWeight.NORMAL, lineHeight = 1.1f),
+      RingLine("55", 28f, TextWeight.BOLD, lineHeight = 1f),
+      RingLine("4.58 kWh", 10f, TextWeight.MEDIUM, lineHeight = 1.2f),
+    )
+
   @Test
-  fun defaults_matchTheDesign() {
-    // Design v4: label (10.5) · 2 · SOC (40, line-height 1) · 2 · kWh (12), centred in the ring.
-    val o = RingLayout.offsets(socDp = 40f, labelDp = 10.5f, underDp = 12f, gapDp = 2f)
-    assertEquals(28.14f, o.label, 0.01f)
-    assertEquals(29.02f, o.under, 0.01f)
+  fun eachView_putsItsBaselineOnTheCanvasBaseline() {
+    val baselines = RingStack.baselines(lines, 1f, gap = 1f, measurer = FakeMeasurer)
+    val centers = RingLayout.centers(lines, gap = 1f, measurer = FakeMeasurer)
+    lines.indices.forEach { i ->
+      val size = lines[i].requested
+      // A view of height bottom − top, centred on its centre, has its baseline at −top below its top.
+      val viewTop = centers[i] - (1.06f + 0.27f) * size / 2
+      assertEquals(baselines[i], viewTop + 1.06f * size, 1e-3f)
+    }
   }
 
   @Test
-  fun scaledDown_movesCloser() {
-    val o = RingLayout.offsets(socDp = 34f, labelDp = 8.925f, underDp = 10.2f, gapDp = 1.7f)
-    assertEquals(23.92f, o.label, 0.01f)
-    assertEquals(24.67f, o.under, 0.01f)
+  fun lines_keepTheirOrder() {
+    val c = RingLayout.centers(lines, gap = 1f, measurer = FakeMeasurer)
+    assert(c[0] < c[1] && c[1] < c[2]) { c.toString() }
   }
 }

@@ -6,19 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TextFitTest {
-  /** Every character is half the font size wide; Roboto-like vertical metrics. */
-  private object Fake : TextMeasurer {
-    override fun width(text: String, sizeDp: Float, weight: TextWeight) = 0.5f * sizeDp * text.length
-
-    override fun metrics(sizeDp: Float, weight: TextWeight) =
-      LineMetrics(ascent = -0.93f * sizeDp, descent = 0.24f * sizeDp, top = -1.06f * sizeDp, bottom = 0.27f * sizeDp)
-
-    override fun ink(text: String, sizeDp: Float, weight: TextWeight) =
-      Ink(width = width(text, sizeDp, weight), top = -0.7f * sizeDp, bottom = 0f)
-  }
-
   private fun fit(requested: Float, box: Box, vararg texts: String) =
-    TextFit.fit(texts.toList(), requested, TextWeight.MEDIUM, box, Fake)
+    TextFit.fit(texts.toList(), requested, TextWeight.MEDIUM, box, FakeMeasurer)
 
   @Test fun shortValue_keepsTheRequestedSize() = assertEquals(20f, fit(20f, Box(100f, 40f), "10.0 A"), 0f)
 
@@ -54,22 +43,22 @@ class TextFitTest {
 
   /** The farthest ink corner of the three lines from the ring centre, at [factor]. */
   private fun farthest(lines: List<RingLine>, factor: Float): Float {
-    val baselines = RingStack.baselines(lines, factor, gap = 1f, measurer = Fake)
+    val baselines = RingStack.baselines(lines, factor, gap = 1f, measurer = FakeMeasurer)
     return lines.indices.maxOf { i ->
       val size = lines[i].requested * factor
-      val ink = Fake.ink(lines[i].text, size, lines[i].weight)
+      val ink = FakeMeasurer.ink(lines[i].text, size, lines[i].weight)
       maxOf(hypot(ink.width / 2, baselines[i] + ink.top), hypot(ink.width / 2, baselines[i] + ink.bottom))
     }
   }
 
   @Test
   fun ring_roomy_keepsFactorOne() =
-    assertEquals(1f, TextFit.fitRing(ringLines(), gap = 1f, innerRadius = 60f, measurer = Fake), 0f)
+    assertEquals(1f, TextFit.fitRing(ringLines(), gap = 1f, innerRadius = 60f, measurer = FakeMeasurer), 0f)
 
   @Test
   fun ringLines_shrinkTogether() {
     val lines = ringLines()
-    val factor = TextFit.fitRing(lines, gap = 1f, innerRadius = 20f, measurer = Fake)
+    val factor = TextFit.fitRing(lines, gap = 1f, innerRadius = 20f, measurer = FakeMeasurer)
     assertTrue("$factor", factor < 1f)
     assertTrue(farthest(lines, factor) <= 20f + TextFit.RING_TOLERANCE_DP)
     assertTrue(farthest(lines, factor + 0.02f) > 20f + TextFit.RING_TOLERANCE_DP)
@@ -79,8 +68,8 @@ class TextFitTest {
   fun ring_toleratesOneDpTouch() {
     val lines = ringLines()
     val atOne = farthest(lines, 1f)
-    assertEquals(1f, TextFit.fitRing(lines, gap = 1f, innerRadius = atOne - 0.9f, measurer = Fake), 0f)
-    assertTrue(TextFit.fitRing(lines, gap = 1f, innerRadius = atOne - 1.5f, measurer = Fake) < 1f)
+    assertEquals(1f, TextFit.fitRing(lines, gap = 1f, innerRadius = atOne - 0.9f, measurer = FakeMeasurer), 0f)
+    assertTrue(TextFit.fitRing(lines, gap = 1f, innerRadius = atOne - 1.5f, measurer = FakeMeasurer) < 1f)
   }
 
   @Test
@@ -92,7 +81,7 @@ class TextFitTest {
         RingLine("b", 20f, TextWeight.NORMAL, lineHeight = 1f),
         RingLine("c", 10f, TextWeight.NORMAL, lineHeight = 1f),
       )
-    val baseline = RingStack.baselines(lines, 1f, gap = 2f, measurer = Fake)[1]
+    val baseline = RingStack.baselines(lines, 1f, gap = 2f, measurer = FakeMeasurer)[1]
     // Content area 1.17 × 20 centred in a 20 dp box: the baseline is 0.93 × 20 below its top.
     val contentTop = -(1.17f * 20f) / 2
     assertEquals(contentTop + 0.93f * 20f, baseline, 1e-3f)
