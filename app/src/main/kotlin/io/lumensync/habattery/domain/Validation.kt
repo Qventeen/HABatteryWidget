@@ -6,8 +6,7 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 
 enum class Field {
-  PRIMARY_URL,
-  FALLBACK_URL,
+  URL,
   TOKEN,
   PREFIX,
   CHARGE,
@@ -27,7 +26,6 @@ enum class Field {
 enum class Problem {
   REQUIRED,
   INVALID,
-  INSECURE,
   OUT_OF_RANGE,
   TOO_MANY,
 }
@@ -41,10 +39,7 @@ object Validation {
   const val MAX_CAPACITY_AH = 10_000.0
 
   fun connection(c: ConnectionSettings): List<FieldError> =
-    listOfNotNull(
-      urlError(Field.PRIMARY_URL, c.primaryUrl, required = true),
-      urlError(Field.FALLBACK_URL, c.fallbackUrl, required = false),
-    )
+    listOfNotNull(urlError(c.url))
 
   fun isPrefixValid(prefix: String): Boolean = PREFIX.matches(prefix.trim())
 
@@ -85,17 +80,13 @@ object Validation {
   }
 
   fun isConfigured(s: Settings, hasToken: Boolean): Boolean =
-    hasToken && s.connection.primaryUrl.isNotBlank() && s.entities.charge.isNotBlank()
+    hasToken && s.connection.url.isNotBlank() && s.entities.charge.isNotBlank()
 
-  private fun urlError(field: Field, url: String, required: Boolean): FieldError? =
+  private fun urlError(url: String): FieldError? =
     when {
-      url.isBlank() -> if (required) FieldError(field, Problem.REQUIRED) else null
-      else ->
-        when (UrlPolicy.check(url)) {
-          UrlPolicy.Verdict.OK -> null
-          UrlPolicy.Verdict.INVALID -> FieldError(field, Problem.INVALID)
-          UrlPolicy.Verdict.INSECURE -> FieldError(field, Problem.INSECURE)
-        }
+      url.isBlank() -> FieldError(Field.URL, Problem.REQUIRED)
+      UrlPolicy.check(url) == UrlPolicy.Verdict.INVALID -> FieldError(Field.URL, Problem.INVALID)
+      else -> null
     }
 
   private fun entityError(field: Field, id: String, required: Boolean, index: Int? = null): FieldError? =

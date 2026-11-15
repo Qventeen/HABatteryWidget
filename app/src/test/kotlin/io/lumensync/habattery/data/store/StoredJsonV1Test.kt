@@ -34,8 +34,7 @@ class StoredJsonV1Test {
         "schemaVersion": 1,
         "settings": {
           "connection": {
-            "primaryUrl": "http://ha.local:8123",
-            "fallbackUrl": "https://ha.example.com"
+            "url": "http://ha.local:8123"
           },
           "entities": {
             "prefix": "bps_bms",
@@ -63,10 +62,7 @@ class StoredJsonV1Test {
         settings =
           Settings(
             connection =
-              ConnectionSettings(
-                primaryUrl = "http://ha.local:8123",
-                fallbackUrl = "https://ha.example.com",
-              ),
+              ConnectionSettings(url = "http://ha.local:8123"),
             entities =
               EntitySettings(
                 prefix = "bps_bms",
@@ -164,7 +160,6 @@ class StoredJsonV1Test {
     val errors =
       mapOf(
         """{ "type": "not_configured" }""" to SyncError.NotConfigured,
-        """{ "type": "insecure" }""" to SyncError.InsecureConnection,
         """{ "type": "unauthorized" }""" to SyncError.Unauthorized,
         """{ "type": "unreachable" }""" to SyncError.Unreachable,
         """{ "type": "http", "code": 401 }""" to SyncError.HttpError(401),

@@ -116,7 +116,7 @@ class FakeSyncScheduler : SyncScheduler {
 
 fun configuredSettings(notifyOnFull: Boolean = false): Settings =
   Settings(
-    connection = ConnectionSettings(primaryUrl = "http://ha.local:8123"),
+    connection = ConnectionSettings(url = "http://ha.local:8123"),
     entities = EntitySettings(charge = "sensor.soc"),
     notifyOnFull = notifyOnFull,
   )

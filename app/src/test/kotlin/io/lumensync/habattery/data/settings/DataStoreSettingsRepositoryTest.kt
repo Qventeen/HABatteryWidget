@@ -37,7 +37,7 @@ class DataStoreSettingsRepositoryTest {
   fun freshStore_hasNoDefaults() = runTest {
     val s = repo().settings.first()
     assertEquals(Settings(), s)
-    assertEquals("", s.connection.primaryUrl)
+    assertEquals("", s.connection.url)
     assertEquals(EntitySettings(), s.entities)
     assertFalse(s.refresh.auto)
     assertNull(s.refresh.intervalMinutes)

@@ -54,8 +54,8 @@ class HomeAssistantSourceTest {
   private fun reply(code: Int, body: String = "") =
     MockResponse.Builder().code(code).body(body).build()
 
-  private suspend fun fetch(primary: String, fallback: String = "", token: String = "t0ken"): SyncResult =
-    source.fetch(ConnectionSettings(primary, fallback), entities, token)
+  private suspend fun fetch(url: String, token: String = "t0ken"): SyncResult =
+    source.fetch(ConnectionSettings(url), entities, token)
 
   private fun SyncResult.error(): SyncError = (this as SyncResult.Failure).error
 
@@ -147,22 +147,15 @@ class HomeAssistantSourceTest {
   }
 
   @Test
-  fun fallback_usedAfterPrimaryFails() = runTest {
-    val fb = server(reply(200, okBody))
-    assertTrue(fetch(closedUrl(), fb.base()) is SyncResult.Success)
+  fun `posts once to the one url`() = runTest {
+    val s = server(reply(500), reply(200, okBody))
+    assertEquals(SyncError.HttpError(500), fetch(s.base()).error())
+    assertEquals(1, s.requestCount)
   }
 
   @Test
-  fun bothFail_primaryAuthWinsOverUnreachable() = runTest {
-    assertEquals(
-      SyncError.Unauthorized,
-      fetch(server(reply(401)).base(), closedUrl()).error(),
-    )
-  }
-
-  @Test
-  fun bothFail_unreachablePrimaryGivesFallbackError() = runTest {
-    assertEquals(SyncError.HttpError(500), fetch(closedUrl(), server(reply(500)).base()).error())
+  fun unreachable_isFailureWithoutFallback() = runTest {
+    assertEquals(SyncError.Unreachable, fetch(closedUrl()).error())
   }
 
   @Test
@@ -173,18 +166,6 @@ class HomeAssistantSourceTest {
   }
 
   @Test
-  fun sameFallback_requestsOnce() = runTest {
-    val s = server(reply(500), reply(500))
-    fetch(s.base(), s.base() + "/")
-    assertEquals(1, s.requestCount)
-  }
-
-  @Test
-  fun insecureUrl_noRequest() = runTest {
-    assertEquals(SyncError.InsecureConnection, fetch("http://example.com").error())
-  }
-
-  @Test
   fun errorsNeverContainToken() = runTest {
     val errors =
       listOf(
@@ -192,15 +173,8 @@ class HomeAssistantSourceTest {
         fetch(server(reply(500)).base()),
         fetch(server(reply(200, "<html>")).base()),
         fetch(closedUrl()),
-        fetch("http://example.com"),
         fetch("not a url"),
       )
     errors.forEach { assertFalse(it.error().toString().contains("t0ken")) }
-  }
-
-  @Test
-  fun pickError_prefersSpecific() {
-    assertEquals(SyncError.BadResponse, pickError(SyncError.BadResponse, SyncError.Unauthorized))
-    assertEquals(SyncError.Unauthorized, pickError(SyncError.Unreachable, SyncError.Unauthorized))
   }
 }

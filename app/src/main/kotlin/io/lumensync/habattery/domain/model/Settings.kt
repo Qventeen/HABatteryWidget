@@ -12,7 +12,7 @@ data class Settings(
 )
 
 @Serializable
-data class ConnectionSettings(val primaryUrl: String = "", val fallbackUrl: String = "")
+data class ConnectionSettings(val url: String = "")
 
 @Serializable
 data class EntitySettings(

@@ -17,7 +17,6 @@
     <string name="status_with_time">%1$s · %2$s</string>
 
     <string name="error_not_configured">Налаштуйте в застосунку</string>
-    <string name="error_insecure">Незахищений HTTP працює лише в локальній мережі</string>
     <string name="error_unauthorized">Токен відхилено</string>
     <string name="error_unreachable">Home Assistant недоступний</string>
     <string name="error_http">Помилка Home Assistant %1$d</string>
@@ -50,8 +49,8 @@
     <string name="action_save">Зберегти</string>
 
     <string name="connection_title">Підключення</string>
-    <string name="connection_primary">URL Home Assistant</string>
-    <string name="connection_fallback">Резервний URL (необов’язково)</string>
+    <string name="connection_url">URL Home Assistant</string>
+    <string name="connection_http_warning">Звичайний http:// до інтернет-адреси передає ваш токен без шифрування. Якщо можете, використовуйте https://.</string>
 
     <string name="token_title">Токен доступу</string>
     <string name="token_label">Довгостроковий токен доступу</string>
@@ -81,7 +80,6 @@
 
     <string name="field_required">Обов’язкове поле</string>
     <string name="field_url_invalid">Введіть повний URL, наприклад https://ha.example.com</string>
-    <string name="field_url_insecure">Використовуйте https://. Незахищений http:// працює лише в локальній мережі.</string>
     <string name="field_token_not_saved">Не вдалося зберегти токен. Спробуйте ще раз.</string>
     <string name="field_entity_invalid">Введіть ID сутності, наприклад sensor.battery_soc</string>
     <string name="field_interval_invalid">Введіть ціле число хвилин</string>

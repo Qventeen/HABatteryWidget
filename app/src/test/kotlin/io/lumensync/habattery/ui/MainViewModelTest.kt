@@ -87,21 +87,20 @@ class MainViewModelTest {
 
   @Test fun saveConnection_trimsAndSaves() = runTest(dispatcher) {
     val vm = start()
-    vm.saveConnection("  http://192.168.1.2:8123/ ", "")
+    vm.saveConnection("  http://192.168.1.2:8123/ ")
     advanceUntilIdle()
-    assertEquals("http://192.168.1.2:8123/", state.settings.connection.primaryUrl)
+    assertEquals("http://192.168.1.2:8123/", state.settings.connection.url)
     assertTrue(widgets.refreshes >= 1)
     assertTrue(scheduler.applied.last().second)
     assertEquals(2, source.calls)
   }
 
-  @Test fun saveConnection_insecure_keepsSettings() = runTest(dispatcher) {
+  @Test fun saveConnection_publicHttp_saves() = runTest(dispatcher) {
     val vm = start()
-    vm.saveConnection("http://example.com", "")
+    vm.saveConnection("http://example.com")
     advanceUntilIdle()
-    assertEquals(listOf(FieldError(Field.PRIMARY_URL, Problem.INSECURE)), state.errors)
-    assertEquals("http://ha.local:8123", state.settings.connection.primaryUrl)
-    assertEquals(1, source.calls)
+    assertEquals(emptyList<FieldError>(), state.errors)
+    assertEquals("http://example.com", state.settings.connection.url)
   }
 
   @Test fun saveToken_neverInState() = runTest(dispatcher) {
@@ -142,11 +141,11 @@ class MainViewModelTest {
   @Test fun saveSettings_writeFails_keepsSettingsWithoutCrash() = runTest(dispatcher) {
     val vm = start()
     settings.updateFailure = IOException("disk")
-    vm.saveConnection("http://192.168.1.2:8123", "")
+    vm.saveConnection("http://192.168.1.2:8123")
     vm.saveCapacity("100", Locale.US)
     vm.setNotifyOnFull(true)
     advanceUntilIdle()
-    assertEquals("http://ha.local:8123", state.settings.connection.primaryUrl)
+    assertEquals("http://ha.local:8123", state.settings.connection.url)
     assertNull(state.settings.capacityAh)
     assertFalse(state.settings.notifyOnFull)
     assertEquals(1, source.calls)

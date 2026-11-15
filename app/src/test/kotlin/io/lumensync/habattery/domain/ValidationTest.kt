@@ -2,14 +2,12 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.Field.CAPACITY
 import io.lumensync.habattery.domain.Field.CHARGE
-import io.lumensync.habattery.domain.Field.FALLBACK_URL
 import io.lumensync.habattery.domain.Field.INTERVAL
 import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
 import io.lumensync.habattery.domain.Field.PREFIX
-import io.lumensync.habattery.domain.Field.PRIMARY_URL
+import io.lumensync.habattery.domain.Field.URL
 import io.lumensync.habattery.domain.Field.TEMPERATURES
-import io.lumensync.habattery.domain.Problem.INSECURE
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
 import io.lumensync.habattery.domain.Problem.REQUIRED
@@ -26,23 +24,20 @@ import org.junit.Test
 
 class ValidationTest {
   @Test
-  fun connection_primaryRequired() =
+  fun connection_urlRequired() =
     assertEquals(
-      listOf(FieldError(PRIMARY_URL, REQUIRED)),
+      listOf(FieldError(URL, REQUIRED)),
       Validation.connection(ConnectionSettings()),
     )
 
   @Test
-  fun connection_insecureFallback() =
-    assertEquals(
-      listOf(FieldError(FALLBACK_URL, INSECURE)),
-      Validation.connection(ConnectionSettings("http://192.168.1.2:8123", "http://example.com")),
-    )
+  fun `public http is not a field error`() =
+    assertEquals(emptyList<FieldError>(), Validation.connection(ConnectionSettings("http://example.com")))
 
   @Test
   fun connection_invalidPrimary() =
     assertEquals(
-      listOf(FieldError(PRIMARY_URL, INVALID)),
+      listOf(FieldError(URL, INVALID)),
       Validation.connection(ConnectionSettings("not a url")),
     )
 

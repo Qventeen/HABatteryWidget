@@ -71,8 +71,8 @@ class MainViewModel(
     }
   }
 
-  fun saveConnection(primary: String, fallback: String) {
-    val connection = ConnectionSettings(primary.trim(), fallback.trim())
+  fun saveConnection(url: String) {
+    val connection = ConnectionSettings(url.trim())
     save(Validation.connection(connection), syncAfter = true) { it.copy(connection = connection) }
   }
 

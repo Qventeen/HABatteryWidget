@@ -8,7 +8,6 @@ import io.lumensync.habattery.domain.model.Direction
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError.BadResponse
 import io.lumensync.habattery.domain.model.SyncError.HttpError
-import io.lumensync.habattery.domain.model.SyncError.InsecureConnection
 import io.lumensync.habattery.domain.model.SyncError.NotConfigured
 import io.lumensync.habattery.domain.model.SyncError.Unauthorized
 import io.lumensync.habattery.domain.model.SyncError.Unreachable
@@ -68,7 +67,7 @@ class FormattersTest {
     @Test
     fun everyErrorHasText() {
         val f = Formatters(context)
-        listOf(NotConfigured, InsecureConnection, Unauthorized, Unreachable, HttpError(502), BadResponse)
+        listOf(NotConfigured, Unauthorized, Unreachable, HttpError(502), BadResponse)
             .forEach { assertTrue(f.error(it).isNotBlank()) }
     }
 

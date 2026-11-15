@@ -17,7 +17,6 @@ internal fun fieldErrorText(error: FieldError): String =
     Problem.REQUIRED -> stringResource(R.string.field_required)
     Problem.INVALID -> stringResource(invalidMessage(error.field))
     Problem.TOO_MANY -> stringResource(R.string.field_required)
-    Problem.INSECURE -> stringResource(R.string.field_url_insecure)
     // Only the interval and the capacity have a range.
     Problem.OUT_OF_RANGE ->
       if (error.field == Field.INTERVAL) {
@@ -34,8 +33,7 @@ internal fun fieldErrorText(error: FieldError): String =
 @StringRes
 private fun invalidMessage(field: Field): Int =
   when (field) {
-    Field.PRIMARY_URL,
-    Field.FALLBACK_URL -> R.string.field_url_invalid
+    Field.URL -> R.string.field_url_invalid
     // The token text is never checked; INVALID means the Keystore failed to store it.
     Field.TOKEN -> R.string.field_token_not_saved
     Field.CHARGE,

@@ -43,16 +43,16 @@ class MainScreenTest {
   }
 
   @Test
-  fun localPrimaryUrl_savesWithoutFieldError() {
+  fun localUrl_savesWithoutFieldError() {
     waitForContent()
 
     compose
-      .onNodeWithText(text(R.string.connection_primary))
+      .onNodeWithText(text(R.string.connection_url))
       .performScrollTo()
       .performTextReplacement("http://10.0.2.2:8123")
     saveConnection()
 
-    listOf(R.string.field_required, R.string.field_url_invalid, R.string.field_url_insecure).forEach {
+    listOf(R.string.field_required, R.string.field_url_invalid).forEach {
       compose.onNodeWithText(text(it)).assertDoesNotExist()
     }
   }
@@ -60,7 +60,7 @@ class MainScreenTest {
   @Test
   fun save_clearsFocus() {
     waitForContent()
-    val field = compose.onNodeWithText(text(R.string.connection_primary))
+    val field = compose.onNodeWithText(text(R.string.connection_url))
     field.performScrollTo().performClick().performTextReplacement("http://10.0.2.2:8123")
     field.assertIsFocused()
 

@@ -95,7 +95,6 @@ class Formatters(private val context: Context) {
 
     fun error(e: SyncError): String = when (e) {
         SyncError.NotConfigured -> context.getString(R.string.error_not_configured)
-        SyncError.InsecureConnection -> context.getString(R.string.error_insecure)
         SyncError.Unauthorized -> context.getString(R.string.error_unauthorized)
         SyncError.Unreachable -> context.getString(R.string.error_unreachable)
         is SyncError.HttpError -> context.getString(R.string.error_http, e.code)

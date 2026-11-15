@@ -21,7 +21,6 @@
     <string name="status_with_time">%1$s · %2$s</string>
 
     <string name="error_not_configured">Set up in the app</string>
-    <string name="error_insecure">Plain HTTP works only on a local network</string>
     <string name="error_unauthorized">Token rejected</string>
     <string name="error_unreachable">Home Assistant is unreachable</string>
     <string name="error_http">Home Assistant error %1$d</string>
@@ -54,8 +53,8 @@
     <string name="action_save">Save</string>
 
     <string name="connection_title">Connection</string>
-    <string name="connection_primary">Home Assistant URL</string>
-    <string name="connection_fallback">Fallback URL (optional)</string>
+    <string name="connection_url">Home Assistant URL</string>
+    <string name="connection_http_warning">Plain http:// to an internet address sends your token unencrypted. Use https:// if you can.</string>
 
     <string name="token_title">Access token</string>
     <string name="token_label">Long-lived access token</string>
@@ -86,7 +85,6 @@
     <!-- Field errors under the inputs. -->
     <string name="field_required">Required</string>
     <string name="field_url_invalid">Enter a full URL, like https://ha.example.com</string>
-    <string name="field_url_insecure">Use https://. Plain http:// works only on a local network.</string>
     <string name="field_token_not_saved">Could not save the token. Try again.</string>
     <string name="field_entity_invalid">Enter an entity ID, like sensor.battery_soc</string>
     <string name="field_interval_invalid">Enter a whole number of minutes</string>

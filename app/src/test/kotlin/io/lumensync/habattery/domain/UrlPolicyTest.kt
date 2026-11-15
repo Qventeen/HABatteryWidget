@@ -1,6 +1,6 @@
 package io.lumensync.habattery.domain
 
-import io.lumensync.habattery.domain.UrlPolicy.Verdict.INSECURE
+import io.lumensync.habattery.domain.UrlPolicy.Verdict.PUBLIC_HTTP
 import io.lumensync.habattery.domain.UrlPolicy.Verdict.INVALID
 import io.lumensync.habattery.domain.UrlPolicy.Verdict.OK
 import org.junit.Assert.assertEquals
@@ -29,7 +29,7 @@ class UrlPolicyTest {
       .forEach { assertEquals(it, OK, v(it)) }
 
   @Test
-  fun insecure() =
+  fun publicHttp() =
     listOf(
         "http://example.com",
         "http://172.32.0.1",
@@ -37,7 +37,7 @@ class UrlPolicyTest {
         "http://[2001:db8::1]",
         "http://8.8.8.8",
       )
-      .forEach { assertEquals(it, INSECURE, v(it)) }
+      .forEach { assertEquals(it, PUBLIC_HTTP, v(it)) }
 
   @Test
   fun invalid() =
@@ -66,7 +66,7 @@ class UrlPolicyTest {
         "http://[fe7f::1]",
         "http://[fec0::1]",
       )
-      .forEach { assertEquals(it, INSECURE, v(it)) }
+      .forEach { assertEquals(it, PUBLIC_HTTP, v(it)) }
   }
 
   @Test
@@ -78,22 +78,22 @@ class UrlPolicyTest {
   @Test
   fun userInfo_usesRealHost() {
     assertEquals(OK, v("http://user@192.168.1.2"))
-    assertEquals(INSECURE, v("http://192.168.1.1@evil.com"))
+    assertEquals(PUBLIC_HTTP, v("http://192.168.1.1@evil.com"))
   }
 
   @Test
-  fun trailingDot_isInsecure() = assertEquals(INSECURE, v("http://ha.local."))
+  fun trailingDot_isPublicHttp() = assertEquals(PUBLIC_HTTP, v("http://ha.local."))
 
   @Test
   fun numericSingleLabel_isInsecure() =
     listOf("http://134744072", "http://3232235777", "http://0", "http://00:8123").forEach {
-      assertEquals(it, INSECURE, v(it))
+      assertEquals(it, PUBLIC_HTTP, v(it))
     }
 
   @Test
   fun hexLabel_isInsecure() =
     listOf("http://0x08080808", "http://0XC0A80101", "http://0x").forEach {
-      assertEquals(it, INSECURE, v(it))
+      assertEquals(it, PUBLIC_HTTP, v(it))
     }
 
   @Test
@@ -105,11 +105,17 @@ class UrlPolicyTest {
         "http://192.168.1.010",
         "http://192.168.01.1",
       )
-      .forEach { assertEquals(it, INSECURE, v(it)) }
+      .forEach { assertEquals(it, PUBLIC_HTTP, v(it)) }
 
   @Test
   fun zeroOctet_isNotLeadingZero() = assertEquals(OK, v("http://10.0.0.1"))
 
   @Test
   fun hexInDottedHost_isRejectedByUriParser() = assertEquals(INVALID, v("http://0x8.0.0.1"))
+
+  @Test fun `public http is allowed with a warning`() = assertEquals(PUBLIC_HTTP, v("http://example.com"))
+
+  @Test fun `messy input classifies like the clean form`() = assertEquals(PUBLIC_HTTP, v(" HTTP://Example.com/ "))
+
+  @Test fun `other schemes`() = assertEquals(UrlPolicy.Verdict.INVALID, v("ftp://example.com"))
 }

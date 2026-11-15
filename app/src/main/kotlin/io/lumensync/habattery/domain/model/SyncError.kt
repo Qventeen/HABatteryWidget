@@ -7,8 +7,6 @@ import kotlinx.serialization.Serializable
 sealed interface SyncError {
   @Serializable @SerialName("not_configured") data object NotConfigured : SyncError
 
-  @Serializable @SerialName("insecure") data object InsecureConnection : SyncError
-
   @Serializable @SerialName("unauthorized") data object Unauthorized : SyncError
 
   @Serializable @SerialName("unreachable") data object Unreachable : SyncError
