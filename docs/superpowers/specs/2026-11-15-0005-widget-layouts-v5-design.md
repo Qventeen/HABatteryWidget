@@ -284,3 +284,110 @@ languages).
 
 File layout inside `widget/`, the `LayoutSpec` shape, the exact Glance
 structure, the 0.5 sp adjustments from the fit check, and the wording.
+
+## 8. Build notes (2026-11-15)
+
+### 5.0 device test: passed
+
+- Phone: model 2602DPT53G, Android 16 (API 36), 390 dp wide, density
+  520. The launcher is `com.miui.home` (Xiaomi **HyperOS**), not ColorOS
+  as written above.
+- A throwaway APK with the four buckets of 5.1 in `SizeMode.Responsive`:
+  each size showed its own bucket. 4×2: real size 267 × 132 dp (options
+  267.3 × 131.6); 5×2: about 339 × 131 dp (from the screenshot); 4×3 and
+  5×3 their own; 5×4 the stretched 5×3.
+- The widget was drawn once and never redrawn while it was resized (its
+  size texts stayed stale), and the shown layout always followed the real
+  size: the launcher picks the bucket. Approach A1 holds on HyperOS.
+- On the `Pixel_8_API_35` emulator the same APK picked the right bucket
+  too, also after a rotation without a redraw.
+
+### Builder calls (§7)
+
+- Files in `widget/`: `LayoutSpec` (the README numbers of each layout,
+  its bucket, `forSize` with the platform's best-fit rule), `TextFit`
+  (pure fit rules), `PaintTextMeasurer`, `WidgetFonts` (texts and shown
+  sizes of one drawing), `WidgetLayouts` (`Layout4x2` … `Layout5x3`),
+  `WidgetParts` (top row, ring, pack pills, cell column and grid),
+  `WidgetContent` (root, empty state). `WidgetTopRow`, `WidgetBody`,
+  `ring_track.xml` are gone; `WidgetScale` moved to the card
+  (`ui/sections/CardScale`).
+- Measuring uses Glance's own text appearance styles
+  (`TextAppearanceSpan.updateMeasureState`), so the fit uses the font and
+  weight the home screen draws.
+- The top row's time left and update time share the space between the
+  balancing icon and the buttons and get one size, so they never
+  overlap.
+- A text's height check is the font's top (above the baseline) plus the
+  ink below the baseline, not the line height. Android draws a one-line
+  text view from the font's top; in a pill lower than the whole line the
+  view is cut to the pill and keeps its top, so the glyphs move down. With
+  the line height, large values and the Ukrainian decimal comma
+  ("3,312 В") were cut at the bottom. In such a pill the text sits a bit
+  low (100 %, 2-row layouts).
+- Ring: track and arc are tinted alpha bitmaps at the layout's size and
+  stroke, in a box as wide as the ring and as high as its row
+  (`ContentScale.Fit`). The three lines are placed like the canvas CSS
+  stack (gap, line heights), with the font padding taken out. Their fit
+  checks the ink corners against the inner circle, 1 dp tolerance.
+- 2-row layouts: the canvas has 6 dp between the 32 dp buttons; each
+  touch area grows 3 dp toward the other, so they touch and the circles
+  stay where the PNG has them.
+- The empty state's reason shrinks when the column would be taller than
+  the card (large system font at 100 %).
+- Wording: "Sync error: %1$s" / "Помилка синхронізації: %1$s"; the font
+  sliders show "%1$d %".
+- Glance keeps at most 10 children in a Row or Column and drops the rest
+  without an error (the first build lost ↻). The fit test checks that
+  every part reaches the RemoteViews.
+
+### Deviations (owner's call where marked)
+
+1. **The ring text fits the ring at its design size**, not at the bucket
+   (5.5 says bucket boxes). At the bucket the ring is 6 dp smaller (4×2
+   70, 4×3 80, 5×2 106 dp), and fitting to it made the ring text 3–6 %
+   smaller than the PNGs at the owner's sizes (4×2 SOC 26.3 instead of
+   28 sp). 5.1 lets the ring shrink between bucket and design size with
+   the fonts unchanged, so this follows 5.1. On cells smaller than the
+   owner's the text can come up to about 3 dp closer to the stroke;
+   nothing is cut.
+2. **No design font went down by 0.5 sp** (5.1). At the buckets, only
+   the long worst-case main values do not fit at 50 %: "↑ 3.98 kW" in
+   4×2 shows at 15.9 instead of 17 sp, in 5×2 at 20.5 instead of 21, in
+   5×3 at 21.1 instead of 22. The fit rule shrinks just these values;
+   the PNG values show at the design size. Lowering the design fonts
+   would make every value smaller than the PNGs and change
+   `docs/design/README.md`. So the §6 test "at 50 % with the worst-case
+   values nothing shrinks" is replaced by one for the PNG values
+   (`fiftyPercent_designValues_showTheDesignSizes`). Owner's call.
+3. **The top-row time texts are longer than the design's**, so they
+   shrink at 50 % where the row is narrow: "17 hr, 16 min" (the
+   formatter of spec 0003; the design shows "17 h 16 min"), "11:15 PM"
+   with a 12-hour clock, a date when the last update was not today. In
+   5×2 at its bucket, "17 hr, 16 min" + "23:15" show at about 9 sp
+   (design 10.5), with a date about 6 sp. A shorter time-left format
+   would fix most of it. Owner's call; not changed here.
+4. The app card keeps its v4 error text next to the icon (5.7): it is
+   where the app shows the full reason (decision 4). The icon's content
+   description is the new "Sync error: <reason>".
+5. The canvas draws "SOC" with 1 px letter spacing; Glance has none.
+6. The picker preview card keeps the 4×2 design size, centred, because a
+   launcher may give the preview a taller box (the Pixel launcher gives
+   3 × 2 cells, about 266 × 224 dp). Its ring text positions are fixed
+   numbers.
+
+### Checks
+
+- Fit check (`WidgetFitTest`, `Pixel_8_API_35`): every layout at its
+  bucket and at the owner's sizes (267 × 132, 340 × 132, 267 × 205,
+  340 × 205, 340 × 278), typical and worst-case values (also 3 cell
+  pills, sync error, no data, setup), every group at 25, 50 and 100 %,
+  English and Ukrainian, and at font scale 1.3: every text shows whole
+  (one line, wide enough, ink not cut). At 50 % in English the PNG
+  values show at the design sizes. Both buttons, every icon and pill
+  reach the RemoteViews.
+- The drawings were compared with the v5 PNGs side by side (light, dark,
+  sync error). They are made by `GlanceAppWidget.compose()` and drawn in
+  software, where rounded corners do not show; on the emulator's
+  launcher the card and the pills are round, and light and dark follow
+  the system.
