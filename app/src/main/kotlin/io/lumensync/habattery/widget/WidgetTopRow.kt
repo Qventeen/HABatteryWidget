@@ -39,15 +39,14 @@ private val BUTTON_ICON = 18.dp
 @Composable
 internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: WidgetActions) {
   val context = LocalContext.current
-  val f = look.formatters
-  val missing = context.getString(R.string.value_missing)
+  val texts = look.texts
   val small = look.font(FontGroup.SMALL)
 
   Row(GlanceModifier.fillMaxWidth().height(TOUCH), verticalAlignment = Alignment.CenterVertically) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       WidgetIcon(R.drawable.ic_hourglass, look.dp(12f), WidgetColors.sub, null)
       Text(
-        model.timeLeft?.let(f::duration) ?: missing,
+        texts.timeLeft(model),
         GlanceModifier.padding(start = look.dp(4f)),
         style = textStyle(small, WidgetColors.sub),
         maxLines = 1,
@@ -58,13 +57,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
       R.drawable.ic_balance,
       look.dp(16f),
       if (model.balancing == true) WidgetColors.accent else WidgetColors.dim,
-      context.getString(
-        when (model.balancing) {
-          true -> R.string.widget_balancing_on
-          false -> R.string.widget_balancing_off
-          null -> R.string.widget_balancing_unknown
-        }
-      ),
+      context.getString(WidgetTexts.balancingDescription(model.balancing)),
     )
     Box(
       GlanceModifier.defaultWeight().padding(start = look.dp(10f), end = look.dp(6f)),
@@ -73,7 +66,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
       val error = model.error
       if (error == null) {
         Text(
-          f.updatedAt(model.updatedAtMillis),
+          texts.updatedAt(model),
           style = textStyle(small, WidgetColors.sub),
           maxLines = 1,
         )
@@ -86,7 +79,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
             context.getString(R.string.widget_sync_error),
           )
           Text(
-            f.error(error),
+            texts.formatters.error(error),
             GlanceModifier.padding(start = look.dp(3f)),
             style = textStyle(small, WidgetColors.bad, FontWeight.Medium),
             maxLines = 1,
@@ -98,8 +91,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
       icon = if (model.autoRefresh) R.drawable.ic_auto_refresh else R.drawable.ic_auto_refresh_off,
       iconColor = if (model.autoRefresh) WidgetColors.accent else WidgetColors.dim,
       face = if (model.autoRefresh) WidgetColors.okBg else WidgetColors.tile,
-      description =
-        context.getString(if (model.autoRefresh) R.string.widget_auto_on else R.string.widget_auto_off),
+      description = context.getString(WidgetTexts.autoDescription(model.autoRefresh)),
       action = actions.toggleAuto,
     )
     Spacer(GlanceModifier.width(look.dp(10f)))
@@ -108,10 +100,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
       icon = R.drawable.ic_refresh,
       iconColor = if (model.refreshing) WidgetColors.dim else WidgetColors.sub,
       face = WidgetColors.tile,
-      description =
-        context.getString(
-          if (model.refreshing) R.string.widget_refreshing else R.string.widget_refresh_action
-        ),
+      description = context.getString(WidgetTexts.refreshDescription(model.refreshing)),
       action = actions.refresh,
     )
   }

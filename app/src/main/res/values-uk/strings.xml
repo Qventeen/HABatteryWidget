@@ -10,35 +10,17 @@
     <string name="unit_kilowatt_hours">%1$s кВт·год</string>
     <string name="charge_percent">%1$d%%</string>
 
-    <string name="status_charging">Заряджається %1$s</string>
-    <string name="status_discharging">Розряджається %1$s</string>
-    <string name="status_idle">Очікування</string>
-    <string name="status_full">Повна</string>
-    <string name="status_unknown">Невідомо</string>
-    <string name="time_to_full">Повна за %1$s</string>
-    <string name="time_to_empty">Порожня за %1$s</string>
-    <string name="status_with_time">%1$s · %2$s</string>
-
     <string name="error_not_configured">Налаштуйте в застосунку</string>
     <string name="error_unauthorized">Токен відхилено</string>
     <string name="error_unreachable">Home Assistant недоступний</string>
     <string name="error_http">Помилка Home Assistant %1$d</string>
     <string name="error_bad_response">Несподівана відповідь від Home Assistant</string>
 
-    <plurals name="refresh_mode_auto">
-        <item quantity="one">авто, кожну %d хв</item>
-        <item quantity="few">авто, кожні %d хв</item>
-        <item quantity="many">авто, кожні %d хв</item>
-        <item quantity="other">авто, кожні %d хв</item>
-    </plurals>
-    <string name="refresh_mode_manual">вручну</string>
-
     <string name="widget_name">Батарея HA</string>
     <string name="widget_description">Заряд, потужність, струм, напруга та залишок часу з Home Assistant</string>
     <string name="widget_refreshing">Оновлення…</string>
     <string name="widget_no_data">Немає даних від Home Assistant</string>
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
-    <string name="widget_updated_at">Оновлено %1$s</string>
     <string name="widget_refresh_action">Оновити</string>
     <string name="widget_soc_description">Рівень заряду %1$d відсотків</string>
     <string name="widget_charging">Заряджається</string>
@@ -60,13 +42,6 @@
     <string name="notification_full_title">Батарея заряджена</string>
     <string name="notification_full_text">Батарею повністю заряджено.</string>
 
-    <string name="overview_ah_left">Залишилось А·год: %1$s</string>
-    <string name="overview_average_cell">Середня комірка: %1$s</string>
-    <string name="overview_delta">Різниця комірок: %1$s</string>
-    <string name="overview_mosfet">MOSFET: %1$s</string>
-    <string name="overview_temperature">Температура %1$d: %2$s</string>
-    <string name="overview_balancing_on">Балансування: увімкнено</string>
-    <string name="overview_balancing_off">Балансування: вимкнено</string>
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
     <string name="action_refresh_now">Оновити зараз</string>
     <string name="action_add_widget">Додати віджет</string>

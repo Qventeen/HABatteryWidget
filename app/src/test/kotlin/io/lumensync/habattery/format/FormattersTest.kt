@@ -3,15 +3,11 @@ package io.lumensync.habattery.format
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.model.BatteryState
-import io.lumensync.habattery.domain.model.Direction
-import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError.BadResponse
 import io.lumensync.habattery.domain.model.SyncError.HttpError
 import io.lumensync.habattery.domain.model.SyncError.NotConfigured
 import io.lumensync.habattery.domain.model.SyncError.Unauthorized
 import io.lumensync.habattery.domain.model.SyncError.Unreachable
-import io.lumensync.habattery.domain.model.TimeRemaining
 import java.util.TimeZone
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -84,24 +80,6 @@ class FormattersTest {
 
     @Test
     fun httpErrorShowsCode() = assertTrue(Formatters(context).error(HttpError(502)).contains("502"))
-
-    @Test
-    fun refreshMode() {
-        val f = Formatters(context)
-        assertTrue(f.refreshMode(RefreshSettings(true, 30)).contains("30"))
-        assertEquals(context.getString(R.string.refresh_mode_manual), f.refreshMode(RefreshSettings()))
-    }
-
-    @Test
-    fun status_combinesStateAndTime() {
-        val f = Formatters(context)
-        val time = TimeRemaining(Direction.TO_FULL, 90.minutes)
-        val text = f.status(BatteryState.CHARGING, 500.0, time)
-        assertTrue(text, text.startsWith("Charging 500 W"))
-        assertTrue(text, text.contains(" · "))
-        assertEquals("Full", f.status(BatteryState.FULL, null, null))
-        assertEquals("Discharging 500 W", f.status(BatteryState.DISCHARGING, 500.0, null))
-    }
 
     @Test
     fun updatedAt_today_showsTimeOnly() {

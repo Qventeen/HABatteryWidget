@@ -49,8 +49,8 @@ fun WidgetContent(model: WidgetModel, fontSizes: FontSizes, actions: WidgetActio
   val context = LocalContext.current
   val size = LocalSize.current
   val s = WidgetScale.of(size.width.value, size.height.value)
-  val formatters = remember(context) { Formatters(context) }
-  val look = WidgetLook(s, fontSizes, context.resources.configuration.fontScale, formatters)
+  val texts = remember(context) { WidgetTexts(context, Formatters(context)) }
+  val look = WidgetLook(s, fontSizes, context.resources.configuration.fontScale, texts)
 
   Box(
     GlanceModifier.fillMaxSize()
@@ -79,7 +79,7 @@ internal class WidgetLook(
   val s: Float,
   private val fontSizes: FontSizes,
   private val fontScale: Float,
-  val formatters: Formatters,
+  val texts: WidgetTexts,
 ) {
   fun dp(value: Float): Dp = (value * s).dp
 
@@ -119,7 +119,7 @@ private fun EmptyContent(model: WidgetModel.Empty, look: WidgetLook, openApp: Ac
     if (model.kind == WidgetModel.EmptyKind.NO_DATA) {
       model.error?.let { error ->
         Text(
-          look.formatters.error(error),
+          look.texts.formatters.error(error),
           GlanceModifier.padding(top = look.dp(8f)),
           style =
             textStyle(look.font(FontGroup.SMALL), WidgetColors.bad, FontWeight.Medium, TextAlign.Center),

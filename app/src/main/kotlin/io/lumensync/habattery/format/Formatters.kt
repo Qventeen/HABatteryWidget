@@ -7,11 +7,7 @@ import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
 import android.text.format.DateUtils
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.model.BatteryState
-import io.lumensync.habattery.domain.model.Direction
-import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.TimeRemaining
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -96,22 +92,6 @@ class Formatters(private val context: Context) {
     private fun localDate(millis: Long): LocalDate =
         Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
 
-    fun status(state: BatteryState, powerW: Double?, time: TimeRemaining?): String {
-        val base = when (state) {
-            BatteryState.CHARGING -> context.getString(R.string.status_charging, powerOrMissing(powerW))
-            BatteryState.DISCHARGING -> context.getString(R.string.status_discharging, powerOrMissing(powerW))
-            BatteryState.IDLE -> context.getString(R.string.status_idle)
-            BatteryState.FULL -> context.getString(R.string.status_full)
-            BatteryState.UNKNOWN -> context.getString(R.string.status_unknown)
-        }
-        if (time == null) return base
-        val timeText = when (time.direction) {
-            Direction.TO_FULL -> context.getString(R.string.time_to_full, duration(time.duration))
-            Direction.TO_EMPTY -> context.getString(R.string.time_to_empty, duration(time.duration))
-        }
-        return context.getString(R.string.status_with_time, base, timeText)
-    }
-
     fun error(e: SyncError): String = when (e) {
         SyncError.NotConfigured -> context.getString(R.string.error_not_configured)
         SyncError.Unauthorized -> context.getString(R.string.error_unauthorized)
@@ -119,18 +99,6 @@ class Formatters(private val context: Context) {
         is SyncError.HttpError -> context.getString(R.string.error_http, e.code)
         SyncError.BadResponse -> context.getString(R.string.error_bad_response)
     }
-
-    fun refreshMode(r: RefreshSettings): String {
-        val minutes = r.intervalMinutes
-        return if (r.auto && minutes != null) {
-            context.resources.getQuantityString(R.plurals.refresh_mode_auto, minutes, minutes)
-        } else {
-            context.getString(R.string.refresh_mode_manual)
-        }
-    }
-
-    private fun powerOrMissing(watts: Double?): String =
-        if (watts == null) context.getString(R.string.value_missing) else power(watts)
 
     private companion object {
         const val KILO = 1000.0

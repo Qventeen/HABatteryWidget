@@ -1,123 +1,239 @@
 package io.lumensync.habattery.ui.sections
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.BatteryMath
-import io.lumensync.habattery.domain.BatteryOverview
-import io.lumensync.habattery.domain.model.BatteryReading
+import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.FontGroup
+import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.format.Formatters
+import io.lumensync.habattery.widget.WidgetPalette
+import io.lumensync.habattery.widget.WidgetScale
+import io.lumensync.habattery.widget.WidgetTexts
 
-/** The same values as the widget, from the same [BatteryOverview], or the setup text. */
+/**
+ * The widget's layout drawn in Compose, from the same [WidgetModel] (spec 0003, 5.9). It scales by
+ * its own width. ↻ runs [onRefresh]; the toggle runs [onToggleAuto]. Without data: the message only.
+ */
 @Composable
-fun OverviewCard(overview: BatteryOverview, modifier: Modifier = Modifier) {
-  val context = LocalContext.current
-  val formatters = remember(context) { Formatters(context) }
-  val reading = overview.reading
-
-  Card(modifier.fillMaxWidth()) {
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      when {
-        overview.setupNeeded -> Text(stringResource(R.string.overview_setup))
-        reading == null -> Text(stringResource(R.string.widget_no_data))
-        else -> ReadingDetails(overview, reading, formatters)
-      }
-      if (!overview.setupNeeded) {
-        overview.error?.let { Text(formatters.error(it), color = MaterialTheme.colorScheme.error) }
-      }
-    }
-  }
-}
-
-@Composable
-private fun ReadingDetails(
-  overview: BatteryOverview,
-  reading: BatteryReading,
-  formatters: Formatters,
+fun OverviewCard(
+  model: WidgetModel,
+  fontSizes: FontSizes,
+  syncing: Boolean,
+  onRefresh: () -> Unit,
+  onToggleAuto: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-  val secondary = MaterialTheme.colorScheme.onSurfaceVariant
-  Row(verticalAlignment = Alignment.CenterVertically) {
-    Text(
-      formatters.chargePercent(reading.chargePercent),
-      style = MaterialTheme.typography.displaySmall,
-      fontWeight = FontWeight.Bold,
-    )
-    Column(Modifier.weight(1f).padding(start = 16.dp)) {
-      overview.state?.let { state ->
-        Text(
-          formatters.status(state, reading.powerW, overview.timeRemaining),
-          style = MaterialTheme.typography.titleMedium,
-        )
+  val context = LocalContext.current
+  val texts = remember(context) { WidgetTexts(context, Formatters(context)) }
+  val palette = if (isSystemInDarkTheme()) WidgetPalette.Dark else WidgetPalette.Light
+  val density = LocalDensity.current
+
+  BoxWithConstraints(modifier.fillMaxWidth()) {
+    val look = CardLook(WidgetScale.of(maxWidth.value), fontSizes, density.fontScale, palette, texts)
+    // Sizes below already include the system font scale (capped), so the card turns it off.
+    CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
+      val shape = RoundedCornerShape(look.dp(24f))
+      when (model) {
+        is WidgetModel.Empty ->
+          EmptyCard(model, look, Modifier.fillMaxWidth().background(palette.card, shape))
+        is WidgetModel.Data ->
+          Column(
+            Modifier.fillMaxWidth()
+              .height(look.dp(WidgetScale.HEIGHT_DP))
+              .background(palette.card, shape)
+              .padding(look.dp(12f))
+          ) {
+            TopRow(model, look, syncing, onRefresh, onToggleAuto)
+            CardBody(model, look, Modifier.weight(1f).fillMaxWidth().padding(top = look.dp(4f)))
+          }
       }
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        reading.currentA?.let { Text(formatters.current(it)) }
-        reading.totalVoltageV?.let { Text(formatters.voltage(it)) }
-      }
-      Text(
-        formatters.refreshMode(overview.refresh),
-        style = MaterialTheme.typography.bodySmall,
-        color = secondary,
-      )
     }
   }
-  LinearProgressIndicator(
-    progress = { BatteryMath.progress(reading.chargePercent) },
-    modifier = Modifier.fillMaxWidth(),
-  )
-  Row(Modifier.fillMaxWidth()) {
-    Text(
-      stringResource(R.string.widget_updated_at, formatters.updatedAt(reading.updatedAtMillis)),
-      modifier = Modifier.weight(1f),
-      style = MaterialTheme.typography.bodySmall,
-      color = secondary,
-    )
-  }
-  ExtraValues(reading, formatters)
 }
 
-/** One line per value the BMS reported; missing values are skipped. */
+/** Sizes for one drawing, as the widget's: [s] scales fixed sizes; fonts are capped (approach E1). */
+internal class CardLook(
+  val s: Float,
+  private val fontSizes: FontSizes,
+  private val fontScale: Float,
+  val palette: WidgetPalette,
+  val texts: WidgetTexts,
+) {
+  fun dp(value: Float): Dp = (value * s).dp
+
+  /** The shown size in dp; the card runs with font scale 1, so sp equals it. */
+  fun shownSize(group: FontGroup): Float = fontSizes.effective(group, fontScale) * s
+
+  fun font(group: FontGroup): TextUnit = shownSize(group).sp
+}
+
 @Composable
-private fun ExtraValues(reading: BatteryReading, formatters: Formatters) {
-  Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-    reading.capacityRemainingAh?.let {
-      Text(stringResource(R.string.overview_ah_left, formatters.ampHours(it)))
-    }
-    reading.averageCellVoltageV?.let {
-      Text(stringResource(R.string.overview_average_cell, formatters.cellVoltage(it)))
-    }
-    BatteryMath.deltaMv(reading)?.let {
-      Text(stringResource(R.string.overview_delta, formatters.deltaMv(it)))
-    }
-    reading.mosfetTemperatureC?.let {
-      Text(stringResource(R.string.overview_mosfet, formatters.temperature(it)))
-    }
-    // Numbering keeps the sensor position, so a missing sensor 2 leaves a gap.
-    reading.temperaturesC.forEachIndexed { index, celsius ->
-      if (celsius != null) {
-        Text(stringResource(R.string.overview_temperature, index + 1, formatters.temperature(celsius)))
+private fun EmptyCard(model: WidgetModel.Empty, look: CardLook, modifier: Modifier) {
+  val palette = look.palette
+  Column(
+    modifier.padding(16.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    val message =
+      when (model.kind) {
+        WidgetModel.EmptyKind.SETUP -> R.string.overview_setup
+        WidgetModel.EmptyKind.NO_DATA -> R.string.widget_no_data
+      }
+    Text(
+      stringResource(message),
+      color = palette.text,
+      fontSize = 15.sp,
+      fontWeight = FontWeight.Medium,
+      textAlign = TextAlign.Center,
+    )
+    if (model.kind == WidgetModel.EmptyKind.NO_DATA) {
+      model.error?.let {
+        Text(
+          look.texts.formatters.error(it),
+          color = palette.bad,
+          fontSize = 13.sp,
+          textAlign = TextAlign.Center,
+        )
       }
     }
-    reading.balancing?.let {
-      Text(
-        stringResource(
-          if (it) R.string.overview_balancing_on else R.string.overview_balancing_off
-        )
-      )
+  }
+}
+
+@Composable
+private fun TopRow(
+  model: WidgetModel.Data,
+  look: CardLook,
+  syncing: Boolean,
+  onRefresh: () -> Unit,
+  onToggleAuto: () -> Unit,
+) {
+  val palette = look.palette
+  val texts = look.texts
+  val small = look.font(FontGroup.SMALL)
+  Row(Modifier.fillMaxWidth().height(TOUCH), verticalAlignment = Alignment.CenterVertically) {
+    CardIcon(R.drawable.ic_hourglass, look.dp(12f), palette.sub, null)
+    Spacer(Modifier.width(look.dp(4f)))
+    Text(texts.timeLeft(model), color = palette.sub, fontSize = small, maxLines = 1)
+    Spacer(Modifier.width(look.dp(10f)))
+    CardIcon(
+      R.drawable.ic_balance,
+      look.dp(16f),
+      if (model.balancing == true) palette.accent else palette.dim,
+      stringResource(WidgetTexts.balancingDescription(model.balancing)),
+    )
+    Box(
+      Modifier.weight(1f).padding(start = look.dp(10f), end = look.dp(6f)),
+      contentAlignment = Alignment.CenterEnd,
+    ) {
+      val error = model.error
+      if (error == null) {
+        Text(texts.updatedAt(model), color = palette.sub, fontSize = small, maxLines = 1)
+      } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          CardIcon(
+            R.drawable.ic_alert,
+            look.dp(12f),
+            palette.bad,
+            stringResource(R.string.widget_sync_error),
+          )
+          Spacer(Modifier.width(look.dp(3f)))
+          Text(
+            texts.formatters.error(error),
+            color = palette.bad,
+            fontSize = small,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        }
+      }
+    }
+    CircleButton(
+      icon = if (model.autoRefresh) R.drawable.ic_auto_refresh else R.drawable.ic_auto_refresh_off,
+      iconColor = if (model.autoRefresh) palette.accent else palette.dim,
+      face = if (model.autoRefresh) palette.okBg else palette.tile,
+      description = stringResource(WidgetTexts.autoDescription(model.autoRefresh)),
+      onClick = onToggleAuto,
+    )
+    Spacer(Modifier.width(look.dp(10f)))
+    val busy = syncing || model.refreshing
+    CircleButton(
+      icon = R.drawable.ic_refresh,
+      iconColor = if (busy) palette.dim else palette.sub,
+      face = palette.tile,
+      description = stringResource(WidgetTexts.refreshDescription(busy)),
+      onClick = onRefresh,
+    )
+  }
+}
+
+private val TOUCH = 44.dp
+private val FACE = 36.dp
+private val BUTTON_ICON = 18.dp
+
+@Composable
+private fun CircleButton(
+  @DrawableRes icon: Int,
+  iconColor: Color,
+  face: Color,
+  description: String,
+  onClick: () -> Unit,
+) {
+  Box(
+    Modifier.size(TOUCH)
+      .clip(CircleShape)
+      .clickable(role = Role.Button, onClick = onClick)
+      .semantics { contentDescription = description },
+    contentAlignment = Alignment.Center,
+  ) {
+    Box(Modifier.size(FACE).background(face, CircleShape), contentAlignment = Alignment.Center) {
+      CardIcon(icon, BUTTON_ICON, iconColor, null)
     }
   }
+}
+
+@Composable
+internal fun CardIcon(@DrawableRes id: Int, size: Dp, tint: Color, description: String?) {
+  Icon(painterResource(id), contentDescription = description, modifier = Modifier.size(size), tint = tint)
 }

@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
   private fun mainActions() =
     MainActions(
       refreshNow = viewModel::refreshNow,
+      toggleAutoRefresh = viewModel::toggleAutoRefresh,
       saveConnection = viewModel::saveConnection,
       saveToken = viewModel::saveToken,
       saveEntities = viewModel::saveEntities,

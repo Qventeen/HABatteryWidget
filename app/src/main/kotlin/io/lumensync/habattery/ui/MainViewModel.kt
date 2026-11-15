@@ -7,7 +7,9 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
+import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.Validation
+import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -43,12 +45,16 @@ class MainViewModel(
 
   private val local = MutableStateFlow(Local())
 
+  private val toggleAuto = ToggleAutoRefresh(settings, scheduler, widgets)
+
   val uiState: StateFlow<MainUiState> =
     combine(settings.settings, tokens.hasToken, cache.state, local) { s, hasToken, c, l ->
+        val overview = BatteryOverview.build(c, s, hasToken, clock())
         MainUiState(
           settings = s,
           hasToken = hasToken,
-          overview = BatteryOverview.build(c, s, hasToken, clock()),
+          overview = overview,
+          widget = WidgetModel.build(overview, s),
           syncing = l.running > 0,
           errors = l.errors,
         )
@@ -69,6 +75,11 @@ class MainViewModel(
         local.update { it.copy(running = it.running - 1) }
       }
     }
+  }
+
+  /** The overview card's auto toggle: the same action as the widget's. */
+  fun toggleAutoRefresh() {
+    viewModelScope.launch { guarded { toggleAuto() } }
   }
 
   fun saveConnection(url: String) {

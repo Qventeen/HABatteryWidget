@@ -14,33 +14,17 @@
     <string name="charge_percent">%1$d%%</string>
     <string name="value_missing" translatable="false">—</string>
 
-    <string name="status_charging">Charging %1$s</string>
-    <string name="status_discharging">Discharging %1$s</string>
-    <string name="status_idle">Idle</string>
-    <string name="status_full">Full</string>
-    <string name="status_unknown">Unknown</string>
-    <string name="time_to_full">Full in %1$s</string>
-    <string name="time_to_empty">Empty in %1$s</string>
-    <string name="status_with_time">%1$s · %2$s</string>
-
     <string name="error_not_configured">Set up in the app</string>
     <string name="error_unauthorized">Token rejected</string>
     <string name="error_unreachable">Home Assistant is unreachable</string>
     <string name="error_http">Home Assistant error %1$d</string>
     <string name="error_bad_response">Unexpected answer from Home Assistant</string>
 
-    <plurals name="refresh_mode_auto">
-        <item quantity="one">auto, every %d min</item>
-        <item quantity="other">auto, every %d min</item>
-    </plurals>
-    <string name="refresh_mode_manual">manual</string>
-
     <string name="widget_name">HA battery</string>
     <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
     <string name="widget_refreshing">Refreshing…</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
-    <string name="widget_updated_at">Updated %1$s</string>
     <string name="widget_refresh_action">Refresh</string>
     <string name="delta_label">Δ %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
@@ -64,13 +48,6 @@
     <string name="notification_full_text">The battery is fully charged.</string>
 
     <!-- Main screen. -->
-    <string name="overview_ah_left">Ah left: %1$s</string>
-    <string name="overview_average_cell">Average cell: %1$s</string>
-    <string name="overview_delta">Cell delta: %1$s</string>
-    <string name="overview_mosfet">MOSFET: %1$s</string>
-    <string name="overview_temperature">Temperature %1$d: %2$s</string>
-    <string name="overview_balancing_on">Balancing: on</string>
-    <string name="overview_balancing_off">Balancing: off</string>
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
     <string name="action_refresh_now">Refresh now</string>
     <string name="action_add_widget">Add widget</string>

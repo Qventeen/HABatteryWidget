@@ -32,8 +32,6 @@ import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.Flow
 import io.lumensync.habattery.domain.WidgetModel.Temperatures
 import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.domain.model.MainValue
-import io.lumensync.habattery.domain.model.UnderSoc
 import kotlin.math.roundToInt
 
 /**
@@ -42,16 +40,14 @@ import kotlin.math.roundToInt
  */
 @Composable
 internal fun WidgetBody(model: WidgetModel.Data, look: WidgetLook, modifier: GlanceModifier) {
-  val context = LocalContext.current
-  val f = look.formatters
-  val missing = context.getString(R.string.value_missing)
+  val texts = look.texts
 
   Row(modifier, verticalAlignment = Alignment.CenterVertically) {
     Ring(model, look)
     Spacer(GlanceModifier.width(look.dp(10f)))
     Column(GlanceModifier.defaultWeight().fillMaxHeight()) {
       BigPill(
-        model.voltage?.let(f::voltage) ?: missing,
+        texts.voltage(model),
         Level.PLAIN,
         Flow.NONE,
         look,
@@ -59,12 +55,7 @@ internal fun WidgetBody(model: WidgetModel.Data, look: WidgetLook, modifier: Gla
       )
       Spacer(GlanceModifier.height(look.dp(6f)))
       BigPill(
-        model.mainValue?.let {
-          when (model.main) {
-            MainValue.CURRENT -> f.current(it)
-            MainValue.POWER -> f.power(it)
-          }
-        } ?: missing,
+        texts.main(model),
         model.mainLevel,
         model.flow,
         look,
@@ -85,7 +76,7 @@ internal fun WidgetBody(model: WidgetModel.Data, look: WidgetLook, modifier: Gla
 @Composable
 private fun Ring(model: WidgetModel.Data, look: WidgetLook) {
   val context = LocalContext.current
-  val f = look.formatters
+  val texts = look.texts
   val density = context.resources.displayMetrics.density
   val sizeDp = 104f * look.s
   val arc =
@@ -94,14 +85,7 @@ private fun Ring(model: WidgetModel.Data, look: WidgetLook) {
       sizePx = (sizeDp * density).roundToInt().coerceAtLeast(1),
       strokePx = 8f * look.s * density,
     )
-  val description = context.getString(R.string.widget_soc_description, model.socPercent)
-  val under =
-    model.underSocValue?.let {
-      when (model.underSoc) {
-        UnderSoc.KWH -> f.kilowattHours(it)
-        UnderSoc.AH -> f.ampHours(it)
-      }
-    } ?: context.getString(R.string.value_missing)
+  val description = texts.ringDescription(model)
 
   Box(
     GlanceModifier.size(look.dp(104f)).semantics { contentDescription = description },
@@ -134,12 +118,12 @@ private fun Ring(model: WidgetModel.Data, look: WidgetLook) {
       maxLines = 1,
     )
     Text(
-      f.socNumber(model.socPercent),
+      texts.soc(model),
       style = textStyle(look.font(FontGroup.SOC), WidgetColors.text, FontWeight.Bold),
       maxLines = 1,
     )
     Text(
-      under,
+      texts.underSoc(model),
       GlanceModifier.padding(top = (2 * offsets.under).dp),
       style = textStyle(look.font(FontGroup.UNDER_SOC), WidgetColors.text, FontWeight.Medium),
       maxLines = 1,
@@ -165,13 +149,12 @@ private fun BigPill(
     contentAlignment = Alignment.Center,
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-      if (flow != Flow.NONE) {
-        val up = flow == Flow.UP
+      WidgetTexts.flowDescription(flow)?.let { description ->
         WidgetIcon(
-          if (up) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
+          if (flow == Flow.UP) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
           look.dp(16f),
           color,
-          context.getString(if (up) R.string.widget_charging else R.string.widget_discharging),
+          context.getString(description),
         )
         Spacer(GlanceModifier.width(look.dp(4f)))
       }
@@ -224,8 +207,8 @@ private fun cellPills(model: WidgetModel.Data, look: WidgetLook): List<@Composab
         )
     }
   return listOf<@Composable () -> Unit>(
-    { TextPill(model.averageCellVoltage?.let(look.formatters::cellVoltage), Level.PLAIN, look) },
-    { DeltaPill(model, look) },
+    { TextPill(look.texts.averageCell(model), Level.PLAIN, look) },
+    { TextPill(look.texts.delta(model), model.deltaLevel, look) },
   ) +
     temperatures +
     {
@@ -242,19 +225,10 @@ private fun cellPills(model: WidgetModel.Data, look: WidgetLook): List<@Composab
 }
 
 @Composable
-private fun DeltaPill(model: WidgetModel.Data, look: WidgetLook) {
-  val context = LocalContext.current
-  val value =
-    model.deltaMv?.let(look.formatters::deltaMv) ?: context.getString(R.string.value_missing)
-  TextPill(context.getString(R.string.delta_label, value), model.deltaLevel, look)
-}
-
-@Composable
-private fun TextPill(text: String?, level: Level, look: WidgetLook) {
-  val shown = text ?: LocalContext.current.getString(R.string.value_missing)
+private fun TextPill(text: String, level: Level, look: WidgetLook) {
   SmallPill(level, look) {
     Text(
-      shown,
+      text,
       style = textStyle(look.font(FontGroup.CELL), WidgetColors.pillText(level), FontWeight.Medium),
       maxLines = 1,
     )
@@ -282,7 +256,7 @@ private fun TemperaturePill(
       WidgetIcon(arrow, look.dp(10f), color, arrowDescription?.let(context::getString))
     }
     Text(
-      celsius?.let(look.formatters::temperature) ?: context.getString(R.string.value_missing),
+      look.texts.temperature(celsius),
       GlanceModifier.padding(start = look.dp(3f)),
       style = textStyle(look.font(FontGroup.CELL), color, FontWeight.Medium),
       maxLines = 1,
