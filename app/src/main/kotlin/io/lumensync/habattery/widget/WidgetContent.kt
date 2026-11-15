@@ -1,5 +1,8 @@
 package io.lumensync.habattery.widget
 
+import android.os.Build
+import android.util.DisplayMetrics
+import android.util.TypedValue
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -50,7 +53,14 @@ fun WidgetContent(model: WidgetModel, fontSizes: FontSizes, actions: WidgetActio
   val size = LocalSize.current
   val s = WidgetScale.of(size.width.value, size.height.value)
   val texts = remember(context) { WidgetTexts(context, Formatters(context)) }
-  val look = WidgetLook(s, fontSizes, context.resources.configuration.fontScale, texts)
+  val look =
+    WidgetLook(
+      s,
+      fontSizes,
+      context.resources.configuration.fontScale,
+      context.resources.displayMetrics,
+      texts,
+    )
 
   Box(
     GlanceModifier.fillMaxSize()
@@ -79,15 +89,24 @@ internal class WidgetLook(
   val s: Float,
   private val fontSizes: FontSizes,
   private val fontScale: Float,
+  private val metrics: DisplayMetrics,
   val texts: WidgetTexts,
 ) {
   fun dp(value: Float): Dp = (value * s).dp
 
   /**
-   * Glance takes sp only, and the system multiplies sp by its font scale again: divide it back out,
-   * so the shown size is the capped effective size.
+   * Glance takes sp only, and the system scales sp by its font scale again. So hand over the sp that
+   * shows at the capped effective size: on Android 14+ sp scales non-linearly, so use the
+   * converter's exact inverse; before that, divide the font scale back out.
    */
-  fun font(group: FontGroup): TextUnit = (shownSize(group) / fontScale).sp
+  fun font(group: FontGroup): TextUnit = spFor(shownSize(group)).sp
+
+  private fun spFor(dp: Float): Float =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, dp * metrics.density, metrics)
+    } else {
+      dp / fontScale
+    }
 
   /** The size the text is shown at, in dp (setting × font scale, capped, × [s]). */
   fun shownSize(group: FontGroup): Float = fontSizes.effective(group, fontScale) * s
