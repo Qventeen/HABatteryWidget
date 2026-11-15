@@ -22,7 +22,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.ui.sections.ActionsRow
 import io.lumensync.habattery.ui.sections.CapacitySection
 import io.lumensync.habattery.ui.sections.ConnectionSection
@@ -31,17 +34,21 @@ import io.lumensync.habattery.ui.sections.NotificationSection
 import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
+import io.lumensync.habattery.ui.sections.WidgetSection
 import java.util.Locale
 
 /** What the screen can ask for: the ViewModel's functions plus two system actions. */
 data class MainActions(
   val refreshNow: () -> Unit,
+  val toggleAutoRefresh: () -> Unit,
   val saveConnection: (url: String) -> Unit,
   val saveToken: (token: String) -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
   val setNotifyOnFull: (Boolean) -> Unit,
   val saveCapacity: (text: String, locale: Locale) -> Unit,
+  val saveDisplay: (DisplaySettings) -> Unit,
+  val saveFontSizes: (FontSizes) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
@@ -51,13 +58,14 @@ data class MainActions(
 fun MainScreen(state: MainUiState, actions: MainActions) {
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
     val overview = state.overview
-    if (overview == null) {
+    val widget = state.widget
+    if (overview == null || widget == null) {
       // The first state from storage has not arrived yet; drafts must start from real settings.
       Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
       }
     } else {
-      MainContent(state, overview, actions, padding)
+      MainContent(state, overview, widget, actions, padding)
     }
   }
 }
@@ -66,6 +74,7 @@ fun MainScreen(state: MainUiState, actions: MainActions) {
 private fun MainContent(
   state: MainUiState,
   overview: BatteryOverview,
+  widget: WidgetModel,
   actions: MainActions,
   padding: PaddingValues,
 ) {
@@ -80,7 +89,13 @@ private fun MainContent(
         .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    OverviewCard(overview)
+    OverviewCard(
+      widget,
+      settings.fontSizes,
+      syncing = state.syncing,
+      onRefresh = actions.refreshNow,
+      onToggleAuto = actions.toggleAutoRefresh,
+    )
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
     ConnectionSection(
       settings.connection,
@@ -107,5 +122,6 @@ private fun MainContent(
       actions.openNotificationSettings,
     )
     CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)
+    WidgetSection(settings.display, settings.fontSizes, actions.saveDisplay, actions.saveFontSizes)
   }
 }

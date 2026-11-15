@@ -3,17 +3,14 @@ package io.lumensync.habattery.format
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.model.BatteryState
-import io.lumensync.habattery.domain.model.Direction
-import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError.BadResponse
 import io.lumensync.habattery.domain.model.SyncError.HttpError
 import io.lumensync.habattery.domain.model.SyncError.NotConfigured
 import io.lumensync.habattery.domain.model.SyncError.Unauthorized
 import io.lumensync.habattery.domain.model.SyncError.Unreachable
-import io.lumensync.habattery.domain.model.TimeRemaining
 import java.util.TimeZone
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -52,7 +49,10 @@ class FormattersTest {
     fun newValues_en() {
         val f = Formatters(context)
         assertEquals("25 °C", f.temperature(25.0))
-        assertEquals("25.4 °C", f.temperature(25.35))
+        // Whole degrees: a decimal or negative value fits the 90 dp pill.
+        assertEquals("25 °C", f.temperature(25.35))
+        assertEquals("-13 °C", f.temperature(-12.6))
+        assertEquals("0 °C", f.temperature(-0.4))
         assertEquals("157.0 Ah", f.ampHours(157.0))
         // number() rounds half-even, so the brief's tie value 3.3125 gives 3.312; use a clear case.
         assertEquals("3.313 V", f.cellVoltage(3.3126))
@@ -85,24 +85,6 @@ class FormattersTest {
     fun httpErrorShowsCode() = assertTrue(Formatters(context).error(HttpError(502)).contains("502"))
 
     @Test
-    fun refreshMode() {
-        val f = Formatters(context)
-        assertTrue(f.refreshMode(RefreshSettings(true, 30)).contains("30"))
-        assertEquals(context.getString(R.string.refresh_mode_manual), f.refreshMode(RefreshSettings()))
-    }
-
-    @Test
-    fun status_combinesStateAndTime() {
-        val f = Formatters(context)
-        val time = TimeRemaining(Direction.TO_FULL, 90.minutes)
-        val text = f.status(BatteryState.CHARGING, 500.0, time)
-        assertTrue(text, text.startsWith("Charging 500 W"))
-        assertTrue(text, text.contains(" · "))
-        assertEquals("Full", f.status(BatteryState.FULL, null, null))
-        assertEquals("Discharging 500 W", f.status(BatteryState.DISCHARGING, 500.0, null))
-    }
-
-    @Test
     fun updatedAt_today_showsTimeOnly() {
         val text = Formatters(context).updatedAt(MORNING, nowMillis = MORNING + 4 * HOUR)
         assertTrue(text, text.contains("8:00"))
@@ -124,6 +106,38 @@ class FormattersTest {
         val f = Formatters(context)
         assertTrue(f.duration(90.minutes).contains("30"))
         assertTrue(f.duration(45.minutes).contains("45"))
+    }
+
+    @Test
+    fun widgetNumbers_en() {
+        val f = Formatters(context)
+        assertEquals("4.16 kWh", f.kilowattHours(4.1605))
+        assertEquals("55", f.socNumber(55))
+        assertEquals("100", f.socNumber(100))
+    }
+
+    @Test
+    fun duration_underOneDay_hoursAndMinutes() {
+        val f = Formatters(context)
+        assertEquals("59 min", f.duration(59.minutes))
+        assertEquals("23 hr, 59 min", f.duration((23 * 60 + 59).minutes))
+    }
+
+    @Test
+    fun duration_fromOneDay_daysAndHours() {
+        val f = Formatters(context)
+        assertEquals("1 day, 0 hr", f.duration(24.hours))
+        assertEquals("2 days, 7 hr", f.duration(55.hours + 20.minutes))
+    }
+
+    @Test
+    @Config(qualifiers = "uk")
+    fun duration_days_uk_hasNoMinutes() {
+        val f = Formatters(context)
+        val text = f.duration(55.hours + 20.minutes)
+        val minuteUnit = f.duration(1.minutes).filterNot { it.isDigit() }.trim()
+        assertTrue(text, text.contains("2") && text.contains("7") && !text.contains("20"))
+        assertFalse(text, text.contains(minuteUnit))
     }
 
     private companion object {

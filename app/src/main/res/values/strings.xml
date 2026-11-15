@@ -10,17 +10,9 @@
     <string name="unit_millivolts">%1$s mV</string>
     <string name="unit_celsius">%1$s °C</string>
     <string name="unit_amp_hours">%1$s Ah</string>
+    <string name="unit_kilowatt_hours">%1$s kWh</string>
     <string name="charge_percent">%1$d%%</string>
     <string name="value_missing" translatable="false">—</string>
-
-    <string name="status_charging">Charging %1$s</string>
-    <string name="status_discharging">Discharging %1$s</string>
-    <string name="status_idle">Idle</string>
-    <string name="status_full">Full</string>
-    <string name="status_unknown">Unknown</string>
-    <string name="time_to_full">Full in %1$s</string>
-    <string name="time_to_empty">Empty in %1$s</string>
-    <string name="status_with_time">%1$s · %2$s</string>
 
     <string name="error_not_configured">Set up in the app</string>
     <string name="error_unauthorized">Token rejected</string>
@@ -28,34 +20,37 @@
     <string name="error_http">Home Assistant error %1$d</string>
     <string name="error_bad_response">Unexpected answer from Home Assistant</string>
 
-    <plurals name="refresh_mode_auto">
-        <item quantity="one">auto, every %d min</item>
-        <item quantity="other">auto, every %d min</item>
-    </plurals>
-    <string name="refresh_mode_manual">manual</string>
-
     <string name="widget_name">HA battery</string>
     <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
     <string name="widget_refreshing">Refreshing…</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
-    <string name="widget_updated_at">Updated %1$s</string>
-    <string name="widget_refresh_symbol" translatable="false">↻</string>
     <string name="widget_refresh_action">Refresh</string>
     <string name="delta_label">Δ %1$s</string>
+    <string name="widget_soc_label" translatable="false">SOC</string>
+    <plurals name="widget_soc_description">
+        <item quantity="one">State of charge %1$d percent</item>
+        <item quantity="other">State of charge %1$d percent</item>
+    </plurals>
+    <string name="widget_charging">Charging</string>
+    <string name="widget_discharging">Discharging</string>
+    <string name="widget_balancing_on">Balancing on</string>
+    <string name="widget_balancing_off">Balancing off</string>
+    <string name="widget_balancing_unknown">Balancing unknown</string>
+    <string name="widget_sync_error">Sync error</string>
+    <string name="widget_battery_temperature">Battery temperature</string>
+    <string name="widget_highest_temperature">Highest sensor temperature</string>
+    <string name="widget_lowest_temperature">Lowest sensor temperature</string>
+    <string name="widget_mosfet_temperature">MOSFET temperature</string>
+    <string name="widget_auto_on">Auto refresh on</string>
+    <string name="widget_auto_off">Auto refresh off</string>
+    <string name="widget_open_app">Open app</string>
 
     <string name="notification_channel_full">Full charge</string>
     <string name="notification_full_title">Battery full</string>
     <string name="notification_full_text">The battery is fully charged.</string>
 
     <!-- Main screen. -->
-    <string name="overview_ah_left">Ah left: %1$s</string>
-    <string name="overview_average_cell">Average cell: %1$s</string>
-    <string name="overview_delta">Cell delta: %1$s</string>
-    <string name="overview_mosfet">MOSFET: %1$s</string>
-    <string name="overview_temperature">Temperature %1$d: %2$s</string>
-    <string name="overview_balancing_on">Balancing: on</string>
-    <string name="overview_balancing_off">Balancing: off</string>
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
     <string name="action_refresh_now">Refresh now</string>
     <string name="action_add_widget">Add widget</string>
@@ -81,6 +76,7 @@
     <string name="entities_fill">Fill</string>
     <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
     <string name="entity_capacity_remaining">Ah left (Ah)</string>
+    <string name="entity_total_capacity">Total capacity (Ah)</string>
     <string name="entity_average_cell_voltage">Average cell voltage (V)</string>
     <string name="entity_delta_cell_voltage">Cell delta (V)</string>
     <string name="entity_mosfet_temperature">MOSFET temperature (°C)</string>
@@ -104,7 +100,23 @@
 
     <string name="capacity_title">Battery capacity</string>
     <string name="capacity_label">Battery capacity (Ah)</string>
-    <string name="capacity_hint">Used for the time to full, and for the time to empty when there is no Ah left sensor.</string>
+    <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
+
+    <string name="widget_settings_title">Widget</string>
+    <string name="widget_under_soc">Under SOC</string>
+    <string name="widget_choice_kwh">kWh</string>
+    <string name="widget_choice_ah">Ah</string>
+    <string name="widget_second_value">Second value</string>
+    <string name="widget_choice_current">Current</string>
+    <string name="widget_choice_power">Power</string>
+    <string name="widget_font_soc">SOC number</string>
+    <string name="widget_font_under_soc">kWh / Ah under SOC</string>
+    <string name="widget_font_main">Main values</string>
+    <string name="widget_font_cell">Cell values</string>
+    <string name="widget_font_small">Small text</string>
+    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_reset_sizes">Reset sizes</string>
+    <string name="widget_summary">%1$s · %2$s</string>
 
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
@@ -133,8 +145,14 @@
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
 
     <!-- Sample values for the widget picker preview. -->
-    <string name="preview_charge" translatable="false">89%</string>
-    <string name="preview_voltage">26.56 V</string>
-    <string name="preview_current">0.4 A</string>
-    <string name="preview_delta">Δ 3 mV</string>
+    <string name="preview_time_left">17 hr, 16 min</string>
+    <string name="preview_updated" translatable="false">11:29</string>
+    <string name="preview_soc" translatable="false">55</string>
+    <string name="preview_kwh">4.58 kWh</string>
+    <string name="preview_voltage">26.50 V</string>
+    <string name="preview_current">10.0 A</string>
+    <string name="preview_cell">3.312 V</string>
+    <string name="preview_delta">Δ 12 mV</string>
+    <string name="preview_battery_temperature" translatable="false">25 °C</string>
+    <string name="preview_mosfet_temperature" translatable="false">27 °C</string>
 </resources>

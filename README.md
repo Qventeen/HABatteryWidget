@@ -6,6 +6,11 @@ voltage, cell delta, MOSFET temperature, battery temperatures, balancing. The
 app calls `POST {baseUrl}/api/template` with a
 long-lived HA token. The widget draws from the local cache only.
 
+The widget follows design v4 (`docs/design/`): a SOC ring, two big pack values,
+cell and temperature pills, time left, and an auto-refresh toggle. The app's
+overview card shows the same layout. The "Widget" settings section picks kWh or
+Ah under SOC, current or power, and the font sizes.
+
 ## Requirements
 
 - JDK 17
@@ -51,7 +56,7 @@ Local testing only — it accepts any token:
 
 ```bash
 python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
-  --total-v 26.5 --ah-left 157 --avg-cell 3.31 --delta 0.01 --mosfet 27 \
+  --total-v 26.5 --ah-left 157 --capacity 314 --avg-cell 3.31 --delta 0.01 --mosfet 27 \
   --temps "25,23" --balancing on   # add --status 401 to test errors
 ```
 

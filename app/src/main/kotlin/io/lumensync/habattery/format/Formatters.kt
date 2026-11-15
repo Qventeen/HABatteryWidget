@@ -7,11 +7,7 @@ import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
 import android.text.format.DateUtils
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.model.BatteryState
-import io.lumensync.habattery.domain.model.Direction
-import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.TimeRemaining
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -51,8 +47,15 @@ class Formatters(private val context: Context) {
 
     fun deltaMv(mv: Int): String = context.getString(R.string.unit_millivolts, number(mv.toDouble(), 0, 0))
 
+    /** Whole degrees, as the widget design shows them. Rounded first, so -0.4 is "0", not "-0". */
     fun temperature(celsius: Double): String =
-        context.getString(R.string.unit_celsius, number(celsius, 0, 1))
+        context.getString(R.string.unit_celsius, number(Math.round(celsius).toDouble(), 0, 0))
+
+    fun kilowattHours(kwh: Double): String =
+        context.getString(R.string.unit_kilowatt_hours, number(kwh, 2, 2))
+
+    /** The SOC number inside the ring, without "%". */
+    fun socNumber(percent: Int): String = number(percent.toDouble(), 0, 0)
 
     fun ampHours(ah: Double): String =
         context.getString(R.string.unit_amp_hours, number(ah, 1, 1))
@@ -63,15 +66,19 @@ class Formatters(private val context: Context) {
     fun chargePercent(percent: Double): String =
         context.getString(R.string.charge_percent, percent.roundToInt())
 
+    /** "45 min", "17 hr, 16 min"; from 24 h days and hours ("2 days, 7 hr"), minutes dropped. */
     fun duration(d: Duration): String {
         val totalMinutes = d.inWholeMinutes
-        val hours = totalMinutes / 60
+        val days = totalMinutes / MINUTES_PER_DAY
+        val hours = totalMinutes % MINUTES_PER_DAY / 60
         val minutes = totalMinutes % 60
         val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT)
-        return if (hours == 0L) {
-            format.format(Measure(minutes, MeasureUnit.MINUTE))
-        } else {
-            format.formatMeasures(Measure(hours, MeasureUnit.HOUR), Measure(minutes, MeasureUnit.MINUTE))
+        return when {
+            days > 0L ->
+                format.formatMeasures(Measure(days, MeasureUnit.DAY), Measure(hours, MeasureUnit.HOUR))
+            hours > 0L ->
+                format.formatMeasures(Measure(hours, MeasureUnit.HOUR), Measure(minutes, MeasureUnit.MINUTE))
+            else -> format.format(Measure(minutes, MeasureUnit.MINUTE))
         }
     }
 
@@ -86,22 +93,6 @@ class Formatters(private val context: Context) {
     private fun localDate(millis: Long): LocalDate =
         Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
 
-    fun status(state: BatteryState, powerW: Double?, time: TimeRemaining?): String {
-        val base = when (state) {
-            BatteryState.CHARGING -> context.getString(R.string.status_charging, powerOrMissing(powerW))
-            BatteryState.DISCHARGING -> context.getString(R.string.status_discharging, powerOrMissing(powerW))
-            BatteryState.IDLE -> context.getString(R.string.status_idle)
-            BatteryState.FULL -> context.getString(R.string.status_full)
-            BatteryState.UNKNOWN -> context.getString(R.string.status_unknown)
-        }
-        if (time == null) return base
-        val timeText = when (time.direction) {
-            Direction.TO_FULL -> context.getString(R.string.time_to_full, duration(time.duration))
-            Direction.TO_EMPTY -> context.getString(R.string.time_to_empty, duration(time.duration))
-        }
-        return context.getString(R.string.status_with_time, base, timeText)
-    }
-
     fun error(e: SyncError): String = when (e) {
         SyncError.NotConfigured -> context.getString(R.string.error_not_configured)
         SyncError.Unauthorized -> context.getString(R.string.error_unauthorized)
@@ -110,20 +101,9 @@ class Formatters(private val context: Context) {
         SyncError.BadResponse -> context.getString(R.string.error_bad_response)
     }
 
-    fun refreshMode(r: RefreshSettings): String {
-        val minutes = r.intervalMinutes
-        return if (r.auto && minutes != null) {
-            context.resources.getQuantityString(R.plurals.refresh_mode_auto, minutes, minutes)
-        } else {
-            context.getString(R.string.refresh_mode_manual)
-        }
-    }
-
-    private fun powerOrMissing(watts: Double?): String =
-        if (watts == null) context.getString(R.string.value_missing) else power(watts)
-
     private companion object {
         const val KILO = 1000.0
+        const val MINUTES_PER_DAY = 24 * 60L
 
         /** "Jan 14, 11:59 PM" style; the year only when it is not this year. */
         const val DATE_AND_TIME =

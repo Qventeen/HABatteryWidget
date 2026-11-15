@@ -22,6 +22,13 @@ class EntityFillTest {
   }
 
   @Test
+  fun `fill sets the total capacity id`() =
+    assertEquals(
+      "sensor.bps_bms_total_battery_capacity",
+      EntityFill.fromPrefix("bps_bms", EntitySettings()).totalCapacity,
+    )
+
+  @Test
   fun `fill overwrites hand edits`() =
     assertEquals(
       "sensor.bps_bms_current",

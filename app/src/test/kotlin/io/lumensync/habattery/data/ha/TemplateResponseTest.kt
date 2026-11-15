@@ -22,12 +22,21 @@ class TemplateResponseTest {
   }
 
   @Test
+  fun `parses capacity`() {
+    val r = StoreJson.decodeFromString<TemplateResponse>("""{"soc":55,"capacity":314.0}""").toReading(1L)!!
+    assertEquals(314.0, r.totalCapacityAh)
+    val none = StoreJson.decodeFromString<TemplateResponse>("""{"soc":55,"capacity":null}""").toReading(1L)!!
+    assertNull(none.totalCapacityAh)
+  }
+
+  @Test
   fun `non-finite optional values become null`() {
     // JSON cannot carry NaN or Infinity, so build the response directly.
     val r =
       TemplateResponse(
           soc = 55.0,
           ahLeft = Double.NaN,
+          capacity = Double.POSITIVE_INFINITY,
           avgCell = Double.POSITIVE_INFINITY,
           delta = Double.NaN,
           mosfet = Double.NEGATIVE_INFINITY,
@@ -35,6 +44,7 @@ class TemplateResponseTest {
         )
         .toReading(1L)!!
     assertNull(r.capacityRemainingAh)
+    assertNull(r.totalCapacityAh)
     assertNull(r.averageCellVoltageV)
     assertNull(r.deltaCellVoltageV)
     assertNull(r.mosfetTemperatureC)

@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.glance.GlanceId
-import androidx.glance.GlanceTheme
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -14,6 +13,7 @@ import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
 import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.WidgetModel
 import kotlinx.coroutines.flow.first
 
 /** Renders from local data only (cache, settings, token presence). No network here. */
@@ -31,13 +31,17 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       val cache by container.readingCache.state.collectAsState(initialCache)
       val settings by container.settingsRepository.settings.collectAsState(initialSettings)
       val hasToken by container.tokenStore.hasToken.collectAsState(initialHasToken)
-      GlanceTheme {
-        WidgetContent(
-          overview = BatteryOverview.build(cache, settings, hasToken, System.currentTimeMillis()),
-          refreshAction = actionRunCallback<RefreshAction>(),
-          openAppAction = actionStartActivity<MainActivity>(),
-        )
-      }
+      val overview = BatteryOverview.build(cache, settings, hasToken, System.currentTimeMillis())
+      WidgetContent(
+        model = WidgetModel.build(overview, settings),
+        fontSizes = settings.fontSizes,
+        actions =
+          WidgetActions(
+            openApp = actionStartActivity<MainActivity>(),
+            refresh = actionRunCallback<RefreshAction>(),
+            toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
+          ),
+      )
     }
   }
 }

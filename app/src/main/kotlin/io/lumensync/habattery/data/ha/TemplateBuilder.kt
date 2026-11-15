@@ -10,6 +10,7 @@ object TemplateBuilder {
       "\"current\": ${stateOrNone(entities.current)}, " +
       "\"power\": ${stateOrNone(entities.power)}, " +
       "\"ah_left\": ${stateOrNone(entities.capacityRemaining)}, " +
+      "\"capacity\": ${stateOrNone(entities.totalCapacity)}, " +
       "\"avg_cell\": ${stateOrNone(entities.averageCellVoltage)}, " +
       "\"delta\": ${stateOrNone(entities.deltaCellVoltage)}, " +
       "\"mosfet\": ${stateOrNone(entities.mosfetTemperature)}, " +

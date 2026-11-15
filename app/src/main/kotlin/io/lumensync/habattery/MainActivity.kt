@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
           tokens = c.tokenStore,
           cache = c.readingCache,
           sync = c.syncBattery,
+          toggleAuto = c.toggleAutoRefresh,
           scheduler = c.syncScheduler,
           widgets = c.widgetRefresher,
         )
@@ -67,12 +68,15 @@ class MainActivity : ComponentActivity() {
   private fun mainActions() =
     MainActions(
       refreshNow = viewModel::refreshNow,
+      toggleAutoRefresh = viewModel::toggleAutoRefresh,
       saveConnection = viewModel::saveConnection,
       saveToken = viewModel::saveToken,
       saveEntities = viewModel::saveEntities,
       saveRefresh = viewModel::saveRefresh,
       setNotifyOnFull = viewModel::setNotifyOnFull,
       saveCapacity = viewModel::saveCapacity,
+      saveDisplay = viewModel::saveDisplay,
+      saveFontSizes = viewModel::saveFontSizes,
       requestPinWidget = {
         lifecycleScope.launch {
           GlanceAppWidgetManager(this@MainActivity)

@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.map
 
 class DataStoreSettingsRepository(private val store: DataStore<SettingsRecord>) :
   SettingsRepository {
-  override val settings: Flow<Settings> = store.data.map { it.settings }
+  /** Font sizes out of range (an old or edited file) are clamped here, so no reader sees them. */
+  override val settings: Flow<Settings> =
+    store.data.map { it.settings.copy(fontSizes = it.settings.fontSizes.clamped()) }
 
   override suspend fun update(transform: (Settings) -> Settings) {
     store.updateData { it.copy(settings = transform(it.settings)) }

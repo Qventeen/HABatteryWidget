@@ -4,8 +4,15 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
+import io.lumensync.habattery.domain.ToggleAutoRefresh
+import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.UnderSoc
+import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
@@ -62,7 +69,8 @@ class MainViewModelTest {
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
-    val vm = MainViewModel(settings, tokens, cache, sync, scheduler, widgets, clock = { 1_000L })
+    val toggle = ToggleAutoRefresh(settings, scheduler, widgets)
+    val vm = MainViewModel(settings, tokens, cache, sync, toggle, scheduler, widgets, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
     return vm
   }
@@ -79,6 +87,22 @@ class MainViewModelTest {
       current = it
       advanceUntilIdle()
     }
+
+  @Test fun uiState_carriesTheWidgetModel() = runTest(dispatcher) {
+    start()
+    val widget = state.widget
+    assertTrue("$widget", widget is WidgetModel.Data)
+    assertEquals(50, (widget as WidgetModel.Data).socPercent)
+  }
+
+  @Test fun toggleAutoRefresh_turnsOnWith15AndSyncs() = runTest(dispatcher) {
+    val vm = start()
+    vm.toggleAutoRefresh()
+    advanceUntilIdle()
+    assertEquals(RefreshSettings(true, 15), state.settings.refresh)
+    assertEquals(1, scheduler.syncNowCalls)
+    assertTrue((state.widget as WidgetModel.Data).autoRefresh)
+  }
 
   @Test fun init_syncsOnce() = runTest(dispatcher) {
     start()
@@ -237,6 +261,23 @@ class MainViewModelTest {
       ),
       state.settings.entities,
     )
+  }
+
+  @Test fun saveDisplay_storesAndRedraws() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveDisplay(DisplaySettings(UnderSoc.AH, MainValue.POWER))
+    advanceUntilIdle()
+    assertEquals(DisplaySettings(UnderSoc.AH, MainValue.POWER), state.settings.display)
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveFontSizes_clamps() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveFontSizes(FontSizes(soc = 50f, small = 11.5f))
+    advanceUntilIdle()
+    assertEquals(FontSizes(soc = 42f, small = 11.5f), state.settings.fontSizes)
   }
 
   @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {

@@ -21,6 +21,14 @@ class BatteryMathTest {
   private val base = reading(50.0, null, null)
 
   @Test
+  fun `sensor capacity wins when above zero`() {
+    assertEquals(280.0, BatteryMath.fullCapacityAh(base.copy(totalCapacityAh = 280.0), 314.0))
+    assertEquals(314.0, BatteryMath.fullCapacityAh(base.copy(totalCapacityAh = 0.0), 314.0))
+    assertEquals(314.0, BatteryMath.fullCapacityAh(base.copy(totalCapacityAh = null), 314.0))
+    assertNull(BatteryMath.fullCapacityAh(base.copy(totalCapacityAh = -1.0), null))
+  }
+
+  @Test
   fun `idle inside the 0_1 A band`() {
     assertEquals(BatteryState.IDLE, BatteryMath.state(50.0, 0.1))
     assertEquals(BatteryState.IDLE, BatteryMath.state(50.0, -0.1))

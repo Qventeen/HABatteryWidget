@@ -12,23 +12,26 @@ import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
 import androidx.glance.appwidget.testing.unit.hasRunCallbackClickAction
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
-import androidx.glance.testing.unit.hasAnyDescendant
-import androidx.glance.testing.unit.hasClickAction
 import androidx.glance.testing.unit.hasContentDescription
+import androidx.glance.testing.unit.hasContentDescriptionEqualTo
 import androidx.glance.testing.unit.hasStartActivityClickAction
 import androidx.glance.testing.unit.hasText
 import androidx.glance.testing.unit.hasTextEqualTo
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.BatteryReading
-import io.lumensync.habattery.domain.model.BatteryState
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.DisplaySettings
+import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.testing.configuredSettings
-import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -43,179 +46,233 @@ class WidgetContentTest {
   private val formatters: Formatters
     get() = Formatters(context)
 
+  private fun text(id: Int, vararg args: Any): String = context.getString(id, *args)
+
   private val openAppComponent = ComponentName("io.lumensync.habattery", "OpenApp")
 
   @Test
-  fun setupState_showsSetupText() =
-    render(overview(hasToken = false)) {
-      onNode(hasText(context.getString(R.string.error_not_configured))).assertExists()
-      onAllNodes(hasText("55%")).assertCountEquals(0)
-      // The only tap target is the card, and it opens the app: no ↻ in setup.
-      onNode(hasClickAction()).assert(hasStartActivityClickAction(openAppComponent))
+  fun normal_showsValues() =
+    render(model()) {
+      listOf(
+          "55",
+          formatters.kilowattHours(4.1605),
+          formatters.voltage(26.5),
+          formatters.current(10.0),
+          formatters.cellVoltage(3.312),
+          text(R.string.delta_label, formatters.deltaMv(12)),
+          formatters.temperature(25.0),
+          formatters.temperature(27.0),
+          formatters.updatedAt(UPDATED),
+          formatters.duration(sampleTimeLeft()),
+        )
+        .forEach { onNode(hasTextEqualTo(it)).assertExists() }
+      onNode(hasTextEqualTo(text(R.string.widget_soc_label))).assertExists()
     }
 
   @Test
-  fun noReading_showsNoData() =
-    render(overview(reading = null)) {
-      onNode(hasText(context.getString(R.string.widget_no_data))).assertExists()
+  fun ahAndPower_replaceKwhAndCurrent() =
+    render(model(settings = settings(display = DisplaySettings(UnderSoc.AH, MainValue.POWER)))) {
+      onNode(hasTextEqualTo(formatters.ampHours(157.0))).assertExists()
+      onNode(hasTextEqualTo(formatters.power(265.0))).assertExists()
+      onAllNodes(hasText("kWh")).assertCountEquals(0)
+      onAllNodes(hasTextEqualTo(formatters.current(10.0))).assertCountEquals(0)
+    }
+
+  @Test
+  fun discharging_arrowIsDescribed() =
+    render(model()) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_discharging))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_charging))).assertCountEquals(0)
+    }
+
+  @Test
+  fun oneSensor_onePillWithoutArrow() =
+    render(model()) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_highest_temperature)))
+        .assertCountEquals(0)
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
+    }
+
+  @Test
+  fun twoSensors_highestAndLowest() =
+    render(model(sample.copy(temperaturesC = listOf(44.0, 47.0)), settings(sensors = 2))) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_highest_temperature))).assertExists()
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_lowest_temperature))).assertExists()
+      onNode(hasTextEqualTo(formatters.temperature(47.0))).assertExists()
+      onNode(hasTextEqualTo(formatters.temperature(44.0))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature)))
+        .assertCountEquals(0)
+    }
+
+  @Test
+  fun error_replacesUpdateTime() =
+    render(model(error = SyncError.Unreachable)) {
+      onNode(hasTextEqualTo(text(R.string.error_unreachable))).assertExists()
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_sync_error))).assertExists()
+      onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
+      onNode(hasTextEqualTo("55")).assertExists()
+    }
+
+  @Test
+  fun refreshing_keepsButtonWithRefreshingDescription() {
+    render(model()) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasAnyDescendant(hasText(context.getString(R.string.widget_refresh_symbol))))
-        .assert(hasContentDescription(context.getString(R.string.widget_refresh_action)))
+        .assert(hasContentDescription(text(R.string.widget_refresh_action)))
+    }
+    render(model(refreshingSince = NOW - 1_000L)) {
+      onNode(hasRunCallbackClickAction<NoOpRefresh>())
+        .assert(hasContentDescription(text(R.string.widget_refreshing)))
+    }
+  }
+
+  @Test
+  fun autoToggle_describesItsState() {
+    render(model()) {
+      onNode(hasRunCallbackClickAction<NoOpToggle>())
+        .assert(hasContentDescription(text(R.string.widget_auto_off)))
+    }
+    render(model(settings = settings(refresh = RefreshSettings(true, 30)))) {
+      onNode(hasRunCallbackClickAction<NoOpToggle>())
+        .assert(hasContentDescription(text(R.string.widget_auto_on)))
+    }
+  }
+
+  @Test
+  fun missingDelta_showsDash() =
+    render(model(sample.copy(deltaCellVoltageV = null))) {
+      onNode(hasTextEqualTo(text(R.string.delta_label, text(R.string.value_missing)))).assertExists()
     }
 
   @Test
-  fun normal_showsChargeAndDelta() =
-    render(overview()) {
-      onNode(hasText("55%")).assertExists()
-      onNode(hasTextEqualTo(context.getString(R.string.delta_label, formatters.deltaMv(12))))
-        .assertExists()
-      assertPowerOnlyInStatus()
-      onNode(hasTextEqualTo(formatters.current(-7.8))).assertExists()
+  fun missingVoltage_showsDash() =
+    render(model(sample.copy(totalVoltageV = null))) {
+      // The voltage pill, and the kWh line under SOC (kWh needs the voltage).
+      onAllNodes(hasTextEqualTo(text(R.string.value_missing))).assertCountEquals(2)
+    }
+
+  @Test
+  fun balancing_isDescribed() {
+    render(model()) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
+    }
+    render(model(sample.copy(balancing = null))) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_unknown))).assertExists()
+    }
+  }
+
+  @Test
+  fun ring_isDescribed() =
+    render(model()) {
+      onNode(hasContentDescriptionEqualTo(context.resources.getQuantityString(R.plurals.widget_soc_description, 55, 55))).assertExists()
+    }
+
+  @Test
+  fun emptySetup_offersOpenAppOnly() =
+    render(model(hasToken = false)) {
+      onNode(hasTextEqualTo(text(R.string.error_not_configured))).assertExists()
+      onNode(hasTextEqualTo(text(R.string.widget_open_app))).assertExists()
+      onAllNodes(hasRunCallbackClickAction<NoOpRefresh>()).assertCountEquals(0)
+      onAllNodes(hasRunCallbackClickAction<NoOpToggle>()).assertCountEquals(0)
+      onAllNodes(hasStartActivityClickAction(openAppComponent)).assertCountEquals(2)
+    }
+
+  @Test
+  fun emptyNoData_showsTheError() =
+    render(model(reading = null, error = SyncError.Unauthorized)) {
+      onNode(hasTextEqualTo(text(R.string.widget_no_data))).assertExists()
+      onNode(hasTextEqualTo(text(R.string.error_unauthorized))).assertExists()
+      onNode(hasTextEqualTo(text(R.string.widget_open_app))).assertExists()
+    }
+
+  @Test
+  fun belowMinimumSize_stillRendersEverything() =
+    render(model(), widthDp = 276, heightDp = 140) {
+      onNode(hasTextEqualTo("55")).assertExists()
       onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
-      onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasAnyDescendant(hasText(context.getString(R.string.widget_refresh_symbol))))
-        .assert(hasContentDescription(context.getString(R.string.widget_refresh_action)))
+      onNode(hasTextEqualTo(formatters.temperature(27.0))).assertExists()
     }
 
   @Test
-  fun noDelta_hidesDeltaText() =
-    render(overview(sample(deltaCellVoltageV = null))) {
-      onAllNodes(hasText("mV")).assertCountEquals(0)
+  fun largeFonts_stillRender() =
+    render(model(), fontSizes = FontSizes(soc = 42f, underSoc = 12f, main = 24f, cell = 15f, small = 12f)) {
+      onNode(hasTextEqualTo("55")).assertExists()
     }
-
-  @Test
-  fun noCellText_isShown() =
-    render(overview()) { onAllNodes(hasText("3.30")).assertCountEquals(0) }
-
-  @Test
-  fun summaryTier_110dp_showsCharge() =
-    render(overview(), heightDp = 110) { onNode(hasText("55%")).assertExists() }
-
-  @Test
-  fun missingPower_hidesPowerLine() =
-    render(overview(sample(powerW = null))) {
-      onAllNodes(hasText(" W")).assertCountEquals(0)
-    }
-
-  @Test
-  fun missingCurrentAndVoltage_hideTheirLines() =
-    render(overview(sample(currentA = null, totalVoltageV = null))) {
-      onNode(hasTextEqualTo(context.getString(R.string.status_unknown))).assertExists()
-      onAllNodes(hasTextEqualTo(formatters.current(-7.8))).assertCountEquals(0)
-      onAllNodes(hasTextEqualTo(formatters.voltage(26.5))).assertCountEquals(0)
-    }
-
-  @Test
-  fun error_showsErrorLine() =
-    render(overview(error = SyncError.Unreachable)) {
-      onNode(hasText(context.getString(R.string.error_unreachable))).assertExists()
-      onNode(hasText("55%")).assertExists()
-    }
-
-  @Test
-  fun refreshing_keepsSymbolWithRefreshingDescription() =
-    listOf(sample(), null)
-      .map { overview(reading = it, refreshingSinceMillis = NOW - 1_000L) }
-      .forEach { refreshing ->
-        render(refreshing) {
-          // The symbol stays (no wider text label that cuts the metrics); only its description changes.
-          onNode(hasRunCallbackClickAction<NoOpRefresh>())
-            .assert(hasAnyDescendant(hasTextEqualTo(context.getString(R.string.widget_refresh_symbol))))
-            .assert(hasContentDescription(context.getString(R.string.widget_refreshing)))
-          onAllNodes(hasText(context.getString(R.string.widget_refreshing))).assertCountEquals(0)
-        }
-      }
-
-  @Test
-  @Config(qualifiers = "uk")
-  fun ukrainianCompact_statusKeepsTimeLeft() {
-    val overview = overview(settings = configuredSettings().copy(capacityAh = 314.0))
-    val time = checkNotNull(overview.timeRemaining)
-    assertEquals(WidgetDensityTier.COMPACT, WidgetLayoutSpec.fromSize(160f).tier)
-    render(overview, widthDp = 230, heightDp = 160) {
-      onNode(hasTextEqualTo(formatters.status(BatteryState.DISCHARGING, -207.0, time)))
-        .assert(hasText(formatters.duration(time.duration)))
-    }
-  }
-
-  @Test
-  fun statusLine_wrapsToTwoLinesBelowSummaryTier() =
-    WidgetDensityTier.entries.forEach { tier ->
-      val expected = if (tier == WidgetDensityTier.SUMMARY_ONLY) 1 else 2
-      listOf(true, false).forEach { narrow ->
-        assertEquals("$tier", expected, WidgetDimens.of(tier, narrow).statusLines)
-      }
-    }
-
-  @Test
-  fun everyTier_showsChargeAndDelta() =
-    listOf(110 to WidgetDensityTier.SUMMARY_ONLY, 160 to WidgetDensityTier.COMPACT, 250 to WidgetDensityTier.REGULAR)
-      .forEach { (heightDp, tier) ->
-        assertEquals(tier, WidgetLayoutSpec.fromSize(heightDp.toFloat()).tier)
-        render(overview(), heightDp = heightDp) {
-          onNode(hasText("55%")).assertExists()
-          onNode(hasText("12 mV")).assertExists()
-        }
-      }
-
-  /** The sample's power shows exactly once: inside the status line, not in the metrics row. */
-  private fun GlanceAppWidgetUnitTest.assertPowerOnlyInStatus() {
-    val power = formatters.power(-207.0)
-    onNode(hasText(power))
-      .assert(hasTextEqualTo(context.getString(R.string.status_discharging, power)))
-  }
 
   private fun render(
-    overview: BatteryOverview,
-    widthDp: Int = 300,
-    heightDp: Int = 300,
+    model: WidgetModel,
+    widthDp: Int = 360,
+    heightDp: Int = 180,
+    fontSizes: FontSizes = FontSizes(),
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
   ) = runGlanceAppWidgetUnitTest {
     setContext(context)
     setAppWidgetSize(DpSize(widthDp.dp, heightDp.dp))
-    val refresh = actionRunCallback<NoOpRefresh>()
-    val openApp = actionStartActivity(openAppComponent)
-    provideComposable { WidgetContent(overview, refresh, openApp) }
+    val actions =
+      WidgetActions(
+        openApp = actionStartActivity(openAppComponent),
+        refresh = actionRunCallback<NoOpRefresh>(),
+        toggleAuto = actionRunCallback<NoOpToggle>(),
+      )
+    provideComposable { WidgetContent(model, fontSizes, actions) }
     assertions()
   }
 
-  private fun overview(
-    reading: BatteryReading? = sample(),
-    error: SyncError? = null,
-    refreshingSinceMillis: Long? = null,
-    hasToken: Boolean = true,
-    settings: Settings = configuredSettings(),
-  ): BatteryOverview =
-    BatteryOverview.build(
-      cache = CacheState(reading, error, refreshingSinceMillis),
-      settings = settings,
-      hasToken = hasToken,
-      nowMillis = NOW,
+  private val sample =
+    BatteryReading(
+      chargePercent = 54.6,
+      powerW = -265.0,
+      currentA = -10.0,
+      totalVoltageV = 26.5,
+      capacityRemainingAh = 157.0,
+      averageCellVoltageV = 3.312,
+      deltaCellVoltageV = 0.012,
+      mosfetTemperatureC = 27.0,
+      temperaturesC = listOf(25.0),
+      balancing = false,
+      updatedAtMillis = UPDATED,
     )
 
-  private fun sample(
-    powerW: Double? = -207.0,
-    currentA: Double? = -7.8,
-    totalVoltageV: Double? = 26.5,
-    deltaCellVoltageV: Double? = 0.012,
-  ) = BatteryReading(
-    chargePercent = 54.6,
-    powerW = powerW,
-    currentA = currentA,
-    totalVoltageV = totalVoltageV,
-    deltaCellVoltageV = deltaCellVoltageV,
-    updatedAtMillis = NOW - 60_000L,
-  )
+  /** 157 Ah at 10 A. */
+  private fun sampleTimeLeft() = kotlin.time.Duration.parse("15h 42m")
+
+  private fun settings(
+    sensors: Int = 1,
+    display: DisplaySettings = DisplaySettings(),
+    refresh: RefreshSettings = RefreshSettings(),
+  ): Settings {
+    val base = configuredSettings()
+    return base.copy(
+      entities = base.entities.copy(temperatures = List(sensors) { "sensor.t$it" }),
+      display = display,
+      refresh = refresh,
+    )
+  }
+
+  private fun model(
+    reading: BatteryReading? = sample,
+    settings: Settings = settings(),
+    error: SyncError? = null,
+    hasToken: Boolean = true,
+    refreshingSince: Long? = null,
+  ): WidgetModel =
+    WidgetModel.build(
+      BatteryOverview.build(CacheState(reading, error, refreshingSince), settings, hasToken, NOW),
+      settings,
+    )
 
   class NoOpRefresh : ActionCallback {
-    override suspend fun onAction(
-      context: Context,
-      glanceId: GlanceId,
-      parameters: ActionParameters,
-    ) = Unit
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) =
+      Unit
+  }
+
+  class NoOpToggle : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) =
+      Unit
   }
 
   private companion object {
     const val NOW = 1_800_000_000_000L
+    const val UPDATED = NOW - 60_000L
   }
 }

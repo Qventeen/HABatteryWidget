@@ -33,7 +33,10 @@ data class BatteryOverview(
         setupNeeded = !Validation.isConfigured(settings, hasToken),
         reading = reading,
         state = reading?.let { BatteryMath.state(it.chargePercent, it.currentA) },
-        timeRemaining = reading?.let { BatteryMath.timeRemaining(it, settings.capacityAh) },
+        timeRemaining =
+          reading?.let {
+            BatteryMath.timeRemaining(it, BatteryMath.fullCapacityAh(it, settings.capacityAh))
+          },
         error = cache.error,
         refreshing = since != null && nowMillis - since in 0 until REFRESHING_LIMIT_MS,
         refresh = settings.refresh,
