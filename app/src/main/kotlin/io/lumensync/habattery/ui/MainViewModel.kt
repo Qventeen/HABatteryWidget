@@ -10,6 +10,7 @@ import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
@@ -173,6 +174,11 @@ class MainViewModel(
   /** Display choices save at once; only the drawings change, so no sync. */
   fun saveDisplay(display: DisplaySettings) {
     save(emptyList(), syncAfter = false) { it.copy(display = display) }
+  }
+
+  /** The theme saves at once; the widgets redraw (no sync). */
+  fun saveAppearance(appearance: AppearanceSettings) {
+    save(emptyList(), syncAfter = false) { it.copy(appearance = appearance) }
   }
 
   fun saveFontSizes(sizes: FontSizes) {

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontSizes
@@ -50,6 +51,7 @@ data class MainActions(
   val saveCapacity: (text: String, locale: Locale) -> Unit,
   val saveDisplay: (DisplaySettings) -> Unit,
   val saveFontSizes: (FontSizes) -> Unit,
+  val saveAppearance: (AppearanceSettings) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
@@ -93,6 +95,7 @@ private fun MainContent(
     OverviewCard(
       widget,
       settings.fontSizes,
+      settings.appearance.theme,
       syncing = state.syncing,
       onRefresh = actions.refreshNow,
       onToggleAuto = actions.toggleAutoRefresh,

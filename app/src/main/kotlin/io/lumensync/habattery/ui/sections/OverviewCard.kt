@@ -45,6 +45,7 @@ import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.WidgetScale
@@ -58,6 +59,7 @@ import io.lumensync.habattery.widget.WidgetTexts
 fun OverviewCard(
   model: WidgetModel,
   fontSizes: FontSizes,
+  theme: ThemeChoice,
   syncing: Boolean,
   onRefresh: () -> Unit,
   onToggleAuto: () -> Unit,
@@ -65,7 +67,8 @@ fun OverviewCard(
 ) {
   val context = LocalContext.current
   val texts = remember(context) { WidgetTexts(context, Formatters(context)) }
-  val palette = if (isSystemInDarkTheme()) WidgetPalette.Dark else WidgetPalette.Light
+  val palette =
+    if (theme.isDark(isSystemInDarkTheme())) WidgetPalette.Dark else WidgetPalette.Light
   val density = LocalDensity.current
 
   BoxWithConstraints(modifier.fillMaxWidth()) {
