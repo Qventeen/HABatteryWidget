@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   body { margin: 0; padding: 24px; background: #CDD3CB; font-family: Roboto, system-ui, sans-serif; }
-  .board { display: flex; flex-wrap: wrap; gap: 24px; }
+  .board { display: grid; grid-template-columns: repeat(2, 420px); gap: 24px; }
   .frame { padding: 30px; border-radius: 16px; background: var(--backdrop); }
   .caption { margin: 0 0 12px; font-size: 13px; color: var(--sub); }
 
@@ -27,7 +27,10 @@
           background: var(--card); display: flex; flex-direction: column; }
   .top { display: flex; align-items: center; gap: 10px; height: 44px; flex-shrink: 0; }
   .small { font-size: 10.5px; color: var(--sub); white-space: nowrap; display: flex; align-items: center; gap: 4px; }
-  .spacer { flex-grow: 1; }
+  .status { flex-grow: 1; min-width: 0; display: flex; justify-content: flex-end; margin-right: -4px; }
+  .error { display: flex; align-items: center; gap: 3px; min-width: 0; font-size: 10.5px; font-weight: 500;
+           color: var(--bad); white-space: nowrap; }
+  .error span { overflow: hidden; text-overflow: ellipsis; }   /* long errors end in "…" */
   /* 44 dp touch area, 36 dp visible circle */
   .btn { width: 44px; height: 44px; flex-shrink: 0; border: none; padding: 0; background: none;
          display: flex; align-items: center; justify-content: center; color: var(--sub); }
@@ -35,7 +38,7 @@
                display: flex; align-items: center; justify-content: center; }
   .btn.on { color: var(--accent); }
   .btn.on .face { background: var(--ok-bg); }
-  .btn.off { color: var(--dim); }
+  .btn.off, .btn.busy { color: var(--dim); }                     /* busy = refreshing */
 
   .body { flex-grow: 1; display: flex; gap: 10px; min-height: 0; margin-top: 4px; }
   .ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; align-self: center; }
@@ -48,8 +51,8 @@
 
   .cols { flex-grow: 1; min-width: 0; display: flex; gap: 6px; }
   .col { min-width: 0; display: flex; flex-direction: column; }
-  .col.main { flex: 1 1 0; gap: 6px; }                             /* pack: voltage, current */
-  .col.cells { flex: 0 0 90px; justify-content: space-between; }   /* cell details */
+  .col.main { flex: 1 1 0; gap: 6px; }                             /* pack: voltage, current or power */
+  .col.cells { flex: 0 0 90px; justify-content: space-between; }   /* cell details, 4 or 5 pills */
   .pill { height: 19px; box-sizing: border-box; border-radius: 9.5px; padding: 0 8px; display: flex;
           align-items: center; justify-content: center; gap: 2px; font-size: 14px; font-weight: 500;
           white-space: nowrap; overflow: hidden; background: var(--tile); color: var(--text); }
@@ -59,6 +62,14 @@
   .pill.bad { background: var(--bad-bg); color: var(--bad); }
   .pill.idle { color: var(--sub); }
   .no-arrow { width: 10px; margin-right: 3px; flex-shrink: 0; } /* empty ↑/↓ slot: temperature numbers line up */
+
+  /* No data at all: one message and the open-app action. */
+  .empty { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+           gap: 8px; text-align: center; }
+  .empty .title { font-size: 15px; font-weight: 500; color: var(--text); }
+  .empty .reason { font-size: 10.5px; font-weight: 500; color: var(--bad); }
+  .open { height: 40px; margin-top: 2px; padding: 0 20px; border-radius: 20px; border: none;
+          background: var(--ok-bg); color: var(--accent); font: 500 14px Roboto, system-ui, sans-serif; }
 </style>
 </head>
 <body>
@@ -75,50 +86,93 @@
     up: '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>',
     chip: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
     thermo: '<path d="M10 14V5a2 2 0 1 1 4 0v9"/><circle cx="12" cy="17" r="3"/>',
+    alert: '<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4"/><path d="M12 17.5v.5"/>',
+    battery: '<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2"/>',
   };
   const svg = (paths, size, label, extra = '') =>
     `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
       stroke-linecap="round" stroke-linejoin="round" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'} ${extra}>${paths}</svg>`;
 
-  // Preview states. Battery: 8S, 314 Ah.
+  // Preview states. Battery: 8S, 314 Ah. status: normal | refreshing | error | nodata | setup.
   const VARIANTS = [
-    { theme: 'light', caption: 'Light · discharging · auto refresh on',
-      soc: 55, volts: 26.5, amps: -10, deltaMv: 40, cellV: 3.312, mos: 27, tMax: 25, tMin: 23,
+    { theme: 'light', caption: 'Light · discharging · 1 sensor · kWh · current',
+      status: 'normal', under: 'kWh', main: 'current',
+      soc: 55, volts: 26.5, amps: -10, deltaMv: 12, cellV: 3.312, temps: [25], mos: 27,
       balancing: false, auto: true, updated: '11:29' },
-    { theme: 'dark', caption: 'Dark · charging · balancing · auto refresh off',
-      soc: 82, volts: 27.2, amps: 25, deltaMv: 12, cellV: 3.400, mos: 31, tMax: 26, tMin: 24,
+    { theme: 'dark', caption: 'Dark · charging · refreshing · 2 sensors · Ah · power',
+      status: 'refreshing', under: 'Ah', main: 'power',
+      soc: 82, volts: 27.2, amps: 125.5, deltaMv: 18, cellV: 3.400, temps: [47, 44], mos: 85,
       balancing: true, auto: false, updated: '14:05' },
+    { theme: 'light', caption: 'Light · sync error · 0.5 A (days) · cold sensor · delta missing',
+      status: 'error', error: 'Token rejected', under: 'kWh', main: 'current',
+      soc: 55, volts: 26.5, amps: -0.5, deltaMv: null, cellV: 3.305, temps: [3], mos: 22,
+      balancing: false, auto: true, updated: '09:12' },
+    { theme: 'dark', caption: 'Dark · no data yet (the last sync failed)',
+      status: 'nodata', error: 'Token rejected' },
   ];
   const CAPACITY_AH = 314;
+  const MIN_CURRENT_A = 0.5;
   const R = 48, CIRC = 2 * Math.PI * R;
+  const MISSING = '—';
 
-  function widget(v) {
+  // Whole watts below 1000 W, else kW with up to 2 decimals (as Formatters.power).
+  const power = (w) => Math.round(Math.abs(w)) < 1000
+    ? `${Math.round(Math.abs(w))} W` : `${parseFloat((Math.abs(w) / 1000).toFixed(2))} kW`;
+  // "45 min", "17 h 16 min", from 24 h "2 d 7 h".
+  const duration = (hours) => {
+    const m = Math.round(hours * 60);
+    if (m < 60) return `${m} min`;
+    if (m < 1440) return `${Math.floor(m / 60)} h ${m % 60} min`;
+    return `${Math.floor(m / 1440)} d ${Math.floor((m % 1440) / 60)} h`;
+  };
+  // Fixed limits (design v4): battery amber < 5 or > 45 °C, red ≤ 0 or > 55 °C; MOSFET amber > 65, red > 80 °C.
+  const batteryTone = (c) => (c <= 0 || c > 55 ? 'bad' : c < 5 || c > 45 ? 'warn' : '');
+  const mosfetTone = (c) => (c > 80 ? 'bad' : c > 65 ? 'warn' : '');
+  const c = (n) => (n < 0 ? '−' + Math.abs(n) : n) + ' °C';
+
+  function emptyCard(v) {
+    const title = v.status === 'setup' ? 'Set up in the app' : 'No data from Home Assistant';
+    const reason = v.status === 'nodata' && v.error ? `<div class="reason">${v.error}</div>` : '';
+    return `
+          <div class="empty">
+            <span style="color: var(--sub); display: flex">${svg(ICON.battery, 28)}</span>
+            <div class="title">${title}</div>${reason}
+            <button class="open">Open app</button>
+          </div>`;
+  }
+
+  function dataCard(v) {
     const ah = CAPACITY_AH * v.soc / 100;
     const kwh = ah * v.volts / 1000;
-    const state = v.amps < 0 ? 'down' : v.amps > 0 ? 'up' : 'idle';
-    const hours = state === 'down' ? ah / -v.amps : state === 'up' ? (CAPACITY_AH - ah) / v.amps : null;
-    const mins = hours === null ? null : Math.round(hours * 60);
-    const timeLeft = mins === null ? '—' : `${Math.floor(mins / 60)} h ${mins % 60} min`;
+    const state = v.amps < -0.1 ? 'down' : v.amps > 0.1 ? 'up' : 'idle';
+    const amps = Math.abs(v.amps);
+    const hours = amps < MIN_CURRENT_A ? null
+      : state === 'down' ? ah / amps : state === 'up' ? (CAPACITY_AH - ah) / amps : null;
+    const timeLeft = hours === null ? MISSING : duration(hours);
     const ring = v.soc < 15 ? 'var(--bad)' : v.soc < 25 ? 'var(--warn-ring)' : 'var(--bar)';
     const curTone = state === 'down' ? 'warn' : state === 'up' ? 'ok' : 'idle';
-    const deltaTone = v.deltaMv > 40 ? 'bad' : v.deltaMv > 15 ? 'warn' : '';
+    const deltaTone = v.deltaMv == null ? '' : v.deltaMv > 40 ? 'bad' : v.deltaMv > 15 ? 'warn' : '';
     const arrow = state === 'idle' ? '' : svg(ICON[state], 16, state === 'down' ? 'Discharging' : 'Charging', 'stroke-width="2.6"');
-    const c = (n) => (n < 0 ? '−' + Math.abs(n) : n) + ' °C';
+    const mainValue = v.main === 'power' ? power(v.volts * v.amps) : `${amps.toFixed(1)} A`;
+    const underSoc = v.under === 'Ah' ? `${ah.toFixed(1)} Ah` : `${kwh.toFixed(2)} kWh`;
+    const status = v.status === 'error'
+      ? `<div class="error">${svg(ICON.alert, 12, 'Sync error', 'stroke-width="2.4"')}<span>${v.error}</span></div>`
+      : `<div class="small">${v.updated}</div>`;
+    // One battery sensor: one pill without an arrow. Two or more: highest and lowest.
+    const temps = v.temps.length === 1
+      ? `<div class="pill ${batteryTone(v.temps[0])}" style="gap: 0">${svg(ICON.thermo, 13, 'Battery temperature')}<span class="no-arrow" aria-hidden="true"></span>${c(v.temps[0])}</div>`
+      : `<div class="pill ${batteryTone(Math.max(...v.temps))}" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.up, 10, 'Highest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(Math.max(...v.temps))}</div>
+                <div class="pill ${batteryTone(Math.min(...v.temps))}" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.down, 10, 'Lowest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(Math.min(...v.temps))}</div>`;
 
     return `
-    <div class="${v.theme}">
-      <div class="frame">
-        <p class="caption">${v.caption}</p>
-        <div class="card">
           <div class="top">
             <div class="small">${svg(ICON.hourglass, 12)}${timeLeft}</div>
             <span style="color: ${v.balancing ? 'var(--accent)' : 'var(--dim)'}; display: flex">
               ${svg(ICON.balance, 16, v.balancing ? 'Balancing on' : 'Balancing off')}</span>
-            <div class="spacer"></div>
-            <div class="small" style="margin-right: -4px">${v.updated}</div>
+            <div class="status">${status}</div>
             <button class="btn ${v.auto ? 'on' : 'off'}" aria-label="${v.auto ? 'Auto refresh on' : 'Auto refresh off'}" aria-pressed="${v.auto}">
               <span class="face">${svg(ICON.auto + (v.auto ? '' : ICON.slash), 18)}</span></button>
-            <button class="btn" aria-label="Refresh"><span class="face">${svg(ICON.refresh, 18)}</span></button>
+            <button class="btn ${v.status === 'refreshing' ? 'busy' : ''}" aria-label="${v.status === 'refreshing' ? 'Refreshing' : 'Refresh'}"><span class="face">${svg(ICON.refresh, 18)}</span></button>
           </div>
           <div class="body">
             <div class="ring">
@@ -130,23 +184,31 @@
               <div class="inner">
                 <div class="label">SOC</div>
                 <div class="soc">${v.soc}</div>
-                <div class="kwh">${kwh.toFixed(2)} kWh</div>
+                <div class="kwh">${underSoc}</div>
               </div>
             </div>
             <div class="cols">
               <div class="col main">
                 <div class="pill big">${v.volts.toFixed(2)} V</div>
-                <div class="pill big ${curTone}">${arrow}${Math.abs(v.amps).toFixed(1)} A</div>
+                <div class="pill big ${curTone}">${arrow}${mainValue}</div>
               </div>
               <div class="col cells">
                 <div class="pill">${v.cellV.toFixed(3)} V</div>
-                <div class="pill ${deltaTone}">Δ ${v.deltaMv} mV</div>
-                <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.up, 10, 'Highest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMax)}</div>
-                <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.down, 10, 'Lowest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMin)}</div>
-                <div class="pill" style="gap: 0">${svg(ICON.chip, 13, 'MOSFET temperature')}<span class="no-arrow" aria-hidden="true"></span>${c(v.mos)}</div>
+                <div class="pill ${deltaTone}">Δ ${v.deltaMv == null ? MISSING : v.deltaMv + ' mV'}</div>
+                ${temps}
+                <div class="pill ${mosfetTone(v.mos)}" style="gap: 0">${svg(ICON.chip, 13, 'MOSFET temperature')}<span class="no-arrow" aria-hidden="true"></span>${c(v.mos)}</div>
               </div>
             </div>
-          </div>
+          </div>`;
+  }
+
+  function widget(v) {
+    const content = v.status === 'nodata' || v.status === 'setup' ? emptyCard(v) : dataCard(v);
+    return `
+    <div class="${v.theme}">
+      <div class="frame">
+        <p class="caption">${v.caption}</p>
+        <div class="card">${content}
         </div>
       </div>
     </div>`;
