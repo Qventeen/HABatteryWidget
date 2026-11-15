@@ -16,6 +16,7 @@ data class Settings(
   val capacityAh: Double? = null,
   val display: DisplaySettings = DisplaySettings(),
   val fontSizes: FontSizes = FontSizes(),
+  val appearance: AppearanceSettings = AppearanceSettings(),
 )
 
 @Serializable
@@ -124,3 +125,22 @@ data class FontSizes(
   /** The size to draw: the setting times the system font scale, never above the group's maximum. */
   fun effective(group: FontGroup, fontScale: Float): Float = min(this[group] * fontScale, group.max)
 }
+
+/** The colour theme of the app, the overview card and the widget. */
+@Serializable
+enum class ThemeChoice {
+  SYSTEM,
+  LIGHT,
+  DARK;
+
+  /** Whether to draw dark, given the system's mode ([systemDark]). */
+  fun isDark(systemDark: Boolean): Boolean =
+    when (this) {
+      SYSTEM -> systemDark
+      LIGHT -> false
+      DARK -> true
+    }
+}
+
+/** App-wide look choices (spec 0008). The language is not stored here: the system keeps it. */
+@Serializable data class AppearanceSettings(val theme: ThemeChoice = ThemeChoice.SYSTEM)

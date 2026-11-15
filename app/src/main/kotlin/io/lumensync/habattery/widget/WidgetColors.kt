@@ -4,25 +4,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
 import io.lumensync.habattery.domain.Level
+import io.lumensync.habattery.domain.model.ThemeChoice
 
-/** [WidgetPalette] as Glance day/night colours. */
-object WidgetColors {
-  private fun of(pick: (WidgetPalette) -> Color): ColorProvider =
-    ColorProvider(day = pick(WidgetPalette.Light), night = pick(WidgetPalette.Dark))
+/**
+ * The one place where the theme choice becomes widget colours (spec 0008, approach A1). System
+ * gives Glance day/night colours; Light and Dark give fixed colours of that palette. The layout
+ * code only receives a [WidgetColors] and never looks at the [ThemeChoice].
+ */
+class WidgetColors(theme: ThemeChoice) {
+  private val choose: (WidgetPalette.() -> Color) -> ColorProvider =
+    when (theme) {
+      ThemeChoice.SYSTEM -> { pick -> ColorProvider(day = pick(WidgetPalette.Light), night = pick(WidgetPalette.Dark)) }
+      ThemeChoice.LIGHT -> { pick -> ColorProvider(pick(WidgetPalette.Light)) }
+      ThemeChoice.DARK -> { pick -> ColorProvider(pick(WidgetPalette.Dark)) }
+    }
 
-  val card = of { it.card }
-  val text = of { it.text }
-  val sub = of { it.sub }
-  val dim = of { it.dim }
-  val tile = of { it.tile }
-  val track = of { it.track }
-  val accent = of { it.accent }
-  val okBg = of { it.okBg }
-  val bad = of { it.bad }
+  private fun of(pick: WidgetPalette.() -> Color): ColorProvider = choose(pick)
 
-  fun pillBackground(level: Level): ColorProvider = of { it.pillBackground(level) }
+  val card = of { card }
+  val text = of { text }
+  val sub = of { sub }
+  val dim = of { dim }
+  val tile = of { tile }
+  val track = of { track }
+  val accent = of { accent }
+  val okBg = of { okBg }
+  val bad = of { bad }
 
-  fun pillText(level: Level): ColorProvider = of { it.pillText(level) }
+  fun pillBackground(level: Level): ColorProvider = of { pillBackground(level) }
 
-  fun ring(level: Level): ColorProvider = of { it.ringColor(level) }
+  fun pillText(level: Level): ColorProvider = of { pillText(level) }
+
+  fun ring(level: Level): ColorProvider = of { ringColor(level) }
 }

@@ -3,6 +3,7 @@ package io.lumensync.habattery.widget
 import android.content.Context
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.glance.GlanceId
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
@@ -35,6 +36,7 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       WidgetContent(
         model = WidgetModel.build(overview, settings),
         fontSizes = settings.fontSizes,
+        colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
         actions =
           WidgetActions(
             openApp = actionStartActivity<MainActivity>(),

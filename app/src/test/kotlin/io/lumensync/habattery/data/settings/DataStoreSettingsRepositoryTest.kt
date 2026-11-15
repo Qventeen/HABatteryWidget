@@ -3,8 +3,10 @@ package io.lumensync.habattery.data.settings
 import io.lumensync.habattery.data.store.JsonSerializer
 import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.jsonDataStore
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.ThemeChoice
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -66,6 +68,19 @@ class DataStoreSettingsRepositoryTest {
     val sizes = repo().settings.first().fontSizes
     assertEquals(42f, sizes.soc)
     assertEquals(9f, sizes.small)
+  }
+
+  @Test
+  fun oldFileWithoutAppearance_loadsTheSystemTheme() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"notifyOnFull":true}}""")
+    assertEquals(ThemeChoice.SYSTEM, repo().settings.first().appearance.theme)
+  }
+
+  @Test
+  fun theme_roundTrips() = runTest {
+    val r = repo()
+    r.update { it.copy(appearance = AppearanceSettings(ThemeChoice.DARK)) }
+    assertEquals(ThemeChoice.DARK, r.settings.first().appearance.theme)
   }
 
   @Test

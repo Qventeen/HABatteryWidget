@@ -25,6 +25,7 @@ import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
@@ -223,7 +224,7 @@ class WidgetContentTest {
         refresh = actionRunCallback<NoOpRefresh>(),
         toggleAuto = actionRunCallback<NoOpToggle>(),
       )
-    provideComposable { WidgetContent(model, fontSizes, actions) }
+    provideComposable { WidgetContent(model, fontSizes, WidgetColors(ThemeChoice.SYSTEM), actions) }
     assertions()
   }
 

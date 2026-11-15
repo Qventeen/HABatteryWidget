@@ -5,6 +5,7 @@ import android.util.TypedValue
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -25,6 +26,7 @@ class WidgetLookTest {
       context.resources.configuration.fontScale,
       context.resources.displayMetrics,
       WidgetTexts(context, Formatters(context)),
+      WidgetColors(ThemeChoice.SYSTEM),
     )
 
   /** What the system shows for the sp Glance gets, in dp. */

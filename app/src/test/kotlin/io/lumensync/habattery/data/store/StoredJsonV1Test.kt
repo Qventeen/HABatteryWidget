@@ -1,5 +1,6 @@
 package io.lumensync.habattery.data.store
 
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
@@ -11,6 +12,7 @@ import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.domain.model.ThemeChoice
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -58,7 +60,8 @@ class StoredJsonV1Test {
           "notifyOnFull": true,
           "capacityAh": 314.5,
           "display": { "underSoc": "AH", "mainValue": "POWER" },
-          "fontSizes": { "soc": 41.0, "underSoc": 11.0, "main": 20.0, "cell": 13.0, "small": 11.5 }
+          "fontSizes": { "soc": 41.0, "underSoc": 11.0, "main": 20.0, "cell": 13.0, "small": 11.5 },
+          "appearance": { "theme": "DARK" }
         }
       }
       """
@@ -90,6 +93,7 @@ class StoredJsonV1Test {
             capacityAh = 314.5,
             display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
             fontSizes = FontSizes(soc = 41f, underSoc = 11f, main = 20f, cell = 13f, small = 11.5f),
+            appearance = AppearanceSettings(ThemeChoice.DARK),
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())

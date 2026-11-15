@@ -44,11 +44,11 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
 
   Row(GlanceModifier.fillMaxWidth().height(TOUCH), verticalAlignment = Alignment.CenterVertically) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-      WidgetIcon(R.drawable.ic_hourglass, look.dp(12f), WidgetColors.sub, null)
+      WidgetIcon(R.drawable.ic_hourglass, look.dp(12f), look.colors.sub, null)
       Text(
         texts.timeLeft(model),
         GlanceModifier.padding(start = look.dp(4f)),
-        style = textStyle(small, WidgetColors.sub),
+        style = textStyle(small, look.colors.sub),
         maxLines = 1,
       )
     }
@@ -56,7 +56,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
     WidgetIcon(
       R.drawable.ic_balance,
       look.dp(16f),
-      if (model.balancing == true) WidgetColors.accent else WidgetColors.dim,
+      if (model.balancing == true) look.colors.accent else look.colors.dim,
       context.getString(WidgetTexts.balancingDescription(model.balancing)),
     )
     Box(
@@ -67,7 +67,7 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
       if (error == null) {
         Text(
           texts.updatedAt(model),
-          style = textStyle(small, WidgetColors.sub),
+          style = textStyle(small, look.colors.sub),
           maxLines = 1,
         )
       } else {
@@ -75,13 +75,13 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
           WidgetIcon(
             R.drawable.ic_alert,
             look.dp(12f),
-            WidgetColors.bad,
+            look.colors.bad,
             context.getString(R.string.widget_sync_error),
           )
           Text(
             texts.formatters.error(error),
             GlanceModifier.padding(start = look.dp(3f)),
-            style = textStyle(small, WidgetColors.bad, FontWeight.Medium),
+            style = textStyle(small, look.colors.bad, FontWeight.Medium),
             maxLines = 1,
           )
         }
@@ -89,8 +89,8 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
     }
     CircleButton(
       icon = if (model.autoRefresh) R.drawable.ic_auto_refresh else R.drawable.ic_auto_refresh_off,
-      iconColor = if (model.autoRefresh) WidgetColors.accent else WidgetColors.dim,
-      face = if (model.autoRefresh) WidgetColors.okBg else WidgetColors.tile,
+      iconColor = if (model.autoRefresh) look.colors.accent else look.colors.dim,
+      face = if (model.autoRefresh) look.colors.okBg else look.colors.tile,
       description = context.getString(WidgetTexts.autoDescription(model.autoRefresh)),
       action = actions.toggleAuto,
     )
@@ -98,8 +98,8 @@ internal fun WidgetTopRow(model: WidgetModel.Data, look: WidgetLook, actions: Wi
     // While a sync runs, ↻ stays in place and only dims.
     CircleButton(
       icon = R.drawable.ic_refresh,
-      iconColor = if (model.refreshing) WidgetColors.dim else WidgetColors.sub,
-      face = WidgetColors.tile,
+      iconColor = if (model.refreshing) look.colors.dim else look.colors.sub,
+      face = look.colors.tile,
       description = context.getString(WidgetTexts.refreshDescription(model.refreshing)),
       action = actions.refresh,
     )
