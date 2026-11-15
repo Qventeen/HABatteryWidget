@@ -44,27 +44,31 @@ private val PILL_RADIUS = 999.dp
  * toggle and ↻ (spec 0005, 5.3). The error takes the update time's place, so nothing else moves.
  */
 @Composable
-internal fun TopRow(d: DataLook, actions: WidgetActions, modifier: GlanceModifier = GlanceModifier) {
+internal fun TopRow(d: DataLook, actions: WidgetActions) {
   val context = LocalContext.current
   val s = d.spec
   val c = d.colors
   val model = d.model
   val small = d.look.sp(d.fonts.small)
 
-  Row(modifier.fillMaxWidth().height(s.topRow.dp), verticalAlignment = Alignment.CenterVertically) {
-    Spacer(GlanceModifier.width(s.timeStart.dp))
-    WidgetIcon(R.drawable.ic_hourglass, s.hourglass.dp, c.sub, null)
-    Spacer(GlanceModifier.width(s.hourglassGap.dp))
-    Text(d.texts.timeLeft, style = textStyle(small, c.sub), maxLines = 1)
-    Spacer(GlanceModifier.width(s.topGap.dp))
-    WidgetIcon(
-      R.drawable.ic_balance,
-      s.statusIcon.dp,
-      if (model.balancing == true) c.accent else c.dim,
-      context.getString(WidgetTexts.balancingDescription(model.balancing)),
-    )
-    Spacer(GlanceModifier.width(s.topGap.dp))
-    Box(GlanceModifier.defaultWeight(), contentAlignment = Alignment.CenterEnd) {
+  // Glance keeps at most 10 children in a Row: gaps are padding, not spacers.
+  Row(GlanceModifier.fillMaxWidth().height(s.topRow.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(GlanceModifier.padding(start = s.timeStart.dp), verticalAlignment = Alignment.CenterVertically) {
+      WidgetIcon(R.drawable.ic_hourglass, s.hourglass.dp, c.sub, null)
+      Spacer(GlanceModifier.width(s.hourglassGap.dp))
+      Text(d.texts.timeLeft, style = textStyle(small, c.sub), maxLines = 1)
+      Spacer(GlanceModifier.width(s.topGap.dp))
+      WidgetIcon(
+        R.drawable.ic_balance,
+        s.statusIcon.dp,
+        if (model.balancing == true) c.accent else c.dim,
+        context.getString(WidgetTexts.balancingDescription(model.balancing)),
+      )
+    }
+    Box(
+      GlanceModifier.defaultWeight().padding(start = s.topGap.dp, end = s.toButtons.dp),
+      contentAlignment = Alignment.CenterEnd,
+    ) {
       val updatedAt = d.texts.updatedAt
       if (updatedAt != null) {
         Text(updatedAt, style = textStyle(small, c.sub), maxLines = 1)
@@ -72,7 +76,6 @@ internal fun TopRow(d: DataLook, actions: WidgetActions, modifier: GlanceModifie
         WidgetIcon(R.drawable.ic_alert, s.statusIcon.dp, c.bad, d.texts.errorDescription)
       }
     }
-    Spacer(GlanceModifier.width(s.toButtons.dp))
     CircleButton(
       d,
       icon = if (model.autoRefresh) R.drawable.ic_auto_refresh else R.drawable.ic_auto_refresh_off,
