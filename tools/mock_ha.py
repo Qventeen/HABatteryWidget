@@ -5,6 +5,7 @@ The Authorization header is ignored and never printed.
 """
 import argparse
 import json
+import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
@@ -31,20 +32,34 @@ def make_handler(args):
         }
     ).encode()
 
+    temps = parse_temps(args.temps)
+    # The sensor-list template (spec 0004) names the prefix in its match pattern.
+    sensor_pattern = re.compile(r"sensor\[\.\]([a-z0-9_]+)_temperature_sensor_\[0-9\]\+")
+
+    def sensor_list(template):
+        m = sensor_pattern.search(template)
+        if not m or m.group(1) != args.prefix:
+            return []
+        return ["sensor.%s_temperature_sensor_%d" % (args.prefix, i + 1) for i in range(len(temps))]
+
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self):
             length = int(self.headers.get("Content-Length") or 0)
-            self.rfile.read(length)
+            raw = self.rfile.read(length)
             if self.path != "/api/template":
                 self.send_error(404)
             elif args.status != 200:
                 self.send_error(args.status)
             else:
+                template = json.loads(raw or b"{}").get("template", "")
+                data = body
+                if "select('match'" in template:
+                    data = json.dumps(sensor_list(template)).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Content-Length", str(len(data)))
                 self.end_headers()
-                self.wfile.write(body)
+                self.wfile.write(data)
 
         def do_GET(self):
             self.send_error(404)
@@ -72,6 +87,7 @@ def main():
     p.add_argument("--mosfet", type=float)
     p.add_argument("--temps", help='comma-separated degrees C, e.g. "25,23"')
     p.add_argument("--balancing", choices=["on", "off"], help="raw balancing state")
+    p.add_argument("--prefix", default="bps_bms", help="BMS prefix that has --temps sensors")
     p.add_argument("--status", type=int, default=200, help="HTTP status to return")
     args = p.parse_args()
     HTTPServer((args.host, args.port), make_handler(args)).serve_forever()
