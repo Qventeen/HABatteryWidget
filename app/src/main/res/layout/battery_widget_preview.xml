@@ -1,279 +1,286 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Widget picker preview: design v5, 4x2, normal state (light theme, sample values; spec 0005, 5.6).
-     Sizes from docs/design/README.md. RemoteViews-safe views only. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     Sizes from docs/design/README.md. The card keeps the 4x2 design size, centred: a launcher may
+     give the preview another box. RemoteViews-safe views only. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/preview_card_bg"
-    android:orientation="vertical"
-    android:padding="10dp">
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="32dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-        <ImageView
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_marginStart="2dp"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_hourglass"
-            android:tint="#5C625E" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:maxLines="1"
-            android:text="@string/preview_time_left"
-            android:textColor="#5C625E"
-            android:textSize="10.5sp" />
-        <ImageView
-            android:layout_width="15dp"
-            android:layout_height="15dp"
-            android:layout_marginStart="6dp"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_balance"
-            android:tint="#B9C0BA" />
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="6dp"
-            android:gravity="end"
-            android:maxLines="1"
-            android:text="@string/preview_updated"
-            android:textColor="#5C625E"
-            android:textSize="10.5sp" />
-        <FrameLayout
-            android:layout_width="32dp"
+        android:layout_width="267dp"
+        android:layout_height="132dp"
+        android:layout_gravity="center"
+        android:background="@drawable/preview_card_bg"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="32dp"
-            android:layout_marginStart="6dp">
-
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
             <ImageView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:background="@drawable/preview_button_on_bg"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="2dp"
                 android:importantForAccessibility="no"
-                android:padding="7dp"
-                android:src="@drawable/ic_auto_refresh"
-                android:tint="#2E7D32" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="6dp">
-
-            <ImageView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:background="@drawable/preview_button_bg"
-                android:importantForAccessibility="no"
-                android:padding="7dp"
-                android:src="@drawable/ic_refresh"
+                android:src="@drawable/ic_hourglass"
                 android:tint="#5C625E" />
-        </FrameLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="4dp"
-        android:layout_weight="1"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
-        <FrameLayout
-            android:layout_width="76dp"
-            android:layout_height="match_parent">
-
-            <ImageView
-                android:layout_width="76dp"
-                android:layout_height="76dp"
-                android:layout_gravity="center"
-                android:importantForAccessibility="no"
-                android:src="@drawable/preview_ring" />
-
-            <!-- Each line is centred, then moved by padding on one side (twice the shift). -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:paddingBottom="43dp"
+                android:layout_marginStart="4dp"
                 android:maxLines="1"
-                android:text="@string/widget_soc_label"
+                android:text="@string/preview_time_left"
                 android:textColor="#5C625E"
-                android:textSize="8.5sp" />
-
+                android:textSize="10.5sp" />
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_marginStart="6dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_balance"
+                android:tint="#B9C0BA" />
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:paddingBottom="5dp"
-                android:maxLines="1"
-                android:text="@string/preview_soc"
-                android:textColor="#1B1D1C"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:paddingTop="38dp"
-                android:maxLines="1"
-                android:text="@string/preview_kwh"
-                android:textColor="#1B1D1C"
-                android:textSize="10sp"
-                android:fontFamily="sans-serif-medium" />
-        </FrameLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@drawable/preview_big_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="4dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:text="@string/preview_voltage"
-                    android:textColor="#1B1D1C"
-                    android:textSize="17sp"
-                    android:fontFamily="sans-serif-medium" />
-            </LinearLayout>
+                android:layout_marginStart="6dp"
+                android:gravity="end"
+                android:maxLines="1"
+                android:text="@string/preview_updated"
+                android:textColor="#5C625E"
+                android:textSize="10.5sp" />
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="6dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/preview_warn_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="4dp">
                 <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:layout_marginEnd="3dp"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/preview_button_on_bg"
                     android:importantForAccessibility="no"
-                    android:src="@drawable/ic_arrow_down"
-                    android:tint="#A05A00" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:text="@string/preview_current"
-                    android:textColor="#A05A00"
-                    android:textSize="17sp"
-                    android:fontFamily="sans-serif-medium" />
-            </LinearLayout>
+                    android:padding="7dp"
+                    android:src="@drawable/ic_auto_refresh"
+                    android:tint="#2E7D32" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="6dp">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/preview_button_bg"
+                    android:importantForAccessibility="no"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_refresh"
+                    android:tint="#5C625E" />
+            </FrameLayout>
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="66dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
-            android:orientation="vertical">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:background="@drawable/preview_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="4dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:text="@string/preview_cell"
-                    android:textColor="#1B1D1C"
-                    android:textSize="11sp"
-                    android:fontFamily="sans-serif-medium" />
-            </LinearLayout>
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="4dp"
+            android:layout_weight="1"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+            <FrameLayout
+                android:layout_width="76dp"
+                android:layout_height="match_parent">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/preview_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="4dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:text="@string/preview_delta"
-                    android:textColor="#1B1D1C"
-                    android:textSize="11sp"
-                    android:fontFamily="sans-serif-medium" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/preview_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="4dp">
                 <ImageView
-                    android:layout_width="11dp"
-                    android:layout_height="11dp"
+                    android:layout_width="76dp"
+                    android:layout_height="76dp"
+                    android:layout_gravity="center"
                     android:importantForAccessibility="no"
-                    android:src="@drawable/ic_thermometer"
-                    android:tint="#1B1D1C" />
+                    android:src="@drawable/preview_ring" />
+
+                <!-- Each line is centred, then moved by padding on one side (twice the shift). -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
+                    android:layout_gravity="center"
+                    android:paddingBottom="43dp"
                     android:maxLines="1"
-                    android:text="@string/preview_battery_temperature"
+                    android:text="@string/widget_soc_label"
+                    android:textColor="#5C625E"
+                    android:textSize="8.5sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:paddingBottom="5dp"
+                    android:maxLines="1"
+                    android:text="@string/preview_soc"
                     android:textColor="#1B1D1C"
-                    android:textSize="11sp"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:paddingTop="38dp"
+                    android:maxLines="1"
+                    android:text="@string/preview_kwh"
+                    android:textColor="#1B1D1C"
+                    android:textSize="10sp"
                     android:fontFamily="sans-serif-medium" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/preview_big_pill_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:text="@string/preview_voltage"
+                        android:textColor="#1B1D1C"
+                        android:textSize="17sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/preview_warn_pill_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginEnd="3dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_arrow_down"
+                        android:tint="#A05A00" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:text="@string/preview_current"
+                        android:textColor="#A05A00"
+                        android:textSize="17sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_marginTop="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/preview_pill_bg"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="4dp">
-                <ImageView
-                    android:layout_width="11dp"
-                    android:layout_height="11dp"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/ic_chip"
-                    android:tint="#1B1D1C" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="3dp"
-                    android:maxLines="1"
-                    android:text="@string/preview_mosfet_temperature"
-                    android:textColor="#1B1D1C"
-                    android:textSize="11sp"
-                    android:fontFamily="sans-serif-medium" />
+                android:layout_width="66dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/preview_pill_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:text="@string/preview_cell"
+                        android:textColor="#1B1D1C"
+                        android:textSize="11sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/preview_pill_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:text="@string/preview_delta"
+                        android:textColor="#1B1D1C"
+                        android:textSize="11sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/preview_pill_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_thermometer"
+                        android:tint="#1B1D1C" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:maxLines="1"
+                        android:text="@string/preview_battery_temperature"
+                        android:textColor="#1B1D1C"
+                        android:textSize="11sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/preview_pill_bg"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chip"
+                        android:tint="#1B1D1C" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:maxLines="1"
+                        android:text="@string/preview_mosfet_temperature"
+                        android:textColor="#1B1D1C"
+                        android:textSize="11sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>
