@@ -64,7 +64,7 @@ class HomeAssistantSourceTest {
     val s = server(reply(200, okBody))
     val result = fetch(s.base())
     assertEquals(
-      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, listOf(3.31, null, 3.30), 1234L)),
+      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, listOf(3.31, null, 3.30), updatedAtMillis = 1234L)),
       result,
     )
     val req = s.takeRequest()

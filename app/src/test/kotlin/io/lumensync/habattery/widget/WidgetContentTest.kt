@@ -86,14 +86,13 @@ class WidgetContentTest {
   @Test
   fun missingPower_hidesPowerLine() =
     render(overview(sample(powerW = null))) {
-      onNode(hasTextEqualTo(context.getString(R.string.status_unknown))).assertExists()
       onAllNodes(hasText(" W")).assertCountEquals(0)
     }
 
   @Test
   fun missingCurrentAndVoltage_hideTheirLines() =
     render(overview(sample(currentA = null, totalVoltageV = null))) {
-      assertPowerOnlyInStatus()
+      onNode(hasTextEqualTo(context.getString(R.string.status_unknown))).assertExists()
       onAllNodes(hasTextEqualTo(formatters.current(-7.8))).assertCountEquals(0)
       onAllNodes(hasTextEqualTo(formatters.voltage(26.5))).assertCountEquals(0)
     }

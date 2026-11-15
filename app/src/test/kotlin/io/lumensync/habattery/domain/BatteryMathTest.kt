@@ -11,20 +11,38 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class BatteryMathTest {
-  private fun r(charge: Double, power: Double? = null, current: Double? = null) =
-    BatteryReading(chargePercent = charge, powerW = power, currentA = current, updatedAtMillis = 0)
+  private fun reading(soc: Double, currentA: Double?, ahLeft: Double?) =
+    BatteryReading(
+      chargePercent = soc,
+      currentA = currentA,
+      capacityRemainingAh = ahLeft,
+      updatedAtMillis = 0,
+    )
+
+  private val base = reading(50.0, null, null)
 
   @Test
-  fun state_rules() {
-    assertEquals(BatteryState.FULL, BatteryMath.state(100.0, 0.0))
-    assertEquals(BatteryState.FULL, BatteryMath.state(99.5, -20.0))
-    assertEquals(BatteryState.FULL, BatteryMath.state(100.0, null))
-    assertEquals(BatteryState.IDLE, BatteryMath.state(99.4, 0.0))
-    assertEquals(BatteryState.DISCHARGING, BatteryMath.state(100.0, -25.0))
-    assertEquals(BatteryState.UNKNOWN, BatteryMath.state(80.0, null))
-    assertEquals(BatteryState.IDLE, BatteryMath.state(50.0, 20.0))
-    assertEquals(BatteryState.CHARGING, BatteryMath.state(50.0, 20.1))
-    assertEquals(BatteryState.DISCHARGING, BatteryMath.state(50.0, -20.1))
+  fun `idle inside the 0_1 A band`() {
+    assertEquals(BatteryState.IDLE, BatteryMath.state(50.0, 0.1))
+    assertEquals(BatteryState.IDLE, BatteryMath.state(50.0, -0.1))
+    assertEquals(BatteryState.IDLE, BatteryMath.state(50.0, 0.0))
+  }
+
+  @Test
+  fun `charging and discharging outside the band`() {
+    assertEquals(BatteryState.CHARGING, BatteryMath.state(50.0, 0.11))
+    assertEquals(BatteryState.DISCHARGING, BatteryMath.state(50.0, -0.11))
+  }
+
+  @Test
+  fun `unknown without current`() = assertEquals(BatteryState.UNKNOWN, BatteryMath.state(50.0, null))
+
+  @Test
+  fun `full at 100 percent unless discharging`() {
+    assertEquals(BatteryState.FULL, BatteryMath.state(99.6, null))
+    assertEquals(BatteryState.FULL, BatteryMath.state(100.0, -0.1))
+    assertEquals(BatteryState.FULL, BatteryMath.state(100.0, 5.0))
+    assertEquals(BatteryState.DISCHARGING, BatteryMath.state(100.0, -0.2))
   }
 
   @Test
@@ -38,33 +56,67 @@ class BatteryMathTest {
   }
 
   @Test
-  fun timeRemaining_rules() {
+  fun `to empty uses Ah left`() =
     assertEquals(
-      TimeRemaining(Direction.TO_EMPTY, 377.minutes),
-      BatteryMath.timeRemaining(r(50.0, -500.0, -25.0), 314.0),
+      TimeRemaining(Direction.TO_EMPTY, 942.minutes),
+      BatteryMath.timeRemaining(reading(50.0, -10.0, 157.0), null),
     )
+
+  @Test
+  fun `to empty falls back to SOC and capacity`() =
     assertEquals(
-      TimeRemaining(Direction.TO_EMPTY, 377.minutes), // current sign ignored
-      BatteryMath.timeRemaining(r(50.0, -500.0, 25.0), 314.0),
+      942.minutes,
+      BatteryMath.timeRemaining(reading(50.0, -10.0, null), 314.0)?.duration,
     )
+
+  @Test
+  fun `to empty needs Ah left or capacity`() =
+    assertNull(BatteryMath.timeRemaining(reading(50.0, -10.0, null), null))
+
+  @Test
+  fun `to full uses capacity minus Ah left`() =
     assertEquals(
-      TimeRemaining(Direction.TO_FULL, 94.minutes),
-      BatteryMath.timeRemaining(r(80.0, 1000.0, 40.0), 314.0),
+      TimeRemaining(Direction.TO_FULL, 942.minutes),
+      BatteryMath.timeRemaining(reading(50.0, 10.0, 157.0), 314.0),
     )
-    assertNull(BatteryMath.timeRemaining(r(50.0, -500.0, -0.4), 314.0))
-    assertNull(BatteryMath.timeRemaining(r(50.0, -500.0, null), 314.0))
-    assertNull(BatteryMath.timeRemaining(r(50.0, -500.0, -25.0), null))
-    assertNull(BatteryMath.timeRemaining(r(50.0, 0.0, -25.0), 314.0)) // IDLE
-    assertNull(BatteryMath.timeRemaining(r(50.0, null, -25.0), 314.0)) // UNKNOWN
-    assertNull(BatteryMath.timeRemaining(r(100.0, 0.0, 5.0), 314.0)) // FULL
+
+  @Test
+  fun `to full clamps at zero`() =
+    assertEquals(
+      0.minutes,
+      BatteryMath.timeRemaining(reading(99.0, 10.0, 320.0), 314.0)?.duration,
+    )
+
+  @Test
+  fun `to full falls back to SOC`() =
+    assertEquals(
+      942.minutes,
+      BatteryMath.timeRemaining(reading(50.0, 10.0, null), 314.0)?.duration,
+    )
+
+  @Test
+  fun `to full needs capacity`() =
+    assertNull(BatteryMath.timeRemaining(reading(50.0, 10.0, 157.0), null))
+
+  @Test
+  fun `no time below 0_5 A`() =
+    assertNull(BatteryMath.timeRemaining(reading(50.0, -0.4, 157.0), 314.0))
+
+  @Test
+  fun `no time when idle`() =
+    assertNull(BatteryMath.timeRemaining(reading(50.0, 0.05, 157.0), 314.0))
+
+  @Test
+  fun `no time without current or when full`() {
+    assertNull(BatteryMath.timeRemaining(reading(50.0, null, 157.0), 314.0))
+    assertNull(BatteryMath.timeRemaining(reading(100.0, 5.0, 157.0), 314.0))
   }
 
   @Test
-  fun timeRemaining_clampsCharge() {
-    assertEquals(
-      TimeRemaining(Direction.TO_EMPTY, 0.minutes),
-      BatteryMath.timeRemaining(r(-2.0, -500.0, -25.0), 314.0),
-    )
+  fun `delta in mV rounds`() {
+    assertEquals(13, BatteryMath.deltaMv(base.copy(deltaCellVoltageV = 0.0125)))
+    assertEquals(40, BatteryMath.deltaMv(base.copy(deltaCellVoltageV = 0.040)))
+    assertNull(BatteryMath.deltaMv(base.copy(deltaCellVoltageV = null)))
   }
 
   @Test

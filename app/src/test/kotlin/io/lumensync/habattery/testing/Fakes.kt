@@ -121,5 +121,5 @@ fun configuredSettings(notifyOnFull: Boolean = false): Settings =
     notifyOnFull = notifyOnFull,
   )
 
-fun reading(charge: Double = 50.0, power: Double? = 0.0): BatteryReading =
-  BatteryReading(chargePercent = charge, powerW = power, updatedAtMillis = 1_000L)
+fun reading(charge: Double = 50.0, current: Double? = 0.0): BatteryReading =
+  BatteryReading(chargePercent = charge, currentA = current, updatedAtMillis = 1_000L)

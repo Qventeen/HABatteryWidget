@@ -10,6 +10,12 @@ data class BatteryReading(
   val currentA: Double? = null,
   val totalVoltageV: Double? = null,
   val cellVoltagesV: List<Double?> = emptyList(),
+  val capacityRemainingAh: Double? = null,
+  val averageCellVoltageV: Double? = null,
+  val deltaCellVoltageV: Double? = null,
+  val mosfetTemperatureC: Double? = null,
+  val temperaturesC: List<Double?> = emptyList(),
+  val balancing: Boolean? = null,
   val updatedAtMillis: Long,
 )
 

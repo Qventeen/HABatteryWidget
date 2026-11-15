@@ -48,7 +48,7 @@ class BatteryOverviewTest {
     val settings = configuredSettings().copy(capacityAh = 100.0)
     val overview = build(CacheState(reading = r), settings)
     assertEquals(r, overview.reading)
-    assertEquals(BatteryMath.state(60.0, -300.0), overview.state)
+    assertEquals(BatteryMath.state(60.0, 6.0), overview.state)
     assertEquals(BatteryMath.cellStats(r.cellVoltagesV), overview.cellStats)
     assertEquals(BatteryMath.timeRemaining(r, 100.0), overview.timeRemaining)
     assertEquals(settings.refresh, overview.refresh)

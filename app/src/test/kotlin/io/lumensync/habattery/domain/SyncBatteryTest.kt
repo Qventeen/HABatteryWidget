@@ -99,7 +99,7 @@ class SyncBatteryTest {
   @Test
   fun belowRearm_rearms() = runTest {
     val cache = FakeReadingCache(CacheState(fullChargeNotified = true))
-    val source = FakeBatterySource(SyncResult.Success(reading(98.0, -100.0)))
+    val source = FakeBatterySource(SyncResult.Success(reading(98.0, -5.0)))
 
     sync(source, cache, configuredSettings(notifyOnFull = true))()
 

@@ -34,7 +34,7 @@ data class BatteryOverview(
       return BatteryOverview(
         setupNeeded = !Validation.isConfigured(settings, hasToken),
         reading = reading,
-        state = reading?.let { BatteryMath.state(it.chargePercent, it.powerW) },
+        state = reading?.let { BatteryMath.state(it.chargePercent, it.currentA) },
         cellStats = reading?.let { BatteryMath.cellStats(it.cellVoltagesV) },
         timeRemaining = reading?.let { BatteryMath.timeRemaining(it, settings.capacityAh) },
         error = cache.error,
