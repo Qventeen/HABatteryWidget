@@ -1,7 +1,7 @@
 # Widget design — 4×2, 5×2, 4×3, 5×3
 
-Status: approved (v5), to be built in spec 0004. Built before: v4 (one 4×2
-layout, spec 0003).
+Status: approved (v5), to be built in spec 0005 (layouts); temperatures in
+spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
 
 The design was made on a design canvas; this folder keeps the latest
 version in the repo. Current version: **v5**. On the canvas the v5 row has
@@ -68,16 +68,18 @@ row spans the full width and the ring sits below it.
 - **Cell pills:** a small fixed gap, and the pills grow to fill the space,
   so the cell column starts and ends with the pack pills. Never spread the
   pills with big gaps.
-- **Always 4 cell pills:** average cell voltage, cell delta, battery
-  temperature, MOSFET temperature (always last).
+- **4 cell pills:** average cell voltage, cell delta, battery
+  temperature, MOSFET temperature (always last); 3 when no battery sensor
+  is set.
 - **Temperature pills:** icon, 3–4 dp space, value. No arrows, no empty
   slot. The battery pill shows the **average of all battery sensors**.
 - All pills show numbers only (no text labels).
 
 ## Font sizes
 
-Defaults per size (sp). These are the groups of the widget font-size
-settings.
+Design sizes per size (sp) = 50 % of the font settings; 100 % = twice the
+design size, 25 % = half (spec 0005). Above 50 % each text grows only as far
+as its box allows: the design sizes already fit the longest values.
 
 | Group | 4×2 | 5×2 | 4×3 | 5×3 |
 |---|---|---|---|---|
@@ -133,7 +135,7 @@ every id can also be typed by hand.
 | SOC ring | green ≥ 25 %, amber < 25 %, red < 15 % |
 | Current / power pill | amber when discharging, green when charging, grey when idle |
 | Delta pill | plain ≤ 15 mV, amber > 15 mV, red > 40 mV |
-| Battery temperature pill | by the average: amber below 5 °C or above 45 °C; red at 0 °C or below, or above 55 °C. Open for spec 0004: colour by the worst sensor instead |
+| Battery temperature pill | shows the average; the colour comes from the worst sensor (spec 0004): amber below 5 °C or above 45 °C; red at 0 °C or below, or above 55 °C |
 | MOSFET pill | amber above 65 °C, red above 80 °C |
 | Sync error icon | red ⚠ |
 | Balancing icon | green when on, grey when off |
