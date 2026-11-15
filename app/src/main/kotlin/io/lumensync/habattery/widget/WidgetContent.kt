@@ -87,7 +87,10 @@ internal class WidgetLook(
    * Glance takes sp only, and the system multiplies sp by its font scale again: divide it back out,
    * so the shown size is the capped effective size.
    */
-  fun font(group: FontGroup): TextUnit = (fontSizes.effective(group, fontScale) * s / fontScale).sp
+  fun font(group: FontGroup): TextUnit = (shownSize(group) / fontScale).sp
+
+  /** The size the text is shown at, in dp (setting × font scale, capped, × [s]). */
+  fun shownSize(group: FontGroup): Float = fontSizes.effective(group, fontScale) * s
 
   /** A text outside the font groups (the empty state): scaled, and the system scale applies. */
   fun fixedFont(sp: Float): TextUnit = (sp * s).sp

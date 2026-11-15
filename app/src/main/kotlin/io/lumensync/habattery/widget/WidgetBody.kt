@@ -2,6 +2,7 @@ package io.lumensync.habattery.widget
 
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -118,23 +119,31 @@ private fun Ring(model: WidgetModel.Data, look: WidgetLook) {
       modifier = GlanceModifier.fillMaxSize(),
       colorFilter = ColorFilter.tint(WidgetColors.ring(model.ringLevel)),
     )
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-      Text(
-        context.getString(R.string.widget_soc_label),
-        style = textStyle(look.font(FontGroup.SMALL), WidgetColors.sub),
-        maxLines = 1,
+    // Each line is centred, then moved by padding on one side (a centred view grows by the padding).
+    val offsets =
+      RingLayout.offsets(
+        socDp = look.shownSize(FontGroup.SOC),
+        labelDp = look.shownSize(FontGroup.SMALL),
+        underDp = look.shownSize(FontGroup.UNDER_SOC),
+        gapDp = 2f * look.s,
       )
-      Text(
-        f.socNumber(model.socPercent),
-        style = textStyle(look.font(FontGroup.SOC), WidgetColors.text, FontWeight.Bold),
-        maxLines = 1,
-      )
-      Text(
-        under,
-        style = textStyle(look.font(FontGroup.UNDER_SOC), WidgetColors.text, FontWeight.Medium),
-        maxLines = 1,
-      )
-    }
+    Text(
+      context.getString(R.string.widget_soc_label),
+      GlanceModifier.padding(bottom = (2 * offsets.label).dp),
+      style = textStyle(look.font(FontGroup.SMALL), WidgetColors.sub),
+      maxLines = 1,
+    )
+    Text(
+      f.socNumber(model.socPercent),
+      style = textStyle(look.font(FontGroup.SOC), WidgetColors.text, FontWeight.Bold),
+      maxLines = 1,
+    )
+    Text(
+      under,
+      GlanceModifier.padding(top = (2 * offsets.under).dp),
+      style = textStyle(look.font(FontGroup.UNDER_SOC), WidgetColors.text, FontWeight.Medium),
+      maxLines = 1,
+    )
   }
 }
 
