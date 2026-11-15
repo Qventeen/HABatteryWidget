@@ -70,6 +70,21 @@ class MainScreenTest {
     field.assertIsNotFocused()
   }
 
+  @Test
+  fun fillSetsEveryEntityFieldFromPrefix() {
+    waitForContent()
+
+    compose
+      .onNodeWithText(text(R.string.entities_prefix))
+      .performScrollTo()
+      .performTextReplacement("bps_bms")
+    compose.onNodeWithText(text(R.string.entities_fill)).performScrollTo().performClick()
+    compose.waitForIdle()
+
+    compose.onNodeWithText("sensor.bps_bms_power_tube_temperature").performScrollTo().assertIsDisplayed()
+    compose.onNodeWithText("sensor.bps_bms_temperature_sensor_1").performScrollTo().assertIsDisplayed()
+  }
+
   private fun saveConnection() {
     compose
       .onNode(hasText(text(R.string.action_save)) and hasAnyAncestor(hasTestTag(CONNECTION_SECTION_TAG)))

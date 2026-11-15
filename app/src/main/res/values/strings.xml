@@ -63,14 +63,28 @@
     <string name="token_hide">Hide token</string>
 
     <string name="entities_title">Entities</string>
-    <string name="entity_charge">Charge (required)</string>
-    <string name="entity_power">Power</string>
-    <string name="entity_current">Current</string>
-    <string name="entity_total_voltage">Total voltage</string>
+    <string name="entity_charge">State of charge (%) — required</string>
+    <string name="entity_power">Power (W)</string>
+    <string name="entity_current">Current (A)</string>
+    <string name="entity_total_voltage">Total voltage (V)</string>
+    <string name="entities_prefix">Prefix, like bps_bms</string>
+    <string name="entities_fill">Fill</string>
+    <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
+    <string name="entity_capacity_remaining">Ah left (Ah)</string>
+    <string name="entity_average_cell_voltage">Average cell voltage (V)</string>
+    <string name="entity_delta_cell_voltage">Cell delta (V)</string>
+    <string name="entity_mosfet_temperature">MOSFET temperature (°C)</string>
+    <string name="entity_temperatures">Battery temperature sensors</string>
+    <string name="entity_temperature">Temperature sensor %1$d (°C)</string>
+    <string name="entity_temperature_add">Add sensor</string>
+    <string name="entity_temperature_remove">Remove sensor %1$d</string>
+    <string name="entity_balancing">Balancing (on/off)</string>
+    <string name="field_prefix_invalid">Use lower-case letters, digits and _</string>
+    <string name="field_temperatures_too_many">Maximum number of sensors: %1$d</string>
 
     <string name="refresh_title">Auto-refresh</string>
     <string name="refresh_auto">Refresh in the background</string>
-    <string name="refresh_interval">Interval, min</string>
+    <string name="refresh_interval">Refresh interval (min)</string>
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>
@@ -79,8 +93,8 @@
     <string name="notify_open_settings">Open settings</string>
 
     <string name="capacity_title">Battery capacity</string>
-    <string name="capacity_label">Capacity, Ah</string>
-    <string name="capacity_hint">Optional. Used to estimate the time left.</string>
+    <string name="capacity_label">Battery capacity (Ah)</string>
+    <string name="capacity_hint">Used for the time to full, and for the time to empty when there is no Ah left sensor.</string>
 
     <!-- Field errors under the inputs. -->
     <string name="field_required">Required</string>

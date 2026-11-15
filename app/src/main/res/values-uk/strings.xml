@@ -59,14 +59,28 @@
     <string name="token_hide">Сховати токен</string>
 
     <string name="entities_title">Сутності</string>
-    <string name="entity_charge">Заряд (обов’язково)</string>
-    <string name="entity_power">Потужність</string>
-    <string name="entity_current">Струм</string>
-    <string name="entity_total_voltage">Загальна напруга</string>
+    <string name="entity_charge">Рівень заряду (%) — обов’язково</string>
+    <string name="entity_power">Потужність (Вт)</string>
+    <string name="entity_current">Струм (А)</string>
+    <string name="entity_total_voltage">Загальна напруга (В)</string>
+    <string name="entities_prefix">Префікс, наприклад bps_bms</string>
+    <string name="entities_fill">Заповнити</string>
+    <string name="entities_fill_hint">Заповнює всі поля нижче. Перевірте їх і натисніть «Зберегти».</string>
+    <string name="entity_capacity_remaining">Залишок А·год (А·год)</string>
+    <string name="entity_average_cell_voltage">Середня напруга комірки (В)</string>
+    <string name="entity_delta_cell_voltage">Різниця комірок (В)</string>
+    <string name="entity_mosfet_temperature">Температура MOSFET (°C)</string>
+    <string name="entity_temperatures">Датчики температури батареї</string>
+    <string name="entity_temperature">Датчик температури %1$d (°C)</string>
+    <string name="entity_temperature_add">Додати датчик</string>
+    <string name="entity_temperature_remove">Видалити датчик %1$d</string>
+    <string name="entity_balancing">Балансування (увімк./вимк.)</string>
+    <string name="field_prefix_invalid">Використовуйте малі літери, цифри та _</string>
+    <string name="field_temperatures_too_many">Максимум датчиків: %1$d</string>
 
     <string name="refresh_title">Автооновлення</string>
     <string name="refresh_auto">Оновлювати у фоновому режимі</string>
-    <string name="refresh_interval">Інтервал, хв</string>
+    <string name="refresh_interval">Інтервал оновлення (хв)</string>
     <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
 
     <string name="notify_title">Сповіщення</string>
@@ -75,8 +89,8 @@
     <string name="notify_open_settings">Відкрити налаштування</string>
 
     <string name="capacity_title">Ємність батареї</string>
-    <string name="capacity_label">Ємність, А·год</string>
-    <string name="capacity_hint">Необов’язково. Потрібна для розрахунку залишку часу.</string>
+    <string name="capacity_label">Ємність батареї (А·год)</string>
+    <string name="capacity_hint">Для часу до повного заряду, а також для часу до розряду, якщо немає датчика залишку А·год.</string>
 
     <string name="field_required">Обов’язкове поле</string>
     <string name="field_url_invalid">Введіть повний URL, наприклад https://ha.example.com</string>
