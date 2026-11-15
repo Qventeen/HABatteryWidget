@@ -22,6 +22,7 @@ data class EntitySettings(
   val current: String = "",
   val power: String = "",
   val capacityRemaining: String = "",
+  val totalCapacity: String = "",
   val averageCellVoltage: String = "",
   val deltaCellVoltage: String = "",
   val mosfetTemperature: String = "",

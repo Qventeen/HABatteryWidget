@@ -77,6 +77,7 @@
     <string name="entities_fill">Заповнити</string>
     <string name="entities_fill_hint">Заповнює всі поля нижче. Перевірте їх і натисніть «Зберегти».</string>
     <string name="entity_capacity_remaining">Залишок А·год (А·год)</string>
+    <string name="entity_total_capacity">Повна ємність (А·год)</string>
     <string name="entity_average_cell_voltage">Середня напруга комірки (В)</string>
     <string name="entity_delta_cell_voltage">Різниця комірок (В)</string>
     <string name="entity_mosfet_temperature">Температура MOSFET (°C)</string>
@@ -100,7 +101,7 @@
 
     <string name="capacity_title">Ємність батареї</string>
     <string name="capacity_label">Ємність батареї (А·год)</string>
-    <string name="capacity_hint">Для часу до повного заряду, а також для часу до розряду, якщо немає датчика залишку А·год.</string>
+    <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
 
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>

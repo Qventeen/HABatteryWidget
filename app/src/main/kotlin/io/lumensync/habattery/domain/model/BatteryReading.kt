@@ -10,6 +10,7 @@ data class BatteryReading(
   val currentA: Double? = null,
   val totalVoltageV: Double? = null,
   val capacityRemainingAh: Double? = null,
+  val totalCapacityAh: Double? = null,
   val averageCellVoltageV: Double? = null,
   val deltaCellVoltageV: Double? = null,
   val mosfetTemperatureC: Double? = null,

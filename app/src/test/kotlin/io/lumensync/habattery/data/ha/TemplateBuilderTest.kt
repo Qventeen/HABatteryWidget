@@ -13,9 +13,16 @@ class TemplateBuilderTest {
   fun onlyCharge() =
     assertEquals(
       "{{ {\"soc\": states('sensor.soc') | float(none), \"total_v\": none, \"current\": none, " +
-        "\"power\": none, \"ah_left\": none, \"avg_cell\": none, \"delta\": none, " +
+        "\"power\": none, \"ah_left\": none, \"capacity\": none, \"avg_cell\": none, \"delta\": none, " +
         "\"mosfet\": none, \"temps\": [], \"balancing\": none} | to_json }}",
       TemplateBuilder.build(EntitySettings(charge = "sensor.soc")),
+    )
+
+  @Test
+  fun `capacity key`() =
+    assertTrue(
+      "\"capacity\": states('sensor.cap') | float(none)" in
+        TemplateBuilder.build(EntitySettings(charge = "sensor.soc", totalCapacity = "sensor.cap"))
     )
 
   @Test

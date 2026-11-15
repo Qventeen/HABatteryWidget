@@ -81,6 +81,7 @@
     <string name="entities_fill">Fill</string>
     <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
     <string name="entity_capacity_remaining">Ah left (Ah)</string>
+    <string name="entity_total_capacity">Total capacity (Ah)</string>
     <string name="entity_average_cell_voltage">Average cell voltage (V)</string>
     <string name="entity_delta_cell_voltage">Cell delta (V)</string>
     <string name="entity_mosfet_temperature">MOSFET temperature (°C)</string>
@@ -104,7 +105,7 @@
 
     <string name="capacity_title">Battery capacity</string>
     <string name="capacity_label">Battery capacity (Ah)</string>
-    <string name="capacity_hint">Used for the time to full, and for the time to empty when there is no Ah left sensor.</string>
+    <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
 
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>

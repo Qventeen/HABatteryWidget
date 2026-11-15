@@ -8,6 +8,7 @@ import io.lumensync.habattery.domain.Field.POWER
 import io.lumensync.habattery.domain.Field.PREFIX
 import io.lumensync.habattery.domain.Field.URL
 import io.lumensync.habattery.domain.Field.TEMPERATURES
+import io.lumensync.habattery.domain.Field.TOTAL_CAPACITY
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
 import io.lumensync.habattery.domain.Problem.REQUIRED
@@ -23,6 +24,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ValidationTest {
+  @Test
+  fun `total capacity checks the id`() =
+    assertEquals(
+      listOf(FieldError(TOTAL_CAPACITY, INVALID)),
+      Validation.entities(EntitySettings(charge = "sensor.soc", totalCapacity = "bad id")),
+    )
+
   @Test
   fun connection_urlRequired() =
     assertEquals(

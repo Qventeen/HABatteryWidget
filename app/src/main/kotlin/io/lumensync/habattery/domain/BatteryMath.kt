@@ -24,6 +24,10 @@ object BatteryMath {
       else -> BatteryState.IDLE
     }
 
+  /** The capacity sensor when it reports more than 0 Ah, else the capacity typed in the app. */
+  fun fullCapacityAh(reading: BatteryReading, settingsCapacityAh: Double?): Double? =
+    reading.totalCapacityAh?.takeIf { it > 0.0 } ?: settingsCapacityAh
+
   fun deltaMv(reading: BatteryReading): Int? =
     reading.deltaCellVoltageV?.let { (it * 1000).roundToInt() }
 

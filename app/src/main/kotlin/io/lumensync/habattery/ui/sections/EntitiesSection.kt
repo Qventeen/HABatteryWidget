@@ -24,7 +24,7 @@ import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.EntitySettings
 
 /**
- * Saves the prefix, the nine single ids and the temperature ids. Strings only, so the draft
+ * Saves the prefix, the ten single ids and the temperature ids. Strings only, so the draft
  * survives rotation and process death.
  */
 private fun draftSaver(stored: EntitySettings) =
@@ -37,6 +37,7 @@ private fun draftSaver(stored: EntitySettings) =
         it.current,
         it.power,
         it.capacityRemaining,
+        it.totalCapacity,
         it.averageCellVoltage,
         it.deltaCellVoltage,
         it.mosfetTemperature,
@@ -51,16 +52,17 @@ private fun draftSaver(stored: EntitySettings) =
         current = it[3],
         power = it[4],
         capacityRemaining = it[5],
-        averageCellVoltage = it[6],
-        deltaCellVoltage = it[7],
-        mosfetTemperature = it[8],
-        balancing = it[9],
+        totalCapacity = it[6],
+        averageCellVoltage = it[7],
+        deltaCellVoltage = it[8],
+        mosfetTemperature = it[9],
+        balancing = it[10],
         temperatures = it.drop(SINGLE_FIELDS),
       )
     },
   )
 
-private const val SINGLE_FIELDS = 10 // the prefix and the nine single ids
+private const val SINGLE_FIELDS = 11 // the prefix and the ten single ids
 
 /** Entity IDs: a prefix with Fill, the single ids, and the temperature sensor list. */
 @Composable
@@ -123,6 +125,13 @@ fun EntitiesSection(
       errors.errorFor(Field.CAPACITY_REMAINING),
     ) {
       draft = draft.copy(capacityRemaining = it)
+    }
+    EntityField(
+      R.string.entity_total_capacity,
+      draft.totalCapacity,
+      errors.errorFor(Field.TOTAL_CAPACITY),
+    ) {
+      draft = draft.copy(totalCapacity = it)
     }
     EntityField(
       R.string.entity_average_cell_voltage,

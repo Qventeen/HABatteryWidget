@@ -10,6 +10,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import kotlin.time.Duration.Companion.minutes
 import org.junit.Test
 
 class BatteryOverviewTest {
@@ -50,6 +51,21 @@ class BatteryOverviewTest {
     assertEquals(BatteryMath.state(60.0, 6.0), overview.state)
     assertEquals(BatteryMath.timeRemaining(r, 100.0), overview.timeRemaining)
     assertEquals(settings.refresh, overview.refresh)
+  }
+
+  @Test
+  fun timeToFull_usesTheCapacitySensorFirst() {
+    val r =
+      BatteryReading(
+        chargePercent = 50.0,
+        currentA = 10.0,
+        capacityRemainingAh = 157.0,
+        totalCapacityAh = 280.0,
+        updatedAtMillis = 1L,
+      )
+    val settings = configuredSettings().copy(capacityAh = 314.0)
+    // (280 − 157) Ah / 10 A = 12.3 h
+    assertEquals(738.minutes, build(CacheState(reading = r), settings).timeRemaining?.duration)
   }
 
   @Test

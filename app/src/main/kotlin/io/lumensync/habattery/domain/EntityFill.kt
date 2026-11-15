@@ -13,6 +13,7 @@ object EntityFill {
       current = "sensor.${p}_current",
       power = "sensor.${p}_power",
       capacityRemaining = "sensor.${p}_capacity_remaining",
+      totalCapacity = "sensor.${p}_total_battery_capacity",
       averageCellVoltage = "sensor.${p}_average_cell_voltage",
       deltaCellVoltage = "sensor.${p}_delta_cell_voltage",
       mosfetTemperature = "sensor.${p}_power_tube_temperature",

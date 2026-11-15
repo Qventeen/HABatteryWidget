@@ -22,6 +22,7 @@ def make_handler(args):
             "current": args.current,
             "power": args.power,
             "ah_left": args.ah_left,
+            "capacity": args.capacity,
             "avg_cell": args.avg_cell,
             "delta": args.delta,
             "mosfet": args.mosfet,
@@ -65,6 +66,7 @@ def main():
     p.add_argument("--current", type=float)
     p.add_argument("--power", type=float)
     p.add_argument("--ah-left", dest="ah_left", type=float)
+    p.add_argument("--capacity", type=float, help="total battery capacity, Ah")
     p.add_argument("--avg-cell", dest="avg_cell", type=float)
     p.add_argument("--delta", type=float)
     p.add_argument("--mosfet", type=float)

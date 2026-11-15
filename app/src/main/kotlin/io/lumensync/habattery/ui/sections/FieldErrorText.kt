@@ -43,6 +43,7 @@ private fun invalidMessage(field: Field): Int =
     Field.CURRENT,
     Field.TOTAL_VOLTAGE,
     Field.CAPACITY_REMAINING,
+    Field.TOTAL_CAPACITY,
     Field.AVERAGE_CELL_VOLTAGE,
     Field.DELTA_CELL_VOLTAGE,
     Field.MOSFET_TEMPERATURE,

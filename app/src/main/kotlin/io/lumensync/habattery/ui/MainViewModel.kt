@@ -101,6 +101,7 @@ class MainViewModel(
         current = entities.current.trim(),
         power = entities.power.trim(),
         capacityRemaining = entities.capacityRemaining.trim(),
+        totalCapacity = entities.totalCapacity.trim(),
         averageCellVoltage = entities.averageCellVoltage.trim(),
         deltaCellVoltage = entities.deltaCellVoltage.trim(),
         mosfetTemperature = entities.mosfetTemperature.trim(),
