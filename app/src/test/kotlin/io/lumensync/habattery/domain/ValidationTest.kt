@@ -4,12 +4,17 @@ import io.lumensync.habattery.domain.Field.CAPACITY
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.FALLBACK_URL
 import io.lumensync.habattery.domain.Field.INTERVAL
+import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
+import io.lumensync.habattery.domain.Field.PREFIX
 import io.lumensync.habattery.domain.Field.PRIMARY_URL
+import io.lumensync.habattery.domain.Field.TEMPERATURES
 import io.lumensync.habattery.domain.Problem.INSECURE
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
 import io.lumensync.habattery.domain.Problem.REQUIRED
+import io.lumensync.habattery.domain.Problem.TOO_MANY
+import io.lumensync.habattery.domain.Validation.isPrefixValid
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -48,7 +53,7 @@ class ValidationTest {
   @Test
   fun entities_badIds() =
     assertEquals(
-      listOf(FieldError(POWER, INVALID), FieldError(Field.TOTAL_VOLTAGE, INVALID)),
+      listOf(FieldError(Field.TOTAL_VOLTAGE, INVALID), FieldError(POWER, INVALID)),
       Validation.entities(
         EntitySettings(charge = "sensor.soc", power = "bad id", totalVoltage = "sensor v")
       ),
@@ -83,4 +88,42 @@ class ValidationTest {
     assertFalse(Validation.isConfigured(s, hasToken = false))
     assertFalse(Validation.isConfigured(Settings(), hasToken = true))
   }
+
+  private fun entities(e: EntitySettings) = Validation.entities(e)
+
+  @Test
+  fun `prefix rules`() {
+    assertTrue(isPrefixValid("bps_bms"))
+    assertFalse(isPrefixValid("BPS_BMS"))
+    assertFalse(isPrefixValid("bps-bms"))
+    assertEquals(
+      listOf(FieldError(PREFIX, INVALID)),
+      entities(EntitySettings(prefix = "BPS", charge = "sensor.soc")),
+    )
+    assertEquals(
+      emptyList<FieldError>(),
+      entities(EntitySettings(prefix = "", charge = "sensor.soc")),
+    )
+  }
+
+  @Test
+  fun `blank temperature row is required at its index`() =
+    assertEquals(
+      listOf(FieldError(TEMPERATURES, REQUIRED, 0)),
+      entities(EntitySettings(charge = "sensor.soc", temperatures = listOf("", "sensor.t"))),
+    )
+
+  @Test
+  fun `more than 8 temperatures`() =
+    assertTrue(
+      FieldError(TEMPERATURES, TOO_MANY) in
+        entities(EntitySettings(charge = "sensor.soc", temperatures = List(9) { "sensor.t$it" }))
+    )
+
+  @Test
+  fun `new single field checks the id`() =
+    assertEquals(
+      listOf(FieldError(MOSFET_TEMPERATURE, INVALID)),
+      entities(EntitySettings(charge = "sensor.soc", mosfetTemperature = "bad id")),
+    )
 }

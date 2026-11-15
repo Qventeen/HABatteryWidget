@@ -14,11 +14,13 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.model.EntitySettings
 
-/** Saves the draft as a flat list of the four entity IDs. */
-private val DraftSaver =
+/** Saves the four shown entity IDs; the other fields are restored from the stored value. */
+private fun draftSaver(stored: EntitySettings) =
   listSaver<EntitySettings, String>(
     save = { listOf(it.charge, it.power, it.current, it.totalVoltage) },
-    restore = { EntitySettings(it[0], it[1], it[2], it[3]) },
+    restore = {
+      stored.copy(charge = it[0], power = it[1], current = it[2], totalVoltage = it[3])
+    },
   )
 
 /** Entity IDs: charge, power, current and total voltage. */
@@ -29,7 +31,7 @@ fun EntitiesSection(
   onSave: (EntitySettings) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  var draft by rememberSaveable(entities, stateSaver = DraftSaver) { mutableStateOf(entities) }
+  var draft by rememberSaveable(entities, stateSaver = draftSaver(entities)) { mutableStateOf(entities) }
 
   SectionCard(R.string.entities_title, modifier) {
     EntityField(R.string.entity_charge, draft.charge, errors.errorFor(Field.CHARGE)) {

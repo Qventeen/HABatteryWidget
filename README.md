@@ -50,7 +50,8 @@ Local testing only — it accepts any token:
 
 ```bash
 python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
-  --total-v 26.5 --cells 3.31,3.30,3.32,3.31   # add --status 401 to test errors
+  --total-v 26.5 --ah-left 157 --avg-cell 3.31 --delta 0.01 --mosfet 27 \
+  --temps "25,23" --balancing on   # add --status 401 to test errors
 ```
 
 Options you leave out are returned as `null`. In the app on the Android

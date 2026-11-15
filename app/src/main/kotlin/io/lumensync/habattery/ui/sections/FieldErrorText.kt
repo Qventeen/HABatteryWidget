@@ -16,6 +16,7 @@ internal fun fieldErrorText(error: FieldError): String =
   when (error.problem) {
     Problem.REQUIRED -> stringResource(R.string.field_required)
     Problem.INVALID -> stringResource(invalidMessage(error.field))
+    Problem.TOO_MANY -> stringResource(R.string.field_required)
     Problem.INSECURE -> stringResource(R.string.field_url_insecure)
     // Only the interval and the capacity have a range.
     Problem.OUT_OF_RANGE ->
@@ -40,7 +41,14 @@ private fun invalidMessage(field: Field): Int =
     Field.CHARGE,
     Field.POWER,
     Field.CURRENT,
-    Field.TOTAL_VOLTAGE -> R.string.field_entity_invalid
+    Field.TOTAL_VOLTAGE,
+    Field.PREFIX,
+    Field.CAPACITY_REMAINING,
+    Field.AVERAGE_CELL_VOLTAGE,
+    Field.DELTA_CELL_VOLTAGE,
+    Field.MOSFET_TEMPERATURE,
+    Field.TEMPERATURES,
+    Field.BALANCING -> R.string.field_entity_invalid
     Field.INTERVAL -> R.string.field_interval_invalid
     Field.CAPACITY -> R.string.field_capacity_invalid
   }

@@ -16,11 +16,22 @@ data class ConnectionSettings(val primaryUrl: String = "", val fallbackUrl: Stri
 
 @Serializable
 data class EntitySettings(
+  val prefix: String = "",
   val charge: String = "",
-  val power: String = "",
-  val current: String = "",
   val totalVoltage: String = "",
-)
+  val current: String = "",
+  val power: String = "",
+  val capacityRemaining: String = "",
+  val averageCellVoltage: String = "",
+  val deltaCellVoltage: String = "",
+  val mosfetTemperature: String = "",
+  val temperatures: List<String> = emptyList(),
+  val balancing: String = "",
+) {
+  companion object {
+    const val MAX_TEMPERATURES = 8
+  }
+}
 
 @Serializable
 data class RefreshSettings(val auto: Boolean = false, val intervalMinutes: Int? = null) {

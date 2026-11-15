@@ -95,10 +95,17 @@ class MainViewModel(
   fun saveEntities(entities: EntitySettings) {
     val clean =
       entities.copy(
+        prefix = entities.prefix.trim(),
         charge = entities.charge.trim(),
-        power = entities.power.trim(),
-        current = entities.current.trim(),
         totalVoltage = entities.totalVoltage.trim(),
+        current = entities.current.trim(),
+        power = entities.power.trim(),
+        capacityRemaining = entities.capacityRemaining.trim(),
+        averageCellVoltage = entities.averageCellVoltage.trim(),
+        deltaCellVoltage = entities.deltaCellVoltage.trim(),
+        mosfetTemperature = entities.mosfetTemperature.trim(),
+        temperatures = entities.temperatures.map { it.trim() },
+        balancing = entities.balancing.trim(),
       )
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }

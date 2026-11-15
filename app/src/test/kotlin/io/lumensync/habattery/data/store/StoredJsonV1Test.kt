@@ -38,10 +38,17 @@ class StoredJsonV1Test {
             "fallbackUrl": "https://ha.example.com"
           },
           "entities": {
+            "prefix": "bps_bms",
             "charge": "sensor.soc",
-            "power": "sensor.power",
+            "totalVoltage": "sensor.voltage",
             "current": "sensor.current",
-            "totalVoltage": "sensor.voltage"
+            "power": "sensor.power",
+            "capacityRemaining": "sensor.ah",
+            "averageCellVoltage": "sensor.avg",
+            "deltaCellVoltage": "sensor.delta",
+            "mosfetTemperature": "sensor.mosfet",
+            "temperatures": ["sensor.t1", "sensor.t2"],
+            "balancing": "sensor.bal"
           },
           "refresh": { "auto": true, "intervalMinutes": 30 },
           "notifyOnFull": true,
@@ -62,10 +69,17 @@ class StoredJsonV1Test {
               ),
             entities =
               EntitySettings(
+                prefix = "bps_bms",
                 charge = "sensor.soc",
-                power = "sensor.power",
-                current = "sensor.current",
                 totalVoltage = "sensor.voltage",
+                current = "sensor.current",
+                power = "sensor.power",
+                capacityRemaining = "sensor.ah",
+                averageCellVoltage = "sensor.avg",
+                deltaCellVoltage = "sensor.delta",
+                mosfetTemperature = "sensor.mosfet",
+                temperatures = listOf("sensor.t1", "sensor.t2"),
+                balancing = "sensor.bal",
               ),
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
             notifyOnFull = true,
