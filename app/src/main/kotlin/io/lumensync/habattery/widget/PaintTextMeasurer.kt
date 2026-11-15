@@ -12,7 +12,8 @@ import android.text.style.TextAppearanceSpan
  * for the font the home screen shows (spec 0005, 5.5). Runs in the app process; sizes are dp.
  */
 class PaintTextMeasurer(context: Context) : TextMeasurer {
-  private val density = context.resources.displayMetrics.density
+  /** Not `density`: inside `TextPaint.apply` that name is the paint's own field. */
+  private val pxPerDp = context.resources.displayMetrics.density
   private val paints =
     TextWeight.entries.associateWith { weight ->
       TextPaint(Paint.ANTI_ALIAS_FLAG).also { TextAppearanceSpan(context, style(weight)).updateMeasureState(it) }
@@ -21,23 +22,23 @@ class PaintTextMeasurer(context: Context) : TextMeasurer {
 
   @Synchronized
   override fun width(text: String, sizeDp: Float, weight: TextWeight): Float =
-    paint(sizeDp, weight).measureText(text) / density
+    paint(sizeDp, weight).measureText(text) / pxPerDp
 
   @Synchronized
   override fun metrics(sizeDp: Float, weight: TextWeight): LineMetrics {
     val m = paint(sizeDp, weight).fontMetrics
-    return LineMetrics(m.ascent / density, m.descent / density, m.top / density, m.bottom / density)
+    return LineMetrics(m.ascent / pxPerDp, m.descent / pxPerDp, m.top / pxPerDp, m.bottom / pxPerDp)
   }
 
   @Synchronized
   override fun ink(text: String, sizeDp: Float, weight: TextWeight): Ink {
     val paint = paint(sizeDp, weight)
     paint.getTextBounds(text, 0, text.length, bounds)
-    return Ink(paint.measureText(text) / density, bounds.top / density, bounds.bottom / density)
+    return Ink(paint.measureText(text) / pxPerDp, bounds.top / pxPerDp, bounds.bottom / pxPerDp)
   }
 
   private fun paint(sizeDp: Float, weight: TextWeight): TextPaint =
-    paints.getValue(weight).apply { textSize = sizeDp * density }
+    paints.getValue(weight).apply { textSize = sizeDp * pxPerDp }
 
   private fun style(weight: TextWeight): Int =
     when (weight) {
