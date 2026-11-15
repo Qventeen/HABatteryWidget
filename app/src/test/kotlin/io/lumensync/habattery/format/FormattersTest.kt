@@ -128,6 +128,14 @@ class FormattersTest {
     }
 
     @Test
+    fun widgetNumbers_en() {
+        val f = Formatters(context)
+        assertEquals("4.16 kWh", f.kilowattHours(4.1605))
+        assertEquals("55", f.socNumber(55))
+        assertEquals("100", f.socNumber(100))
+    }
+
+    @Test
     fun duration_underOneDay_hoursAndMinutes() {
         val f = Formatters(context)
         assertEquals("59 min", f.duration(59.minutes))

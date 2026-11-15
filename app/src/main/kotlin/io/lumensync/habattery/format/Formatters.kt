@@ -54,6 +54,12 @@ class Formatters(private val context: Context) {
     fun temperature(celsius: Double): String =
         context.getString(R.string.unit_celsius, number(celsius, 0, 1))
 
+    fun kilowattHours(kwh: Double): String =
+        context.getString(R.string.unit_kilowatt_hours, number(kwh, 2, 2))
+
+    /** The SOC number inside the ring, without "%". */
+    fun socNumber(percent: Int): String = number(percent.toDouble(), 0, 0)
+
     fun ampHours(ah: Double): String =
         context.getString(R.string.unit_amp_hours, number(ah, 1, 1))
 

@@ -10,6 +10,7 @@
     <string name="unit_millivolts">%1$s mV</string>
     <string name="unit_celsius">%1$s °C</string>
     <string name="unit_amp_hours">%1$s Ah</string>
+    <string name="unit_kilowatt_hours">%1$s kWh</string>
     <string name="charge_percent">%1$d%%</string>
     <string name="value_missing" translatable="false">—</string>
 
@@ -43,6 +44,21 @@
     <string name="widget_refresh_symbol" translatable="false">↻</string>
     <string name="widget_refresh_action">Refresh</string>
     <string name="delta_label">Δ %1$s</string>
+    <string name="widget_soc_label" translatable="false">SOC</string>
+    <string name="widget_soc_description">State of charge %1$d percent</string>
+    <string name="widget_charging">Charging</string>
+    <string name="widget_discharging">Discharging</string>
+    <string name="widget_balancing_on">Balancing on</string>
+    <string name="widget_balancing_off">Balancing off</string>
+    <string name="widget_balancing_unknown">Balancing unknown</string>
+    <string name="widget_sync_error">Sync error</string>
+    <string name="widget_battery_temperature">Battery temperature</string>
+    <string name="widget_highest_temperature">Highest sensor temperature</string>
+    <string name="widget_lowest_temperature">Lowest sensor temperature</string>
+    <string name="widget_mosfet_temperature">MOSFET temperature</string>
+    <string name="widget_auto_on">Auto refresh on</string>
+    <string name="widget_auto_off">Auto refresh off</string>
+    <string name="widget_open_app">Open app</string>
 
     <string name="notification_channel_full">Full charge</string>
     <string name="notification_full_title">Battery full</string>

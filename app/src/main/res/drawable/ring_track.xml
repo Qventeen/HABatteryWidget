@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The SOC ring's track: a full circle (r 48, stroke 8 in a 104 box), tinted. The arc is a bitmap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="104dp"
+    android:height="104dp"
+    android:viewportWidth="104"
+    android:viewportHeight="104">
+    <path
+        android:pathData="M52,4a48,48 0,1 1,0 96a48,48 0,1 1,0 -96z"
+        android:strokeWidth="8"
+        android:strokeColor="#FFFFFFFF" />
+</vector>

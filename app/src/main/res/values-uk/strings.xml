@@ -7,6 +7,7 @@
     <string name="unit_millivolts">%1$s мВ</string>
     <string name="unit_celsius">%1$s °C</string>
     <string name="unit_amp_hours">%1$s А·год</string>
+    <string name="unit_kilowatt_hours">%1$s кВт·год</string>
     <string name="charge_percent">%1$d%%</string>
 
     <string name="status_charging">Заряджається %1$s</string>
@@ -39,6 +40,20 @@
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
     <string name="widget_updated_at">Оновлено %1$s</string>
     <string name="widget_refresh_action">Оновити</string>
+    <string name="widget_soc_description">Рівень заряду %1$d відсотків</string>
+    <string name="widget_charging">Заряджається</string>
+    <string name="widget_discharging">Розряджається</string>
+    <string name="widget_balancing_on">Балансування увімкнено</string>
+    <string name="widget_balancing_off">Балансування вимкнено</string>
+    <string name="widget_balancing_unknown">Балансування невідоме</string>
+    <string name="widget_sync_error">Помилка синхронізації</string>
+    <string name="widget_battery_temperature">Температура батареї</string>
+    <string name="widget_highest_temperature">Найвища температура датчика</string>
+    <string name="widget_lowest_temperature">Найнижча температура датчика</string>
+    <string name="widget_mosfet_temperature">Температура MOSFET</string>
+    <string name="widget_auto_on">Автооновлення увімкнено</string>
+    <string name="widget_auto_off">Автооновлення вимкнено</string>
+    <string name="widget_open_app">Відкрити застосунок</string>
     <string name="delta_label">Δ %1$s</string>
 
     <string name="notification_channel_full">Повний заряд</string>
