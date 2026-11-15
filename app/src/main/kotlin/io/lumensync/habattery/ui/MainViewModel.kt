@@ -11,7 +11,9 @@ import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.port.ReadingCache
@@ -134,6 +136,16 @@ class MainViewModel(
 
   fun setNotifyOnFull(enabled: Boolean) {
     save(emptyList(), syncAfter = false) { it.copy(notifyOnFull = enabled) }
+  }
+
+  /** Display choices save at once; only the drawings change, so no sync. */
+  fun saveDisplay(display: DisplaySettings) {
+    save(emptyList(), syncAfter = false) { it.copy(display = display) }
+  }
+
+  fun saveFontSizes(sizes: FontSizes) {
+    val clamped = sizes.clamped()
+    save(emptyList(), syncAfter = false) { it.copy(fontSizes = clamped) }
   }
 
   fun saveCapacity(text: String, locale: Locale) {

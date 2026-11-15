@@ -93,6 +93,22 @@
     <string name="capacity_label">Ємність батареї (А·год)</string>
     <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
 
+    <string name="widget_settings_title">Віджет</string>
+    <string name="widget_under_soc">Під SOC</string>
+    <string name="widget_choice_kwh">кВт·год</string>
+    <string name="widget_choice_ah">А·год</string>
+    <string name="widget_second_value">Друге значення</string>
+    <string name="widget_choice_current">Струм</string>
+    <string name="widget_choice_power">Потужність</string>
+    <string name="widget_font_soc">Число SOC</string>
+    <string name="widget_font_under_soc">кВт·год / А·год під SOC</string>
+    <string name="widget_font_main">Основні значення</string>
+    <string name="widget_font_cell">Значення комірок</string>
+    <string name="widget_font_small">Дрібний текст</string>
+    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_reset_sizes">Скинути розміри</string>
+    <string name="widget_summary">%1$s · %2$s</string>
+
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>
     <string name="entities_summary_manual">Задано вручну</string>

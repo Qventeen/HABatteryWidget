@@ -101,6 +101,25 @@ class MainScreenTest {
     compose.onNodeWithText(label).assertDoesNotExist()
   }
 
+  @Test
+  fun widgetSection_choosesAh() {
+    waitForContent()
+    compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
+
+    compose.onNodeWithText(text(R.string.widget_choice_ah)).performScrollTo().performClick()
+    compose.waitForIdle()
+
+    val summary =
+      compose.activity.getString(
+        R.string.widget_summary,
+        text(R.string.widget_choice_ah),
+        text(R.string.widget_choice_current),
+      )
+    compose.onNodeWithText(summary).assertExists()
+    // Leave the stored choice as a fresh install has it.
+    compose.onNodeWithText(text(R.string.widget_choice_kwh)).performScrollTo().performClick()
+  }
+
   private fun saveConnection() {
     compose
       .onNode(hasText(text(R.string.action_save)) and hasAnyAncestor(hasTestTag(CONNECTION_SECTION_TAG)))

@@ -6,7 +6,11 @@ import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
@@ -255,6 +259,23 @@ class MainViewModelTest {
       ),
       state.settings.entities,
     )
+  }
+
+  @Test fun saveDisplay_storesAndRedraws() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveDisplay(DisplaySettings(UnderSoc.AH, MainValue.POWER))
+    advanceUntilIdle()
+    assertEquals(DisplaySettings(UnderSoc.AH, MainValue.POWER), state.settings.display)
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveFontSizes_clamps() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveFontSizes(FontSizes(soc = 50f, small = 11.5f))
+    advanceUntilIdle()
+    assertEquals(FontSizes(soc = 42f, small = 11.5f), state.settings.fontSizes)
   }
 
   @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {

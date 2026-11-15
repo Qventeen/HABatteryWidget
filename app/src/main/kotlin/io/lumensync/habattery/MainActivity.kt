@@ -74,6 +74,8 @@ class MainActivity : ComponentActivity() {
       saveRefresh = viewModel::saveRefresh,
       setNotifyOnFull = viewModel::setNotifyOnFull,
       saveCapacity = viewModel::saveCapacity,
+      saveDisplay = viewModel::saveDisplay,
+      saveFontSizes = viewModel::saveFontSizes,
       requestPinWidget = {
         lifecycleScope.launch {
           GlanceAppWidgetManager(this@MainActivity)

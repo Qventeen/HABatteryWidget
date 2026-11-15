@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.ui.sections.ActionsRow
 import io.lumensync.habattery.ui.sections.CapacitySection
 import io.lumensync.habattery.ui.sections.ConnectionSection
@@ -32,6 +34,7 @@ import io.lumensync.habattery.ui.sections.NotificationSection
 import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
+import io.lumensync.habattery.ui.sections.WidgetSection
 import java.util.Locale
 
 /** What the screen can ask for: the ViewModel's functions plus two system actions. */
@@ -44,6 +47,8 @@ data class MainActions(
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
   val setNotifyOnFull: (Boolean) -> Unit,
   val saveCapacity: (text: String, locale: Locale) -> Unit,
+  val saveDisplay: (DisplaySettings) -> Unit,
+  val saveFontSizes: (FontSizes) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
@@ -117,5 +122,6 @@ private fun MainContent(
       actions.openNotificationSettings,
     )
     CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)
+    WidgetSection(settings.display, settings.fontSizes, actions.saveDisplay, actions.saveFontSizes)
   }
 }

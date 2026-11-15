@@ -99,6 +99,22 @@
     <string name="capacity_label">Battery capacity (Ah)</string>
     <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
 
+    <string name="widget_settings_title">Widget</string>
+    <string name="widget_under_soc">Under SOC</string>
+    <string name="widget_choice_kwh">kWh</string>
+    <string name="widget_choice_ah">Ah</string>
+    <string name="widget_second_value">Second value</string>
+    <string name="widget_choice_current">Current</string>
+    <string name="widget_choice_power">Power</string>
+    <string name="widget_font_soc">SOC number</string>
+    <string name="widget_font_under_soc">kWh / Ah under SOC</string>
+    <string name="widget_font_main">Main values</string>
+    <string name="widget_font_cell">Cell values</string>
+    <string name="widget_font_small">Small text</string>
+    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_reset_sizes">Reset sizes</string>
+    <string name="widget_summary">%1$s · %2$s</string>
+
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
     <string name="token_summary_saved">Saved</string>
