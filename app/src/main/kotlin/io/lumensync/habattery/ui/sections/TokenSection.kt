@@ -31,13 +31,17 @@ fun TokenSection(
   hasToken: Boolean,
   errors: List<FieldError>,
   onSave: (token: String) -> Unit,
+  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   // Plain remember: a typed token must never enter the saved-state Bundle (lost on rotation).
   var draft by remember { mutableStateOf("") }
   var visible by rememberSaveable { mutableStateOf(false) }
 
-  SectionCard(R.string.token_title, modifier) {
+  val summary =
+    stringResource(if (hasToken) R.string.token_summary_saved else R.string.summary_not_set)
+
+  SectionCard(R.string.token_title, summary, initiallyExpanded, modifier) {
     SettingsTextField(
       value = draft,
       onValueChange = { draft = it },

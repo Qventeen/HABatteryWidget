@@ -67,11 +67,19 @@ fun EntitiesSection(
   entities: EntitySettings,
   errors: List<FieldError>,
   onSave: (EntitySettings) -> Unit,
+  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   var draft by rememberSaveable(entities, stateSaver = draftSaver(entities)) { mutableStateOf(entities) }
 
-  SectionCard(R.string.entities_title, modifier) {
+  val summary =
+    when {
+      entities.prefix.isNotBlank() -> entities.prefix
+      entities.charge.isNotBlank() -> stringResource(R.string.entities_summary_manual)
+      else -> stringResource(R.string.summary_not_set)
+    }
+
+  SectionCard(R.string.entities_title, summary, initiallyExpanded, modifier) {
     SettingsTextField(
       value = draft.prefix,
       onValueChange = { draft = draft.copy(prefix = it) },

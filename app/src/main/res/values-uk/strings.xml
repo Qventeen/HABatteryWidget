@@ -92,6 +92,22 @@
     <string name="capacity_label">Ємність батареї (А·год)</string>
     <string name="capacity_hint">Для часу до повного заряду, а також для часу до розряду, якщо немає датчика залишку А·год.</string>
 
+    <string name="summary_not_set">Не задано</string>
+    <string name="token_summary_saved">Збережено</string>
+    <string name="entities_summary_manual">Задано вручну</string>
+    <string name="refresh_summary_off">Вимкнено</string>
+    <plurals name="refresh_summary_every">
+        <item quantity="one">Кожну %d хв</item>
+        <item quantity="few">Кожні %d хв</item>
+        <item quantity="many">Кожні %d хв</item>
+        <item quantity="other">Кожні %d хв</item>
+    </plurals>
+    <string name="notify_summary_on">Увімкнено</string>
+    <string name="notify_summary_off">Вимкнено</string>
+    <string name="capacity_summary">%1$s А·год</string>
+    <string name="section_show">Показати: %1$s</string>
+    <string name="section_hide">Сховати: %1$s</string>
+
     <string name="field_required">Обов’язкове поле</string>
     <string name="field_url_invalid">Введіть повний URL, наприклад https://ha.example.com</string>
     <string name="field_token_not_saved">Не вдалося зберегти токен. Спробуйте ще раз.</string>

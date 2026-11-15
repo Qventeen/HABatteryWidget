@@ -96,6 +96,21 @@
     <string name="capacity_label">Battery capacity (Ah)</string>
     <string name="capacity_hint">Used for the time to full, and for the time to empty when there is no Ah left sensor.</string>
 
+    <!-- Folded section summaries and chevron descriptions. -->
+    <string name="summary_not_set">Not set</string>
+    <string name="token_summary_saved">Saved</string>
+    <string name="entities_summary_manual">Set by hand</string>
+    <string name="refresh_summary_off">Off</string>
+    <plurals name="refresh_summary_every">
+        <item quantity="one">Every %d min</item>
+        <item quantity="other">Every %d min</item>
+    </plurals>
+    <string name="notify_summary_on">On</string>
+    <string name="notify_summary_off">Off</string>
+    <string name="capacity_summary">%1$s Ah</string>
+    <string name="section_show">Show %1$s</string>
+    <string name="section_hide">Hide %1$s</string>
+
     <!-- Field errors under the inputs. -->
     <string name="field_required">Required</string>
     <string name="field_url_invalid">Enter a full URL, like https://ha.example.com</string>

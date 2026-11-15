@@ -25,6 +25,7 @@ fun ConnectionSection(
   connection: ConnectionSettings,
   errors: List<FieldError>,
   onSave: (url: String) -> Unit,
+  initiallyExpanded: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   var url by rememberSaveable(connection) { mutableStateOf(connection.url) }
@@ -35,7 +36,15 @@ fun ConnectionSection(
       null
     }
 
-  SectionCard(R.string.connection_title, modifier.testTag(CONNECTION_SECTION_TAG)) {
+  val host = runCatching { java.net.URI(connection.url).host }.getOrNull()
+  val summary = host ?: stringResource(R.string.summary_not_set)
+
+  SectionCard(
+    R.string.connection_title,
+    summary,
+    initiallyExpanded,
+    modifier.testTag(CONNECTION_SECTION_TAG),
+  ) {
     SettingsTextField(
       value = url,
       onValueChange = { url = it },

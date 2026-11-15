@@ -82,9 +82,24 @@ private fun MainContent(
   ) {
     OverviewCard(overview)
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
-    ConnectionSection(settings.connection, state.errors, actions.saveConnection)
-    TokenSection(state.hasToken, state.errors, actions.saveToken)
-    EntitiesSection(settings.entities, state.errors, actions.saveEntities)
+    ConnectionSection(
+      settings.connection,
+      state.errors,
+      actions.saveConnection,
+      initiallyExpanded = overview.setupNeeded,
+    )
+    TokenSection(
+      state.hasToken,
+      state.errors,
+      actions.saveToken,
+      initiallyExpanded = overview.setupNeeded,
+    )
+    EntitiesSection(
+      settings.entities,
+      state.errors,
+      actions.saveEntities,
+      initiallyExpanded = overview.setupNeeded,
+    )
     RefreshSection(settings.refresh, state.errors, actions.saveRefresh)
     NotificationSection(
       settings.notifyOnFull,

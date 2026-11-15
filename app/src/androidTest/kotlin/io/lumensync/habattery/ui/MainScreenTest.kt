@@ -85,6 +85,22 @@ class MainScreenTest {
     compose.onNodeWithText("sensor.bps_bms_temperature_sensor_1").performScrollTo().assertIsDisplayed()
   }
 
+  @Test
+  fun sectionsFoldAndUnfold() {
+    waitForContent()
+    val label = text(R.string.capacity_label)
+    val header = compose.onNodeWithText(text(R.string.capacity_title))
+
+    // The capacity section starts folded: its content is not composed.
+    compose.onNodeWithText(label).assertDoesNotExist()
+
+    header.performScrollTo().performClick()
+    compose.onNodeWithText(label).assertExists()
+
+    header.performClick()
+    compose.onNodeWithText(label).assertDoesNotExist()
+  }
+
   private fun saveConnection() {
     compose
       .onNode(hasText(text(R.string.action_save)) and hasAnyAncestor(hasTestTag(CONNECTION_SECTION_TAG)))
