@@ -35,7 +35,7 @@ class ValidationTest {
     assertEquals(emptyList<FieldError>(), Validation.connection(ConnectionSettings("http://example.com")))
 
   @Test
-  fun connection_invalidPrimary() =
+  fun connection_invalidUrl() =
     assertEquals(
       listOf(FieldError(URL, INVALID)),
       Validation.connection(ConnectionSettings("not a url")),

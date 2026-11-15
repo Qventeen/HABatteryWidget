@@ -71,6 +71,7 @@
     <string name="entity_charge">Рівень заряду (%) — обов’язково</string>
     <string name="entity_power">Потужність (Вт)</string>
     <string name="entity_current">Струм (А)</string>
+    <string name="entity_current_hint">Визначає заряд чи розряд і час, що залишився</string>
     <string name="entity_total_voltage">Загальна напруга (В)</string>
     <string name="entities_prefix">Префікс, наприклад bps_bms</string>
     <string name="entities_fill">Заповнити</string>
@@ -115,6 +116,8 @@
     <string name="notify_summary_off">Вимкнено</string>
     <string name="capacity_summary">%1$s А·год</string>
     <string name="section_show">Показати: %1$s</string>
+    <string name="section_expanded">Розгорнуто</string>
+    <string name="section_collapsed">Згорнуто</string>
     <string name="section_hide">Сховати: %1$s</string>
 
     <string name="field_required">Обов’язкове поле</string>

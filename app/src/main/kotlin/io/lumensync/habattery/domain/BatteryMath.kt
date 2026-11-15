@@ -40,7 +40,7 @@ object BatteryMath {
     val ahLeft = reading.capacityRemainingAh
     val ah =
       if (direction == Direction.TO_EMPTY) {
-        ahLeft ?: capacityAh?.let { soc / 100 * it }
+        ahLeft?.coerceAtLeast(0.0) ?: capacityAh?.let { soc / 100 * it }
       } else {
         capacityAh?.let { cap -> ahLeft?.let { max(0.0, cap - it) } ?: ((100 - soc) / 100 * cap) }
       } ?: return null

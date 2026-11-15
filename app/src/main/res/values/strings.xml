@@ -75,6 +75,7 @@
     <string name="entity_charge">State of charge (%) — required</string>
     <string name="entity_power">Power (W)</string>
     <string name="entity_current">Current (A)</string>
+    <string name="entity_current_hint">Sets charging or discharging and the time left</string>
     <string name="entity_total_voltage">Total voltage (V)</string>
     <string name="entities_prefix">Prefix, like bps_bms</string>
     <string name="entities_fill">Fill</string>
@@ -118,6 +119,8 @@
     <string name="notify_summary_off">Off</string>
     <string name="capacity_summary">%1$s Ah</string>
     <string name="section_show">Show %1$s</string>
+    <string name="section_expanded">Expanded</string>
+    <string name="section_collapsed">Collapsed</string>
     <string name="section_hide">Hide %1$s</string>
 
     <!-- Field errors under the inputs. -->

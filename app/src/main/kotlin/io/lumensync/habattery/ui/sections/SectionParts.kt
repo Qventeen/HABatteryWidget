@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,6 +29,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -52,11 +55,18 @@ internal fun SectionCard(
 ) {
   var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
   val titleText = stringResource(title)
+  val actionLabel =
+    stringResource(if (expanded) R.string.section_hide else R.string.section_show, titleText)
+  val stateText =
+    stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
   OutlinedCard(modifier.fillMaxWidth()) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
       Row(
         modifier =
-          Modifier.fillMaxWidth().clickable(role = Role.Button) { expanded = !expanded },
+          Modifier.fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClickLabel = actionLabel, role = Role.Button) { expanded = !expanded }
+            .semantics { stateDescription = stateText },
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Column(Modifier.weight(1f).padding(end = 8.dp)) {
@@ -70,8 +80,7 @@ internal fun SectionCard(
         Icon(
           painter =
             painterResource(if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
-          contentDescription =
-            stringResource(if (expanded) R.string.section_hide else R.string.section_show, titleText),
+          contentDescription = null, // the row speaks for it
         )
       }
       if (expanded) content()

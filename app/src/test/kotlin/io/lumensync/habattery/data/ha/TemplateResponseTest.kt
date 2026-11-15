@@ -22,6 +22,26 @@ class TemplateResponseTest {
   }
 
   @Test
+  fun `non-finite optional values become null`() {
+    // JSON cannot carry NaN or Infinity, so build the response directly.
+    val r =
+      TemplateResponse(
+          soc = 55.0,
+          ahLeft = Double.NaN,
+          avgCell = Double.POSITIVE_INFINITY,
+          delta = Double.NaN,
+          mosfet = Double.NEGATIVE_INFINITY,
+          temps = listOf(Double.NaN, 25.0),
+        )
+        .toReading(1L)!!
+    assertNull(r.capacityRemainingAh)
+    assertNull(r.averageCellVoltageV)
+    assertNull(r.deltaCellVoltageV)
+    assertNull(r.mosfetTemperatureC)
+    assertEquals(listOf(null, 25.0), r.temperaturesC)
+  }
+
+  @Test
   fun `balancing text`() {
     listOf("on", "ON", " on ", "true", "1").forEach { assertEquals(true, parseBalancing(it)) }
     listOf("off", "False", "0").forEach { assertEquals(false, parseBalancing(it)) }

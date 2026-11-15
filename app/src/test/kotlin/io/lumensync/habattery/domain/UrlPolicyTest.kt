@@ -85,19 +85,19 @@ class UrlPolicyTest {
   fun trailingDot_isPublicHttp() = assertEquals(PUBLIC_HTTP, v("http://ha.local."))
 
   @Test
-  fun numericSingleLabel_isInsecure() =
+  fun numericSingleLabel_isPublicHttp() =
     listOf("http://134744072", "http://3232235777", "http://0", "http://00:8123").forEach {
       assertEquals(it, PUBLIC_HTTP, v(it))
     }
 
   @Test
-  fun hexLabel_isInsecure() =
+  fun hexLabel_isPublicHttp() =
     listOf("http://0x08080808", "http://0XC0A80101", "http://0x").forEach {
       assertEquals(it, PUBLIC_HTTP, v(it))
     }
 
   @Test
-  fun leadingZeroOctet_isInsecure() =
+  fun leadingZeroOctet_isPublicHttp() =
     listOf(
         "http://010.0.0.1",
         "http://010.001.001.005",

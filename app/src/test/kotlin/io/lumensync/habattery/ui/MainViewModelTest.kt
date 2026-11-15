@@ -202,6 +202,43 @@ class MainViewModelTest {
     assertTrue(state.errors.isEmpty())
   }
 
+  @Test fun saveEntities_trimsEveryFieldAndEachTemperature() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveEntities(
+      EntitySettings(
+        prefix = " bps_bms ",
+        charge = " sensor.soc ",
+        totalVoltage = " sensor.v ",
+        current = " sensor.i ",
+        power = " sensor.p ",
+        capacityRemaining = " sensor.ah ",
+        averageCellVoltage = " sensor.avg ",
+        deltaCellVoltage = " sensor.delta ",
+        mosfetTemperature = " sensor.mosfet ",
+        temperatures = listOf(" sensor.t1 ", "sensor.t2"),
+        balancing = " binary_sensor.bal ",
+      )
+    )
+    advanceUntilIdle()
+    assertTrue(state.errors.isEmpty())
+    assertEquals(
+      EntitySettings(
+        prefix = "bps_bms",
+        charge = "sensor.soc",
+        totalVoltage = "sensor.v",
+        current = "sensor.i",
+        power = "sensor.p",
+        capacityRemaining = "sensor.ah",
+        averageCellVoltage = "sensor.avg",
+        deltaCellVoltage = "sensor.delta",
+        mosfetTemperature = "sensor.mosfet",
+        temperatures = listOf("sensor.t1", "sensor.t2"),
+        balancing = "binary_sensor.bal",
+      ),
+      state.settings.entities,
+    )
+  }
+
   @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {
     val vm = start()
     vm.setNotifyOnFull(true)

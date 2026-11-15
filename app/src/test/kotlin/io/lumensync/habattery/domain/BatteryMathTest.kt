@@ -59,6 +59,27 @@ class BatteryMathTest {
     )
 
   @Test
+  fun `negative Ah left gives zero time to empty`() =
+    assertEquals(
+      TimeRemaining(Direction.TO_EMPTY, 0.minutes),
+      BatteryMath.timeRemaining(reading(50.0, -10.0, -5.0), null),
+    )
+
+  @Test
+  fun `SOC above 100 is clamped in the SOC path`() =
+    assertEquals(
+      BatteryMath.timeRemaining(reading(100.0, -10.0, null), 314.0),
+      BatteryMath.timeRemaining(reading(102.0, -10.0, null), 314.0),
+    )
+
+  @Test
+  fun `exactly 0_5 A gives a time`() =
+    assertEquals(
+      TimeRemaining(Direction.TO_EMPTY, 18840.minutes),
+      BatteryMath.timeRemaining(reading(50.0, -0.5, 157.0), null),
+    )
+
+  @Test
   fun `to empty needs Ah left or capacity`() =
     assertNull(BatteryMath.timeRemaining(reading(50.0, -10.0, null), null))
 

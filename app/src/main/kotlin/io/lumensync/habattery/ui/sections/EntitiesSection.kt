@@ -19,6 +19,7 @@ import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.EntityFill
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.EntitySettings
 
@@ -79,17 +80,22 @@ fun EntitiesSection(
       else -> stringResource(R.string.summary_not_set)
     }
 
+  val prefixOk = Validation.isPrefixValid(draft.prefix.trim().trimEnd('_'))
+  // While typing: flag a bad prefix at once. An error from the last save still wins.
+  val liveError =
+    if (draft.prefix.isNotEmpty() && !prefixOk) FieldError(Field.PREFIX, Problem.INVALID) else null
+
   SectionCard(R.string.entities_title, summary, initiallyExpanded, modifier) {
     SettingsTextField(
       value = draft.prefix,
       onValueChange = { draft = draft.copy(prefix = it) },
       label = stringResource(R.string.entities_prefix),
-      error = errors.errorFor(Field.PREFIX),
+      error = errors.errorFor(Field.PREFIX) ?: liveError,
       hint = stringResource(R.string.entities_fill_hint),
     )
     OutlinedButton(
       onClick = { draft = EntityFill.fromPrefix(draft.prefix, draft) },
-      enabled = Validation.isPrefixValid(draft.prefix.trim().trimEnd('_')),
+      enabled = prefixOk,
     ) {
       Text(stringResource(R.string.entities_fill))
     }
@@ -100,7 +106,12 @@ fun EntitiesSection(
     EntityField(R.string.entity_total_voltage, draft.totalVoltage, errors.errorFor(Field.TOTAL_VOLTAGE)) {
       draft = draft.copy(totalVoltage = it)
     }
-    EntityField(R.string.entity_current, draft.current, errors.errorFor(Field.CURRENT)) {
+    EntityField(
+      R.string.entity_current,
+      draft.current,
+      errors.errorFor(Field.CURRENT),
+      hint = stringResource(R.string.entity_current_hint),
+    ) {
       draft = draft.copy(current = it)
     }
     EntityField(R.string.entity_power, draft.power, errors.errorFor(Field.POWER)) {
@@ -188,7 +199,8 @@ private fun EntityField(
   @StringRes label: Int,
   value: String,
   error: FieldError?,
+  hint: String? = null,
   onValueChange: (String) -> Unit,
 ) {
-  SettingsTextField(value, onValueChange, stringResource(label), error)
+  SettingsTextField(value, onValueChange, stringResource(label), error, hint)
 }
