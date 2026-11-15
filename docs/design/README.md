@@ -13,24 +13,33 @@ latest version in the repo.
 
 ## Layout
 
+Main rule: the most important data sits on the left, and importance drops
+to the right: SOC, then pack voltage and current, then cell details.
+
 Card: 360 × 180 dp, 12 dp padding, 24 dp corner radius.
 
 ```
- ⌛ 17 h 16 min  ⚖                 11:29  (⟳auto) (↻)
- ╭───╮   ( 26.50 V )      ( 3.312 V )
- │SOC│   ( ↓ −10.0 A )    ( Δ 40 mV )
- │55 │   ( 172.7 Ah )     ( 🌡↑ 25 °C )
- ╰───╯   ( ▣ 27 °C )      ( 🌡↓ 23 °C )
+ ⌛ 17 h 16 min  ⚖               11:29  (⟳auto) (↻)
+ ╭─────╮  ╭───────────╮  ( 3.312 V )
+ │ SOC │  │  26.50 V  │  ( Δ 40 mV )
+ │ 55  │  ╰───────────╯  ( 🌡↑ 25 °C )
+ │ kWh │  ╭───────────╮  ( 🌡↓ 23 °C )
+ │     │  │ ↓ 10.0 A  │  ( ▣ 27 °C )
+ ╰─────╯  ╰───────────╯
 ```
 
 - **Top row (44 dp), full width:** time left, balancing icon, last update
   time, auto-refresh toggle, manual refresh (top-right corner).
 - **SOC ring (112 dp):** small "SOC" label, the number without "%", kWh left
   below it. The ring shows the charge level.
-- **Pills, 2 × 4, numbers only (no text labels):**
-  - middle column, pack and BMS: voltage, current, Ah left, MOSFET temperature;
-  - right column, cells: average cell voltage, cell delta, highest sensor
-    temperature, lowest sensor temperature.
+- **Middle column, pack (takes the free width, about 118 dp):** two big
+  pills, each half the column height (53 dp, 6 dp gap): pack voltage, then
+  current. The current has no sign: the arrow and the colour show the
+  direction. This leaves room for 3-digit currents ("↓ 125.5 A" fits).
+- **Right column, cells (90 dp):** five small pills, 20 dp high: average
+  cell voltage, cell delta, highest sensor temperature, lowest sensor
+  temperature, MOSFET temperature.
+- All pills show numbers only (no text labels).
 
 ## Data
 
@@ -41,9 +50,9 @@ Entity names use the ESPHome JK-BMS naming with a user prefix, for example
 |---|---|---|
 | SOC | `sensor.<p>_state_of_charge` | |
 | kWh left | computed | Ah left × total voltage / 1000 |
-| Ah left | `sensor.<p>_capacity_remaining` | |
+| Ah left | `sensor.<p>_capacity_remaining` | Not shown; input for kWh and time left |
 | Voltage | `sensor.<p>_total_voltage` | |
-| Current | `sensor.<p>_current` | The sign gives the state: < 0 discharging, > 0 charging, 0 idle (likely; check on the real BMS) |
+| Current | `sensor.<p>_current` | The sign gives the state: < 0 discharging, > 0 charging, 0 idle (likely; check on the real BMS). Shown without the sign, with an arrow |
 | Time left | computed | Discharging: Ah left / \|I\|. Charging: (full − Ah left) / I. "—" when idle |
 | MOSFET temp. | `sensor.<p>_mosfet_temperature` | |
 | Highest / lowest temp. | computed | Max / min over the available `sensor.<p>_temperature_sensor_1…N` |
@@ -75,7 +84,8 @@ These are the groups for the widget font-size settings (spec 0002):
 |---|---|
 | SOC number | 44 sp |
 | kWh under SOC | 13 sp |
-| Pill values | 14 sp |
+| Main values (voltage, current) | 22 sp |
+| Cell pill values | 14 sp |
 | Small text (SOC label, time left, update time) | 10.5 sp |
 
 ## Notes for the build

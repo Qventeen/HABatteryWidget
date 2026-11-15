@@ -43,10 +43,13 @@
   .ring .kwh { font-size: 13px; font-weight: 500; }
 
   .cols { flex-grow: 1; min-width: 0; display: flex; gap: 6px; }
-  .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
-  .pill { height: 25px; box-sizing: border-box; border-radius: 12.5px; padding: 0 8px; display: flex;
+  .col { min-width: 0; display: flex; flex-direction: column; }
+  .col.main { flex: 1 1 0; gap: 6px; }                             /* pack: voltage, current */
+  .col.cells { flex: 0 0 90px; justify-content: space-between; }   /* cell details */
+  .pill { height: 20px; box-sizing: border-box; border-radius: 10px; padding: 0 8px; display: flex;
           align-items: center; justify-content: center; gap: 2px; font-size: 14px; font-weight: 500;
           white-space: nowrap; overflow: hidden; background: var(--tile); color: var(--text); }
+  .pill.big { flex: 1 1 0; height: auto; border-radius: 26.5px; padding: 0 6px; gap: 4px; font-size: 22px; }
   .pill.ok { background: var(--ok-bg); color: var(--accent); }
   .pill.warn { background: var(--warn-bg); color: var(--warn); }
   .pill.bad { background: var(--bad-bg); color: var(--bad); }
@@ -83,7 +86,6 @@
   ];
   const CAPACITY_AH = 314;
   const R = 51, CIRC = 2 * Math.PI * R;
-  const minus = (n, digits) => (n < 0 ? '−' : n > 0 ? '+' : '') + Math.abs(n).toFixed(digits);
 
   function widget(v) {
     const ah = CAPACITY_AH * v.soc / 100;
@@ -95,7 +97,7 @@
     const ring = v.soc < 15 ? 'var(--bad)' : v.soc < 25 ? 'var(--warn-ring)' : 'var(--bar)';
     const curTone = state === 'down' ? 'warn' : state === 'up' ? 'ok' : 'idle';
     const deltaTone = v.deltaMv > 40 ? 'bad' : v.deltaMv > 15 ? 'warn' : '';
-    const arrow = state === 'idle' ? '' : svg(ICON[state], 13, state === 'down' ? 'Discharging' : 'Charging', 'stroke-width="2.6"');
+    const arrow = state === 'idle' ? '' : svg(ICON[state], 16, state === 'down' ? 'Discharging' : 'Charging', 'stroke-width="2.6"');
     const c = (n) => (n < 0 ? '−' + Math.abs(n) : n) + ' °C';
 
     return `
@@ -127,17 +129,16 @@
               </div>
             </div>
             <div class="cols">
-              <div class="col">
-                <div class="pill">${v.volts.toFixed(2)} V</div>
-                <div class="pill ${curTone}">${arrow}${minus(v.amps, 1)} A</div>
-                <div class="pill">${ah.toFixed(1)} Ah</div>
-                <div class="pill" style="gap: 3px">${svg(ICON.chip, 13, 'MOSFET temperature')}${c(v.mos)}</div>
+              <div class="col main">
+                <div class="pill big">${v.volts.toFixed(2)} V</div>
+                <div class="pill big ${curTone}">${arrow}${Math.abs(v.amps).toFixed(1)} A</div>
               </div>
-              <div class="col">
+              <div class="col cells">
                 <div class="pill">${v.cellV.toFixed(3)} V</div>
                 <div class="pill ${deltaTone}">Δ ${v.deltaMv} mV</div>
                 <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.up, 10, 'Highest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMax)}</div>
                 <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.down, 10, 'Lowest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMin)}</div>
+                <div class="pill" style="gap: 3px">${svg(ICON.chip, 13, 'MOSFET temperature')}${c(v.mos)}</div>
               </div>
             </div>
           </div>
