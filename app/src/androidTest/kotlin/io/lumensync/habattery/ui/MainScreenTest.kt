@@ -1,6 +1,9 @@
 package io.lumensync.habattery.ui
 
+import android.os.Build
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
@@ -9,20 +12,27 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.filters.SdkSuppress
 import io.lumensync.habattery.App
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
 import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
 import io.lumensync.habattery.ui.sections.CONNECTION_SECTION_TAG
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
@@ -144,6 +154,59 @@ class MainScreenTest {
     compose.onNodeWithText(summary).assertExists()
     // Leave the stored choice as a fresh install has it.
     compose.onNodeWithText(text(R.string.widget_choice_kwh)).performScrollTo().performClick()
+  }
+
+  /** Brightness of a pixel at the left edge, half way down: the screen's background. */
+  private fun backgroundLuminance(): Float {
+    val pixels = compose.onRoot().captureToImage().toPixelMap()
+    return pixels[2, pixels.height / 2].luminance()
+  }
+
+  @Test
+  fun themeSwitch_changesTheAppColours() {
+    waitForContent()
+    compose.onNodeWithText(text(R.string.appearance_title)).performScrollTo().performClick()
+
+    compose.onNodeWithText(text(R.string.appearance_theme_dark)).performScrollTo().performClick()
+    compose.waitForIdle()
+    assertTrue(backgroundLuminance() < 0.3f)
+
+    compose.onNodeWithText(text(R.string.appearance_theme_light)).performScrollTo().performClick()
+    compose.waitForIdle()
+    assertTrue(backgroundLuminance() > 0.7f)
+
+    // Leave the stored choice as a fresh install has it.
+    // The theme row comes first; the language row (Android 13+) has a System button too.
+    compose.onAllNodesWithText(text(R.string.appearance_system))[0].performScrollTo().performClick()
+  }
+
+  @Test
+  fun languageRow_existsOnlyFromAndroid13() {
+    waitForContent()
+    compose.onNodeWithText(text(R.string.appearance_title)).performScrollTo().performClick()
+    compose.waitForIdle()
+
+    val row = compose.onNodeWithTag(LANGUAGE_ROW_TAG)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      row.performScrollTo().assertIsDisplayed()
+    } else {
+      row.assertDoesNotExist()
+    }
+  }
+
+  @Test
+  @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+  fun languageSwitch_setsTheAppLanguage() {
+    waitForContent()
+    val language = ApplicationProvider.getApplicationContext<App>().container.appLanguage
+    compose.onNodeWithText(text(R.string.appearance_title)).performScrollTo().performClick()
+    try {
+      compose.onNodeWithText(text(R.string.appearance_language_ukrainian)).performScrollTo().performClick()
+      compose.waitUntil(LOAD_TIMEOUT_MS) { language.current() == LanguageChoice.UKRAINIAN }
+    } finally {
+      // The language lives in the system, not in the saved settings: put it back.
+      language.set(LanguageChoice.SYSTEM)
+    }
   }
 
   private fun saveConnection() {

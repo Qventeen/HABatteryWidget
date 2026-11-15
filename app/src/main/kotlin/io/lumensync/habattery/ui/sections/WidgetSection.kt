@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,28 +58,6 @@ fun WidgetSection(
     }
     OutlinedButton(onClick = { onSaveFontSizes(FontSizes()) }) {
       Text(stringResource(R.string.widget_reset_sizes))
-    }
-  }
-}
-
-@Composable
-private fun <T> ChoiceRow(
-  @StringRes title: Int,
-  options: List<T>,
-  selected: T,
-  label: (T) -> Int,
-  onSelect: (T) -> Unit,
-) {
-  Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
-  SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-    options.forEachIndexed { index, option ->
-      SegmentedButton(
-        selected = option == selected,
-        onClick = { onSelect(option) },
-        shape = SegmentedButtonDefaults.itemShape(index, options.size),
-      ) {
-        Text(stringResource(label(option)))
-      }
     }
   }
 }

@@ -99,6 +99,20 @@
     <string name="capacity_label">Ємність батареї (А·год)</string>
     <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
 
+    <string name="appearance_title">Вигляд</string>
+    <string name="appearance_theme">Тема</string>
+    <string name="appearance_language">Мова</string>
+    <string name="appearance_system">Системна</string>
+    <string name="appearance_theme_light">Світла</string>
+    <string name="appearance_theme_dark">Темна</string>
+    <string name="appearance_language_english">English</string>
+    <string name="appearance_language_ukrainian">Українська</string>
+    <string name="appearance_summary_theme_system">Системна тема</string>
+    <string name="appearance_summary_theme_light">Світла тема</string>
+    <string name="appearance_summary_theme_dark">Темна тема</string>
+    <string name="appearance_summary_language_system">Мова системи</string>
+    <string name="appearance_summary">%1$s · %2$s</string>
+
     <string name="widget_settings_title">Віджет</string>
     <string name="widget_under_soc">Під SOC</string>
     <string name="widget_choice_kwh">кВт·год</string>

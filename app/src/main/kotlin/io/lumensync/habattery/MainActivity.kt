@@ -13,11 +13,15 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.system.AppLanguage
 import io.lumensync.habattery.ui.MainActions
 import io.lumensync.habattery.ui.MainScreen
 import io.lumensync.habattery.ui.MainViewModel
@@ -45,12 +49,17 @@ class MainActivity : ComponentActivity() {
     }
   }
 
+  /** The language choice shown; null where the system has no per-app language (before Android 13). */
+  private var language by mutableStateOf<LanguageChoice?>(null)
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge() // first frame: the system's mode; the effect below applies the chosen theme
     super.onCreate(savedInstanceState)
     confirmWidgetPlacement()
+    val appLanguage = application.container.appLanguage
+    language = if (appLanguage.supported) appLanguage.current() else null
     viewModel.languageShown(resources.configuration.locales[0].toLanguageTag())
-    val actions = mainActions()
+    val actions = mainActions(appLanguage)
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
       val dark = state.settings.appearance.theme.isDark(isSystemInDarkTheme())
@@ -62,7 +71,7 @@ class MainActivity : ComponentActivity() {
         )
         onDispose {}
       }
-      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions) }
+      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language) }
     }
   }
 
@@ -78,7 +87,7 @@ class MainActivity : ComponentActivity() {
     }
   }
 
-  private fun mainActions() =
+  private fun mainActions(appLanguage: AppLanguage) =
     MainActions(
       refreshNow = viewModel::refreshNow,
       toggleAutoRefresh = viewModel::toggleAutoRefresh,
@@ -92,6 +101,11 @@ class MainActivity : ComponentActivity() {
       saveDisplay = viewModel::saveDisplay,
       saveFontSizes = viewModel::saveFontSizes,
       saveAppearance = viewModel::saveAppearance,
+      setLanguage = {
+        language = it
+        // The system recreates the activity if the language changed; onCreate then redraws the widgets.
+        appLanguage.set(it)
+      },
       requestPinWidget = {
         lifecycleScope.launch {
           GlanceAppWidgetManager(this@MainActivity)

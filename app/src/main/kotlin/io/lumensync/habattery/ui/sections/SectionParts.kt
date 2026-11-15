@@ -16,6 +16,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -150,3 +153,27 @@ internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolea
 /** The error the last save reported for [field] (and [index] for one list item), if any. */
 internal fun List<FieldError>.errorFor(field: Field, index: Int? = null): FieldError? =
   firstOrNull { it.field == field && it.index == index }
+
+/** A titled row of segmented buttons; one is selected. */
+@Composable
+internal fun <T> ChoiceRow(
+  @StringRes title: Int,
+  options: List<T>,
+  selected: T,
+  label: (T) -> Int,
+  modifier: Modifier = Modifier,
+  onSelect: (T) -> Unit,
+) {
+  Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
+  SingleChoiceSegmentedButtonRow(modifier.fillMaxWidth()) {
+    options.forEachIndexed { index, option ->
+      SegmentedButton(
+        selected = option == selected,
+        onClick = { onSelect(option) },
+        shape = SegmentedButtonDefaults.itemShape(index, options.size),
+      ) {
+        Text(stringResource(label(option)))
+      }
+    }
+  }
+}
