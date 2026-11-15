@@ -4,6 +4,7 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
+import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
@@ -68,7 +69,8 @@ class MainViewModelTest {
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
-    val vm = MainViewModel(settings, tokens, cache, sync, scheduler, widgets, clock = { 1_000L })
+    val toggle = ToggleAutoRefresh(settings, scheduler, widgets)
+    val vm = MainViewModel(settings, tokens, cache, sync, toggle, scheduler, widgets, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
     return vm
   }

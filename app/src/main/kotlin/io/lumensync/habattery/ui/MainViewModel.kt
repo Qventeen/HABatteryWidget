@@ -38,6 +38,7 @@ class MainViewModel(
   private val tokens: TokenStore,
   cache: ReadingCache,
   private val sync: SyncBattery,
+  private val toggleAuto: ToggleAutoRefresh,
   private val scheduler: SyncScheduler,
   private val widgets: WidgetRefresher,
   private val clock: () -> Long = System::currentTimeMillis,
@@ -46,8 +47,6 @@ class MainViewModel(
   private data class Local(val running: Int = 0, val errors: List<FieldError> = emptyList())
 
   private val local = MutableStateFlow(Local())
-
-  private val toggleAuto = ToggleAutoRefresh(settings, scheduler, widgets)
 
   val uiState: StateFlow<MainUiState> =
     combine(settings.settings, tokens.hasToken, cache.state, local) { s, hasToken, c, l ->

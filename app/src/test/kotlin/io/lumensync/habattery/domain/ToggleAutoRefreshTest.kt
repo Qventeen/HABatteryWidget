@@ -5,7 +5,11 @@ import io.lumensync.habattery.testing.FakeSettingsRepository
 import io.lumensync.habattery.testing.FakeSyncScheduler
 import io.lumensync.habattery.testing.FakeWidgetRefresher
 import io.lumensync.habattery.testing.configuredSettings
+import io.lumensync.habattery.domain.port.WidgetRefresher
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -36,6 +40,29 @@ class ToggleAutoRefreshTest {
     assertEquals(listOf(stored to true), scheduler.applied)
     assertEquals(1, scheduler.syncNowCalls)
     assertTrue(widgets.refreshes >= 1)
+  }
+
+  @Test
+  fun `a double tap ends with the schedule matching the stored setting`() = runTest {
+    val settings = FakeSettingsRepository(configuredSettings().copy(refresh = RefreshSettings(false, 30)))
+    val scheduler = FakeSyncScheduler()
+    var redraws = 0
+    // The first redraw is slow, so the second tap overtakes the first one without serializing.
+    val slowFirst =
+      object : WidgetRefresher {
+        override suspend fun refreshAll() {
+          if (redraws++ == 0) repeat(3) { yield() }
+        }
+      }
+    val toggle = ToggleAutoRefresh(settings, scheduler, slowFirst)
+
+    coroutineScope {
+      launch { toggle() }
+      launch { toggle() }
+    }
+
+    assertEquals(RefreshSettings(false, 30), settings.settings.value.refresh)
+    assertEquals(settings.settings.value.refresh, scheduler.applied.last().first.refresh)
   }
 
   @Test

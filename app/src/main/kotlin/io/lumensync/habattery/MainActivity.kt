@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
           tokens = c.tokenStore,
           cache = c.readingCache,
           sync = c.syncBattery,
+          toggleAuto = c.toggleAutoRefresh,
           scheduler = c.syncScheduler,
           widgets = c.widgetRefresher,
         )
