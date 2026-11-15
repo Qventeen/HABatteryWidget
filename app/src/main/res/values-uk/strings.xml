@@ -32,13 +32,12 @@
     <string name="refresh_mode_manual">вручну</string>
 
     <string name="widget_name">Батарея HA</string>
-    <string name="widget_description">Заряд, потужність, струм, напруга, залишок часу та комірки з Home Assistant</string>
+    <string name="widget_description">Заряд, потужність, струм, напруга та залишок часу з Home Assistant</string>
     <string name="widget_refreshing">Оновлення…</string>
     <string name="widget_no_data">Немає даних від Home Assistant</string>
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
     <string name="widget_updated_at">Оновлено %1$s</string>
     <string name="widget_refresh_action">Оновити</string>
-    <string name="cell_label">%1$d</string>
     <string name="delta_label">Δ %1$s</string>
 
     <string name="notification_channel_full">Повний заряд</string>
@@ -63,13 +62,8 @@
     <string name="entities_title">Сутності</string>
     <string name="entity_charge">Заряд (обов’язково)</string>
     <string name="entity_power">Потужність</string>
-    <string name="entity_fallback_power">Резервна потужність</string>
     <string name="entity_current">Струм</string>
     <string name="entity_total_voltage">Загальна напруга</string>
-    <string name="entity_cells">Напруги комірок</string>
-    <string name="entity_cell">Комірка %1$d</string>
-    <string name="entity_cell_add">Додати комірку</string>
-    <string name="entity_cell_remove">Видалити комірку %1$d</string>
 
     <string name="refresh_title">Автооновлення</string>
     <string name="refresh_auto">Оновлювати у фоновому режимі</string>
@@ -90,7 +84,6 @@
     <string name="field_url_insecure">Використовуйте https://. Незахищений http:// працює лише в локальній мережі.</string>
     <string name="field_token_not_saved">Не вдалося зберегти токен. Спробуйте ще раз.</string>
     <string name="field_entity_invalid">Введіть ID сутності, наприклад sensor.battery_soc</string>
-    <string name="field_cells_too_many">Максимальна кількість комірок: %1$d</string>
     <string name="field_interval_invalid">Введіть ціле число хвилин</string>
     <string name="field_capacity_invalid">Введіть число</string>
     <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>

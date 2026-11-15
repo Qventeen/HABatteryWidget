@@ -1,7 +1,6 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.Field.CAPACITY
-import io.lumensync.habattery.domain.Field.CELLS
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.FALLBACK_URL
 import io.lumensync.habattery.domain.Field.INTERVAL
@@ -11,7 +10,6 @@ import io.lumensync.habattery.domain.Problem.INSECURE
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
 import io.lumensync.habattery.domain.Problem.REQUIRED
-import io.lumensync.habattery.domain.Problem.TOO_MANY
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -48,28 +46,12 @@ class ValidationTest {
     assertEquals(listOf(FieldError(CHARGE, REQUIRED)), Validation.entities(EntitySettings()))
 
   @Test
-  fun entities_badIdsAndCells() =
+  fun entities_badIds() =
     assertEquals(
-      listOf(FieldError(POWER, INVALID), FieldError(CELLS, INVALID, 1), FieldError(CELLS, REQUIRED, 2)),
+      listOf(FieldError(POWER, INVALID), FieldError(Field.TOTAL_VOLTAGE, INVALID)),
       Validation.entities(
-        EntitySettings(
-          charge = "sensor.soc",
-          power = "bad id",
-          cells = listOf("sensor.c1", "sensor c2", ""),
-        )
+        EntitySettings(charge = "sensor.soc", power = "bad id", totalVoltage = "sensor v")
       ),
-    )
-
-  @Test
-  fun entities_tooManyCells() =
-    assertTrue(
-      FieldError(CELLS, TOO_MANY) in
-        Validation.entities(
-          EntitySettings(
-            charge = "sensor.soc",
-            cells = List(EntitySettings.MAX_CELLS + 1) { "sensor.c$it" },
-          )
-        )
     )
 
   @Test

@@ -45,8 +45,6 @@ class FormattersTest {
         assertEquals("2 kW", f.power(2000.0))
         assertEquals("26.46 V", f.voltage(26.456))
         assertEquals("-12.3 A", f.current(-12.34))
-        assertEquals("3.300", f.cellVoltage(3.3))
-        assertEquals("—", f.cellVoltage(null))
         assertEquals("55%", f.chargePercent(54.6))
         assertEquals("12 mV", f.deltaMv(12))
     }

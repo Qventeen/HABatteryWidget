@@ -3,6 +3,7 @@ package io.lumensync.habattery.data.settings
 import io.lumensync.habattery.data.store.JsonSerializer
 import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.jsonDataStore
+import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.Settings
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,7 +38,7 @@ class DataStoreSettingsRepositoryTest {
     val s = repo().settings.first()
     assertEquals(Settings(), s)
     assertEquals("", s.connection.primaryUrl)
-    assertTrue(s.entities.cells.isEmpty())
+    assertEquals(EntitySettings(), s.entities)
     assertFalse(s.refresh.auto)
     assertNull(s.refresh.intervalMinutes)
     assertNull(s.capacityAh)

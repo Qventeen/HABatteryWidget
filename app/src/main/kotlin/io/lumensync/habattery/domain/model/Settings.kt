@@ -18,15 +18,9 @@ data class ConnectionSettings(val primaryUrl: String = "", val fallbackUrl: Stri
 data class EntitySettings(
   val charge: String = "",
   val power: String = "",
-  val fallbackPower: String = "",
   val current: String = "",
   val totalVoltage: String = "",
-  val cells: List<String> = emptyList(),
-) {
-  companion object {
-    const val MAX_CELLS = 32
-  }
-}
+)
 
 @Serializable
 data class RefreshSettings(val auto: Boolean = false, val intervalMinutes: Int? = null) {

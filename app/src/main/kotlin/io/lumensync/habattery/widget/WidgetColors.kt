@@ -12,14 +12,8 @@ object WidgetColors {
   val secondaryText = ColorProvider(day = Color(0xFF5F6368), night = Color(0xFFA0A4AB))
   /** A control that is busy, such as ↻ during a sync. */
   val dimmedText = ColorProvider(day = Color(0xFFB4B8BE), night = Color(0xFF5F636A))
-  val divider = ColorProvider(day = Color(0xFFEAECEF), night = Color(0xFF2C2C30))
   val chipBackground = ColorProvider(day = Color(0xFFEEF1F4), night = Color(0xFF2C2E33))
-  val cellTileBackground = ColorProvider(day = Color(0xFFF5F7F9), night = Color(0xFF25262B))
-  val cellBadgeBackground = ColorProvider(day = Color(0xFF0E5A6D), night = Color(0xFF14748A))
-  val cellBadgeText = ColorProvider(day = Color.White, night = Color.White)
   val progressTrack = ColorProvider(day = Color(0xFFE5E7EB), night = Color(0xFF32343A))
-  val minCell = ColorProvider(day = Color(0xFFD32F2F), night = Color(0xFFFF6B6B))
-  val maxCell = ColorProvider(day = Color(0xFF1976D2), night = Color(0xFF64B5F6))
 
   private val green = ColorProvider(day = Color(0xFF4CAF50), night = Color(0xFF4CAF50))
   private val amber = ColorProvider(day = Color(0xFFFB8C00), night = Color(0xFFFFB74D))

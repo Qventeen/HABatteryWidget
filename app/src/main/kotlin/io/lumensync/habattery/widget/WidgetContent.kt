@@ -44,15 +44,14 @@ fun WidgetContent(overview: BatteryOverview, refreshAction: Action, openAppActio
   val formatters = remember(context) { Formatters(context) }
   val size = LocalSize.current
   val reading = overview.reading
-  val spec = WidgetLayoutSpec.fromSize(size.height.value, reading?.cellVoltagesV?.size ?: 0)
+  val spec = WidgetLayoutSpec.fromSize(size.height.value)
   val dimens = WidgetDimens.of(spec.tier, narrow = size.width < WidgetDimens.NARROW_WIDTH)
-  val showsCells = !overview.setupNeeded && reading != null && spec.showCells
 
-  WidgetCard(dimens, openAppAction, centered = !showsCells) {
+  WidgetCard(dimens, openAppAction) {
     when {
       overview.setupNeeded -> SetupContent()
       reading == null -> NoDataContent(overview, formatters, dimens, refreshAction)
-      else -> ReadingContent(overview, reading, spec, dimens, formatters, refreshAction)
+      else -> ReadingContent(overview, reading, dimens, formatters, refreshAction)
     }
   }
 }
@@ -61,7 +60,6 @@ fun WidgetContent(overview: BatteryOverview, refreshAction: Action, openAppActio
 private fun WidgetCard(
   dimens: WidgetDimens,
   openAppAction: Action,
-  centered: Boolean,
   content: @Composable ColumnScope.() -> Unit,
 ) {
   Box(
@@ -74,7 +72,7 @@ private fun WidgetCard(
           .innerCorners()
           .clickable(openAppAction)
           .padding(horizontal = dimens.padH, vertical = dimens.padV),
-      verticalAlignment = if (centered) Alignment.CenterVertically else Alignment.Top,
+      verticalAlignment = Alignment.CenterVertically,
       content = content,
     )
   }
@@ -126,7 +124,6 @@ private fun NoDataContent(
 private fun ColumnScope.ReadingContent(
   overview: BatteryOverview,
   reading: BatteryReading,
-  spec: WidgetLayoutSpec,
   dimens: WidgetDimens,
   formatters: Formatters,
   refreshAction: Action,
@@ -159,11 +156,6 @@ private fun ColumnScope.ReadingContent(
     backgroundColor = WidgetColors.progressTrack,
   )
 
-  if (spec.showCells) {
-    Spacer(GlanceModifier.height(dimens.sectionTop))
-    Box(GlanceModifier.fillMaxWidth().height(1.dp).background(WidgetColors.divider)) {}
-  }
-
   Row(
     modifier = GlanceModifier.fillMaxWidth().padding(vertical = dimens.infoPadV),
     verticalAlignment = Alignment.CenterVertically,
@@ -180,29 +172,18 @@ private fun ColumnScope.ReadingContent(
         ),
       maxLines = 1,
     )
-    overview.cellStats?.let { stats ->
+    BatteryMath.deltaMv(reading)?.let { deltaMv ->
       Text(
-        text = context.getString(R.string.delta_label, formatters.deltaMv(stats.deltaMv)),
+        text = context.getString(R.string.delta_label, formatters.deltaMv(deltaMv)),
         style =
           TextStyle(
-            color = WidgetColors.level(WidgetLevels.delta(stats.deltaMv)),
+            color = WidgetColors.level(WidgetLevels.delta(deltaMv)),
             fontSize = dimens.smallText,
             fontWeight = FontWeight.Bold,
           ),
         maxLines = 1,
       )
     }
-  }
-
-  if (spec.showCells) {
-    CellGrid(
-      cells = reading.cellVoltagesV,
-      stats = overview.cellStats,
-      spec = spec,
-      dimens = dimens,
-      formatters = formatters,
-      modifier = GlanceModifier.defaultWeight(),
-    )
   }
 
   overview.error?.let { error ->

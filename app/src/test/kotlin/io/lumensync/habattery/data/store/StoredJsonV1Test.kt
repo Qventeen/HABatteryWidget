@@ -40,10 +40,8 @@ class StoredJsonV1Test {
           "entities": {
             "charge": "sensor.soc",
             "power": "sensor.power",
-            "fallbackPower": "sensor.power_alt",
             "current": "sensor.current",
-            "totalVoltage": "sensor.voltage",
-            "cells": ["sensor.cell_1", "sensor.cell_2"]
+            "totalVoltage": "sensor.voltage"
           },
           "refresh": { "auto": true, "intervalMinutes": 30 },
           "notifyOnFull": true,
@@ -66,10 +64,8 @@ class StoredJsonV1Test {
               EntitySettings(
                 charge = "sensor.soc",
                 power = "sensor.power",
-                fallbackPower = "sensor.power_alt",
                 current = "sensor.current",
                 totalVoltage = "sensor.voltage",
-                cells = listOf("sensor.cell_1", "sensor.cell_2"),
               ),
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
             notifyOnFull = true,
@@ -77,6 +73,22 @@ class StoredJsonV1Test {
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun removedKeys_areIgnoredOnRead() {
+    val settings =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"entities":{"charge":"sensor.soc","fallbackPower":"sensor.alt","cells":["sensor.c1"]}}}""",
+      )
+    assertEquals(EntitySettings(charge = "sensor.soc"), settings.settings.entities)
+    val cache =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """{"schemaVersion":1,"state":{"reading":{"chargePercent":50.0,"cellVoltagesV":[3.3],"updatedAtMillis":1}}}""",
+      )
+    assertEquals(BatteryReading(chargePercent = 50.0, updatedAtMillis = 1), cache.state.reading)
   }
 
   @Test
@@ -91,7 +103,6 @@ class StoredJsonV1Test {
             "powerW": -207.0,
             "currentA": -7.8,
             "totalVoltageV": 26.5,
-            "cellVoltagesV": [3.301, null, 3.305],
             "capacityRemainingAh": 170.5,
             "averageCellVoltageV": 3.303,
             "deltaCellVoltageV": 0.004,
@@ -118,7 +129,6 @@ class StoredJsonV1Test {
                 powerW = -207.0,
                 currentA = -7.8,
                 totalVoltageV = 26.5,
-                cellVoltagesV = listOf(3.301, null, 3.305),
                 capacityRemainingAh = 170.5,
                 averageCellVoltageV = 3.303,
                 deltaCellVoltageV = 0.004,

@@ -10,7 +10,6 @@ internal data class TemplateResponse(
   val power: Double? = null,
   val current: Double? = null,
   @SerialName("total_v") val totalV: Double? = null,
-  val cells: List<Double?> = emptyList(),
 ) {
   /** Returns null when charge is missing or not finite. Other non-finite values become null. */
   fun toReading(nowMillis: Long): BatteryReading? {
@@ -20,7 +19,6 @@ internal data class TemplateResponse(
       powerW = power.finiteOrNull(),
       currentA = current.finiteOrNull(),
       totalVoltageV = totalV.finiteOrNull(),
-      cellVoltagesV = cells.map { it.finiteOrNull() },
       updatedAtMillis = nowMillis,
     )
   }

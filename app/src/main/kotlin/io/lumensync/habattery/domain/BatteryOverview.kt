@@ -3,7 +3,6 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.BatteryState
 import io.lumensync.habattery.domain.model.CacheState
-import io.lumensync.habattery.domain.model.CellStats
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
@@ -14,7 +13,6 @@ data class BatteryOverview(
   val setupNeeded: Boolean,
   val reading: BatteryReading?,
   val state: BatteryState?,
-  val cellStats: CellStats?,
   val timeRemaining: TimeRemaining?,
   val error: SyncError?,
   val refreshing: Boolean,
@@ -35,7 +33,6 @@ data class BatteryOverview(
         setupNeeded = !Validation.isConfigured(settings, hasToken),
         reading = reading,
         state = reading?.let { BatteryMath.state(it.chargePercent, it.currentA) },
-        cellStats = reading?.let { BatteryMath.cellStats(it.cellVoltagesV) },
         timeRemaining = reading?.let { BatteryMath.timeRemaining(it, settings.capacityAh) },
         error = cache.error,
         refreshing = since != null && nowMillis - since in 0 until REFRESHING_LIMIT_MS,

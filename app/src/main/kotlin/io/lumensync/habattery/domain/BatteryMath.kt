@@ -2,7 +2,6 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.BatteryState
-import io.lumensync.habattery.domain.model.CellStats
 import io.lumensync.habattery.domain.model.Direction
 import io.lumensync.habattery.domain.model.TimeRemaining
 import kotlin.math.abs
@@ -27,18 +26,6 @@ object BatteryMath {
 
   fun deltaMv(reading: BatteryReading): Int? =
     reading.deltaCellVoltageV?.let { (it * 1000).roundToInt() }
-
-  fun cellStats(cells: List<Double?>): CellStats? {
-    val present = cells.withIndex().filter { it.value != null }
-    if (present.size < 2) return null
-    val min = present.minBy { it.value!! }
-    val max = present.maxBy { it.value!! }
-    return CellStats(
-      minIndex = min.index + 1,
-      maxIndex = max.index + 1,
-      deltaMv = ((max.value!! - min.value!!) * 1000).roundToInt(),
-    )
-  }
 
   fun timeRemaining(reading: BatteryReading, capacityAh: Double?): TimeRemaining? {
     val direction =

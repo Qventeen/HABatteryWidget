@@ -2,7 +2,7 @@
 
 An Android home-screen widget (Jetpack Glance) and a settings screen. They show
 a JK-BMS battery read from Home Assistant (HA): charge, power, current, total
-voltage and cell voltages. The app calls `POST {baseUrl}/api/template` with a
+voltage. The app calls `POST {baseUrl}/api/template` with a
 long-lived HA token. The widget draws from the local cache only.
 
 ## Requirements

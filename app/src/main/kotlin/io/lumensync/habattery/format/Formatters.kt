@@ -49,9 +49,6 @@ class Formatters(private val context: Context) {
     fun current(amps: Double): String =
         context.getString(R.string.unit_amps, number(amps, 1, 1))
 
-    fun cellVoltage(volts: Double?): String =
-        if (volts == null) context.getString(R.string.value_missing) else number(volts, 3, 3)
-
     fun deltaMv(mv: Int): String = context.getString(R.string.unit_millivolts, number(mv.toDouble(), 0, 0))
 
     fun chargePercent(percent: Double): String =

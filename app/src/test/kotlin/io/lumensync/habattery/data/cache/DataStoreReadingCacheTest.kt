@@ -57,20 +57,20 @@ class DataStoreReadingCacheTest {
   }
 
   @Test
-  fun readingRoundTripsWithNullCells() = runTest {
+  fun readingRoundTripsWithNullTemperature() = runTest {
     val reading =
       BatteryReading(
         chargePercent = 87.5,
         powerW = -120.0,
-        cellVoltagesV = listOf(3.3, null),
+        temperaturesC = listOf(24.0, null),
         updatedAtMillis = 1_700_000_000_000L,
       )
     val reopened = writeThenReopen { c -> c.update { it.copy(reading = reading) } }
     val read = reopened.state.first().reading
     assertEquals(reading, read)
     assertEquals(87.5, read!!.chargePercent, 0.0)
-    assertEquals(listOf(3.3, null), read.cellVoltagesV)
-    assertNull(read.cellVoltagesV[1])
+    assertEquals(listOf(24.0, null), read.temperaturesC)
+    assertNull(read.temperaturesC[1])
     assertEquals(1_700_000_000_000L, read.updatedAtMillis)
   }
 }

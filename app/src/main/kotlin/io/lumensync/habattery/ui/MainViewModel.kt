@@ -97,10 +97,8 @@ class MainViewModel(
       entities.copy(
         charge = entities.charge.trim(),
         power = entities.power.trim(),
-        fallbackPower = entities.fallbackPower.trim(),
         current = entities.current.trim(),
         totalVoltage = entities.totalVoltage.trim(),
-        cells = entities.cells.map { it.trim() },
       )
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }

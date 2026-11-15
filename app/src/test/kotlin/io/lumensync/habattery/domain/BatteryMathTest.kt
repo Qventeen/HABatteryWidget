@@ -2,7 +2,6 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.BatteryState
-import io.lumensync.habattery.domain.model.CellStats
 import io.lumensync.habattery.domain.model.Direction
 import io.lumensync.habattery.domain.model.TimeRemaining
 import kotlin.time.Duration.Companion.minutes
@@ -43,16 +42,6 @@ class BatteryMathTest {
     assertEquals(BatteryState.FULL, BatteryMath.state(100.0, -0.1))
     assertEquals(BatteryState.FULL, BatteryMath.state(100.0, 5.0))
     assertEquals(BatteryState.DISCHARGING, BatteryMath.state(100.0, -0.2))
-  }
-
-  @Test
-  fun cellStats_rules() {
-    assertEquals(CellStats(1, 2, 10), BatteryMath.cellStats(listOf(3.300, 3.310, 3.305)))
-    assertEquals(CellStats(1, 3, 20), BatteryMath.cellStats(listOf(3.30, null, 3.32)))
-    assertEquals(CellStats(1, 1, 0), BatteryMath.cellStats(listOf(3.3, 3.3)))
-    assertNull(BatteryMath.cellStats(listOf(3.3)))
-    assertNull(BatteryMath.cellStats(listOf(null, 3.3)))
-    assertNull(BatteryMath.cellStats(emptyList()))
   }
 
   @Test

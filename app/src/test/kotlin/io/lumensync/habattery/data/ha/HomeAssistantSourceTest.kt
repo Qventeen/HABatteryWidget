@@ -29,7 +29,7 @@ class HomeAssistantSourceTest {
   private val source = HomeAssistantSource(client) { 1234L }
   private val entities = EntitySettings(charge = "sensor.soc")
   private val okBody =
-    """{"soc":55.0,"power":-500.0,"current":-10.0,"total_v":26.5,"cells":[3.31,null,3.30]}"""
+    """{"soc":55.0,"power":-500.0,"current":-10.0,"total_v":26.5}"""
 
   @After fun tearDown() = servers.forEach { runCatching { it.close() } }
 
@@ -64,7 +64,7 @@ class HomeAssistantSourceTest {
     val s = server(reply(200, okBody))
     val result = fetch(s.base())
     assertEquals(
-      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, listOf(3.31, null, 3.30), updatedAtMillis = 1234L)),
+      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, updatedAtMillis = 1234L)),
       result,
     )
     val req = s.takeRequest()
@@ -137,13 +137,11 @@ class HomeAssistantSourceTest {
         power = Double.NaN,
         current = Double.POSITIVE_INFINITY,
         totalV = Double.NEGATIVE_INFINITY,
-        cells = listOf(3.3, Double.NaN),
       )
     val reading = r.toReading(1L)!!
     assertNull(reading.powerW)
     assertNull(reading.currentA)
     assertNull(reading.totalVoltageV)
-    assertEquals(listOf(3.3, null), reading.cellVoltagesV)
     assertNull(TemplateResponse(soc = Double.NaN).toReading(1L))
     assertNull(TemplateResponse(soc = Double.POSITIVE_INFINITY).toReading(1L))
   }

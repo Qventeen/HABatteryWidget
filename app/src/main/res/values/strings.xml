@@ -34,14 +34,13 @@
     <string name="refresh_mode_manual">manual</string>
 
     <string name="widget_name">HA battery</string>
-    <string name="widget_description">Charge, power, current, voltage, time left and cells from Home Assistant</string>
+    <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
     <string name="widget_refreshing">Refreshing…</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
     <string name="widget_updated_at">Updated %1$s</string>
     <string name="widget_refresh_symbol" translatable="false">↻</string>
     <string name="widget_refresh_action">Refresh</string>
-    <string name="cell_label">%1$d</string>
     <string name="delta_label">Δ %1$s</string>
 
     <string name="notification_channel_full">Full charge</string>
@@ -67,13 +66,8 @@
     <string name="entities_title">Entities</string>
     <string name="entity_charge">Charge (required)</string>
     <string name="entity_power">Power</string>
-    <string name="entity_fallback_power">Fallback power</string>
     <string name="entity_current">Current</string>
     <string name="entity_total_voltage">Total voltage</string>
-    <string name="entity_cells">Cell voltages</string>
-    <string name="entity_cell">Cell %1$d</string>
-    <string name="entity_cell_add">Add cell</string>
-    <string name="entity_cell_remove">Remove cell %1$d</string>
 
     <string name="refresh_title">Auto-refresh</string>
     <string name="refresh_auto">Refresh in the background</string>
@@ -95,7 +89,6 @@
     <string name="field_url_insecure">Use https://. Plain http:// works only on a local network.</string>
     <string name="field_token_not_saved">Could not save the token. Try again.</string>
     <string name="field_entity_invalid">Enter an entity ID, like sensor.battery_soc</string>
-    <string name="field_cells_too_many">Maximum number of cells: %1$d</string>
     <string name="field_interval_invalid">Enter a whole number of minutes</string>
     <string name="field_capacity_invalid">Enter a number</string>
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
@@ -105,6 +98,4 @@
     <string name="preview_voltage">26.56 V</string>
     <string name="preview_current">0.4 A</string>
     <string name="preview_delta">Δ 3 mV</string>
-    <string name="preview_cells_left" translatable="false">1   3.321\n2   3.320\n3   3.322\n4   3.319</string>
-    <string name="preview_cells_right" translatable="false">5   3.320\n6   3.321\n7   3.320\n8   3.321</string>
 </resources>

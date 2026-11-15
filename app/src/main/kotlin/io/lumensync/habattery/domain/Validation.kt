@@ -11,10 +11,8 @@ enum class Field {
   TOKEN,
   CHARGE,
   POWER,
-  FALLBACK_POWER,
   CURRENT,
   TOTAL_VOLTAGE,
-  CELLS,
   INTERVAL,
   CAPACITY,
 }
@@ -24,10 +22,9 @@ enum class Problem {
   INVALID,
   INSECURE,
   OUT_OF_RANGE,
-  TOO_MANY,
 }
 
-data class FieldError(val field: Field, val problem: Problem, val cellIndex: Int? = null)
+data class FieldError(val field: Field, val problem: Problem, val index: Int? = null)
 
 /** Pure validation of already-trimmed settings values. */
 object Validation {
@@ -40,22 +37,13 @@ object Validation {
       urlError(Field.FALLBACK_URL, c.fallbackUrl, required = false),
     )
 
-  fun entities(e: EntitySettings): List<FieldError> {
-    val errors =
-      listOfNotNull(
-        entityError(Field.CHARGE, e.charge, required = true),
-        entityError(Field.POWER, e.power, required = false),
-        entityError(Field.FALLBACK_POWER, e.fallbackPower, required = false),
-        entityError(Field.CURRENT, e.current, required = false),
-        entityError(Field.TOTAL_VOLTAGE, e.totalVoltage, required = false),
-      )
-    val cellErrors =
-      e.cells.mapIndexedNotNull { i, id -> entityError(Field.CELLS, id, required = true, i) }
-    val tooMany =
-      if (e.cells.size > EntitySettings.MAX_CELLS) listOf(FieldError(Field.CELLS, Problem.TOO_MANY))
-      else emptyList()
-    return errors + cellErrors + tooMany
-  }
+  fun entities(e: EntitySettings): List<FieldError> =
+    listOfNotNull(
+      entityError(Field.CHARGE, e.charge, required = true),
+      entityError(Field.POWER, e.power, required = false),
+      entityError(Field.CURRENT, e.current, required = false),
+      entityError(Field.TOTAL_VOLTAGE, e.totalVoltage, required = false),
+    )
 
   fun refresh(r: RefreshSettings): List<FieldError> {
     if (!r.auto) return emptyList()
@@ -84,15 +72,10 @@ object Validation {
         }
     }
 
-  private fun entityError(
-    field: Field,
-    id: String,
-    required: Boolean,
-    cellIndex: Int? = null,
-  ): FieldError? =
+  private fun entityError(field: Field, id: String, required: Boolean): FieldError? =
     when {
-      id.isBlank() -> if (required) FieldError(field, Problem.REQUIRED, cellIndex) else null
-      !ENTITY_ID.matches(id) -> FieldError(field, Problem.INVALID, cellIndex)
+      id.isBlank() -> if (required) FieldError(field, Problem.REQUIRED) else null
+      !ENTITY_ID.matches(id) -> FieldError(field, Problem.INVALID)
       else -> null
     }
 }

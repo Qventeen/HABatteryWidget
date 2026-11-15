@@ -104,6 +104,6 @@ internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolea
   }
 }
 
-/** The error the last save reported for [field] (and [cellIndex] for one cell), if any. */
-internal fun List<FieldError>.errorFor(field: Field, cellIndex: Int? = null): FieldError? =
-  firstOrNull { it.field == field && it.cellIndex == cellIndex }
+/** The error the last save reported for [field] (and [index] for one list item), if any. */
+internal fun List<FieldError>.errorFor(field: Field, index: Int? = null): FieldError? =
+  firstOrNull { it.field == field && it.index == index }

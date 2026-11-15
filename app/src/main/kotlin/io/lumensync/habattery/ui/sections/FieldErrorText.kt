@@ -8,7 +8,6 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.Validation
-import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
 
 /** The text shown under an input for a validation error. */
@@ -18,7 +17,6 @@ internal fun fieldErrorText(error: FieldError): String =
     Problem.REQUIRED -> stringResource(R.string.field_required)
     Problem.INVALID -> stringResource(invalidMessage(error.field))
     Problem.INSECURE -> stringResource(R.string.field_url_insecure)
-    Problem.TOO_MANY -> stringResource(R.string.field_cells_too_many, EntitySettings.MAX_CELLS)
     // Only the interval and the capacity have a range.
     Problem.OUT_OF_RANGE ->
       if (error.field == Field.INTERVAL) {
@@ -41,10 +39,8 @@ private fun invalidMessage(field: Field): Int =
     Field.TOKEN -> R.string.field_token_not_saved
     Field.CHARGE,
     Field.POWER,
-    Field.FALLBACK_POWER,
     Field.CURRENT,
-    Field.TOTAL_VOLTAGE,
-    Field.CELLS -> R.string.field_entity_invalid
+    Field.TOTAL_VOLTAGE -> R.string.field_entity_invalid
     Field.INTERVAL -> R.string.field_interval_invalid
     Field.CAPACITY -> R.string.field_capacity_invalid
   }

@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -22,7 +21,6 @@ import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryMath
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.model.BatteryReading
-import io.lumensync.habattery.domain.model.CellStats
 import io.lumensync.habattery.format.Formatters
 
 /** The same values as the widget, from the same [BatteryOverview], or the setup text. */
@@ -88,51 +86,12 @@ private fun ReadingDetails(
       style = MaterialTheme.typography.bodySmall,
       color = secondary,
     )
-    overview.cellStats?.let { stats ->
+    BatteryMath.deltaMv(reading)?.let { deltaMv ->
       Text(
-        stringResource(R.string.delta_label, formatters.deltaMv(stats.deltaMv)),
+        stringResource(R.string.delta_label, formatters.deltaMv(deltaMv)),
         style = MaterialTheme.typography.bodySmall,
         fontWeight = FontWeight.Bold,
       )
-    }
-  }
-  if (reading.cellVoltagesV.isNotEmpty()) {
-    CellGrid(reading.cellVoltagesV, overview.cellStats, formatters)
-  }
-}
-
-/** Cells in two columns like the widget: 1..half on the left; min and max cells highlighted. */
-@Composable
-private fun CellGrid(cells: List<Double?>, stats: CellStats?, formatters: Formatters) {
-  val split = (cells.size + 1) / 2
-  val highlight = stats?.takeIf { it.minIndex != it.maxIndex }
-  val minColor = MaterialTheme.colorScheme.error
-  val maxColor = MaterialTheme.colorScheme.primary
-  Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-    listOf(0 until split, split until cells.size).forEach { indexes ->
-      Column(Modifier.weight(1f)) {
-        indexes.forEach { index ->
-          val number = index + 1
-          val color =
-            when (number) {
-              highlight?.minIndex -> minColor
-              highlight?.maxIndex -> maxColor
-              else -> Color.Unspecified
-            }
-          Row {
-            Text(
-              stringResource(R.string.cell_label, number),
-              modifier = Modifier.weight(1f),
-              style = MaterialTheme.typography.bodySmall,
-            )
-            Text(
-              formatters.cellVoltage(cells[index]),
-              color = color,
-              fontWeight = if (color != Color.Unspecified) FontWeight.Bold else null,
-            )
-          }
-        }
-      }
     }
   }
 }
