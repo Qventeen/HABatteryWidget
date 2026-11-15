@@ -48,7 +48,6 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.widget.WidgetPalette
-import io.lumensync.habattery.widget.WidgetScale
 import io.lumensync.habattery.widget.WidgetTexts
 
 /**
@@ -75,7 +74,7 @@ fun OverviewCard(
   val density = LocalDensity.current
 
   BoxWithConstraints(modifier.fillMaxWidth()) {
-    val look = CardLook(WidgetScale.of(maxWidth.value), fontPercents, density.fontScale, palette, texts)
+    val look = CardLook(CardScale.of(maxWidth.value), fontPercents, density.fontScale, palette, texts)
     val shape = RoundedCornerShape(look.dp(24f))
     when (model) {
       // A plain message: it follows the system text size like the rest of the screen.
@@ -86,7 +85,7 @@ fun OverviewCard(
         CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
           Column(
             Modifier.fillMaxWidth()
-              .height(WidgetScale.heightDp(look.s).dp)
+              .height(CardScale.heightDp(look.s).dp)
               .background(palette.card, shape)
               .padding(look.dp(12f))
           ) {
