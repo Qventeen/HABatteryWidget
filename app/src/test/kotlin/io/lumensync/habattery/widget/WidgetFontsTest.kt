@@ -76,4 +76,14 @@ class WidgetFontsTest {
     val withError = fonts(LayoutSpec.L5x2, texts(updatedAt = null), FontPercents(small = 100))
     assertTrue("${withError.small} > ${withTime.small}", withError.small > withTime.small)
   }
+
+  /** 4×2 at its bucket: 106 dp − icon 22 − gaps 15 − button 34 − the title's view leave the reason. */
+  @Test
+  fun emptyState_reasonFitsTheCardHeight() {
+    val f = WidgetFonts.empty("No data", "Home Assistant is unreachable", "Open app", LayoutSpec.L4x2, FontPercents(small = 100), 1.3f, FakeMeasurer)
+    val viewHeight = 1.06f + 0.27f
+    val left = 106f - 22f - 15f - 34f - f.title * viewHeight
+    assertTrue("${f.reason}", f.reason * viewHeight <= left + 0.01f)
+    assertTrue("${f.reason}", f.reason < 10.5f * 2 * 1.3f)
+  }
 }
