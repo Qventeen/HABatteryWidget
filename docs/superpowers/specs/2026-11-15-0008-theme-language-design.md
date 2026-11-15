@@ -1,7 +1,7 @@
 # Theme and language — design
 
 - **Date:** 2026-11-15
-- **Status:** draft, waiting for the owner's approval.
+- **Status:** approved by the owner (2026-11-15).
 - **Set:** `0008`. Code on branch `0008-theme-language`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).

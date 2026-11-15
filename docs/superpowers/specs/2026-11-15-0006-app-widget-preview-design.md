@@ -1,7 +1,7 @@
 # Widget preview in the app — design
 
 - **Date:** 2026-11-15
-- **Status:** draft, waiting for the owner's approval.
+- **Status:** approved by the owner (2026-11-15).
 - **Set:** `0006`. Code on branch `0006-app-preview`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).
