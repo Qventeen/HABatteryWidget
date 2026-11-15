@@ -26,6 +26,7 @@ import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
 import io.lumensync.habattery.system.AndroidFullChargeNotifier
 import io.lumensync.habattery.system.AppLanguage
+import io.lumensync.habattery.system.LocaleWatcher
 import io.lumensync.habattery.system.WorkManagerSyncScheduler
 import io.lumensync.habattery.widget.BatteryWidget
 import io.lumensync.habattery.widget.GlanceWidgetRefresher
@@ -84,6 +85,8 @@ class AppContainer(context: Context) {
   val batterySource: BatterySource = HomeAssistantSource(defaultHttpClient())
 
   val appLanguage = AppLanguage(appContext)
+
+  val localeWatcher = LocaleWatcher(appContext.resources.configuration.locales.toLanguageTags())
 
   val syncBattery: SyncBattery =
     SyncBattery(

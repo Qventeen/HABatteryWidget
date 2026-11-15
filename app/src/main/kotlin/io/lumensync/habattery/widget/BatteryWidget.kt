@@ -3,6 +3,7 @@ package io.lumensync.habattery.widget
 import android.content.Context
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.glance.GlanceId
 import androidx.glance.action.actionStartActivity
@@ -32,18 +33,22 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       val cache by container.readingCache.state.collectAsState(initialCache)
       val settings by container.settingsRepository.settings.collectAsState(initialSettings)
       val hasToken by container.tokenStore.hasToken.collectAsState(initialHasToken)
+      val locale by container.localeWatcher.tags.collectAsState()
       val overview = BatteryOverview.build(cache, settings, hasToken, System.currentTimeMillis())
-      WidgetContent(
-        model = WidgetModel.build(overview, settings),
-        fontSizes = settings.fontSizes,
-        colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
-        actions =
-          WidgetActions(
-            openApp = actionStartActivity<MainActivity>(),
-            refresh = actionRunCallback<RefreshAction>(),
-            toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
-          ),
-      )
+      // A new key makes a new composition, also in a live session (the texts come from resources).
+      key(locale) {
+        WidgetContent(
+          model = WidgetModel.build(overview, settings),
+          fontSizes = settings.fontSizes,
+          colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
+          actions =
+            WidgetActions(
+              openApp = actionStartActivity<MainActivity>(),
+              refresh = actionRunCallback<RefreshAction>(),
+              toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
+            ),
+        )
+      }
     }
   }
 }

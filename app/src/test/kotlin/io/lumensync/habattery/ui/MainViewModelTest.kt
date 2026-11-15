@@ -289,20 +289,6 @@ class MainViewModelTest {
     assertEquals(1, source.calls)
   }
 
-  @Test fun languageShown_redrawsOnlyWhenTheLanguageChanges() = runTest(dispatcher) {
-    val vm = start()
-    val start = widgets.refreshes
-    vm.languageShown("en-US")
-    advanceUntilIdle()
-    assertEquals(start, widgets.refreshes) // the first call only remembers it
-    vm.languageShown("en-US")
-    advanceUntilIdle()
-    assertEquals(start, widgets.refreshes)
-    vm.languageShown("uk-UA")
-    advanceUntilIdle()
-    assertEquals(start + 1, widgets.refreshes)
-  }
-
   @Test fun saveFontSizes_clamps() = runTest(dispatcher) {
     val vm = start()
     vm.saveFontSizes(FontSizes(soc = 50f, small = 11.5f))

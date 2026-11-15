@@ -58,7 +58,6 @@ class MainActivity : ComponentActivity() {
     confirmWidgetPlacement()
     val appLanguage = application.container.appLanguage
     language = if (appLanguage.supported) appLanguage.current() else null
-    viewModel.languageShown(resources.configuration.locales[0].toLanguageTag())
     val actions = mainActions(appLanguage)
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -103,7 +102,7 @@ class MainActivity : ComponentActivity() {
       saveAppearance = viewModel::saveAppearance,
       setLanguage = {
         language = it
-        // The system recreates the activity if the language changed; onCreate then redraws the widgets.
+        // The system recreates the activity; App.onConfigurationChanged redraws the widgets.
         appLanguage.set(it)
       },
       requestPinWidget = {
