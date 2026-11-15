@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Minimum height 110 dp, so launchers with about 130-140 dp per 2 rows can place 2 rows (owner, 2026-11-15:
-     option A, a test until design v5). No target cells: the launcher picks the cells (spec 0003, 5.1). -->
+<!-- Minimum = the 4x2 bucket (spec 0005, 5.1): the owner's 4x2 card (267 x 132 dp) minus 6 dp each way.
+     No target cells: the launcher picks the cells (spec 0003, 5.1). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:configure="io.lumensync.habattery.MainActivity"
     android:description="@string/widget_description"
     android:initialLayout="@layout/glance_default_loading_layout"
     android:maxResizeHeight="460dp"
     android:maxResizeWidth="460dp"
-    android:minHeight="110dp"
-    android:minResizeHeight="110dp"
-    android:minResizeWidth="306dp"
-    android:minWidth="306dp"
+    android:minHeight="126dp"
+    android:minResizeHeight="126dp"
+    android:minResizeWidth="261dp"
+    android:minWidth="261dp"
     android:previewLayout="@layout/battery_widget_preview"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
