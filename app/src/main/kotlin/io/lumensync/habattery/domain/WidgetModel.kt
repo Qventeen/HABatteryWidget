@@ -34,6 +34,7 @@ sealed interface WidgetModel {
     /** No battery sensor configured: no battery pill. */
     data object None : Temperatures
 
+    /** [sensors] is the number of configured sensors, not of those that have a value. */
     data class Battery(val celsius: Double?, val level: Level, val sensors: Int) : Temperatures
   }
 

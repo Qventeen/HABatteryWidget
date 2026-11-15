@@ -164,7 +164,7 @@ private fun BigPill(
   }
 }
 
-/** The right column: 3 to 5 pills, MOSFET always last. */
+/** The right column: 3 or 4 pills, MOSFET always last. */
 private fun cellPills(model: WidgetModel.Data, look: WidgetLook): List<@Composable () -> Unit> {
   val temperatures: List<@Composable () -> Unit> =
     when (val t = model.temperatures) {
