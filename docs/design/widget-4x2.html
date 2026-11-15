@@ -58,6 +58,7 @@
   .pill.warn { background: var(--warn-bg); color: var(--warn); }
   .pill.bad { background: var(--bad-bg); color: var(--bad); }
   .pill.idle { color: var(--sub); }
+  .no-arrow { width: 10px; margin-right: 3px; flex-shrink: 0; } /* empty ↑/↓ slot: temperature numbers line up */
 </style>
 </head>
 <body>
@@ -142,7 +143,7 @@
                 <div class="pill ${deltaTone}">Δ ${v.deltaMv} mV</div>
                 <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.up, 10, 'Highest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMax)}</div>
                 <div class="pill" style="gap: 0">${svg(ICON.thermo, 13)}${svg(ICON.down, 10, 'Lowest sensor temperature', 'stroke-width="3" style="margin-right: 3px"')}${c(v.tMin)}</div>
-                <div class="pill" style="gap: 3px">${svg(ICON.chip, 13, 'MOSFET temperature')}${c(v.mos)}</div>
+                <div class="pill" style="gap: 0">${svg(ICON.chip, 13, 'MOSFET temperature')}<span class="no-arrow" aria-hidden="true"></span>${c(v.mos)}</div>
               </div>
             </div>
           </div>

@@ -4,7 +4,7 @@ Status: design only, not built yet. It is the input for the widget part of
 spec 0002. The design was made on a design canvas; this folder keeps the
 latest version in the repo.
 
-Current version: **v2**. On the canvas each version is a separate board
+Current version: **v3**. On the canvas each version is a separate board
 (newest at the bottom); git keeps the older versions of this folder.
 
 ![Widget 4×2, light and dark](widget-4x2.png)
@@ -45,7 +45,9 @@ Card: 360 × 180 dp, 12 dp padding, 24 dp corner radius.
   direction. This leaves room for 3-digit currents ("↓ 125.5 A" fits).
 - **Right column, cells (90 dp):** five small pills, 19 dp high: average
   cell voltage, cell delta, highest sensor temperature, lowest sensor
-  temperature, MOSFET temperature.
+  temperature, MOSFET temperature. The three temperature pills share one
+  layout: 13 dp icon, 10 dp slot for ↑ / ↓ (empty for MOSFET), 3 dp space,
+  value. So the numbers line up.
 - All pills show numbers only (no text labels).
 
 ## Data
