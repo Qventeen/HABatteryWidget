@@ -8,6 +8,8 @@
     <string name="unit_volts">%1$s V</string>
     <string name="unit_amps">%1$s A</string>
     <string name="unit_millivolts">%1$s mV</string>
+    <string name="unit_celsius">%1$s °C</string>
+    <string name="unit_amp_hours">%1$s Ah</string>
     <string name="charge_percent">%1$d%%</string>
     <string name="value_missing" translatable="false">—</string>
 
@@ -47,6 +49,13 @@
     <string name="notification_full_text">The battery is fully charged.</string>
 
     <!-- Main screen. -->
+    <string name="overview_ah_left">Ah left: %1$s</string>
+    <string name="overview_average_cell">Average cell: %1$s</string>
+    <string name="overview_delta">Cell delta: %1$s</string>
+    <string name="overview_mosfet">MOSFET: %1$s</string>
+    <string name="overview_temperature">Temperature %1$d: %2$s</string>
+    <string name="overview_balancing_on">Balancing: on</string>
+    <string name="overview_balancing_off">Balancing: off</string>
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
     <string name="action_refresh_now">Refresh now</string>
     <string name="action_add_widget">Add widget</string>

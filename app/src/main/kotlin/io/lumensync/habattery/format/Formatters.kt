@@ -51,6 +51,15 @@ class Formatters(private val context: Context) {
 
     fun deltaMv(mv: Int): String = context.getString(R.string.unit_millivolts, number(mv.toDouble(), 0, 0))
 
+    fun temperature(celsius: Double): String =
+        context.getString(R.string.unit_celsius, number(celsius, 0, 1))
+
+    fun ampHours(ah: Double): String =
+        context.getString(R.string.unit_amp_hours, number(ah, 1, 1))
+
+    fun cellVoltage(volts: Double): String =
+        context.getString(R.string.unit_volts, number(volts, 3, 3))
+
     fun chargePercent(percent: Double): String =
         context.getString(R.string.charge_percent, percent.roundToInt())
 

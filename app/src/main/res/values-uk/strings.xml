@@ -5,6 +5,8 @@
     <string name="unit_volts">%1$s В</string>
     <string name="unit_amps">%1$s А</string>
     <string name="unit_millivolts">%1$s мВ</string>
+    <string name="unit_celsius">%1$s °C</string>
+    <string name="unit_amp_hours">%1$s А·год</string>
     <string name="charge_percent">%1$d%%</string>
 
     <string name="status_charging">Заряджається %1$s</string>
@@ -43,6 +45,13 @@
     <string name="notification_full_title">Батарея заряджена</string>
     <string name="notification_full_text">Батарею повністю заряджено.</string>
 
+    <string name="overview_ah_left">Залишилось А·год: %1$s</string>
+    <string name="overview_average_cell">Середня комірка: %1$s</string>
+    <string name="overview_delta">Різниця комірок: %1$s</string>
+    <string name="overview_mosfet">MOSFET: %1$s</string>
+    <string name="overview_temperature">Температура %1$d: %2$s</string>
+    <string name="overview_balancing_on">Балансування: увімкнено</string>
+    <string name="overview_balancing_off">Балансування: вимкнено</string>
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
     <string name="action_refresh_now">Оновити зараз</string>
     <string name="action_add_widget">Додати віджет</string>

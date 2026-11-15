@@ -86,11 +86,37 @@ private fun ReadingDetails(
       style = MaterialTheme.typography.bodySmall,
       color = secondary,
     )
-    BatteryMath.deltaMv(reading)?.let { deltaMv ->
+  }
+  ExtraValues(reading, formatters)
+}
+
+/** One line per value the BMS reported; missing values are skipped. */
+@Composable
+private fun ExtraValues(reading: BatteryReading, formatters: Formatters) {
+  Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    reading.capacityRemainingAh?.let {
+      Text(stringResource(R.string.overview_ah_left, formatters.ampHours(it)))
+    }
+    reading.averageCellVoltageV?.let {
+      Text(stringResource(R.string.overview_average_cell, formatters.cellVoltage(it)))
+    }
+    BatteryMath.deltaMv(reading)?.let {
+      Text(stringResource(R.string.overview_delta, formatters.deltaMv(it)))
+    }
+    reading.mosfetTemperatureC?.let {
+      Text(stringResource(R.string.overview_mosfet, formatters.temperature(it)))
+    }
+    // Numbering keeps the sensor position, so a missing sensor 2 leaves a gap.
+    reading.temperaturesC.forEachIndexed { index, celsius ->
+      if (celsius != null) {
+        Text(stringResource(R.string.overview_temperature, index + 1, formatters.temperature(celsius)))
+      }
+    }
+    reading.balancing?.let {
       Text(
-        stringResource(R.string.delta_label, formatters.deltaMv(deltaMv)),
-        style = MaterialTheme.typography.bodySmall,
-        fontWeight = FontWeight.Bold,
+        stringResource(
+          if (it) R.string.overview_balancing_on else R.string.overview_balancing_off
+        )
       )
     }
   }
