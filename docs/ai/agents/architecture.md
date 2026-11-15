@@ -19,10 +19,14 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   records with `schemaVersion = 1`).
 - `format/`: `Formatters`, `Decimal`; one formatter for widget, screen and
   notification.
-- `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`.
+- `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`,
+  `AppLanguage` (per-app language through `LocaleManager`, Android 13+ only; the system
+  stores it) and `LocaleWatcher` (`App` reports locale changes; a real change redraws widgets).
 - `widget/`: Glance widget (one layout scaled by `WidgetScale`, ring bitmap),
   `BatteryWidgetReceiver`, ↻ and auto-toggle actions, refresher, and
   `WidgetPalette` / `WidgetTexts`, which the app's overview card reuses.
+  `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
+  code receives colours only (`WidgetLook.colors`).
 - `ui/`: Compose screen, `MainViewModel`, `sections/`, `theme/`.
 
 Dependency rule: `ui`, `widget`, `system`, `data` → `domain`. `domain` depends

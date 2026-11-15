@@ -18,26 +18,31 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.ui.sections.ActionsRow
+import io.lumensync.habattery.ui.sections.AppearanceSection
 import io.lumensync.habattery.ui.sections.CapacitySection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.NotificationSection
+import io.lumensync.habattery.ui.sections.OVERVIEW_CARD_TAG
 import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
 import io.lumensync.habattery.ui.sections.WidgetSection
 import java.util.Locale
 
-/** What the screen can ask for: the ViewModel's functions plus two system actions. */
+/** What the screen can ask for: the ViewModel's functions plus the system actions. */
 data class MainActions(
   val refreshNow: () -> Unit,
   val toggleAutoRefresh: () -> Unit,
@@ -50,13 +55,15 @@ data class MainActions(
   val saveCapacity: (text: String, locale: Locale) -> Unit,
   val saveDisplay: (DisplaySettings) -> Unit,
   val saveFontSizes: (FontSizes) -> Unit,
+  val saveAppearance: (AppearanceSettings) -> Unit,
+  val setLanguage: (LanguageChoice) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(state: MainUiState, actions: MainActions) {
+fun MainScreen(state: MainUiState, actions: MainActions, language: LanguageChoice?) {
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
     val overview = state.overview
     val widget = state.widget
@@ -66,7 +73,7 @@ fun MainScreen(state: MainUiState, actions: MainActions) {
         CircularProgressIndicator()
       }
     } else {
-      MainContent(state, overview, widget, actions, padding)
+      MainContent(state, overview, widget, actions, language, padding)
     }
   }
 }
@@ -77,6 +84,7 @@ private fun MainContent(
   overview: BatteryOverview,
   widget: WidgetModel,
   actions: MainActions,
+  language: LanguageChoice?,
   padding: PaddingValues,
 ) {
   val settings = state.settings
@@ -93,11 +101,14 @@ private fun MainContent(
     OverviewCard(
       widget,
       settings.fontSizes,
+      settings.appearance.theme,
       syncing = state.syncing,
       onRefresh = actions.refreshNow,
       onToggleAuto = actions.toggleAutoRefresh,
+      modifier = Modifier.testTag(OVERVIEW_CARD_TAG),
     )
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
+    AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
     ConnectionSection(
       settings.connection,
       state.errors,

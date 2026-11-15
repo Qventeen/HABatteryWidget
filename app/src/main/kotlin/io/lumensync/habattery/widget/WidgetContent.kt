@@ -44,11 +44,16 @@ import io.lumensync.habattery.format.Formatters
 data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAuto: Action)
 
 /**
- * The whole widget, drawn from [model] only (design v4). One layout: fixed sizes are scaled by
+ * The whole widget, drawn from [model] and [colors] only (design v4). One layout: fixed sizes are scaled by
  * [WidgetScale]; the two buttons keep their touch size. Tapping the card opens the app.
  */
 @Composable
-fun WidgetContent(model: WidgetModel, fontSizes: FontSizes, actions: WidgetActions) {
+fun WidgetContent(
+  model: WidgetModel,
+  fontSizes: FontSizes,
+  colors: WidgetColors,
+  actions: WidgetActions,
+) {
   val context = LocalContext.current
   val size = LocalSize.current
   val s = WidgetScale.of(size.width.value, size.height.value)
@@ -60,11 +65,12 @@ fun WidgetContent(model: WidgetModel, fontSizes: FontSizes, actions: WidgetActio
       context.resources.configuration.fontScale,
       context.resources.displayMetrics,
       texts,
+      colors,
     )
 
   Box(
     GlanceModifier.fillMaxSize()
-      .background(WidgetColors.card)
+      .background(look.colors.card)
       .cornerRadius(look.dp(24f)) // Android 12+ only; square before (spec 0003, approach D1)
       .clickable(actions.openApp)
       .padding(look.dp(12f))
@@ -91,6 +97,7 @@ internal class WidgetLook(
   private val fontScale: Float,
   private val metrics: DisplayMetrics,
   val texts: WidgetTexts,
+  val colors: WidgetColors,
 ) {
   fun dp(value: Float): Dp = (value * s).dp
 
@@ -128,11 +135,11 @@ private fun EmptyContent(model: WidgetModel.Empty, look: WidgetLook, openApp: Ac
     verticalAlignment = Alignment.CenterVertically,
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-    WidgetIcon(R.drawable.ic_battery, look.dp(28f), WidgetColors.sub, null)
+    WidgetIcon(R.drawable.ic_battery, look.dp(28f), look.colors.sub, null)
     Text(
       context.getString(title),
       GlanceModifier.padding(top = look.dp(8f)),
-      style = textStyle(look.fixedFont(15f), WidgetColors.text, FontWeight.Medium, TextAlign.Center),
+      style = textStyle(look.fixedFont(15f), look.colors.text, FontWeight.Medium, TextAlign.Center),
       maxLines = 2,
     )
     if (model.kind == WidgetModel.EmptyKind.NO_DATA) {
@@ -141,7 +148,7 @@ private fun EmptyContent(model: WidgetModel.Empty, look: WidgetLook, openApp: Ac
           look.texts.formatters.error(error),
           GlanceModifier.padding(top = look.dp(8f)),
           style =
-            textStyle(look.font(FontGroup.SMALL), WidgetColors.bad, FontWeight.Medium, TextAlign.Center),
+            textStyle(look.font(FontGroup.SMALL), look.colors.bad, FontWeight.Medium, TextAlign.Center),
           maxLines = 2,
         )
       }
@@ -149,7 +156,7 @@ private fun EmptyContent(model: WidgetModel.Empty, look: WidgetLook, openApp: Ac
     Spacer(GlanceModifier.height(look.dp(10f)))
     Box(
       GlanceModifier.height(look.dp(40f))
-        .background(WidgetColors.okBg)
+        .background(look.colors.okBg)
         .cornerRadius(look.dp(20f))
         .clickable(openApp)
         .padding(horizontal = look.dp(20f)),
@@ -157,7 +164,7 @@ private fun EmptyContent(model: WidgetModel.Empty, look: WidgetLook, openApp: Ac
     ) {
       Text(
         context.getString(R.string.widget_open_app),
-        style = textStyle(look.fixedFont(14f), WidgetColors.accent, FontWeight.Medium),
+        style = textStyle(look.fixedFont(14f), look.colors.accent, FontWeight.Medium),
         maxLines = 1,
       )
     }

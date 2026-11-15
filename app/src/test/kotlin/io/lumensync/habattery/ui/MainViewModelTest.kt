@@ -6,7 +6,9 @@ import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontSizes
@@ -273,6 +275,16 @@ class MainViewModelTest {
     vm.saveDisplay(DisplaySettings(UnderSoc.AH, MainValue.POWER))
     advanceUntilIdle()
     assertEquals(DisplaySettings(UnderSoc.AH, MainValue.POWER), state.settings.display)
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveAppearance_storesAndRedraws() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveAppearance(AppearanceSettings(ThemeChoice.DARK))
+    advanceUntilIdle()
+    assertEquals(ThemeChoice.DARK, state.settings.appearance.theme)
     assertTrue(widgets.refreshes > before)
     assertEquals(1, source.calls)
   }

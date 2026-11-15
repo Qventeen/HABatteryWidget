@@ -11,7 +11,10 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -25,9 +28,11 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
+import io.lumensync.habattery.widget.WidgetPalette
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -66,7 +71,7 @@ class OverviewCardTest {
     var refreshes = 0
     compose.setContent {
       HaBatteryTheme {
-        OverviewCard(model(sample), FontSizes(), false, { refreshes++ }, { toggles++ })
+        OverviewCard(model(sample), FontSizes(), ThemeChoice.SYSTEM, false, { refreshes++ }, { toggles++ })
       }
     }
     compose.onNodeWithText("55").assertExists()
@@ -80,6 +85,21 @@ class OverviewCardTest {
     assertEquals(1, refreshes)
   }
 
+  /** The chosen theme wins over the device's mode: Dark draws the dark card on any device. */
+  @Test
+  fun darkTheme_drawsTheDarkCard() {
+    compose.setContent {
+      HaBatteryTheme(darkTheme = true) {
+        OverviewCard(model(sample), FontSizes(), ThemeChoice.DARK, false, {}, {}, Modifier.testTag("card"))
+      }
+    }
+    compose.waitForIdle()
+    val pixels = compose.onNodeWithTag("card").captureToImage().toPixelMap()
+    // Bottom middle of the card: its padding, no content on top.
+    val pixel = pixels[pixels.width / 2, pixels.height - 6]
+    assertTrue("$pixel", pixel.isCloseTo(WidgetPalette.Dark.card))
+  }
+
   /** The message without data follows the system text size, like the rest of the screen. */
   @Test
   fun emptyMessage_followsLargeSystemText() {
@@ -89,7 +109,7 @@ class OverviewCardTest {
         Column {
           listOf(1f to "normal", 2f to "large").forEach { (scale, tag) ->
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
-              OverviewCard(model(null, hasToken = false), FontSizes(), false, {}, {}, Modifier.testTag(tag))
+              OverviewCard(model(null, hasToken = false), FontSizes(), ThemeChoice.SYSTEM, false, {}, {}, Modifier.testTag(tag))
             }
           }
         }
@@ -106,7 +126,7 @@ class OverviewCardTest {
   @Test
   fun setup_showsTheSetupText() {
     compose.setContent {
-      HaBatteryTheme { OverviewCard(model(null, hasToken = false), FontSizes(), false, {}, {}) }
+      HaBatteryTheme { OverviewCard(model(null, hasToken = false), FontSizes(), ThemeChoice.SYSTEM, false, {}, {}) }
     }
     compose.onNodeWithText(context.getString(R.string.overview_setup)).assertExists()
   }

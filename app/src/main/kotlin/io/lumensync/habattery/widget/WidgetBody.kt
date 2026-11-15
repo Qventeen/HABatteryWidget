@@ -96,13 +96,13 @@ private fun Ring(model: WidgetModel.Data, look: WidgetLook) {
       ImageProvider(R.drawable.ring_track),
       contentDescription = null,
       modifier = GlanceModifier.fillMaxSize(),
-      colorFilter = ColorFilter.tint(WidgetColors.track),
+      colorFilter = ColorFilter.tint(look.colors.track),
     )
     Image(
       ImageProvider(arc),
       contentDescription = null,
       modifier = GlanceModifier.fillMaxSize(),
-      colorFilter = ColorFilter.tint(WidgetColors.ring(model.ringLevel)),
+      colorFilter = ColorFilter.tint(look.colors.ring(model.ringLevel)),
     )
     // Each line is centred, then moved by padding on one side (a centred view grows by the padding).
     val offsets =
@@ -115,18 +115,18 @@ private fun Ring(model: WidgetModel.Data, look: WidgetLook) {
     Text(
       context.getString(R.string.widget_soc_label),
       GlanceModifier.padding(bottom = (2 * offsets.label).dp),
-      style = textStyle(look.font(FontGroup.SMALL), WidgetColors.sub),
+      style = textStyle(look.font(FontGroup.SMALL), look.colors.sub),
       maxLines = 1,
     )
     Text(
       texts.soc(model),
-      style = textStyle(look.font(FontGroup.SOC), WidgetColors.text, FontWeight.Bold),
+      style = textStyle(look.font(FontGroup.SOC), look.colors.text, FontWeight.Bold),
       maxLines = 1,
     )
     Text(
       texts.underSoc(model),
       GlanceModifier.padding(top = (2 * offsets.under).dp),
-      style = textStyle(look.font(FontGroup.UNDER_SOC), WidgetColors.text, FontWeight.Medium),
+      style = textStyle(look.font(FontGroup.UNDER_SOC), look.colors.text, FontWeight.Medium),
       maxLines = 1,
     )
   }
@@ -141,10 +141,10 @@ private fun BigPill(
   modifier: GlanceModifier,
 ) {
   val context = LocalContext.current
-  val color = WidgetColors.pillText(level)
+  val color = look.colors.pillText(level)
   Box(
     modifier
-      .background(WidgetColors.pillBackground(level))
+      .background(look.colors.pillBackground(level))
       .cornerRadius(look.dp(25f))
       .padding(horizontal = look.dp(6f)),
     contentAlignment = Alignment.Center,
@@ -202,7 +202,7 @@ private fun TextPill(text: String, level: Level, look: WidgetLook) {
   SmallPill(level, look) {
     Text(
       text,
-      style = textStyle(look.font(FontGroup.CELL), WidgetColors.pillText(level), FontWeight.Medium),
+      style = textStyle(look.font(FontGroup.CELL), look.colors.pillText(level), FontWeight.Medium),
       maxLines = 1,
     )
   }
@@ -218,7 +218,7 @@ private fun TemperaturePill(
   look: WidgetLook,
 ) {
   val context = LocalContext.current
-  val color = WidgetColors.pillText(level)
+  val color = look.colors.pillText(level)
   SmallPill(level, look) {
     WidgetIcon(icon, look.dp(13f), color, context.getString(iconDescription))
     Text(
@@ -235,7 +235,7 @@ private fun SmallPill(level: Level, look: WidgetLook, content: @Composable () ->
   Box(
     GlanceModifier.fillMaxWidth()
       .height(look.dp(19f))
-      .background(WidgetColors.pillBackground(level))
+      .background(look.colors.pillBackground(level))
       .cornerRadius(look.dp(9.5f))
       .padding(horizontal = look.dp(8f)),
     contentAlignment = Alignment.Center,
