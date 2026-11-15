@@ -181,6 +181,20 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(appearance = appearance) }
   }
 
+  private var shownLanguage: String? = null
+
+  /**
+   * The screen shows [languageTag]. A change after the first call (set here or in the system's
+   * settings) redraws the widgets, so they use the new language at once (spec 0008, 5.3).
+   */
+  fun languageShown(languageTag: String) {
+    val before = shownLanguage
+    shownLanguage = languageTag
+    if (before != null && before != languageTag) {
+      viewModelScope.launch { guarded { widgets.refreshAll() } }
+    }
+  }
+
   fun saveFontSizes(sizes: FontSizes) {
     val clamped = sizes.clamped()
     save(emptyList(), syncAfter = false) { it.copy(fontSizes = clamped) }

@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge() // first frame: the system's mode; the effect below applies the chosen theme
     super.onCreate(savedInstanceState)
     confirmWidgetPlacement()
+    viewModel.languageShown(resources.configuration.locales[0].toLanguageTag())
     val actions = mainActions()
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
