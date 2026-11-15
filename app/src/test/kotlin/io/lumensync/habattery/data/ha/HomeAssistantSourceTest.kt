@@ -5,6 +5,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
@@ -72,6 +73,23 @@ class HomeAssistantSourceTest {
     assertEquals("/api/template", req.url.encodedPath)
     assertEquals("Bearer t0ken", req.headers["Authorization"])
     assertTrue(req.body!!.utf8().contains("\"template\""))
+  }
+
+  @Test
+  fun `public http is sent`() = runTest {
+    // example.com resolves to the local mock, so the request goes out over plain HTTP.
+    val publicSource =
+      HomeAssistantSource(
+        client.newBuilder().dns { listOf(InetAddress.getLoopbackAddress()) }.build()
+      ) {
+        1234L
+      }
+    val s = server(reply(200, okBody))
+    val result =
+      publicSource.fetch(ConnectionSettings("http://example.com:${s.port}"), entities, "t0ken")
+    assertTrue(result is SyncResult.Success)
+    assertEquals(1, s.requestCount)
+    assertEquals("Bearer t0ken", s.takeRequest().headers["Authorization"])
   }
 
   @Test
