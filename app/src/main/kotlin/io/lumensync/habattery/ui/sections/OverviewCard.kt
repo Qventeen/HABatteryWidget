@@ -79,7 +79,7 @@ fun OverviewCard(
         is WidgetModel.Data ->
           Column(
             Modifier.fillMaxWidth()
-              .height(look.dp(WidgetScale.HEIGHT_DP))
+              .height(WidgetScale.heightDp(look.s).dp)
               .background(palette.card, shape)
               .padding(look.dp(12f))
           ) {
