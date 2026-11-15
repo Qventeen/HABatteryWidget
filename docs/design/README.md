@@ -4,6 +4,9 @@ Status: design only, not built yet. It is the input for the widget part of
 spec 0002. The design was made on a design canvas; this folder keeps the
 latest version in the repo.
 
+Current version: **v2**. On the canvas each version is a separate board
+(newest at the bottom); git keeps the older versions of this folder.
+
 ![Widget 4×2, light and dark](widget-4x2.png)
 
 | File | What it is |
@@ -20,6 +23,7 @@ Card: 360 × 180 dp, 12 dp padding, 24 dp corner radius.
 
 ```
  ⌛ 17 h 16 min  ⚖               11:29  (⟳auto) (↻)
+
  ╭─────╮  ╭───────────╮  ( 3.312 V )
  │ SOC │  │  26.50 V  │  ( Δ 40 mV )
  │ 55  │  ╰───────────╯  ( 🌡↑ 25 °C )
@@ -29,14 +33,17 @@ Card: 360 × 180 dp, 12 dp padding, 24 dp corner radius.
 ```
 
 - **Top row (44 dp), full width:** time left, balancing icon, last update
-  time, auto-refresh toggle, manual refresh (top-right corner).
-- **SOC ring (112 dp):** small "SOC" label, the number without "%", kWh left
-  below it. The ring shows the charge level.
+  time, auto-refresh toggle, manual refresh (top-right corner). Each button
+  shows a 36 dp circle inside a 44 dp touch area.
+- **Gap:** 4 dp under the top row, so 8 dp from the button circles to the
+  pills. No divider line.
+- **SOC ring (104 dp, 8 dp stroke):** small "SOC" label, the number without
+  "%", kWh left below it. The ring shows the charge level.
 - **Middle column, pack (takes the free width, about 118 dp):** two big
-  pills, each half the column height (53 dp, 6 dp gap): pack voltage, then
+  pills, each half the column height (51 dp, 6 dp gap): pack voltage, then
   current. The current has no sign: the arrow and the colour show the
   direction. This leaves room for 3-digit currents ("↓ 125.5 A" fits).
-- **Right column, cells (90 dp):** five small pills, 20 dp high: average
+- **Right column, cells (90 dp):** five small pills, 19 dp high: average
   cell voltage, cell delta, highest sensor temperature, lowest sensor
   temperature, MOSFET temperature.
 - All pills show numbers only (no text labels).
@@ -72,7 +79,6 @@ Entity names use the ESPHome JK-BMS naming with a user prefix, for example
 | Temperature pills | plain (no limits set yet) |
 | Balancing icon | green when on, grey when off |
 | Auto-refresh toggle | green tonal when on; grey with a slash when off |
-
 Theme tokens (light / dark) are the CSS variables at the top of
 `widget-4x2.html`. The app theme is green; no blue.
 
@@ -82,8 +88,8 @@ These are the groups for the widget font-size settings (spec 0002):
 
 | Group | Default |
 |---|---|
-| SOC number | 44 sp |
-| kWh under SOC | 13 sp |
+| SOC number | 40 sp |
+| kWh under SOC | 12 sp |
 | Main values (voltage, current) | 22 sp |
 | Cell pill values | 14 sp |
 | Small text (SOC label, time left, update time) | 10.5 sp |
@@ -95,7 +101,10 @@ These are the groups for the widget font-size settings (spec 0002):
   N percent".
 - Every icon-only element needs a content description: current direction,
   balancing, MOSFET, highest and lowest temperature, both buttons.
-- The buttons are 44 dp. Android advises at least 48 dp for touch targets;
-  use 48 dp if the row still fits.
+- The buttons have a 44 dp touch area (36 dp visible circle). Android
+  advises at least 48 dp for touch targets; use 48 dp if the row still fits.
+- The ring content is tight: at the default sizes the kWh line has about
+  3 dp of room inside the ring. The SOC and kWh font-size settings need
+  upper limits.
 - Open: temperature warning limits; whether min and max cell voltage appear
   on the widget (the sensors exist, the design does not show them).

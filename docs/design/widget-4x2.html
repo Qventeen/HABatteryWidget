@@ -28,28 +28,32 @@
   .top { display: flex; align-items: center; gap: 10px; height: 44px; flex-shrink: 0; }
   .small { font-size: 10.5px; color: var(--sub); white-space: nowrap; display: flex; align-items: center; gap: 4px; }
   .spacer { flex-grow: 1; }
-  .btn { width: 44px; height: 44px; flex-shrink: 0; border-radius: 22px; border: none; padding: 0;
-         display: flex; align-items: center; justify-content: center; background: var(--tile); color: var(--sub); }
-  .btn.on { background: var(--ok-bg); color: var(--accent); }
+  /* 44 dp touch area, 36 dp visible circle */
+  .btn { width: 44px; height: 44px; flex-shrink: 0; border: none; padding: 0; background: none;
+         display: flex; align-items: center; justify-content: center; color: var(--sub); }
+  .btn .face { width: 36px; height: 36px; border-radius: 18px; background: var(--tile);
+               display: flex; align-items: center; justify-content: center; }
+  .btn.on { color: var(--accent); }
+  .btn.on .face { background: var(--ok-bg); }
   .btn.off { color: var(--dim); }
 
-  .body { flex-grow: 1; display: flex; gap: 10px; min-height: 0; }
-  .ring { position: relative; width: 112px; height: 112px; flex-shrink: 0; align-self: center; }
+  .body { flex-grow: 1; display: flex; gap: 10px; min-height: 0; margin-top: 4px; }
+  .ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; align-self: center; }
   .ring svg { position: absolute; inset: 0; }
   .ring .inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
                  justify-content: center; gap: 2px; color: var(--text); }
   .ring .label { font-size: 10.5px; letter-spacing: 1px; color: var(--sub); }
-  .ring .soc { font-size: 44px; font-weight: 700; line-height: 1; }
-  .ring .kwh { font-size: 13px; font-weight: 500; }
+  .ring .soc { font-size: 40px; font-weight: 700; line-height: 1; }
+  .ring .kwh { font-size: 12px; font-weight: 500; }
 
   .cols { flex-grow: 1; min-width: 0; display: flex; gap: 6px; }
   .col { min-width: 0; display: flex; flex-direction: column; }
   .col.main { flex: 1 1 0; gap: 6px; }                             /* pack: voltage, current */
   .col.cells { flex: 0 0 90px; justify-content: space-between; }   /* cell details */
-  .pill { height: 20px; box-sizing: border-box; border-radius: 10px; padding: 0 8px; display: flex;
+  .pill { height: 19px; box-sizing: border-box; border-radius: 9.5px; padding: 0 8px; display: flex;
           align-items: center; justify-content: center; gap: 2px; font-size: 14px; font-weight: 500;
           white-space: nowrap; overflow: hidden; background: var(--tile); color: var(--text); }
-  .pill.big { flex: 1 1 0; height: auto; border-radius: 26.5px; padding: 0 6px; gap: 4px; font-size: 22px; }
+  .pill.big { flex: 1 1 0; height: auto; border-radius: 25px; padding: 0 6px; gap: 4px; font-size: 22px; }
   .pill.ok { background: var(--ok-bg); color: var(--accent); }
   .pill.warn { background: var(--warn-bg); color: var(--warn); }
   .pill.bad { background: var(--bad-bg); color: var(--bad); }
@@ -85,7 +89,7 @@
       balancing: true, auto: false, updated: '14:05' },
   ];
   const CAPACITY_AH = 314;
-  const R = 51, CIRC = 2 * Math.PI * R;
+  const R = 48, CIRC = 2 * Math.PI * R;
 
   function widget(v) {
     const ah = CAPACITY_AH * v.soc / 100;
@@ -112,15 +116,15 @@
             <div class="spacer"></div>
             <div class="small" style="margin-right: -4px">${v.updated}</div>
             <button class="btn ${v.auto ? 'on' : 'off'}" aria-label="${v.auto ? 'Auto refresh on' : 'Auto refresh off'}" aria-pressed="${v.auto}">
-              ${svg(ICON.auto + (v.auto ? '' : ICON.slash), 18)}</button>
-            <button class="btn" aria-label="Refresh">${svg(ICON.refresh, 18)}</button>
+              <span class="face">${svg(ICON.auto + (v.auto ? '' : ICON.slash), 18)}</span></button>
+            <button class="btn" aria-label="Refresh"><span class="face">${svg(ICON.refresh, 18)}</span></button>
           </div>
           <div class="body">
             <div class="ring">
-              <svg width="112" height="112" viewBox="0 0 112 112" role="img" aria-label="State of charge ${v.soc} percent">
-                <circle cx="56" cy="56" r="${R}" fill="none" stroke="var(--track)" stroke-width="9"/>
-                <circle cx="56" cy="56" r="${R}" fill="none" stroke="${ring}" stroke-width="9" stroke-linecap="round"
-                  stroke-dasharray="${Math.max(0.001, CIRC * v.soc / 100)} ${CIRC}" transform="rotate(-90 56 56)"/>
+              <svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="State of charge ${v.soc} percent">
+                <circle cx="52" cy="52" r="${R}" fill="none" stroke="var(--track)" stroke-width="8"/>
+                <circle cx="52" cy="52" r="${R}" fill="none" stroke="${ring}" stroke-width="8" stroke-linecap="round"
+                  stroke-dasharray="${Math.max(0.001, CIRC * v.soc / 100)} ${CIRC}" transform="rotate(-90 52 52)"/>
               </svg>
               <div class="inner">
                 <div class="label">SOC</div>
