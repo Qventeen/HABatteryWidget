@@ -1,11 +1,10 @@
 package io.lumensync.habattery.domain.model
 
-import kotlin.math.min
 import kotlinx.serialization.Serializable
 
 /**
  * Stored settings. Defaults are empty values (0001 §14), except the display choices and font
- * sizes: they are not user data, so they default to the design values (spec 0003).
+ * percents: they are not user data, so they default to the design values (specs 0003, 0005).
  */
 @Serializable
 data class Settings(
@@ -15,7 +14,7 @@ data class Settings(
   val notifyOnFull: Boolean = false,
   val capacityAh: Double? = null,
   val display: DisplaySettings = DisplaySettings(),
-  val fontSizes: FontSizes = FontSizes(),
+  val fontPercents: FontPercents = FontPercents(),
   val appearance: AppearanceSettings = AppearanceSettings(),
 )
 
@@ -80,24 +79,28 @@ data class DisplaySettings(
   val mainValue: MainValue = MainValue.CURRENT,
 )
 
-/** Font-size groups in sp: default and allowed range (checked on design v4 at every maximum). */
-enum class FontGroup(val default: Float, val min: Float, val max: Float, val step: Float) {
-  SOC(40f, 32f, 42f, 1f),
-  UNDER_SOC(12f, 10f, 12f, 1f),
-  MAIN(22f, 18f, 24f, 1f),
-  CELL(14f, 12f, 15f, 1f),
-  SMALL(10.5f, 9f, 12f, 0.5f),
+/** The font-size groups of the widget and the app card (README "Font sizes"). */
+enum class FontGroup {
+  SOC,
+  UNDER_SOC,
+  MAIN,
+  CELL,
+  SMALL,
 }
 
+/**
+ * Font sizes as percents (spec 0005, 5.4): 50 % is each layout's design size, 100 % twice it, 25 %
+ * half. One value per group for all layouts. Stored values outside 25–100 are clamped when read.
+ */
 @Serializable
-data class FontSizes(
-  val soc: Float = FontGroup.SOC.default,
-  val underSoc: Float = FontGroup.UNDER_SOC.default,
-  val main: Float = FontGroup.MAIN.default,
-  val cell: Float = FontGroup.CELL.default,
-  val small: Float = FontGroup.SMALL.default,
+data class FontPercents(
+  val soc: Int = DEFAULT,
+  val underSoc: Int = DEFAULT,
+  val main: Int = DEFAULT,
+  val cell: Int = DEFAULT,
+  val small: Int = DEFAULT,
 ) {
-  operator fun get(group: FontGroup): Float =
+  operator fun get(group: FontGroup): Int =
     when (group) {
       FontGroup.SOC -> soc
       FontGroup.UNDER_SOC -> underSoc
@@ -106,24 +109,31 @@ data class FontSizes(
       FontGroup.SMALL -> small
     }
 
-  fun with(group: FontGroup, sp: Float): FontSizes =
+  fun with(group: FontGroup, percent: Int): FontPercents =
     when (group) {
-      FontGroup.SOC -> copy(soc = sp)
-      FontGroup.UNDER_SOC -> copy(underSoc = sp)
-      FontGroup.MAIN -> copy(main = sp)
-      FontGroup.CELL -> copy(cell = sp)
-      FontGroup.SMALL -> copy(small = sp)
+      FontGroup.SOC -> copy(soc = percent)
+      FontGroup.UNDER_SOC -> copy(underSoc = percent)
+      FontGroup.MAIN -> copy(main = percent)
+      FontGroup.CELL -> copy(cell = percent)
+      FontGroup.SMALL -> copy(small = percent)
     }
 
-  /** Every size inside its group's range; a non-finite size becomes the default. */
-  fun clamped(): FontSizes =
-    FontGroup.entries.fold(this) { sizes, group ->
-      val sp = sizes[group]
-      sizes.with(group, if (sp.isFinite()) sp.coerceIn(group.min, group.max) else group.default)
-    }
+  fun clamped(): FontPercents =
+    FontGroup.entries.fold(this) { p, group -> p.with(group, p[group].coerceIn(MIN, MAX)) }
 
-  /** The size to draw: the setting times the system font scale, never above the group's maximum. */
-  fun effective(group: FontGroup, fontScale: Float): Float = min(this[group] * fontScale, group.max)
+  /**
+   * The size a text asks for, in dp: the layout's design size × percent / 50 × the system font
+   * scale. The drawing may show it smaller when the text does not fit its box (spec 0005, C1).
+   */
+  fun requestedDp(group: FontGroup, designSp: Float, fontScale: Float): Float =
+    designSp * this[group] / DEFAULT * fontScale
+
+  companion object {
+    const val MIN = 25
+    const val DEFAULT = 50
+    const val MAX = 100
+    const val STEP = 5
+  }
 }
 
 /** The colour theme of the app, the overview card and the widget. */

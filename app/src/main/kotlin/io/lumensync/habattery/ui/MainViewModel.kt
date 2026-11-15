@@ -14,7 +14,7 @@ import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
@@ -181,9 +181,9 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(appearance = appearance) }
   }
 
-  fun saveFontSizes(sizes: FontSizes) {
-    val clamped = sizes.clamped()
-    save(emptyList(), syncAfter = false) { it.copy(fontSizes = clamped) }
+  fun saveFontPercents(percents: FontPercents) {
+    val clamped = percents.clamped()
+    save(emptyList(), syncAfter = false) { it.copy(fontPercents = clamped) }
   }
 
   fun saveCapacity(text: String, locale: Locale) {

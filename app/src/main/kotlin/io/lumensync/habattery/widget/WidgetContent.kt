@@ -37,8 +37,18 @@ import androidx.glance.unit.ColorProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.format.Formatters
+
+/** The v4 design sizes (sp) of the five font groups. */
+private val V4_SIZES =
+  mapOf(
+    FontGroup.SOC to 40f,
+    FontGroup.UNDER_SOC to 12f,
+    FontGroup.MAIN to 22f,
+    FontGroup.CELL to 14f,
+    FontGroup.SMALL to 10.5f,
+  )
 
 /** What the widget's tap targets do. */
 data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAuto: Action)
@@ -50,7 +60,7 @@ data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAut
 @Composable
 fun WidgetContent(
   model: WidgetModel,
-  fontSizes: FontSizes,
+  fontPercents: FontPercents,
   colors: WidgetColors,
   actions: WidgetActions,
 ) {
@@ -61,7 +71,7 @@ fun WidgetContent(
   val look =
     WidgetLook(
       s,
-      fontSizes,
+      fontPercents,
       context.resources.configuration.fontScale,
       context.resources.displayMetrics,
       texts,
@@ -93,7 +103,7 @@ fun WidgetContent(
 /** Sizes for one drawing: [s] scales every fixed size; fonts follow spec 0003, approach E1. */
 internal class WidgetLook(
   val s: Float,
-  private val fontSizes: FontSizes,
+  private val fontPercents: FontPercents,
   private val fontScale: Float,
   private val metrics: DisplayMetrics,
   val texts: WidgetTexts,
@@ -115,8 +125,9 @@ internal class WidgetLook(
       dp / fontScale
     }
 
-  /** The size the text is shown at, in dp (setting × font scale, capped, × [s]). */
-  fun shownSize(group: FontGroup): Float = fontSizes.effective(group, fontScale) * s
+  /** The size the text is shown at, in dp (v4 size × percent / 50 × font scale × [s]). */
+  fun shownSize(group: FontGroup): Float =
+    fontPercents.requestedDp(group, V4_SIZES.getValue(group), fontScale) * s
 
   /** A text outside the font groups (the empty state): scaled, and the system scale applies. */
   fun fixedFont(sp: Float): TextUnit = (sp * s).sp

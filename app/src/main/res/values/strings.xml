@@ -129,7 +129,7 @@
     <string name="widget_font_main">Main values</string>
     <string name="widget_font_cell">Cell values</string>
     <string name="widget_font_small">Small text</string>
-    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_font_value">%1$d %%</string>
     <string name="widget_reset_sizes">Reset sizes</string>
     <string name="widget_summary">%1$s · %2$s</string>
 

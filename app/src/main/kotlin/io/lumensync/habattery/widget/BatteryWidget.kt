@@ -39,7 +39,7 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       key(locale) {
         WidgetContent(
           model = WidgetModel.build(overview, settings),
-          fontSizes = settings.fontSizes,
+          fontPercents = settings.fontPercents,
           colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
           actions =
             WidgetActions(

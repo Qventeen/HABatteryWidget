@@ -28,7 +28,7 @@ import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.DisplaySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -209,7 +209,7 @@ class WidgetContentTest {
 
   @Test
   fun largeFonts_stillRender() =
-    render(model(), fontSizes = FontSizes(soc = 42f, underSoc = 12f, main = 24f, cell = 15f, small = 12f)) {
+    render(model(), fontPercents = FontPercents(soc = 100, underSoc = 100, main = 100, cell = 100, small = 100)) {
       onNode(hasTextEqualTo("55")).assertExists()
     }
 
@@ -237,7 +237,7 @@ class WidgetContentTest {
     model: WidgetModel,
     widthDp: Int = 360,
     heightDp: Int = 180,
-    fontSizes: FontSizes = FontSizes(),
+    fontPercents: FontPercents = FontPercents(),
     colors: WidgetColors = WidgetColors(ThemeChoice.SYSTEM),
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
   ) = runGlanceAppWidgetUnitTest {
@@ -249,7 +249,7 @@ class WidgetContentTest {
         refresh = actionRunCallback<NoOpRefresh>(),
         toggleAuto = actionRunCallback<NoOpToggle>(),
       )
-    provideComposable { WidgetContent(model, fontSizes, colors, actions) }
+    provideComposable { WidgetContent(model, fontPercents, colors, actions) }
     assertions()
   }
 
