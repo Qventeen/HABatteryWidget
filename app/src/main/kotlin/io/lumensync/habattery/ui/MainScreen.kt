@@ -36,7 +36,7 @@ import java.util.Locale
 /** What the screen can ask for: the ViewModel's functions plus two system actions. */
 data class MainActions(
   val refreshNow: () -> Unit,
-  val saveConnection: (primary: String, fallback: String) -> Unit,
+  val saveConnection: (url: String) -> Unit,
   val saveToken: (token: String) -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
@@ -82,9 +82,24 @@ private fun MainContent(
   ) {
     OverviewCard(overview)
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
-    ConnectionSection(settings.connection, state.errors, actions.saveConnection)
-    TokenSection(state.hasToken, state.errors, actions.saveToken)
-    EntitiesSection(settings.entities, state.errors, actions.saveEntities)
+    ConnectionSection(
+      settings.connection,
+      state.errors,
+      actions.saveConnection,
+      initiallyExpanded = overview.setupNeeded,
+    )
+    TokenSection(
+      state.hasToken,
+      state.errors,
+      actions.saveToken,
+      initiallyExpanded = overview.setupNeeded,
+    )
+    EntitiesSection(
+      settings.entities,
+      state.errors,
+      actions.saveEntities,
+      initiallyExpanded = overview.setupNeeded,
+    )
     RefreshSection(settings.refresh, state.errors, actions.saveRefresh)
     NotificationSection(
       settings.notifyOnFull,

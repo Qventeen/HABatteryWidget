@@ -30,9 +30,6 @@ fun defaultHttpClient(): OkHttpClient =
     .followSslRedirects(false)
     .build()
 
-internal fun pickError(primary: SyncError, fallback: SyncError): SyncError =
-  if (primary is SyncError.Unreachable) fallback else primary
-
 class HomeAssistantSource(
   private val client: OkHttpClient,
   private val clock: () -> Long = System::currentTimeMillis,
@@ -43,33 +40,15 @@ class HomeAssistantSource(
     entities: EntitySettings,
     token: String,
   ): SyncResult {
-    val primary = connection.primaryUrl
-    val fallback = connection.fallbackUrl
-    val urls = buildList {
-      add(primary)
-      if (fallback.isNotBlank() && fallback.trimEnd('/') != primary.trimEnd('/')) add(fallback)
-    }
     val template = TemplateBuilder.build(entities)
-    var firstError: SyncError? = null
-    var lastError: SyncError = SyncError.Unreachable
-    for (url in urls) {
-      when (val result = fetchOne(url, template, token)) {
-        is SyncResult.Success -> return result
-        is SyncResult.Failure -> {
-          lastError = if (firstError == null) result.error else pickError(firstError, result.error)
-          firstError = lastError
-        }
-      }
-    }
-    return SyncResult.Failure(lastError)
-  }
-
-  private suspend fun fetchOne(baseUrl: String, template: String, token: String): SyncResult =
-    when (UrlPolicy.check(baseUrl)) {
-      UrlPolicy.Verdict.INSECURE -> SyncResult.Failure(SyncError.InsecureConnection)
+    return when (UrlPolicy.check(connection.url)) {
       UrlPolicy.Verdict.INVALID -> SyncResult.Failure(SyncError.Unreachable)
-      UrlPolicy.Verdict.OK -> withContext(Dispatchers.IO) { post(baseUrl, template, token) }
+      // PUBLIC_HTTP is allowed: the settings screen warns, and the user decides.
+      UrlPolicy.Verdict.OK,
+      UrlPolicy.Verdict.PUBLIC_HTTP ->
+        withContext(Dispatchers.IO) { post(connection.url, template, token) }
     }
+  }
 
   private fun post(baseUrl: String, template: String, token: String): SyncResult {
     val body =

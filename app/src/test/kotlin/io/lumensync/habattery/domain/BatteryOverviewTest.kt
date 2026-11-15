@@ -42,14 +42,12 @@ class BatteryOverviewTest {
         chargePercent = 60.0,
         powerW = -300.0,
         currentA = 6.0,
-        cellVoltagesV = listOf(3.30, 3.35, 3.31),
         updatedAtMillis = 1_000L,
       )
     val settings = configuredSettings().copy(capacityAh = 100.0)
     val overview = build(CacheState(reading = r), settings)
     assertEquals(r, overview.reading)
-    assertEquals(BatteryMath.state(60.0, -300.0), overview.state)
-    assertEquals(BatteryMath.cellStats(r.cellVoltagesV), overview.cellStats)
+    assertEquals(BatteryMath.state(60.0, 6.0), overview.state)
     assertEquals(BatteryMath.timeRemaining(r, 100.0), overview.timeRemaining)
     assertEquals(settings.refresh, overview.refresh)
   }
@@ -59,7 +57,6 @@ class BatteryOverviewTest {
     val overview = build(CacheState())
     assertNull(overview.reading)
     assertNull(overview.state)
-    assertNull(overview.cellStats)
     assertNull(overview.timeRemaining)
   }
 

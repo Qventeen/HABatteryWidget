@@ -34,16 +34,20 @@ class StoredJsonV1Test {
         "schemaVersion": 1,
         "settings": {
           "connection": {
-            "primaryUrl": "http://ha.local:8123",
-            "fallbackUrl": "https://ha.example.com"
+            "url": "http://ha.local:8123"
           },
           "entities": {
+            "prefix": "bps_bms",
             "charge": "sensor.soc",
-            "power": "sensor.power",
-            "fallbackPower": "sensor.power_alt",
-            "current": "sensor.current",
             "totalVoltage": "sensor.voltage",
-            "cells": ["sensor.cell_1", "sensor.cell_2"]
+            "current": "sensor.current",
+            "power": "sensor.power",
+            "capacityRemaining": "sensor.ah",
+            "averageCellVoltage": "sensor.avg",
+            "deltaCellVoltage": "sensor.delta",
+            "mosfetTemperature": "sensor.mosfet",
+            "temperatures": ["sensor.t1", "sensor.t2"],
+            "balancing": "sensor.bal"
           },
           "refresh": { "auto": true, "intervalMinutes": 30 },
           "notifyOnFull": true,
@@ -58,18 +62,20 @@ class StoredJsonV1Test {
         settings =
           Settings(
             connection =
-              ConnectionSettings(
-                primaryUrl = "http://ha.local:8123",
-                fallbackUrl = "https://ha.example.com",
-              ),
+              ConnectionSettings(url = "http://ha.local:8123"),
             entities =
               EntitySettings(
+                prefix = "bps_bms",
                 charge = "sensor.soc",
-                power = "sensor.power",
-                fallbackPower = "sensor.power_alt",
-                current = "sensor.current",
                 totalVoltage = "sensor.voltage",
-                cells = listOf("sensor.cell_1", "sensor.cell_2"),
+                current = "sensor.current",
+                power = "sensor.power",
+                capacityRemaining = "sensor.ah",
+                averageCellVoltage = "sensor.avg",
+                deltaCellVoltage = "sensor.delta",
+                mosfetTemperature = "sensor.mosfet",
+                temperatures = listOf("sensor.t1", "sensor.t2"),
+                balancing = "sensor.bal",
               ),
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
             notifyOnFull = true,
@@ -77,6 +83,52 @@ class StoredJsonV1Test {
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun removedKeys_areIgnoredOnRead() {
+    val settings =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"entities":{"charge":"sensor.soc","fallbackPower":"sensor.alt","cells":["sensor.c1"]}}}""",
+      )
+    assertEquals(EntitySettings(charge = "sensor.soc"), settings.settings.entities)
+    val cache =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """{"schemaVersion":1,"state":{"reading":{"chargePercent":50.0,"cellVoltagesV":[3.3],"updatedAtMillis":1}}}""",
+      )
+    assertEquals(BatteryReading(chargePercent = 50.0, updatedAtMillis = 1), cache.state.reading)
+  }
+
+  @Test
+  fun `settings saved by 0_1_0 still load`() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """
+        {
+          "schemaVersion": 1,
+          "settings": {
+            "connection": { "primaryUrl": "http://ha.local:8123", "fallbackUrl": "" },
+            "entities": {
+              "charge": "sensor.soc",
+              "power": "sensor.p",
+              "fallbackPower": "sensor.fp",
+              "current": "sensor.i",
+              "totalVoltage": "sensor.v",
+              "cells": ["sensor.c1"]
+            }
+          }
+        }
+        """,
+      )
+    val settings = record.settings
+    assertEquals("", settings.connection.url)
+    assertEquals("sensor.soc", settings.entities.charge)
+    assertEquals("sensor.p", settings.entities.power)
+    assertEquals("sensor.i", settings.entities.current)
+    assertEquals("sensor.v", settings.entities.totalVoltage)
   }
 
   @Test
@@ -91,7 +143,12 @@ class StoredJsonV1Test {
             "powerW": -207.0,
             "currentA": -7.8,
             "totalVoltageV": 26.5,
-            "cellVoltagesV": [3.301, null, 3.305],
+            "capacityRemainingAh": 170.5,
+            "averageCellVoltageV": 3.303,
+            "deltaCellVoltageV": 0.004,
+            "mosfetTemperatureC": 31.5,
+            "temperaturesC": [24.0, null],
+            "balancing": true,
             "updatedAtMillis": 1800000000000
           },
           "error": { "type": "http", "code": 503 },
@@ -112,7 +169,12 @@ class StoredJsonV1Test {
                 powerW = -207.0,
                 currentA = -7.8,
                 totalVoltageV = 26.5,
-                cellVoltagesV = listOf(3.301, null, 3.305),
+                capacityRemainingAh = 170.5,
+                averageCellVoltageV = 3.303,
+                deltaCellVoltageV = 0.004,
+                mosfetTemperatureC = 31.5,
+                temperaturesC = listOf(24.0, null),
+                balancing = true,
                 updatedAtMillis = 1_800_000_000_000L,
               ),
             error = SyncError.HttpError(503),
@@ -128,7 +190,6 @@ class StoredJsonV1Test {
     val errors =
       mapOf(
         """{ "type": "not_configured" }""" to SyncError.NotConfigured,
-        """{ "type": "insecure" }""" to SyncError.InsecureConnection,
         """{ "type": "unauthorized" }""" to SyncError.Unauthorized,
         """{ "type": "unreachable" }""" to SyncError.Unreachable,
         """{ "type": "http", "code": 401 }""" to SyncError.HttpError(401),

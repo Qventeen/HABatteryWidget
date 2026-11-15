@@ -43,16 +43,16 @@ class MainScreenTest {
   }
 
   @Test
-  fun localPrimaryUrl_savesWithoutFieldError() {
+  fun localUrl_savesWithoutFieldError() {
     waitForContent()
 
     compose
-      .onNodeWithText(text(R.string.connection_primary))
+      .onNodeWithText(text(R.string.connection_url))
       .performScrollTo()
       .performTextReplacement("http://10.0.2.2:8123")
     saveConnection()
 
-    listOf(R.string.field_required, R.string.field_url_invalid, R.string.field_url_insecure).forEach {
+    listOf(R.string.field_required, R.string.field_url_invalid).forEach {
       compose.onNodeWithText(text(it)).assertDoesNotExist()
     }
   }
@@ -60,7 +60,7 @@ class MainScreenTest {
   @Test
   fun save_clearsFocus() {
     waitForContent()
-    val field = compose.onNodeWithText(text(R.string.connection_primary))
+    val field = compose.onNodeWithText(text(R.string.connection_url))
     field.performScrollTo().performClick().performTextReplacement("http://10.0.2.2:8123")
     field.assertIsFocused()
 
@@ -68,6 +68,37 @@ class MainScreenTest {
 
     // No focused field: the keyboard does not open again when the user comes back.
     field.assertIsNotFocused()
+  }
+
+  @Test
+  fun fillSetsEveryEntityFieldFromPrefix() {
+    waitForContent()
+
+    compose
+      .onNodeWithText(text(R.string.entities_prefix))
+      .performScrollTo()
+      .performTextReplacement("bps_bms")
+    compose.onNodeWithText(text(R.string.entities_fill)).performScrollTo().performClick()
+    compose.waitForIdle()
+
+    compose.onNodeWithText("sensor.bps_bms_power_tube_temperature").performScrollTo().assertIsDisplayed()
+    compose.onNodeWithText("sensor.bps_bms_temperature_sensor_1").performScrollTo().assertIsDisplayed()
+  }
+
+  @Test
+  fun sectionsFoldAndUnfold() {
+    waitForContent()
+    val label = text(R.string.capacity_label)
+    val header = compose.onNodeWithText(text(R.string.capacity_title))
+
+    // The capacity section starts folded: its content is not composed.
+    compose.onNodeWithText(label).assertDoesNotExist()
+
+    header.performScrollTo().performClick()
+    compose.onNodeWithText(label).assertExists()
+
+    header.performClick()
+    compose.onNodeWithText(label).assertDoesNotExist()
   }
 
   private fun saveConnection() {

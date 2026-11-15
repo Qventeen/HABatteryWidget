@@ -1,26 +1,36 @@
 package io.lumensync.habattery.ui.sections
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -31,17 +41,49 @@ import io.lumensync.habattery.domain.FieldError
 /** Keyboard for entity IDs and URLs: no auto-correct, no capitals. */
 internal val IdKeyboard = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii)
 
-/** A titled card that holds one settings section. */
+/**
+ * A card for one settings section. The header (title, [summary], chevron) is one button that folds
+ * the card; the content is not composed while it is folded. The fold state survives rotation.
+ */
 @Composable
 internal fun SectionCard(
   @StringRes title: Int,
+  summary: String,
+  initiallyExpanded: Boolean,
   modifier: Modifier = Modifier,
   content: @Composable ColumnScope.() -> Unit,
 ) {
+  var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+  val titleText = stringResource(title)
+  val actionLabel =
+    stringResource(if (expanded) R.string.section_hide else R.string.section_show, titleText)
+  val stateText =
+    stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
   OutlinedCard(modifier.fillMaxWidth()) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
-      content()
+      Row(
+        modifier =
+          Modifier.fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClickLabel = actionLabel, role = Role.Button) { expanded = !expanded }
+            .semantics { stateDescription = stateText },
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Column(Modifier.weight(1f).padding(end = 8.dp)) {
+          Text(titleText, style = MaterialTheme.typography.titleMedium)
+          Text(
+            summary,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        Icon(
+          painter =
+            painterResource(if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
+          contentDescription = null, // the row speaks for it
+        )
+      }
+      if (expanded) content()
     }
   }
 }
@@ -104,6 +146,6 @@ internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolea
   }
 }
 
-/** The error the last save reported for [field] (and [cellIndex] for one cell), if any. */
-internal fun List<FieldError>.errorFor(field: Field, cellIndex: Int? = null): FieldError? =
-  firstOrNull { it.field == field && it.cellIndex == cellIndex }
+/** The error the last save reported for [field] (and [index] for one list item), if any. */
+internal fun List<FieldError>.errorFor(field: Field, index: Int? = null): FieldError? =
+  firstOrNull { it.field == field && it.index == index }

@@ -3,12 +3,12 @@ package io.lumensync.habattery.domain
 import java.net.URI
 import java.net.URISyntaxException
 
-/** Decides whether a Home Assistant base URL may be used. Cleartext HTTP is allowed only locally. */
+/** Decides whether a Home Assistant base URL may be used. Cleartext HTTP to a non-local host is allowed but flagged. */
 object UrlPolicy {
   enum class Verdict {
     OK,
     INVALID,
-    INSECURE,
+    PUBLIC_HTTP,
   }
 
   fun check(url: String): Verdict {
@@ -22,7 +22,7 @@ object UrlPolicy {
     if (host.isNullOrEmpty()) return Verdict.INVALID
     return when (uri.scheme?.lowercase()) {
       "https" -> Verdict.OK
-      "http" -> if (isLocalHost(host)) Verdict.OK else Verdict.INSECURE
+      "http" -> if (isLocalHost(host)) Verdict.OK else Verdict.PUBLIC_HTTP
       else -> Verdict.INVALID
     }
   }

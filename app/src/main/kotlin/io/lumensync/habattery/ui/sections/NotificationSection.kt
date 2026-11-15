@@ -26,6 +26,7 @@ fun NotificationSection(
   onSetEnabled: (Boolean) -> Unit,
   onOpenSettings: () -> Unit,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   var denied by rememberSaveable { mutableStateOf(false) }
   val permission =
@@ -34,7 +35,10 @@ fun NotificationSection(
       if (granted) onSetEnabled(true)
     }
 
-  SectionCard(R.string.notify_title, modifier) {
+  val summary =
+    stringResource(if (enabled) R.string.notify_summary_on else R.string.notify_summary_off)
+
+  SectionCard(R.string.notify_title, summary, initiallyExpanded, modifier) {
     SwitchRow(
       stringResource(R.string.notify_on_full),
       checked = enabled,

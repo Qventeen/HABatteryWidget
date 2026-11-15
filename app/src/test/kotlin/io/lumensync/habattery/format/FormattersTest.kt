@@ -8,7 +8,6 @@ import io.lumensync.habattery.domain.model.Direction
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SyncError.BadResponse
 import io.lumensync.habattery.domain.model.SyncError.HttpError
-import io.lumensync.habattery.domain.model.SyncError.InsecureConnection
 import io.lumensync.habattery.domain.model.SyncError.NotConfigured
 import io.lumensync.habattery.domain.model.SyncError.Unauthorized
 import io.lumensync.habattery.domain.model.SyncError.Unreachable
@@ -45,10 +44,18 @@ class FormattersTest {
         assertEquals("2 kW", f.power(2000.0))
         assertEquals("26.46 V", f.voltage(26.456))
         assertEquals("-12.3 A", f.current(-12.34))
-        assertEquals("3.300", f.cellVoltage(3.3))
-        assertEquals("—", f.cellVoltage(null))
         assertEquals("55%", f.chargePercent(54.6))
         assertEquals("12 mV", f.deltaMv(12))
+    }
+
+    @Test
+    fun newValues_en() {
+        val f = Formatters(context)
+        assertEquals("25 °C", f.temperature(25.0))
+        assertEquals("25.4 °C", f.temperature(25.35))
+        assertEquals("157.0 Ah", f.ampHours(157.0))
+        // number() rounds half-even, so the brief's tie value 3.3125 gives 3.312; use a clear case.
+        assertEquals("3.313 V", f.cellVoltage(3.3126))
     }
 
     @Test
@@ -70,7 +77,7 @@ class FormattersTest {
     @Test
     fun everyErrorHasText() {
         val f = Formatters(context)
-        listOf(NotConfigured, InsecureConnection, Unauthorized, Unreachable, HttpError(502), BadResponse)
+        listOf(NotConfigured, Unauthorized, Unreachable, HttpError(502), BadResponse)
             .forEach { assertTrue(f.error(it).isNotBlank()) }
     }
 

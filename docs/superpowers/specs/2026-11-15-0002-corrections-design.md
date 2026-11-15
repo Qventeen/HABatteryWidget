@@ -272,14 +272,43 @@ The status text keeps showing the power value from the power entity.
 
 ### 5.8 Green theme
 
-Replace the blue scheme in `ui/theme/Color.kt` (same four roles):
+Replace the blue scheme in `ui/theme/Color.kt` (every role below; error roles keep the Material defaults):
 
 | Role | Light | Dark |
 |---|---|---|
 | primary | `#2E7D32` | `#7BC67E` |
-| primaryContainer | `#1B5E20` | `#1E3320` |
-| secondary | `#52634F` | `#B9CCB4` |
-| tertiary | `#38656A` | `#A0CFD4` |
+| onPrimary | `#FFFFFF` | `#0C3900` |
+| primaryContainer | `#B8F397` | `#20510A` |
+| onPrimaryContainer | `#042100` | `#B8F397` |
+| secondary | `#55624C` | `#BDCBB0` |
+| onSecondary | `#FFFFFF` | `#283421` |
+| secondaryContainer | `#D9E7CB` | `#3E4A36` |
+| onSecondaryContainer | `#131F0D` | `#D9E7CB` |
+| tertiary | `#386666` | `#A0CFCF` |
+| onTertiary | `#FFFFFF` | `#003737` |
+| tertiaryContainer | `#BBEBEB` | `#1E4E4E` |
+| onTertiaryContainer | `#002020` | `#BBEBEB` |
+| background | `#FDFDF5` | `#1A1C18` |
+| onBackground | `#1A1C18` | `#E3E3DC` |
+| surface | `#FDFDF5` | `#1A1C18` |
+| onSurface | `#1A1C18` | `#E3E3DC` |
+| surfaceVariant | `#E0E4D6` | `#44483E` |
+| onSurfaceVariant | `#44483E` | `#C4C8BA` |
+| outline | `#74796D` | `#8E9286` |
+| outlineVariant | `#C4C8BA` | `#44483E` |
+| inverseSurface | `#2F312D` | `#E3E3DC` |
+| inverseOnSurface | `#F1F1EA` | `#2F312D` |
+| inversePrimary | `#9CD67D` | `#2E7D32` |
+| surfaceTint | = primary | = primary |
+| surfaceDim | `#DADBD3` | `#121410` |
+| surfaceBright | `#FDFDF5` | `#383A35` |
+| surfaceContainerLowest | `#FFFFFF` | `#0D0F0B` |
+| surfaceContainerLow | `#F7F7F0` | `#1A1C18` |
+| surfaceContainer | `#F1F1EA` | `#1E201C` |
+| surfaceContainerHigh | `#EBECE4` | `#282B26` |
+| surfaceContainerHighest | `#E3E3DC` | `#333531` |
+
+Amended in the final review (ruling R5): the first table set only four roles; the rest fell back to Material's purple baseline.
 
 The primaries match design v3. The window themes hold no colours (checked).
 

@@ -36,8 +36,8 @@ when it has a second implementation or a test fake.
 ## One sync path
 
 - Every trigger (worker, widget ↻, "Refresh now", app start) runs `SyncBattery`.
-- `SyncBattery`: settings and token → `BatterySource.fetch` (primary URL, then
-  fallback) → reading or error into `ReadingCache` (last good reading kept) →
+- `SyncBattery`: settings and token → `BatterySource.fetch` (the one URL) →
+  reading or error into `ReadingCache` (last good reading kept) →
   `FullChargeRule` → `WidgetRefresher.refreshAll()`.
 - Widget ↻ only marks "refreshing" and enqueues unique one-time work.
 - The widget renders from local data only (`ReadingCache`,

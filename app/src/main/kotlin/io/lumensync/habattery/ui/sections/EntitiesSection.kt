@@ -4,8 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,91 +17,180 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
+import io.lumensync.habattery.domain.EntityFill
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.Problem
+import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.EntitySettings
 
-/** Saves the draft as a flat list: the five single entities, then the cells. */
-private val DraftSaver =
+/**
+ * Saves the prefix, the nine single ids and the temperature ids. Strings only, so the draft
+ * survives rotation and process death.
+ */
+private fun draftSaver(stored: EntitySettings) =
   listSaver<EntitySettings, String>(
-    save = { listOf(it.charge, it.power, it.fallbackPower, it.current, it.totalVoltage) + it.cells },
-    restore = { EntitySettings(it[0], it[1], it[2], it[3], it[4], it.drop(SINGLE_FIELDS)) },
+    save = {
+      listOf(
+        it.prefix,
+        it.charge,
+        it.totalVoltage,
+        it.current,
+        it.power,
+        it.capacityRemaining,
+        it.averageCellVoltage,
+        it.deltaCellVoltage,
+        it.mosfetTemperature,
+        it.balancing,
+      ) + it.temperatures
+    },
+    restore = {
+      stored.copy(
+        prefix = it[0],
+        charge = it[1],
+        totalVoltage = it[2],
+        current = it[3],
+        power = it[4],
+        capacityRemaining = it[5],
+        averageCellVoltage = it[6],
+        deltaCellVoltage = it[7],
+        mosfetTemperature = it[8],
+        balancing = it[9],
+        temperatures = it.drop(SINGLE_FIELDS),
+      )
+    },
   )
 
-private const val SINGLE_FIELDS = 5
+private const val SINGLE_FIELDS = 10 // the prefix and the nine single ids
 
-/** Entity IDs: charge, power, fallback power, current, total voltage and up to 32 cells. */
+/** Entity IDs: a prefix with Fill, the single ids, and the temperature sensor list. */
 @Composable
 fun EntitiesSection(
   entities: EntitySettings,
   errors: List<FieldError>,
   onSave: (EntitySettings) -> Unit,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
-  var draft by rememberSaveable(entities, stateSaver = DraftSaver) { mutableStateOf(entities) }
+  var draft by rememberSaveable(entities, stateSaver = draftSaver(entities)) { mutableStateOf(entities) }
 
-  SectionCard(R.string.entities_title, modifier) {
+  val summary =
+    when {
+      entities.prefix.isNotBlank() -> entities.prefix
+      entities.charge.isNotBlank() -> stringResource(R.string.entities_summary_manual)
+      else -> stringResource(R.string.summary_not_set)
+    }
+
+  val prefixOk = Validation.isPrefixValid(draft.prefix.trim().trimEnd('_'))
+  // While typing: flag a bad prefix at once. An error from the last save still wins.
+  val liveError =
+    if (draft.prefix.isNotEmpty() && !prefixOk) FieldError(Field.PREFIX, Problem.INVALID) else null
+
+  SectionCard(R.string.entities_title, summary, initiallyExpanded, modifier) {
+    SettingsTextField(
+      value = draft.prefix,
+      onValueChange = { draft = draft.copy(prefix = it) },
+      label = stringResource(R.string.entities_prefix),
+      error = errors.errorFor(Field.PREFIX) ?: liveError,
+      hint = stringResource(R.string.entities_fill_hint),
+    )
+    OutlinedButton(
+      onClick = { draft = EntityFill.fromPrefix(draft.prefix, draft) },
+      enabled = prefixOk,
+    ) {
+      Text(stringResource(R.string.entities_fill))
+    }
+
     EntityField(R.string.entity_charge, draft.charge, errors.errorFor(Field.CHARGE)) {
       draft = draft.copy(charge = it)
+    }
+    EntityField(R.string.entity_total_voltage, draft.totalVoltage, errors.errorFor(Field.TOTAL_VOLTAGE)) {
+      draft = draft.copy(totalVoltage = it)
+    }
+    EntityField(
+      R.string.entity_current,
+      draft.current,
+      errors.errorFor(Field.CURRENT),
+      hint = stringResource(R.string.entity_current_hint),
+    ) {
+      draft = draft.copy(current = it)
     }
     EntityField(R.string.entity_power, draft.power, errors.errorFor(Field.POWER)) {
       draft = draft.copy(power = it)
     }
     EntityField(
-      R.string.entity_fallback_power,
-      draft.fallbackPower,
-      errors.errorFor(Field.FALLBACK_POWER),
+      R.string.entity_capacity_remaining,
+      draft.capacityRemaining,
+      errors.errorFor(Field.CAPACITY_REMAINING),
     ) {
-      draft = draft.copy(fallbackPower = it)
-    }
-    EntityField(R.string.entity_current, draft.current, errors.errorFor(Field.CURRENT)) {
-      draft = draft.copy(current = it)
+      draft = draft.copy(capacityRemaining = it)
     }
     EntityField(
-      R.string.entity_total_voltage,
-      draft.totalVoltage,
-      errors.errorFor(Field.TOTAL_VOLTAGE),
+      R.string.entity_average_cell_voltage,
+      draft.averageCellVoltage,
+      errors.errorFor(Field.AVERAGE_CELL_VOLTAGE),
     ) {
-      draft = draft.copy(totalVoltage = it)
+      draft = draft.copy(averageCellVoltage = it)
+    }
+    EntityField(
+      R.string.entity_delta_cell_voltage,
+      draft.deltaCellVoltage,
+      errors.errorFor(Field.DELTA_CELL_VOLTAGE),
+    ) {
+      draft = draft.copy(deltaCellVoltage = it)
+    }
+    EntityField(
+      R.string.entity_mosfet_temperature,
+      draft.mosfetTemperature,
+      errors.errorFor(Field.MOSFET_TEMPERATURE),
+    ) {
+      draft = draft.copy(mosfetTemperature = it)
+    }
+    EntityField(R.string.entity_balancing, draft.balancing, errors.errorFor(Field.BALANCING)) {
+      draft = draft.copy(balancing = it)
     }
 
-    Text(stringResource(R.string.entity_cells), style = MaterialTheme.typography.titleSmall)
-    draft.cells.forEachIndexed { index, cell ->
-      SettingsTextField(
-        value = cell,
-        onValueChange = { value ->
-          draft = draft.copy(cells = draft.cells.toMutableList().apply { set(index, value) })
-        },
-        label = stringResource(R.string.entity_cell, index + 1),
-        error = errors.errorFor(Field.CELLS, cellIndex = index),
-        trailingIcon = {
-          IconButton(
-            onClick = {
-              draft = draft.copy(cells = draft.cells.toMutableList().apply { removeAt(index) })
-            }
-          ) {
-            Icon(
-              painter = painterResource(R.drawable.ic_close),
-              contentDescription = stringResource(R.string.entity_cell_remove, index + 1),
-            )
-          }
-        },
-      )
-    }
-    errors.errorFor(Field.CELLS)?.let { error ->
-      Text(
-        fieldErrorText(error),
-        color = MaterialTheme.colorScheme.error,
-        style = MaterialTheme.typography.bodySmall,
-      )
-    }
-    TextButton(
-      onClick = { draft = draft.copy(cells = draft.cells + "") },
-      enabled = draft.cells.size < EntitySettings.MAX_CELLS,
-    ) {
-      Text(stringResource(R.string.entity_cell_add))
-    }
+    TemperatureList(
+      temperatures = draft.temperatures,
+      errors = errors,
+      onChange = { draft = draft.copy(temperatures = it) },
+    )
 
     SaveButton { onSave(draft) }
+  }
+}
+
+@Composable
+private fun TemperatureList(
+  temperatures: List<String>,
+  errors: List<FieldError>,
+  onChange: (List<String>) -> Unit,
+) {
+  Text(stringResource(R.string.entity_temperatures), style = MaterialTheme.typography.titleSmall)
+  temperatures.forEachIndexed { index, id ->
+    val number = index + 1
+    SettingsTextField(
+      value = id,
+      onValueChange = { value -> onChange(temperatures.toMutableList().also { it[index] = value }) },
+      label = stringResource(R.string.entity_temperature, number),
+      error = errors.errorFor(Field.TEMPERATURES, index),
+      trailingIcon = {
+        IconButton(onClick = { onChange(temperatures.filterIndexed { i, _ -> i != index }) }) {
+          Icon(
+            painterResource(R.drawable.ic_close),
+            contentDescription = stringResource(R.string.entity_temperature_remove, number),
+          )
+        }
+      },
+    )
+  }
+  errors.errorFor(Field.TEMPERATURES)?.let {
+    Text(fieldErrorText(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+  }
+  OutlinedButton(
+    onClick = { onChange(temperatures + "") },
+    enabled = temperatures.size < EntitySettings.MAX_TEMPERATURES,
+  ) {
+    Text(stringResource(R.string.entity_temperature_add))
   }
 }
 
@@ -110,7 +199,8 @@ private fun EntityField(
   @StringRes label: Int,
   value: String,
   error: FieldError?,
+  hint: String? = null,
   onValueChange: (String) -> Unit,
 ) {
-  SettingsTextField(value, onValueChange, stringResource(label), error)
+  SettingsTextField(value, onValueChange, stringResource(label), error, hint)
 }

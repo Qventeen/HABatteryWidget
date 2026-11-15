@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import io.lumensync.habattery.R
@@ -21,12 +22,21 @@ fun RefreshSection(
   errors: List<FieldError>,
   onSave: (auto: Boolean, intervalText: String) -> Unit,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   var auto by rememberSaveable(refresh) { mutableStateOf(refresh.auto) }
   var interval by
     rememberSaveable(refresh) { mutableStateOf(refresh.intervalMinutes?.toString().orEmpty()) }
 
-  SectionCard(R.string.refresh_title, modifier) {
+  val minutes = refresh.intervalMinutes
+  val summary =
+    if (refresh.auto && minutes != null) {
+      pluralStringResource(R.plurals.refresh_summary_every, minutes, minutes)
+    } else {
+      stringResource(R.string.refresh_summary_off)
+    }
+
+  SectionCard(R.string.refresh_title, summary, initiallyExpanded, modifier) {
     SwitchRow(stringResource(R.string.refresh_auto), checked = auto, onCheckedChange = { auto = it })
     SettingsTextField(
       value = interval,

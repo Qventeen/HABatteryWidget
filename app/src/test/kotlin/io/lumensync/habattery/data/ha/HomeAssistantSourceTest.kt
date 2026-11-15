@@ -5,6 +5,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
@@ -29,7 +30,7 @@ class HomeAssistantSourceTest {
   private val source = HomeAssistantSource(client) { 1234L }
   private val entities = EntitySettings(charge = "sensor.soc")
   private val okBody =
-    """{"soc":55.0,"power":-500.0,"current":-10.0,"total_v":26.5,"cells":[3.31,null,3.30]}"""
+    """{"soc":55.0,"power":-500.0,"current":-10.0,"total_v":26.5}"""
 
   @After fun tearDown() = servers.forEach { runCatching { it.close() } }
 
@@ -54,8 +55,8 @@ class HomeAssistantSourceTest {
   private fun reply(code: Int, body: String = "") =
     MockResponse.Builder().code(code).body(body).build()
 
-  private suspend fun fetch(primary: String, fallback: String = "", token: String = "t0ken"): SyncResult =
-    source.fetch(ConnectionSettings(primary, fallback), entities, token)
+  private suspend fun fetch(url: String, token: String = "t0ken"): SyncResult =
+    source.fetch(ConnectionSettings(url), entities, token)
 
   private fun SyncResult.error(): SyncError = (this as SyncResult.Failure).error
 
@@ -64,7 +65,7 @@ class HomeAssistantSourceTest {
     val s = server(reply(200, okBody))
     val result = fetch(s.base())
     assertEquals(
-      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, listOf(3.31, null, 3.30), 1234L)),
+      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, updatedAtMillis = 1234L)),
       result,
     )
     val req = s.takeRequest()
@@ -72,6 +73,23 @@ class HomeAssistantSourceTest {
     assertEquals("/api/template", req.url.encodedPath)
     assertEquals("Bearer t0ken", req.headers["Authorization"])
     assertTrue(req.body!!.utf8().contains("\"template\""))
+  }
+
+  @Test
+  fun `public http is sent`() = runTest {
+    // example.com resolves to the local mock, so the request goes out over plain HTTP.
+    val publicSource =
+      HomeAssistantSource(
+        client.newBuilder().dns { listOf(InetAddress.getLoopbackAddress()) }.build()
+      ) {
+        1234L
+      }
+    val s = server(reply(200, okBody))
+    val result =
+      publicSource.fetch(ConnectionSettings("http://example.com:${s.port}"), entities, "t0ken")
+    assertTrue(result is SyncResult.Success)
+    assertEquals(1, s.requestCount)
+    assertEquals("Bearer t0ken", s.takeRequest().headers["Authorization"])
   }
 
   @Test
@@ -137,34 +155,25 @@ class HomeAssistantSourceTest {
         power = Double.NaN,
         current = Double.POSITIVE_INFINITY,
         totalV = Double.NEGATIVE_INFINITY,
-        cells = listOf(3.3, Double.NaN),
       )
     val reading = r.toReading(1L)!!
     assertNull(reading.powerW)
     assertNull(reading.currentA)
     assertNull(reading.totalVoltageV)
-    assertEquals(listOf(3.3, null), reading.cellVoltagesV)
     assertNull(TemplateResponse(soc = Double.NaN).toReading(1L))
     assertNull(TemplateResponse(soc = Double.POSITIVE_INFINITY).toReading(1L))
   }
 
   @Test
-  fun fallback_usedAfterPrimaryFails() = runTest {
-    val fb = server(reply(200, okBody))
-    assertTrue(fetch(closedUrl(), fb.base()) is SyncResult.Success)
+  fun `posts once to the one url`() = runTest {
+    val s = server(reply(500), reply(200, okBody))
+    assertEquals(SyncError.HttpError(500), fetch(s.base()).error())
+    assertEquals(1, s.requestCount)
   }
 
   @Test
-  fun bothFail_primaryAuthWinsOverUnreachable() = runTest {
-    assertEquals(
-      SyncError.Unauthorized,
-      fetch(server(reply(401)).base(), closedUrl()).error(),
-    )
-  }
-
-  @Test
-  fun bothFail_unreachablePrimaryGivesFallbackError() = runTest {
-    assertEquals(SyncError.HttpError(500), fetch(closedUrl(), server(reply(500)).base()).error())
+  fun unreachable_isFailureWithoutFallback() = runTest {
+    assertEquals(SyncError.Unreachable, fetch(closedUrl()).error())
   }
 
   @Test
@@ -175,18 +184,6 @@ class HomeAssistantSourceTest {
   }
 
   @Test
-  fun sameFallback_requestsOnce() = runTest {
-    val s = server(reply(500), reply(500))
-    fetch(s.base(), s.base() + "/")
-    assertEquals(1, s.requestCount)
-  }
-
-  @Test
-  fun insecureUrl_noRequest() = runTest {
-    assertEquals(SyncError.InsecureConnection, fetch("http://example.com").error())
-  }
-
-  @Test
   fun errorsNeverContainToken() = runTest {
     val errors =
       listOf(
@@ -194,15 +191,8 @@ class HomeAssistantSourceTest {
         fetch(server(reply(500)).base()),
         fetch(server(reply(200, "<html>")).base()),
         fetch(closedUrl()),
-        fetch("http://example.com"),
         fetch("not a url"),
       )
     errors.forEach { assertFalse(it.error().toString().contains("t0ken")) }
-  }
-
-  @Test
-  fun pickError_prefersSpecific() {
-    assertEquals(SyncError.BadResponse, pickError(SyncError.BadResponse, SyncError.Unauthorized))
-    assertEquals(SyncError.Unauthorized, pickError(SyncError.Unreachable, SyncError.Unauthorized))
   }
 }

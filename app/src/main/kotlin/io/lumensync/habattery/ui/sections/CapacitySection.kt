@@ -23,6 +23,7 @@ fun CapacitySection(
   errors: List<FieldError>,
   onSave: (text: String, locale: Locale) -> Unit,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
   val locale = LocalConfiguration.current.locales[0]
   var text by
@@ -30,7 +31,11 @@ fun CapacitySection(
       mutableStateOf(capacityAh?.let { formatDecimal(it, locale) }.orEmpty())
     }
 
-  SectionCard(R.string.capacity_title, modifier) {
+  val summary =
+    capacityAh?.let { stringResource(R.string.capacity_summary, formatDecimal(it, locale)) }
+      ?: stringResource(R.string.summary_not_set)
+
+  SectionCard(R.string.capacity_title, summary, initiallyExpanded, modifier) {
     SettingsTextField(
       value = text,
       onValueChange = { text = it },

@@ -71,8 +71,8 @@ class MainViewModel(
     }
   }
 
-  fun saveConnection(primary: String, fallback: String) {
-    val connection = ConnectionSettings(primary.trim(), fallback.trim())
+  fun saveConnection(url: String) {
+    val connection = ConnectionSettings(url.trim())
     save(Validation.connection(connection), syncAfter = true) { it.copy(connection = connection) }
   }
 
@@ -95,12 +95,17 @@ class MainViewModel(
   fun saveEntities(entities: EntitySettings) {
     val clean =
       entities.copy(
+        prefix = entities.prefix.trim(),
         charge = entities.charge.trim(),
-        power = entities.power.trim(),
-        fallbackPower = entities.fallbackPower.trim(),
-        current = entities.current.trim(),
         totalVoltage = entities.totalVoltage.trim(),
-        cells = entities.cells.map { it.trim() },
+        current = entities.current.trim(),
+        power = entities.power.trim(),
+        capacityRemaining = entities.capacityRemaining.trim(),
+        averageCellVoltage = entities.averageCellVoltage.trim(),
+        deltaCellVoltage = entities.deltaCellVoltage.trim(),
+        mosfetTemperature = entities.mosfetTemperature.trim(),
+        temperatures = entities.temperatures.map { it.trim() },
+        balancing = entities.balancing.trim(),
       )
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }

@@ -64,10 +64,11 @@ class WidgetContentTest {
     }
 
   @Test
-  fun normal_showsChargeAndCells() =
+  fun normal_showsChargeAndDelta() =
     render(overview()) {
       onNode(hasText("55%")).assertExists()
-      onNode(hasText("3.300")).assertExists()
+      onNode(hasTextEqualTo(context.getString(R.string.delta_label, formatters.deltaMv(12))))
+        .assertExists()
       assertPowerOnlyInStatus()
       onNode(hasTextEqualTo(formatters.current(-7.8))).assertExists()
       onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
@@ -77,32 +78,31 @@ class WidgetContentTest {
     }
 
   @Test
-  fun summaryTier_hidesCells() =
-    render(overview(), heightDp = 110) {
-      onNode(hasText("55%")).assertExists()
-      onAllNodes(hasText("3.300")).assertCountEquals(0)
+  fun noDelta_hidesDeltaText() =
+    render(overview(sample(deltaCellVoltageV = null))) {
+      onAllNodes(hasText("mV")).assertCountEquals(0)
     }
+
+  @Test
+  fun noCellText_isShown() =
+    render(overview()) { onAllNodes(hasText("3.30")).assertCountEquals(0) }
+
+  @Test
+  fun summaryTier_110dp_showsCharge() =
+    render(overview(), heightDp = 110) { onNode(hasText("55%")).assertExists() }
 
   @Test
   fun missingPower_hidesPowerLine() =
     render(overview(sample(powerW = null))) {
-      onNode(hasTextEqualTo(context.getString(R.string.status_unknown))).assertExists()
       onAllNodes(hasText(" W")).assertCountEquals(0)
     }
 
   @Test
   fun missingCurrentAndVoltage_hideTheirLines() =
     render(overview(sample(currentA = null, totalVoltageV = null))) {
-      assertPowerOnlyInStatus()
+      onNode(hasTextEqualTo(context.getString(R.string.status_unknown))).assertExists()
       onAllNodes(hasTextEqualTo(formatters.current(-7.8))).assertCountEquals(0)
       onAllNodes(hasTextEqualTo(formatters.voltage(26.5))).assertCountEquals(0)
-    }
-
-  @Test
-  fun missingCell_showsDash() =
-    render(overview(sample(cellVoltagesV = listOf(3.300, null, 3.302)))) {
-      onNode(hasTextEqualTo(formatters.cellVoltage(null))).assertExists()
-      onNode(hasText("3.302")).assertExists()
     }
 
   @Test
@@ -131,7 +131,7 @@ class WidgetContentTest {
   fun ukrainianCompact_statusKeepsTimeLeft() {
     val overview = overview(settings = configuredSettings().copy(capacityAh = 314.0))
     val time = checkNotNull(overview.timeRemaining)
-    assertEquals(WidgetDensityTier.COMPACT, WidgetLayoutSpec.fromSize(160f, CELLS.size).tier)
+    assertEquals(WidgetDensityTier.COMPACT, WidgetLayoutSpec.fromSize(160f).tier)
     render(overview, widthDp = 230, heightDp = 160) {
       onNode(hasTextEqualTo(formatters.status(BatteryState.DISCHARGING, -207.0, time)))
         .assert(hasText(formatters.duration(time.duration)))
@@ -148,29 +148,15 @@ class WidgetContentTest {
     }
 
   @Test
-  fun summaryOnlyTier_110dp_hidesCells() =
-    assertCellsAtHeight(110, WidgetDensityTier.SUMMARY_ONLY, shown = false)
-
-  @Test
-  fun compactTier_160dp_showsCells() =
-    assertCellsAtHeight(160, WidgetDensityTier.COMPACT, shown = true)
-
-  @Test
-  fun regularTier_250dp_showsCells() =
-    assertCellsAtHeight(250, WidgetDensityTier.REGULAR, shown = true)
-
-  @Test
-  fun largeTier_300dp_showsCells() =
-    assertCellsAtHeight(300, WidgetDensityTier.LARGE, shown = true)
-
-  private fun assertCellsAtHeight(heightDp: Int, tier: WidgetDensityTier, shown: Boolean) {
-    assertEquals(tier, WidgetLayoutSpec.fromSize(heightDp.toFloat(), CELLS.size).tier)
-    render(overview(), heightDp = heightDp) {
-      onNode(hasText("55%")).assertExists()
-      // Every sample cell starts with "3.30" and no other text does.
-      onAllNodes(hasText("3.30")).assertCountEquals(if (shown) CELLS.size else 0)
-    }
-  }
+  fun everyTier_showsChargeAndDelta() =
+    listOf(110 to WidgetDensityTier.SUMMARY_ONLY, 160 to WidgetDensityTier.COMPACT, 250 to WidgetDensityTier.REGULAR)
+      .forEach { (heightDp, tier) ->
+        assertEquals(tier, WidgetLayoutSpec.fromSize(heightDp.toFloat()).tier)
+        render(overview(), heightDp = heightDp) {
+          onNode(hasText("55%")).assertExists()
+          onNode(hasText("12 mV")).assertExists()
+        }
+      }
 
   /** The sample's power shows exactly once: inside the status line, not in the metrics row. */
   private fun GlanceAppWidgetUnitTest.assertPowerOnlyInStatus() {
@@ -211,13 +197,13 @@ class WidgetContentTest {
     powerW: Double? = -207.0,
     currentA: Double? = -7.8,
     totalVoltageV: Double? = 26.5,
-    cellVoltagesV: List<Double?> = CELLS,
+    deltaCellVoltageV: Double? = 0.012,
   ) = BatteryReading(
     chargePercent = 54.6,
     powerW = powerW,
     currentA = currentA,
     totalVoltageV = totalVoltageV,
-    cellVoltagesV = cellVoltagesV,
+    deltaCellVoltageV = deltaCellVoltageV,
     updatedAtMillis = NOW - 60_000L,
   )
 
@@ -231,6 +217,5 @@ class WidgetContentTest {
 
   private companion object {
     const val NOW = 1_800_000_000_000L
-    val CELLS = listOf(3.300, 3.301, 3.302, 3.303, 3.304, 3.305, 3.306, 3.307)
   }
 }

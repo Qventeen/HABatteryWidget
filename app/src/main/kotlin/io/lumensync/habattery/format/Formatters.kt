@@ -49,10 +49,16 @@ class Formatters(private val context: Context) {
     fun current(amps: Double): String =
         context.getString(R.string.unit_amps, number(amps, 1, 1))
 
-    fun cellVoltage(volts: Double?): String =
-        if (volts == null) context.getString(R.string.value_missing) else number(volts, 3, 3)
-
     fun deltaMv(mv: Int): String = context.getString(R.string.unit_millivolts, number(mv.toDouble(), 0, 0))
+
+    fun temperature(celsius: Double): String =
+        context.getString(R.string.unit_celsius, number(celsius, 0, 1))
+
+    fun ampHours(ah: Double): String =
+        context.getString(R.string.unit_amp_hours, number(ah, 1, 1))
+
+    fun cellVoltage(volts: Double): String =
+        context.getString(R.string.unit_volts, number(volts, 3, 3))
 
     fun chargePercent(percent: Double): String =
         context.getString(R.string.charge_percent, percent.roundToInt())
@@ -98,7 +104,6 @@ class Formatters(private val context: Context) {
 
     fun error(e: SyncError): String = when (e) {
         SyncError.NotConfigured -> context.getString(R.string.error_not_configured)
-        SyncError.InsecureConnection -> context.getString(R.string.error_insecure)
         SyncError.Unauthorized -> context.getString(R.string.error_unauthorized)
         SyncError.Unreachable -> context.getString(R.string.error_unreachable)
         is SyncError.HttpError -> context.getString(R.string.error_http, e.code)

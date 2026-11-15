@@ -45,7 +45,7 @@ class SyncBattery(
               val r = result.reading
               val decision =
                 FullChargeRule.evaluate(
-                  state = BatteryMath.state(r.chargePercent, r.powerW),
+                  state = BatteryMath.state(r.chargePercent, r.currentA),
                   chargePercent = r.chargePercent,
                   enabled = current.notifyOnFull,
                   alreadyNotified = state.fullChargeNotified,

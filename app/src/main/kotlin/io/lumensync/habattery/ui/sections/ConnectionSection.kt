@@ -12,38 +12,47 @@ import androidx.compose.ui.text.input.KeyboardType
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.UrlPolicy
 import io.lumensync.habattery.domain.model.ConnectionSettings
 
 const val CONNECTION_SECTION_TAG = "connection_section"
 
 private val UrlKeyboard = IdKeyboard.copy(keyboardType = KeyboardType.Uri)
 
-/** Primary and fallback URL. The drafts reset when the stored values change. */
+/** The Home Assistant URL. The draft resets when the stored value changes. */
 @Composable
 fun ConnectionSection(
   connection: ConnectionSettings,
   errors: List<FieldError>,
-  onSave: (primary: String, fallback: String) -> Unit,
+  onSave: (url: String) -> Unit,
   modifier: Modifier = Modifier,
+  initiallyExpanded: Boolean = false,
 ) {
-  var primary by rememberSaveable(connection) { mutableStateOf(connection.primaryUrl) }
-  var fallback by rememberSaveable(connection) { mutableStateOf(connection.fallbackUrl) }
+  var url by rememberSaveable(connection) { mutableStateOf(connection.url) }
+  val warning =
+    if (UrlPolicy.check(url) == UrlPolicy.Verdict.PUBLIC_HTTP) {
+      stringResource(R.string.connection_http_warning)
+    } else {
+      null
+    }
 
-  SectionCard(R.string.connection_title, modifier.testTag(CONNECTION_SECTION_TAG)) {
+  val host = runCatching { java.net.URI(connection.url).host }.getOrNull()
+  val summary = host ?: stringResource(R.string.summary_not_set)
+
+  SectionCard(
+    R.string.connection_title,
+    summary,
+    initiallyExpanded,
+    modifier.testTag(CONNECTION_SECTION_TAG),
+  ) {
     SettingsTextField(
-      value = primary,
-      onValueChange = { primary = it },
-      label = stringResource(R.string.connection_primary),
-      error = errors.errorFor(Field.PRIMARY_URL),
+      value = url,
+      onValueChange = { url = it },
+      label = stringResource(R.string.connection_url),
+      error = errors.errorFor(Field.URL),
+      hint = warning,
       keyboardOptions = UrlKeyboard,
     )
-    SettingsTextField(
-      value = fallback,
-      onValueChange = { fallback = it },
-      label = stringResource(R.string.connection_fallback),
-      error = errors.errorFor(Field.FALLBACK_URL),
-      keyboardOptions = UrlKeyboard,
-    )
-    SaveButton { onSave(primary, fallback) }
+    SaveButton { onSave(url) }
   }
 }

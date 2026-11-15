@@ -2,6 +2,7 @@ package io.lumensync.habattery.data.ha
 
 import io.lumensync.habattery.domain.model.EntitySettings
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -11,36 +12,48 @@ class TemplateBuilderTest {
   @Test
   fun onlyCharge() =
     assertEquals(
-      "{{ {\"soc\": states('sensor.soc') | float(none), \"power\": none, \"current\": none, " +
-        "\"total_v\": none, \"cells\": []} | to_json }}",
+      "{{ {\"soc\": states('sensor.soc') | float(none), \"total_v\": none, \"current\": none, " +
+        "\"power\": none, \"ah_left\": none, \"avg_cell\": none, \"delta\": none, " +
+        "\"mosfet\": none, \"temps\": [], \"balancing\": none} | to_json }}",
       TemplateBuilder.build(EntitySettings(charge = "sensor.soc")),
     )
 
   @Test
-  fun powerWithFallback() =
-    assertEquals(
-      "{% set p = states('sensor.p') | float(none) %}" +
-        "{% if p is none %}{% set p = states('sensor.fb') | float(none) %}{% endif %}" +
-        "{{ {\"soc\": states('sensor.soc') | float(none), \"power\": p, \"current\": none, " +
-        "\"total_v\": none, \"cells\": []} | to_json }}",
+  fun allBasicFour() {
+    val t =
       TemplateBuilder.build(
-        EntitySettings(charge = "sensor.soc", power = "sensor.p", fallbackPower = "sensor.fb")
-      ),
+        EntitySettings(charge = "sensor.soc", power = "sensor.p", current = "sensor.i", totalVoltage = "sensor.v")
+      )
+    assertTrue("\"total_v\": states('sensor.v') | float(none), " in t)
+    assertTrue("\"current\": states('sensor.i') | float(none), " in t)
+    assertTrue("\"power\": states('sensor.p') | float(none), " in t)
+  }
+
+  @Test
+  fun `new numeric keys`() {
+    val t = TemplateBuilder.build(EntitySettings(charge = "sensor.soc", capacityRemaining = "sensor.a"))
+    assertTrue("\"ah_left\": states('sensor.a') | float(none)" in t)
+    assertTrue("\"avg_cell\": none" in t)
+  }
+
+  @Test
+  fun `temps list`() =
+    assertTrue(
+      "\"temps\": [states('sensor.t1') | float(none), states('sensor.t2') | float(none)]" in
+        TemplateBuilder.build(EntitySettings(charge = "sensor.soc", temperatures = listOf("sensor.t1", "sensor.t2")))
     )
 
   @Test
-  fun onlyFallbackPower_andCells() {
-    val t =
-      TemplateBuilder.build(
-        EntitySettings(
-          charge = "sensor.soc",
-          fallbackPower = "sensor.fb",
-          cells = listOf("sensor.c1", "sensor.c2"),
-        )
-      )
-    assertTrue(t.contains("\"power\": states('sensor.fb') | float(none)"))
-    assertTrue(
-      t.contains("\"cells\": [states('sensor.c1') | float(none), states('sensor.c2') | float(none)]")
-    )
+  fun `balancing is the raw state`() {
+    val t = TemplateBuilder.build(EntitySettings(charge = "sensor.soc", balancing = "sensor.b"))
+    assertTrue("\"balancing\": states('sensor.b')" in t)
+    assertFalse("states('sensor.b') | float" in t)
+  }
+
+  @Test
+  fun `no cells and no fallback prelude`() {
+    val t = TemplateBuilder.build(EntitySettings(charge = "sensor.soc", power = "sensor.p"))
+    assertFalse("cells" in t)
+    assertFalse("{% set" in t)
   }
 }

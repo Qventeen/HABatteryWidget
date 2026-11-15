@@ -12,19 +12,24 @@ data class Settings(
 )
 
 @Serializable
-data class ConnectionSettings(val primaryUrl: String = "", val fallbackUrl: String = "")
+data class ConnectionSettings(val url: String = "")
 
 @Serializable
 data class EntitySettings(
+  val prefix: String = "",
   val charge: String = "",
-  val power: String = "",
-  val fallbackPower: String = "",
-  val current: String = "",
   val totalVoltage: String = "",
-  val cells: List<String> = emptyList(),
+  val current: String = "",
+  val power: String = "",
+  val capacityRemaining: String = "",
+  val averageCellVoltage: String = "",
+  val deltaCellVoltage: String = "",
+  val mosfetTemperature: String = "",
+  val temperatures: List<String> = emptyList(),
+  val balancing: String = "",
 ) {
   companion object {
-    const val MAX_CELLS = 32
+    const val MAX_TEMPERATURES = 8
   }
 }
 

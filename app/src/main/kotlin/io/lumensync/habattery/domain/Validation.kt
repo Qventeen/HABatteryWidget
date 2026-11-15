@@ -6,15 +6,19 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 
 enum class Field {
-  PRIMARY_URL,
-  FALLBACK_URL,
+  URL,
   TOKEN,
+  PREFIX,
   CHARGE,
   POWER,
-  FALLBACK_POWER,
   CURRENT,
   TOTAL_VOLTAGE,
-  CELLS,
+  CAPACITY_REMAINING,
+  AVERAGE_CELL_VOLTAGE,
+  DELTA_CELL_VOLTAGE,
+  MOSFET_TEMPERATURE,
+  TEMPERATURES,
+  BALANCING,
   INTERVAL,
   CAPACITY,
 }
@@ -22,40 +26,45 @@ enum class Field {
 enum class Problem {
   REQUIRED,
   INVALID,
-  INSECURE,
   OUT_OF_RANGE,
   TOO_MANY,
 }
 
-data class FieldError(val field: Field, val problem: Problem, val cellIndex: Int? = null)
+data class FieldError(val field: Field, val problem: Problem, val index: Int? = null)
 
 /** Pure validation of already-trimmed settings values. */
 object Validation {
+  private val PREFIX = Regex("^[a-z0-9_]+$")
   private val ENTITY_ID = Regex("^[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+$")
   const val MAX_CAPACITY_AH = 10_000.0
 
   fun connection(c: ConnectionSettings): List<FieldError> =
-    listOfNotNull(
-      urlError(Field.PRIMARY_URL, c.primaryUrl, required = true),
-      urlError(Field.FALLBACK_URL, c.fallbackUrl, required = false),
-    )
+    listOfNotNull(urlError(c.url))
 
-  fun entities(e: EntitySettings): List<FieldError> {
-    val errors =
+  fun isPrefixValid(prefix: String): Boolean = PREFIX.matches(prefix.trim())
+
+  fun entities(e: EntitySettings): List<FieldError> =
+    listOfNotNull(
+      if (e.prefix.isNotBlank() && !isPrefixValid(e.prefix)) FieldError(Field.PREFIX, Problem.INVALID)
+      else null,
+      entityError(Field.CHARGE, e.charge, required = true),
+      entityError(Field.TOTAL_VOLTAGE, e.totalVoltage, required = false),
+      entityError(Field.CURRENT, e.current, required = false),
+      entityError(Field.POWER, e.power, required = false),
+      entityError(Field.CAPACITY_REMAINING, e.capacityRemaining, required = false),
+      entityError(Field.AVERAGE_CELL_VOLTAGE, e.averageCellVoltage, required = false),
+      entityError(Field.DELTA_CELL_VOLTAGE, e.deltaCellVoltage, required = false),
+      entityError(Field.MOSFET_TEMPERATURE, e.mosfetTemperature, required = false),
+    ) +
+      e.temperatures.mapIndexedNotNull { i, id ->
+        entityError(Field.TEMPERATURES, id, required = true, index = i)
+      } +
       listOfNotNull(
-        entityError(Field.CHARGE, e.charge, required = true),
-        entityError(Field.POWER, e.power, required = false),
-        entityError(Field.FALLBACK_POWER, e.fallbackPower, required = false),
-        entityError(Field.CURRENT, e.current, required = false),
-        entityError(Field.TOTAL_VOLTAGE, e.totalVoltage, required = false),
+        if (e.temperatures.size > EntitySettings.MAX_TEMPERATURES)
+          FieldError(Field.TEMPERATURES, Problem.TOO_MANY)
+        else null,
+        entityError(Field.BALANCING, e.balancing, required = false),
       )
-    val cellErrors =
-      e.cells.mapIndexedNotNull { i, id -> entityError(Field.CELLS, id, required = true, i) }
-    val tooMany =
-      if (e.cells.size > EntitySettings.MAX_CELLS) listOf(FieldError(Field.CELLS, Problem.TOO_MANY))
-      else emptyList()
-    return errors + cellErrors + tooMany
-  }
 
   fun refresh(r: RefreshSettings): List<FieldError> {
     if (!r.auto) return emptyList()
@@ -71,28 +80,19 @@ object Validation {
   }
 
   fun isConfigured(s: Settings, hasToken: Boolean): Boolean =
-    hasToken && s.connection.primaryUrl.isNotBlank() && s.entities.charge.isNotBlank()
+    hasToken && s.connection.url.isNotBlank() && s.entities.charge.isNotBlank()
 
-  private fun urlError(field: Field, url: String, required: Boolean): FieldError? =
+  private fun urlError(url: String): FieldError? =
     when {
-      url.isBlank() -> if (required) FieldError(field, Problem.REQUIRED) else null
-      else ->
-        when (UrlPolicy.check(url)) {
-          UrlPolicy.Verdict.OK -> null
-          UrlPolicy.Verdict.INVALID -> FieldError(field, Problem.INVALID)
-          UrlPolicy.Verdict.INSECURE -> FieldError(field, Problem.INSECURE)
-        }
+      url.isBlank() -> FieldError(Field.URL, Problem.REQUIRED)
+      UrlPolicy.check(url) == UrlPolicy.Verdict.INVALID -> FieldError(Field.URL, Problem.INVALID)
+      else -> null
     }
 
-  private fun entityError(
-    field: Field,
-    id: String,
-    required: Boolean,
-    cellIndex: Int? = null,
-  ): FieldError? =
+  private fun entityError(field: Field, id: String, required: Boolean, index: Int? = null): FieldError? =
     when {
-      id.isBlank() -> if (required) FieldError(field, Problem.REQUIRED, cellIndex) else null
-      !ENTITY_ID.matches(id) -> FieldError(field, Problem.INVALID, cellIndex)
+      id.isBlank() -> if (required) FieldError(field, Problem.REQUIRED, index) else null
+      !ENTITY_ID.matches(id) -> FieldError(field, Problem.INVALID, index)
       else -> null
     }
 }

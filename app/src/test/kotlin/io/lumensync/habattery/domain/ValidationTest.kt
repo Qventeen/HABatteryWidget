@@ -1,17 +1,18 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.Field.CAPACITY
-import io.lumensync.habattery.domain.Field.CELLS
 import io.lumensync.habattery.domain.Field.CHARGE
-import io.lumensync.habattery.domain.Field.FALLBACK_URL
 import io.lumensync.habattery.domain.Field.INTERVAL
+import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
-import io.lumensync.habattery.domain.Field.PRIMARY_URL
-import io.lumensync.habattery.domain.Problem.INSECURE
+import io.lumensync.habattery.domain.Field.PREFIX
+import io.lumensync.habattery.domain.Field.URL
+import io.lumensync.habattery.domain.Field.TEMPERATURES
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
 import io.lumensync.habattery.domain.Problem.REQUIRED
 import io.lumensync.habattery.domain.Problem.TOO_MANY
+import io.lumensync.habattery.domain.Validation.isPrefixValid
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -23,23 +24,20 @@ import org.junit.Test
 
 class ValidationTest {
   @Test
-  fun connection_primaryRequired() =
+  fun connection_urlRequired() =
     assertEquals(
-      listOf(FieldError(PRIMARY_URL, REQUIRED)),
+      listOf(FieldError(URL, REQUIRED)),
       Validation.connection(ConnectionSettings()),
     )
 
   @Test
-  fun connection_insecureFallback() =
-    assertEquals(
-      listOf(FieldError(FALLBACK_URL, INSECURE)),
-      Validation.connection(ConnectionSettings("http://192.168.1.2:8123", "http://example.com")),
-    )
+  fun `public http is not a field error`() =
+    assertEquals(emptyList<FieldError>(), Validation.connection(ConnectionSettings("http://example.com")))
 
   @Test
-  fun connection_invalidPrimary() =
+  fun connection_invalidUrl() =
     assertEquals(
-      listOf(FieldError(PRIMARY_URL, INVALID)),
+      listOf(FieldError(URL, INVALID)),
       Validation.connection(ConnectionSettings("not a url")),
     )
 
@@ -48,28 +46,12 @@ class ValidationTest {
     assertEquals(listOf(FieldError(CHARGE, REQUIRED)), Validation.entities(EntitySettings()))
 
   @Test
-  fun entities_badIdsAndCells() =
+  fun entities_badIds() =
     assertEquals(
-      listOf(FieldError(POWER, INVALID), FieldError(CELLS, INVALID, 1), FieldError(CELLS, REQUIRED, 2)),
+      listOf(FieldError(Field.TOTAL_VOLTAGE, INVALID), FieldError(POWER, INVALID)),
       Validation.entities(
-        EntitySettings(
-          charge = "sensor.soc",
-          power = "bad id",
-          cells = listOf("sensor.c1", "sensor c2", ""),
-        )
+        EntitySettings(charge = "sensor.soc", power = "bad id", totalVoltage = "sensor v")
       ),
-    )
-
-  @Test
-  fun entities_tooManyCells() =
-    assertTrue(
-      FieldError(CELLS, TOO_MANY) in
-        Validation.entities(
-          EntitySettings(
-            charge = "sensor.soc",
-            cells = List(EntitySettings.MAX_CELLS + 1) { "sensor.c$it" },
-          )
-        )
     )
 
   @Test
@@ -101,4 +83,42 @@ class ValidationTest {
     assertFalse(Validation.isConfigured(s, hasToken = false))
     assertFalse(Validation.isConfigured(Settings(), hasToken = true))
   }
+
+  private fun entities(e: EntitySettings) = Validation.entities(e)
+
+  @Test
+  fun `prefix rules`() {
+    assertTrue(isPrefixValid("bps_bms"))
+    assertFalse(isPrefixValid("BPS_BMS"))
+    assertFalse(isPrefixValid("bps-bms"))
+    assertEquals(
+      listOf(FieldError(PREFIX, INVALID)),
+      entities(EntitySettings(prefix = "BPS", charge = "sensor.soc")),
+    )
+    assertEquals(
+      emptyList<FieldError>(),
+      entities(EntitySettings(prefix = "", charge = "sensor.soc")),
+    )
+  }
+
+  @Test
+  fun `blank temperature row is required at its index`() =
+    assertEquals(
+      listOf(FieldError(TEMPERATURES, REQUIRED, 0)),
+      entities(EntitySettings(charge = "sensor.soc", temperatures = listOf("", "sensor.t"))),
+    )
+
+  @Test
+  fun `more than 8 temperatures`() =
+    assertTrue(
+      FieldError(TEMPERATURES, TOO_MANY) in
+        entities(EntitySettings(charge = "sensor.soc", temperatures = List(9) { "sensor.t$it" }))
+    )
+
+  @Test
+  fun `new single field checks the id`() =
+    assertEquals(
+      listOf(FieldError(MOSFET_TEMPERATURE, INVALID)),
+      entities(EntitySettings(charge = "sensor.soc", mosfetTemperature = "bad id")),
+    )
 }

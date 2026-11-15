@@ -1,8 +1,9 @@
 # HA Battery Widget
 
 An Android home-screen widget (Jetpack Glance) and a settings screen. They show
-a JK-BMS battery read from Home Assistant (HA): charge, power, current, total
-voltage and cell voltages. The app calls `POST {baseUrl}/api/template` with a
+a JK-BMS battery read from Home Assistant (HA): state of charge, total voltage, current, power, Ah left, average cell
+voltage, cell delta, MOSFET temperature, battery temperatures, balancing. The
+app calls `POST {baseUrl}/api/template` with a
 long-lived HA token. The widget draws from the local cache only.
 
 ## Requirements
@@ -50,7 +51,8 @@ Local testing only — it accepts any token:
 
 ```bash
 python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
-  --total-v 26.5 --cells 3.31,3.30,3.32,3.31   # add --status 401 to test errors
+  --total-v 26.5 --ah-left 157 --avg-cell 3.31 --delta 0.01 --mosfet 27 \
+  --temps "25,23" --balancing on   # add --status 401 to test errors
 ```
 
 Options you leave out are returned as `null`. In the app on the Android
@@ -59,9 +61,9 @@ the host) and use any token.
 
 ## Power sign in HA
 
-The app expects: **power > 0 means charging**, for both power entities. If a
-sensor uses the other sign, fix it in HA with a template sensor. The app does
-not flip signs.
+The **current** sign sets the state: negative = discharging, positive =
+charging, |I| <= 0.1 A = idle. Power is shown as an absolute value, so its sign
+does not matter. Check the current sign on your real BMS.
 
 ## Languages
 

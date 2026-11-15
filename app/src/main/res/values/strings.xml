@@ -8,6 +8,8 @@
     <string name="unit_volts">%1$s V</string>
     <string name="unit_amps">%1$s A</string>
     <string name="unit_millivolts">%1$s mV</string>
+    <string name="unit_celsius">%1$s °C</string>
+    <string name="unit_amp_hours">%1$s Ah</string>
     <string name="charge_percent">%1$d%%</string>
     <string name="value_missing" translatable="false">—</string>
 
@@ -21,7 +23,6 @@
     <string name="status_with_time">%1$s · %2$s</string>
 
     <string name="error_not_configured">Set up in the app</string>
-    <string name="error_insecure">Plain HTTP works only on a local network</string>
     <string name="error_unauthorized">Token rejected</string>
     <string name="error_unreachable">Home Assistant is unreachable</string>
     <string name="error_http">Home Assistant error %1$d</string>
@@ -34,14 +35,13 @@
     <string name="refresh_mode_manual">manual</string>
 
     <string name="widget_name">HA battery</string>
-    <string name="widget_description">Charge, power, current, voltage, time left and cells from Home Assistant</string>
+    <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
     <string name="widget_refreshing">Refreshing…</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
     <string name="widget_updated_at">Updated %1$s</string>
     <string name="widget_refresh_symbol" translatable="false">↻</string>
     <string name="widget_refresh_action">Refresh</string>
-    <string name="cell_label">%1$d</string>
     <string name="delta_label">Δ %1$s</string>
 
     <string name="notification_channel_full">Full charge</string>
@@ -49,14 +49,21 @@
     <string name="notification_full_text">The battery is fully charged.</string>
 
     <!-- Main screen. -->
+    <string name="overview_ah_left">Ah left: %1$s</string>
+    <string name="overview_average_cell">Average cell: %1$s</string>
+    <string name="overview_delta">Cell delta: %1$s</string>
+    <string name="overview_mosfet">MOSFET: %1$s</string>
+    <string name="overview_temperature">Temperature %1$d: %2$s</string>
+    <string name="overview_balancing_on">Balancing: on</string>
+    <string name="overview_balancing_off">Balancing: off</string>
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
     <string name="action_refresh_now">Refresh now</string>
     <string name="action_add_widget">Add widget</string>
     <string name="action_save">Save</string>
 
     <string name="connection_title">Connection</string>
-    <string name="connection_primary">Home Assistant URL</string>
-    <string name="connection_fallback">Fallback URL (optional)</string>
+    <string name="connection_url">Home Assistant URL</string>
+    <string name="connection_http_warning">Plain http:// to an internet address sends your token unencrypted. Use https:// if you can.</string>
 
     <string name="token_title">Access token</string>
     <string name="token_label">Long-lived access token</string>
@@ -65,19 +72,29 @@
     <string name="token_hide">Hide token</string>
 
     <string name="entities_title">Entities</string>
-    <string name="entity_charge">Charge (required)</string>
-    <string name="entity_power">Power</string>
-    <string name="entity_fallback_power">Fallback power</string>
-    <string name="entity_current">Current</string>
-    <string name="entity_total_voltage">Total voltage</string>
-    <string name="entity_cells">Cell voltages</string>
-    <string name="entity_cell">Cell %1$d</string>
-    <string name="entity_cell_add">Add cell</string>
-    <string name="entity_cell_remove">Remove cell %1$d</string>
+    <string name="entity_charge">State of charge (%) — required</string>
+    <string name="entity_power">Power (W)</string>
+    <string name="entity_current">Current (A)</string>
+    <string name="entity_current_hint">Sets charging or discharging and the time left</string>
+    <string name="entity_total_voltage">Total voltage (V)</string>
+    <string name="entities_prefix">Prefix, like bps_bms</string>
+    <string name="entities_fill">Fill</string>
+    <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
+    <string name="entity_capacity_remaining">Ah left (Ah)</string>
+    <string name="entity_average_cell_voltage">Average cell voltage (V)</string>
+    <string name="entity_delta_cell_voltage">Cell delta (V)</string>
+    <string name="entity_mosfet_temperature">MOSFET temperature (°C)</string>
+    <string name="entity_temperatures">Battery temperature sensors</string>
+    <string name="entity_temperature">Temperature sensor %1$d (°C)</string>
+    <string name="entity_temperature_add">Add sensor</string>
+    <string name="entity_temperature_remove">Remove sensor %1$d</string>
+    <string name="entity_balancing">Balancing (on/off)</string>
+    <string name="field_prefix_invalid">Use lower-case letters, digits and _</string>
+    <string name="field_temperatures_too_many">Maximum number of sensors: %1$d</string>
 
     <string name="refresh_title">Auto-refresh</string>
     <string name="refresh_auto">Refresh in the background</string>
-    <string name="refresh_interval">Interval, min</string>
+    <string name="refresh_interval">Refresh interval (min)</string>
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>
@@ -86,16 +103,31 @@
     <string name="notify_open_settings">Open settings</string>
 
     <string name="capacity_title">Battery capacity</string>
-    <string name="capacity_label">Capacity, Ah</string>
-    <string name="capacity_hint">Optional. Used to estimate the time left.</string>
+    <string name="capacity_label">Battery capacity (Ah)</string>
+    <string name="capacity_hint">Used for the time to full, and for the time to empty when there is no Ah left sensor.</string>
+
+    <!-- Folded section summaries and chevron descriptions. -->
+    <string name="summary_not_set">Not set</string>
+    <string name="token_summary_saved">Saved</string>
+    <string name="entities_summary_manual">Set by hand</string>
+    <string name="refresh_summary_off">Off</string>
+    <plurals name="refresh_summary_every">
+        <item quantity="one">Every %d min</item>
+        <item quantity="other">Every %d min</item>
+    </plurals>
+    <string name="notify_summary_on">On</string>
+    <string name="notify_summary_off">Off</string>
+    <string name="capacity_summary">%1$s Ah</string>
+    <string name="section_show">Show %1$s</string>
+    <string name="section_expanded">Expanded</string>
+    <string name="section_collapsed">Collapsed</string>
+    <string name="section_hide">Hide %1$s</string>
 
     <!-- Field errors under the inputs. -->
     <string name="field_required">Required</string>
     <string name="field_url_invalid">Enter a full URL, like https://ha.example.com</string>
-    <string name="field_url_insecure">Use https://. Plain http:// works only on a local network.</string>
     <string name="field_token_not_saved">Could not save the token. Try again.</string>
     <string name="field_entity_invalid">Enter an entity ID, like sensor.battery_soc</string>
-    <string name="field_cells_too_many">Maximum number of cells: %1$d</string>
     <string name="field_interval_invalid">Enter a whole number of minutes</string>
     <string name="field_capacity_invalid">Enter a number</string>
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
@@ -105,6 +137,4 @@
     <string name="preview_voltage">26.56 V</string>
     <string name="preview_current">0.4 A</string>
     <string name="preview_delta">Δ 3 mV</string>
-    <string name="preview_cells_left" translatable="false">1   3.321\n2   3.320\n3   3.322\n4   3.319</string>
-    <string name="preview_cells_right" translatable="false">5   3.320\n6   3.321\n7   3.320\n8   3.321</string>
 </resources>

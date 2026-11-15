@@ -11,4 +11,5 @@
   values.
 - The old `app/release.keystore` is in public git history: do not trust or use
   it.
-- Plain `http://` is allowed only for local addresses (`UrlPolicy`).
+- Plain `http://` to a non-local host is allowed; the settings screen warns
+  (`UrlPolicy.PUBLIC_HTTP`). Redirects stay off.
