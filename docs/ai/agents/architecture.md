@@ -12,15 +12,17 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   place), `MainActivity` (launcher and widget configure activity).
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `FullChargeRule`, `RefreshPolicy`,
-  `Validation`, `UrlPolicy`.
+  `Validation`, `UrlPolicy`, `WidgetModel` (what widget and app card show),
+  `WidgetLevels`, `ToggleAutoRefresh`.
 - `data/`: `ha/` (HTTP source, template, response), `settings/`, `cache/`,
   `secure/` (Keystore crypto, `EncryptedTokenStore`), `store/` (JSON DataStore
   records with `schemaVersion = 1`).
 - `format/`: `Formatters`, `Decimal`; one formatter for widget, screen and
   notification.
 - `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`.
-- `widget/`: Glance widget, `BatteryWidgetReceiver`, ↻ action, refresher,
-  size tiers (`WidgetLayoutSpec`).
+- `widget/`: Glance widget (one layout scaled by `WidgetScale`, ring bitmap),
+  `BatteryWidgetReceiver`, ↻ and auto-toggle actions, refresher, and
+  `WidgetPalette` / `WidgetTexts`, which the app's overview card reuses.
 - `ui/`: Compose screen, `MainViewModel`, `sections/`, `theme/`.
 
 Dependency rule: `ui`, `widget`, `system`, `data` → `domain`. `domain` depends

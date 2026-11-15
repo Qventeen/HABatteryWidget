@@ -1,6 +1,6 @@
 # Widget design — 4×2
 
-Status: design only, not built yet. It is the input for spec 0003 (widget).
+Status: built in spec 0003 (`docs/superpowers/specs/2026-11-15-0003-widget-v4-design.md`).
 The design was made on a design canvas; this folder keeps the latest
 version in the repo.
 
