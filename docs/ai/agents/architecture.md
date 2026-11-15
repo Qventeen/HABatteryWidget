@@ -53,4 +53,5 @@ when it has a second implementation or a test fake.
   Ukrainian text in `res/values-uk/strings.xml`, added in the same commit.
 - Units live inside the string (`"%1$s V"`). No user text in Kotlin
   (`NoHardcodedTextTest`); no logic on translated text.
-- Stored fields default only to `""`, empty list, `null` or `false`.
+- Stored fields default only to `""`, empty list, `null` or `false`. Exception:
+  display choices and font sizes default to the design values (spec 0003).

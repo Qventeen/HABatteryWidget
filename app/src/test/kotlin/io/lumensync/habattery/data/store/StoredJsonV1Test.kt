@@ -3,6 +3,10 @@ package io.lumensync.habattery.data.store
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.DisplaySettings
+import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
@@ -52,7 +56,9 @@ class StoredJsonV1Test {
           },
           "refresh": { "auto": true, "intervalMinutes": 30 },
           "notifyOnFull": true,
-          "capacityAh": 314.5
+          "capacityAh": 314.5,
+          "display": { "underSoc": "AH", "mainValue": "POWER" },
+          "fontSizes": { "soc": 41.0, "underSoc": 11.0, "main": 20.0, "cell": 13.0, "small": 11.5 }
         }
       }
       """
@@ -82,6 +88,8 @@ class StoredJsonV1Test {
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
             notifyOnFull = true,
             capacityAh = 314.5,
+            display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
+            fontSizes = FontSizes(soc = 41f, underSoc = 11f, main = 20f, cell = 13f, small = 11.5f),
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())

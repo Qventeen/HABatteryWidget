@@ -61,6 +61,14 @@ class DataStoreSettingsRepositoryTest {
   }
 
   @Test
+  fun fontSizes_areClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"fontSizes":{"soc":99.0,"small":1.0}}}""")
+    val sizes = repo().settings.first().fontSizes
+    assertEquals(42f, sizes.soc)
+    assertEquals(9f, sizes.small)
+  }
+
+  @Test
   fun corruptFile_givesDefaults() = runTest {
     file.writeText("not json")
     assertEquals(Settings(), repo().settings.first())
