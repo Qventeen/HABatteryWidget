@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Picker preview: the SOC ring at 55 % (track and arc), light theme. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="104dp"
+    android:height="104dp"
+    android:viewportWidth="104"
+    android:viewportHeight="104">
+    <path
+        android:pathData="M52,4a48,48 0,1 1,0 96a48,48 0,1 1,0 -96z"
+        android:strokeWidth="8"
+        android:strokeColor="#E1E6E1" />
+    <path
+        android:pathData="M52,4A48,48 0,1 1,37.17 97.65"
+        android:strokeWidth="8"
+        android:strokeColor="#43A047"
+        android:strokeLineCap="round" />
+</vector>

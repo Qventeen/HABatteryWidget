@@ -144,7 +144,10 @@
     <string name="field_capacity_invalid">Введіть число</string>
     <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
 
-    <string name="preview_voltage">26,56 В</string>
-    <string name="preview_current">0,4 А</string>
-    <string name="preview_delta">Δ 3 мВ</string>
+    <string name="preview_time_left">17 год 16 хв</string>
+    <string name="preview_kwh">4,58 кВт·год</string>
+    <string name="preview_voltage">26,50 В</string>
+    <string name="preview_current">10,0 А</string>
+    <string name="preview_cell">3,312 В</string>
+    <string name="preview_delta">Δ 12 мВ</string>
 </resources>

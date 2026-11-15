@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import androidx.core.graphics.createBitmap
 import kotlin.math.roundToInt
 
 /**
@@ -32,7 +33,7 @@ internal object RingBitmap {
   }
 
   private fun draw(percent: Int, sizePx: Int, strokePx: Float): Bitmap {
-    val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ALPHA_8)
+    val bitmap = createBitmap(sizePx, sizePx, Bitmap.Config.ALPHA_8)
     val paint =
       Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
