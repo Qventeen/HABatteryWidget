@@ -15,6 +15,7 @@ import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.testing.FakeBatterySource
@@ -32,6 +33,7 @@ import java.util.Locale
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -71,7 +73,8 @@ class MainViewModelTest {
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
     val toggle = ToggleAutoRefresh(settings, scheduler, widgets)
-    val vm = MainViewModel(settings, tokens, cache, sync, toggle, scheduler, widgets, clock = { 1_000L })
+    val vm = MainViewModel(
+        settings, tokens, cache, sync, toggle, scheduler, widgets, batterySource ?: source, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
     return vm
   }
@@ -314,5 +317,70 @@ class MainViewModelTest {
     advanceUntilIdle()
     assertFalse(state.syncing)
     assertEquals(50.0, vm.uiState.value.overview?.reading?.chargePercent)
+  }
+
+  @Test fun findTemperatureSensors_found() = runTest(dispatcher) {
+    val vm = start()
+    val ids = listOf("sensor.bms_temperature_sensor_1", "sensor.bms_temperature_sensor_2")
+    source.sensors = SensorList.Found(ids)
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Found(ids), result.await())
+    assertEquals(listOf("bms"), source.sensorCalls)
+  }
+
+  @Test fun findTemperatureSensors_noneFound() = runTest(dispatcher) {
+    val vm = start()
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.NoneFound, result.await())
+  }
+
+  @Test fun findTemperatureSensors_failed() = runTest(dispatcher) {
+    val vm = start()
+    source.sensors = SensorList.Failed(SyncError.Unauthorized)
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Failed(SyncError.Unauthorized), result.await())
+  }
+
+  @Test fun findTemperatureSensors_skippedWithoutTokenOrUrl() = runTest(dispatcher) {
+    listOf(
+        start(token = null),
+        start(initial = configuredSettings().copy(connection = ConnectionSettings(""))),
+      )
+      .forEach { vm ->
+        val result = async { vm.findTemperatureSensors("bms") { true } }
+        advanceUntilIdle()
+        assertEquals(SensorSearch.Skipped, result.await())
+        assertEquals(emptyList<String>(), source.sensorCalls)
+      }
+  }
+
+  @Test fun findTemperatureSensors_droppedWhenThePrefixChanged() = runTest(dispatcher) {
+    val vm = start()
+    source.sensors = SensorList.Found(listOf("sensor.bms_temperature_sensor_1"))
+    var current = true
+    val result = async { vm.findTemperatureSensors("bms") { current } }
+    current = false
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Superseded, result.await())
+  }
+
+  @Test fun findTemperatureSensors_changesNothingUntilSave() = runTest(dispatcher) {
+    val vm = start()
+    val before = state.settings
+    source.sensors = SensorList.Found(listOf("sensor.bms_temperature_sensor_1"))
+    async { vm.findTemperatureSensors("bms") { true } }.await()
+    advanceUntilIdle()
+    assertEquals(before, state.settings)
+  }
+
+  @Test fun saveEntities_storesTheFoundList() = runTest(dispatcher) {
+    val vm = start()
+    val ids = listOf("sensor.bms_temperature_sensor_1", "sensor.bms_temperature_sensor_2")
+    vm.saveEntities(state.settings.entities.copy(prefix = "bms", temperatures = ids))
+    advanceUntilIdle()
+    assertEquals(ids, state.settings.entities.temperatures)
   }
 }

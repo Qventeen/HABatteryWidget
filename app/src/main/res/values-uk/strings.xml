@@ -70,6 +70,8 @@
     <string name="entities_prefix">Префікс, наприклад bps_bms</string>
     <string name="entities_fill">Заповнити</string>
     <string name="entities_fill_hint">Заповнює всі поля нижче. Перевірте їх і натисніть «Зберегти».</string>
+    <string name="entities_sensors_none">Для цього префікса датчиків температури не знайдено</string>
+    <string name="entities_sensors_failed">Не вдалося прочитати список датчиків: %1$s</string>
     <string name="entity_capacity_remaining">Залишок А·год (А·год)</string>
     <string name="entity_total_capacity">Повна ємність (А·год)</string>
     <string name="entity_average_cell_voltage">Середня напруга комірки (В)</string>

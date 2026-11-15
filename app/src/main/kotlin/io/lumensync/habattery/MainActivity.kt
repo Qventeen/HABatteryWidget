@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
           toggleAuto = c.toggleAutoRefresh,
           scheduler = c.syncScheduler,
           widgets = c.widgetRefresher,
+          source = c.batterySource,
         )
       }
     }
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
       saveConnection = viewModel::saveConnection,
       saveToken = viewModel::saveToken,
       saveEntities = viewModel::saveEntities,
+      findTemperatureSensors = viewModel::findTemperatureSensors,
       saveRefresh = viewModel::saveRefresh,
       setNotifyOnFull = viewModel::setNotifyOnFull,
       saveCapacity = viewModel::saveCapacity,

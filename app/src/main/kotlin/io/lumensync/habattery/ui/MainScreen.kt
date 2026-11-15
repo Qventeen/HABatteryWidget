@@ -44,6 +44,7 @@ data class MainActions(
   val saveConnection: (url: String) -> Unit,
   val saveToken: (token: String) -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
+  val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
   val setNotifyOnFull: (Boolean) -> Unit,
   val saveCapacity: (text: String, locale: Locale) -> Unit,
@@ -113,6 +114,7 @@ private fun MainContent(
       settings.entities,
       state.errors,
       actions.saveEntities,
+      actions.findTemperatureSensors,
       initiallyExpanded = overview.setupNeeded,
     )
     RefreshSection(settings.refresh, state.errors, actions.saveRefresh)
