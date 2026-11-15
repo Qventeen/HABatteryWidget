@@ -32,8 +32,6 @@ class LayoutSpecTest {
     val b = LayoutSpec.L4x2.boxes(267f, 132f, cellPills = 4)
     assertEquals(Box(89f, 35f), b.packPill)
     assertEquals(Box(66f, 16f), b.cellPill)
-    assertEquals(76f, b.ringDiameter, 0f)
-    assertEquals(7f, b.ringStroke, 0f)
     // 247 − (2 + 12 + 4) − 6 − 15 − 6 − 6 − 32 − 6 − 32
     assertEquals(Box(126f, 32f), b.topTexts)
   }
@@ -41,7 +39,6 @@ class LayoutSpecTest {
   @Test
   fun boxes5x2_ringTakesTheFullHeight() {
     val b = LayoutSpec.L5x2.boxes(340f, 132f, cellPills = 4)
-    assertEquals(112f, b.ringDiameter, 0f)
     assertEquals(Box(108f, 35f), b.packPill)
     assertEquals(Box(84f, 16f), b.cellPill)
     assertEquals(200f - 121f, b.topTexts.width, 0f)
@@ -50,7 +47,6 @@ class LayoutSpecTest {
   @Test
   fun boxes4x3_gridUnderRingAndPack() {
     val b = LayoutSpec.L4x3.boxes(267f, 205f, cellPills = 4)
-    assertEquals(86f, b.ringDiameter, 0f)
     assertEquals(Box(153f, 40f), b.packPill)
     assertEquals(Box(121f, 20f), b.cellPill)
     assertEquals(Box(121f, 20f), b.mosfetPill)
@@ -60,17 +56,15 @@ class LayoutSpecTest {
   @Test
   fun boxes5x3_columns() {
     val b = LayoutSpec.L5x3.boxes(340f, 205f, cellPills = 4)
-    assertEquals(108f, b.ringDiameter, 0f)
     assertEquals(Box(112f, 63f), b.packPill)
     assertEquals(Box(84f, 28.75f), b.cellPill)
     assertEquals(Box(84f, (133f - 12f) / 3f), LayoutSpec.L5x3.boxes(340f, 205f, cellPills = 3).cellPill)
   }
 
   @Test
-  fun boxes_atTheBucket_ringShrinksToItsRow() {
+  fun boxes_atTheBucket_pillsShrink() {
     val b = LayoutSpec.L4x2.boxes(261f, 126f, cellPills = 4)
-    assertEquals(70f, b.ringDiameter, 0f)
-    assertEquals(7f * 70f / 76f, b.ringStroke, 1e-4f)
     assertEquals(Box(83f, 32f), b.packPill)
+    assertEquals(Box(66f, 14.5f), b.cellPill)
   }
 }

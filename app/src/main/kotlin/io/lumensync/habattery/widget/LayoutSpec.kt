@@ -3,7 +3,6 @@ package io.lumensync.habattery.widget
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
-import kotlin.math.min
 
 /** Design font sizes (sp) of one layout, per text role (README "Font sizes"). */
 data class DesignFonts(
@@ -36,8 +35,6 @@ data class LayoutBoxes(
   val cellPill: Box,
   /** In the 4×3 grid with 3 pills, MOSFET takes row 2 alone. */
   val mosfetPill: Box,
-  val ringDiameter: Float,
-  val ringStroke: Float,
   val empty: Box,
 )
 
@@ -112,7 +109,6 @@ data class LayoutSpec(
       timeStart + hourglass + hourglassGap + topGap + statusIcon + topGap + toButtons +
         2 * buttonTouch + buttonGap
     val body = innerH - topRow - bodyTop - if (cellGrid) gridGap + gridHeight else 0f
-    val diameter = min(ring, if (ringFullHeight) innerH else body)
     val packWidth = innerW - ring - columnGap - if (cellGrid) 0f else columnGap + cellColumn
     val cell =
       if (cellGrid) Box((innerW - gridColumnGap) / 2, gridPill)
@@ -122,8 +118,6 @@ data class LayoutSpec(
       packPill = Box(packWidth, (body - packGap) / 2),
       cellPill = cell,
       mosfetPill = if (cellGrid && cellPills == 3) Box(innerW, gridPill) else cell,
-      ringDiameter = diameter,
-      ringStroke = ringStroke * diameter / ring,
       empty = Box(innerW, innerH),
     )
   }

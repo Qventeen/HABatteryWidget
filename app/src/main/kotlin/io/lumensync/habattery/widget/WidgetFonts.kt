@@ -91,8 +91,9 @@ internal data class EmptyFonts(val title: Float, val reason: Float, val button: 
 /**
  * Spec 0005, 5.5 (approach C1): every text asks for its layout's design size × percent / 50 × the
  * system font scale and is shown at that size, or smaller when the text as it is now does not fit
- * its box. The boxes come from the layout at its bucket size: a real widget is never smaller, so
- * the result is safe when the layout stretches.
+ * its box. The pill and top-row boxes come from the layout at its bucket size: a real widget is
+ * never smaller, so the result is safe when the layout stretches. The ring text fits the ring at
+ * its design size (see [data]).
  */
 internal object WidgetFonts {
   fun data(
@@ -119,7 +120,9 @@ internal object WidgetFonts {
         RingLine(texts.soc, requested(FontGroup.SOC, design.soc), TextWeight.BOLD, 1f),
         RingLine(texts.underSoc, requested(FontGroup.UNDER_SOC, design.underSoc), TextWeight.MEDIUM, spec.underLineHeight),
       )
-    val inner = boxes.ringDiameter / 2 - boxes.ringStroke
+    // The ring's own size, not the bucket's: below the design card the ring shrinks to its row
+    // while the fonts stay (5.1), so its text matches the design at the owner's sizes.
+    val inner = spec.ring / 2 - spec.ringStroke
     val factor = TextFit.fitRing(requestedRing, spec.ringTextGap, inner, measurer)
     val ring = requestedRing.map { it.copy(requested = it.requested * factor) }
 
