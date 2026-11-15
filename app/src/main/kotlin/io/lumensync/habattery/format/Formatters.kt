@@ -63,15 +63,19 @@ class Formatters(private val context: Context) {
     fun chargePercent(percent: Double): String =
         context.getString(R.string.charge_percent, percent.roundToInt())
 
+    /** "45 min", "17 hr, 16 min"; from 24 h days and hours ("2 days, 7 hr"), minutes dropped. */
     fun duration(d: Duration): String {
         val totalMinutes = d.inWholeMinutes
-        val hours = totalMinutes / 60
+        val days = totalMinutes / MINUTES_PER_DAY
+        val hours = totalMinutes % MINUTES_PER_DAY / 60
         val minutes = totalMinutes % 60
         val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT)
-        return if (hours == 0L) {
-            format.format(Measure(minutes, MeasureUnit.MINUTE))
-        } else {
-            format.formatMeasures(Measure(hours, MeasureUnit.HOUR), Measure(minutes, MeasureUnit.MINUTE))
+        return when {
+            days > 0L ->
+                format.formatMeasures(Measure(days, MeasureUnit.DAY), Measure(hours, MeasureUnit.HOUR))
+            hours > 0L ->
+                format.formatMeasures(Measure(hours, MeasureUnit.HOUR), Measure(minutes, MeasureUnit.MINUTE))
+            else -> format.format(Measure(minutes, MeasureUnit.MINUTE))
         }
     }
 
@@ -124,6 +128,7 @@ class Formatters(private val context: Context) {
 
     private companion object {
         const val KILO = 1000.0
+        const val MINUTES_PER_DAY = 24 * 60L
 
         /** "Jan 14, 11:59 PM" style; the year only when it is not this year. */
         const val DATE_AND_TIME =

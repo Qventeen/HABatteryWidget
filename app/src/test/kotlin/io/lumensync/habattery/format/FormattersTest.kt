@@ -14,6 +14,7 @@ import io.lumensync.habattery.domain.model.SyncError.Unreachable
 import io.lumensync.habattery.domain.model.TimeRemaining
 import java.util.TimeZone
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -124,6 +125,30 @@ class FormattersTest {
         val f = Formatters(context)
         assertTrue(f.duration(90.minutes).contains("30"))
         assertTrue(f.duration(45.minutes).contains("45"))
+    }
+
+    @Test
+    fun duration_underOneDay_hoursAndMinutes() {
+        val f = Formatters(context)
+        assertEquals("59 min", f.duration(59.minutes))
+        assertEquals("23 hr, 59 min", f.duration((23 * 60 + 59).minutes))
+    }
+
+    @Test
+    fun duration_fromOneDay_daysAndHours() {
+        val f = Formatters(context)
+        assertEquals("1 day, 0 hr", f.duration(24.hours))
+        assertEquals("2 days, 7 hr", f.duration(55.hours + 20.minutes))
+    }
+
+    @Test
+    @Config(qualifiers = "uk")
+    fun duration_days_uk_hasNoMinutes() {
+        val f = Formatters(context)
+        val text = f.duration(55.hours + 20.minutes)
+        val minuteUnit = f.duration(1.minutes).filterNot { it.isDigit() }.trim()
+        assertTrue(text, text.contains("2") && text.contains("7") && !text.contains("20"))
+        assertFalse(text, text.contains(minuteUnit))
     }
 
     private companion object {
