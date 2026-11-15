@@ -1,5 +1,6 @@
 package io.lumensync.habattery.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Rect
@@ -40,6 +41,8 @@ class PaintTextMeasurer(context: Context) : TextMeasurer {
   private fun paint(sizeDp: Float, weight: TextWeight): TextPaint =
     paints.getValue(weight).apply { textSize = sizeDp * pxPerDp }
 
+  /** Glance's own styles on purpose: the measure must use what Glance draws with. */
+  @SuppressLint("PrivateResource")
   private fun style(weight: TextWeight): Int =
     when (weight) {
       TextWeight.NORMAL -> androidx.glance.appwidget.R.style.Glance_AppWidget_TextAppearance_Normal
