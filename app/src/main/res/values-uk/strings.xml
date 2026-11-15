@@ -105,8 +105,6 @@
     <string name="appearance_system">Системна</string>
     <string name="appearance_theme_light">Світла</string>
     <string name="appearance_theme_dark">Темна</string>
-    <string name="appearance_language_english">English</string>
-    <string name="appearance_language_ukrainian">Українська</string>
     <string name="appearance_summary_theme_system">Системна тема</string>
     <string name="appearance_summary_theme_light">Світла тема</string>
     <string name="appearance_summary_theme_dark">Темна тема</string>
