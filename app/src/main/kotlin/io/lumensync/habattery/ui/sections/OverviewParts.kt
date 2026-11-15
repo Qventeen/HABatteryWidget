@@ -65,14 +65,17 @@ internal fun CardBody(model: WidgetModel.Data, look: CardLook, modifier: Modifie
       TextPill(texts.delta(model), model.deltaLevel, look)
       when (val t = model.temperatures) {
         Temperatures.None -> Unit
-        is Temperatures.One ->
-          IconPill(R.drawable.ic_thermometer, R.string.widget_battery_temperature, null, null, t.celsius, t.level, look)
-        is Temperatures.MaxMin -> {
-          IconPill(R.drawable.ic_thermometer, null, R.drawable.ic_arrow_up, R.string.widget_highest_temperature, t.max, t.maxLevel, look)
-          IconPill(R.drawable.ic_thermometer, null, R.drawable.ic_arrow_down, R.string.widget_lowest_temperature, t.min, t.minLevel, look)
-        }
+        is Temperatures.Battery ->
+          IconPill(
+            R.drawable.ic_thermometer,
+            if (t.sensors > 1) R.string.widget_average_temperature
+            else R.string.widget_battery_temperature,
+            t.celsius,
+            t.level,
+            look,
+          )
       }
-      IconPill(R.drawable.ic_chip, R.string.widget_mosfet_temperature, null, null, model.mosfet, model.mosfetLevel, look)
+      IconPill(R.drawable.ic_chip, R.string.widget_mosfet_temperature, model.mosfet, model.mosfetLevel, look)
     }
   }
 }
@@ -182,25 +185,18 @@ private fun TextPill(text: String, level: Level, look: CardLook) {
   }
 }
 
-/** Icon, a 10 dp arrow slot (empty without an arrow, so the numbers line up), the value. */
+/** Icon, a 3 dp space, the value. */
 @Composable
 private fun IconPill(
   @DrawableRes icon: Int,
-  @StringRes iconDescription: Int?,
-  @DrawableRes arrow: Int?,
-  @StringRes arrowDescription: Int?,
+  @StringRes iconDescription: Int,
   celsius: Double?,
   level: Level,
   look: CardLook,
 ) {
   val color = look.palette.pillText(level)
   SmallPill(level, look) {
-    CardIcon(icon, look.dp(13f), color, iconDescription?.let { stringResource(it) })
-    if (arrow == null) {
-      Spacer(Modifier.width(look.dp(10f)))
-    } else {
-      CardIcon(arrow, look.dp(10f), color, arrowDescription?.let { stringResource(it) })
-    }
+    CardIcon(icon, look.dp(13f), color, stringResource(iconDescription))
     Spacer(Modifier.width(look.dp(3f)))
     Text(
       look.texts.temperature(celsius),

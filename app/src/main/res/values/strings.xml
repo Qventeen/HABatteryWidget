@@ -39,8 +39,7 @@
     <string name="widget_balancing_unknown">Balancing unknown</string>
     <string name="widget_sync_error">Sync error</string>
     <string name="widget_battery_temperature">Battery temperature</string>
-    <string name="widget_highest_temperature">Highest sensor temperature</string>
-    <string name="widget_lowest_temperature">Lowest sensor temperature</string>
+    <string name="widget_average_temperature">Average battery temperature</string>
     <string name="widget_mosfet_temperature">MOSFET temperature</string>
     <string name="widget_auto_on">Auto refresh on</string>
     <string name="widget_auto_off">Auto refresh off</string>
@@ -75,6 +74,8 @@
     <string name="entities_prefix">Prefix, like bps_bms</string>
     <string name="entities_fill">Fill</string>
     <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
+    <string name="entities_sensors_none">No temperature sensors found for this prefix</string>
+    <string name="entities_sensors_failed">Could not read the sensor list: %1$s</string>
     <string name="entity_capacity_remaining">Ah left (Ah)</string>
     <string name="entity_total_capacity">Total capacity (Ah)</string>
     <string name="entity_average_cell_voltage">Average cell voltage (V)</string>

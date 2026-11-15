@@ -16,6 +16,8 @@ import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.SensorList
+import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
@@ -41,6 +43,7 @@ class MainViewModel(
   private val toggleAuto: ToggleAutoRefresh,
   private val scheduler: SyncScheduler,
   private val widgets: WidgetRefresher,
+  private val source: BatterySource,
   private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
   /** Runs in flight (overlapping runs are possible) and the last validation errors. */
@@ -122,6 +125,36 @@ class MainViewModel(
       )
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }
+
+  /**
+   * Fill's second step (spec 0004, 5.4): asks HA, with the saved URL and token, for every battery
+   * temperature sensor of [prefix]. It changes nothing; the section puts the ids in its draft.
+   * [stillCurrent] tells whether the draft prefix is still the one asked for.
+   */
+  suspend fun findTemperatureSensors(prefix: String, stillCurrent: () -> Boolean): SensorSearch =
+    try {
+      val connection = settings.settings.first().connection
+      val token = tokens.get()
+      if (connection.url.isBlank() || token == null) {
+        SensorSearch.Skipped
+      } else {
+        val list = source.listTemperatureSensors(connection, prefix, token)
+        if (!stillCurrent()) {
+          SensorSearch.Superseded
+        } else {
+          when (list) {
+            is SensorList.Failed -> SensorSearch.Failed(list.error)
+            is SensorList.Found ->
+              if (list.ids.isEmpty()) SensorSearch.NoneFound else SensorSearch.Found(list.ids)
+          }
+        }
+      }
+    } catch (e: CancellationException) {
+      throw e
+    } catch (_: Exception) {
+      // Storage or Keystore failure: no note and no crash (the message could carry stored data).
+      SensorSearch.Skipped
+    }
 
   fun saveRefresh(auto: Boolean, intervalText: String) {
     val text = intervalText.trim()

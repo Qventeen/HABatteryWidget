@@ -60,7 +60,9 @@ python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
   --temps "25,23" --balancing on   # add --status 401 to test errors
 ```
 
-Options you leave out are returned as `null`. In the app on the Android
+Options you leave out are returned as `null`. For Fill, the mock also lists
+`sensor.<prefix>_temperature_sensor_N` for each value of `--temps`
+(`--prefix`, default `bps_bms`; another prefix gets an empty list). In the app on the Android
 emulator, set the HA URL to `http://10.0.2.2:8123` (the emulator's address for
 the host) and use any token.
 

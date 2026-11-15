@@ -134,38 +134,51 @@ class WidgetModelTest {
     assertEquals(0f, data(sample.copy(chargePercent = -3.0)).ringFraction)
   }
 
+  private fun temps(vararg values: Double?, sensors: Int = values.size) =
+    data(sample.copy(temperaturesC = values.toList()), settings(sensors = sensors)).temperatures
+
   @Test
-  fun `temperature pills by configured sensors`() {
+  fun `no sensor configured shows no battery pill`() {
     assertEquals(Temperatures.None, data(settings = settings(sensors = 0)).temperatures)
-    assertEquals(Temperatures.One(25.0, Level.PLAIN), data().temperatures)
-    assertEquals(
-      Temperatures.MaxMin(47.0, Level.WARN, 44.0, Level.PLAIN),
-      data(sample.copy(temperaturesC = listOf(44.0, 47.0)), settings(sensors = 2)).temperatures,
-    )
   }
 
   @Test
-  fun `missing temperature values`() {
-    assertEquals(
-      Temperatures.MaxMin(null, Level.PLAIN, null, Level.PLAIN),
-      data(sample.copy(temperaturesC = listOf(null, null)), settings(sensors = 2)).temperatures,
-    )
-    assertEquals(
-      Temperatures.One(null, Level.PLAIN),
-      data(sample.copy(temperaturesC = emptyList()), settings(sensors = 1)).temperatures,
-    )
-    assertEquals(
-      Temperatures.MaxMin(30.0, Level.PLAIN, 30.0, Level.PLAIN),
-      data(sample.copy(temperaturesC = listOf(30.0, null)), settings(sensors = 3)).temperatures,
-    )
+  fun `battery pill shows the average of the sensors`() {
+    assertEquals(Temperatures.Battery(25.0, Level.PLAIN, 1), data().temperatures)
+    assertEquals(Temperatures.Battery(24.0, Level.PLAIN, 2), temps(25.0, 23.0))
+    assertEquals(Temperatures.Battery(26.0, Level.PLAIN, 3), temps(25.0, 23.0, 30.0))
   }
 
   @Test
-  fun `temperature levels follow the shown whole degrees`() {
-    fun one(c: Double) = data(sample.copy(temperaturesC = listOf(c))).temperatures
-    assertEquals(Temperatures.One(0.4, Level.BAD), one(0.4)) // shown as 0 °C
-    assertEquals(Temperatures.One(45.4, Level.PLAIN), one(45.4)) // shown as 45 °C
-    assertEquals(Temperatures.One(55.4, Level.WARN), one(55.4)) // shown as 55 °C
+  fun `average is rounded for display after averaging`() {
+    // 24.4 and 25.4 average 24.9: shown 25, not (24 + 25) / 2.
+    val battery = temps(24.4, 25.4) as Temperatures.Battery
+    assertEquals(24.9, battery.celsius!!, 1e-9)
+  }
+
+  @Test
+  fun `missing temperature values are left out`() {
+    assertEquals(Temperatures.Battery(30.0, Level.PLAIN, 3), temps(30.0, null, sensors = 3))
+    assertEquals(Temperatures.Battery(null, Level.PLAIN, 2), temps(null, null))
+    assertEquals(Temperatures.Battery(null, Level.PLAIN, 1), temps(sensors = 1))
+  }
+
+  @Test
+  fun `battery colour follows the worst sensor`() {
+    assertEquals(Temperatures.Battery(35.0, Level.WARN, 2), temps(20.0, 50.0))
+    assertEquals(Temperatures.Battery(40.0, Level.BAD, 2), temps(20.0, 60.0))
+    assertEquals(Temperatures.Battery(9.5, Level.BAD, 2), temps(-1.0, 20.0))
+  }
+
+  @Test
+  fun `temperature levels follow the shown whole degrees of each sensor`() {
+    fun level(c: Double) = (temps(c) as Temperatures.Battery).level
+    assertEquals(Level.BAD, level(0.4)) // shown as 0 °C
+    assertEquals(Level.PLAIN, level(4.6)) // shown as 5 °C
+    assertEquals(Level.PLAIN, level(45.4)) // shown as 45 °C
+    assertEquals(Level.WARN, level(55.4)) // shown as 55 °C
+    assertEquals(Level.BAD, level(55.6)) // shown as 56 °C
+    assertEquals(Level.WARN, level(4.4)) // shown as 4 °C
     assertEquals(Level.PLAIN, data(sample.copy(mosfetTemperatureC = 65.4)).mosfetLevel)
   }
 

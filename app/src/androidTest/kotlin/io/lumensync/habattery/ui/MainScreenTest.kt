@@ -14,17 +14,43 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.core.app.ApplicationProvider
+import io.lumensync.habattery.App
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
+import io.lumensync.habattery.container
+import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.ui.sections.CONNECTION_SECTION_TAG
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Smoke test of the real screen. Expects a fresh install (no saved token or entities). */
+/**
+ * Smoke test of the real screen. It needs the empty state of a fresh install, so a rule clears the
+ * saved settings, token and reading through the app's own stores before the activity starts (an
+ * earlier manual run on the same emulator may have left them).
+ */
 @RunWith(AndroidJUnit4::class)
 class MainScreenTest {
-  @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+  private val freshState =
+    object : ExternalResource() {
+      override fun before() {
+        val container = ApplicationProvider.getApplicationContext<App>().container
+        runBlocking {
+          container.settingsRepository.update { Settings() }
+          container.tokenStore.clear()
+          container.readingCache.update { CacheState() }
+        }
+      }
+    }
+  private val activity = createAndroidComposeRule<MainActivity>()
+
+  @get:Rule val chain: RuleChain = RuleChain.outerRule(freshState).around(activity)
+  private val compose get() = activity
 
   private fun text(@StringRes id: Int): String = compose.activity.getString(id)
 

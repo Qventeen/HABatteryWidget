@@ -245,7 +245,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="13dp"
+                    android:layout_marginStart="3dp"
                     android:maxLines="1"
                     android:text="@string/preview_battery_temperature"
                     android:textColor="#1B1D1C"
@@ -274,7 +274,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="13dp"
+                    android:layout_marginStart="3dp"
                     android:maxLines="1"
                     android:text="@string/preview_mosfet_temperature"
                     android:textColor="#1B1D1C"

@@ -35,8 +35,7 @@
     <string name="widget_balancing_unknown">Балансування невідоме</string>
     <string name="widget_sync_error">Помилка синхронізації</string>
     <string name="widget_battery_temperature">Температура батареї</string>
-    <string name="widget_highest_temperature">Найвища температура датчика</string>
-    <string name="widget_lowest_temperature">Найнижча температура датчика</string>
+    <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
     <string name="widget_auto_on">Автооновлення увімкнено</string>
     <string name="widget_auto_off">Автооновлення вимкнено</string>
@@ -71,6 +70,8 @@
     <string name="entities_prefix">Префікс, наприклад bps_bms</string>
     <string name="entities_fill">Заповнити</string>
     <string name="entities_fill_hint">Заповнює всі поля нижче. Перевірте їх і натисніть «Зберегти».</string>
+    <string name="entities_sensors_none">Для цього префікса датчиків температури не знайдено</string>
+    <string name="entities_sensors_failed">Не вдалося прочитати список датчиків: %1$s</string>
     <string name="entity_capacity_remaining">Залишок А·год (А·год)</string>
     <string name="entity_total_capacity">Повна ємність (А·год)</string>
     <string name="entity_average_cell_voltage">Середня напруга комірки (В)</string>

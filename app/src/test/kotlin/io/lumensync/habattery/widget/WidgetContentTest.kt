@@ -86,23 +86,32 @@ class WidgetContentTest {
     }
 
   @Test
-  fun oneSensor_onePillWithoutArrow() =
+  fun oneSensor_batteryAndMosfetPills() =
     render(model()) {
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature))).assertExists()
-      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_highest_temperature)))
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_average_temperature)))
+        .assertCountEquals(0)
+    }
+
+  @Test
+  fun twoSensors_oneAveragePill() =
+    render(model(sample.copy(temperaturesC = listOf(44.0, 47.0)), settings(sensors = 2))) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_average_temperature))).assertExists()
+      onNode(hasTextEqualTo(formatters.temperature(45.5))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature)))
         .assertCountEquals(0)
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
   @Test
-  fun twoSensors_highestAndLowest() =
-    render(model(sample.copy(temperaturesC = listOf(44.0, 47.0)), settings(sensors = 2))) {
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_highest_temperature))).assertExists()
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_lowest_temperature))).assertExists()
-      onNode(hasTextEqualTo(formatters.temperature(47.0))).assertExists()
-      onNode(hasTextEqualTo(formatters.temperature(44.0))).assertExists()
+  fun noSensor_onlyMosfetPill() =
+    render(model(settings = settings(sensors = 0))) {
       onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature)))
         .assertCountEquals(0)
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_average_temperature)))
+        .assertCountEquals(0)
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
   @Test
