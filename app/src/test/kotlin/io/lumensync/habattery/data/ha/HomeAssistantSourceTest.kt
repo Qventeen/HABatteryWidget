@@ -3,6 +3,7 @@ package io.lumensync.habattery.data.ha
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import java.net.InetAddress
@@ -194,5 +195,45 @@ class HomeAssistantSourceTest {
         fetch("not a url"),
       )
     errors.forEach { assertFalse(it.error().toString().contains("t0ken")) }
+  }
+
+  private suspend fun sensors(url: String, prefix: String = "bms"): SensorList =
+    source.listTemperatureSensors(ConnectionSettings(url), prefix, "t0ken")
+
+  @Test
+  fun `sensor list posts the template and parses the ids`() = runTest {
+    val s = server(reply(200, """["sensor.bms_temperature_sensor_2","sensor.bms_temperature_sensor_1"]"""))
+    assertEquals(
+      SensorList.Found(listOf("sensor.bms_temperature_sensor_1", "sensor.bms_temperature_sensor_2")),
+      sensors(s.base()),
+    )
+    val req = s.takeRequest()
+    assertEquals("/api/template", req.url.encodedPath)
+    assertEquals("Bearer t0ken", req.headers["Authorization"])
+    assertTrue(req.body!!.utf8().contains("sensor[.]bms_temperature_sensor_[0-9]+$"))
+  }
+
+  @Test
+  fun `sensor list with an invalid prefix makes no request`() = runTest {
+    val s = server(reply(200, "[]"))
+    listOf("", "Bad Prefix", "a'b").forEach { assertEquals(SensorList.Found(emptyList()), sensors(s.base(), it)) }
+    assertEquals(0, s.requestCount)
+  }
+
+  @Test
+  fun `sensor list trims the prefix like Fill`() = runTest {
+    val s = server(reply(200, "[]"))
+    sensors(s.base(), " bms_ ")
+    assertTrue(s.takeRequest().body!!.utf8().contains("sensor[.]bms_temperature_sensor_"))
+  }
+
+  @Test
+  fun `sensor list errors map like the sync`() = runTest {
+    fun failed(r: SensorList) = (r as SensorList.Failed).error
+    assertEquals(SyncError.Unauthorized, failed(sensors(server(reply(401)).base())))
+    assertEquals(SyncError.HttpError(500), failed(sensors(server(reply(500)).base())))
+    assertEquals(SyncError.BadResponse, failed(sensors(server(reply(200, "<html>")).base())))
+    assertEquals(SyncError.Unreachable, failed(sensors(closedUrl())))
+    assertEquals(SyncError.Unreachable, failed(sensors("not a url")))
   }
 }

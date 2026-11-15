@@ -63,4 +63,20 @@ class TemplateBuilderTest {
     assertFalse("cells" in t)
     assertFalse("{% set" in t)
   }
+
+  @Test
+  fun `sensor list template matches the prefix pattern`() =
+    assertEquals(
+      "{{ states.sensor | map(attribute='entity_id') | " +
+        "select('match', 'sensor[.]bps_bms_temperature_sensor_[0-9]+$') | list | to_json }}",
+      TemplateBuilder.temperatureSensors("bps_bms"),
+    )
+
+  @Test
+  fun `sensor list template refuses a prefix with other characters`() {
+    listOf("", "Bps", "a b", "a'b", "a.b", "a\\b").forEach {
+      assertFalse(it, TemplateBuilder.isObjectIdPrefix(it))
+    }
+    assertTrue(TemplateBuilder.isObjectIdPrefix("bms_2"))
+  }
 }

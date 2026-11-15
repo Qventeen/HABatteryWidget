@@ -4,6 +4,7 @@ import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
@@ -68,6 +69,23 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
     yield()
     failWith?.let { throw it }
     return result
+  }
+
+  /** What [listTemperatureSensors] returns; [sensorCalls] records the prefixes asked. */
+  var sensors: SensorList = SensorList.Found(emptyList())
+  val sensorCalls = mutableListOf<String>()
+
+  /** When set, the sensor-list call suspends on it first, so a test can change state mid-request. */
+  var sensorGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
+  override suspend fun listTemperatureSensors(
+    connection: ConnectionSettings,
+    prefix: String,
+    token: String,
+  ): SensorList {
+    sensorCalls += prefix
+    sensorGate?.await()
+    return sensors
   }
 }
 

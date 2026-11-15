@@ -13,6 +13,7 @@ import io.lumensync.habattery.domain.model.FontSizes
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.RefreshSettings
+import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
@@ -300,6 +301,12 @@ class MainViewModelTest {
           gate.await()
           return SyncResult.Success(reading())
         }
+
+        override suspend fun listTemperatureSensors(
+          connection: ConnectionSettings,
+          prefix: String,
+          token: String,
+        ): SensorList = SensorList.Found(emptyList())
       }
     val vm = start(source = blocking)
     assertTrue(state.syncing)
