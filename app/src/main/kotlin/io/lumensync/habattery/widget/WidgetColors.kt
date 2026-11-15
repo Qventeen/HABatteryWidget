@@ -3,6 +3,7 @@ package io.lumensync.habattery.widget
 import androidx.compose.ui.graphics.Color
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
+import io.lumensync.habattery.domain.Level
 
 /** Day and night colours of the widget, kept from the old widget's look. */
 object WidgetColors {
@@ -27,5 +28,7 @@ object WidgetColors {
       Level.OK -> green
       Level.WARN -> amber
       Level.BAD -> red
+      Level.PLAIN,
+      Level.IDLE -> secondaryText
     }
 }

@@ -30,6 +30,7 @@ import androidx.glance.text.TextStyle
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryMath
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.WidgetLevels
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.format.Formatters
 import kotlin.math.roundToInt
