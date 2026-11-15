@@ -102,6 +102,36 @@ class StoredJsonV1Test {
   }
 
   @Test
+  fun `settings saved by 0_1_0 still load`() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """
+        {
+          "schemaVersion": 1,
+          "settings": {
+            "connection": { "primaryUrl": "http://ha.local:8123", "fallbackUrl": "" },
+            "entities": {
+              "charge": "sensor.soc",
+              "power": "sensor.p",
+              "fallbackPower": "sensor.fp",
+              "current": "sensor.i",
+              "totalVoltage": "sensor.v",
+              "cells": ["sensor.c1"]
+            }
+          }
+        }
+        """,
+      )
+    val settings = record.settings
+    assertEquals("", settings.connection.url)
+    assertEquals("sensor.soc", settings.entities.charge)
+    assertEquals("sensor.p", settings.entities.power)
+    assertEquals("sensor.i", settings.entities.current)
+    assertEquals("sensor.v", settings.entities.totalVoltage)
+  }
+
+  @Test
   fun cacheRecord_v1() {
     val json =
       """
