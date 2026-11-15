@@ -11,15 +11,14 @@ import io.lumensync.habattery.domain.model.ThemeChoice
  * gives Glance day/night colours; Light and Dark give fixed colours of that palette. The layout
  * code only receives a [WidgetColors] and never looks at the [ThemeChoice].
  */
-class WidgetColors(theme: ThemeChoice) {
-  private val choose: (WidgetPalette.() -> Color) -> ColorProvider =
+class WidgetColors(private val theme: ThemeChoice) {
+  private fun of(pick: WidgetPalette.() -> Color): ColorProvider =
     when (theme) {
-      ThemeChoice.SYSTEM -> { pick -> ColorProvider(day = pick(WidgetPalette.Light), night = pick(WidgetPalette.Dark)) }
-      ThemeChoice.LIGHT -> { pick -> ColorProvider(pick(WidgetPalette.Light)) }
-      ThemeChoice.DARK -> { pick -> ColorProvider(pick(WidgetPalette.Dark)) }
+      ThemeChoice.SYSTEM ->
+        ColorProvider(day = WidgetPalette.Light.pick(), night = WidgetPalette.Dark.pick())
+      ThemeChoice.LIGHT -> ColorProvider(WidgetPalette.Light.pick())
+      ThemeChoice.DARK -> ColorProvider(WidgetPalette.Dark.pick())
     }
-
-  private fun of(pick: WidgetPalette.() -> Color): ColorProvider = choose(pick)
 
   val card = of { card }
   val text = of { text }
