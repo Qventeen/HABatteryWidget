@@ -2,7 +2,7 @@
 
 - **Date:** 2026-11-14 (v3: owner decisions on defaults, app ID and signing;
   missing values defined; second builder check)
-- **Status:** draft, waiting for owner approval
+- **Status:** approved (owner, 2026-11-14); option-0 test skipped
 - **Branch:** `develop`
 - **Set:** `0001` (the plan will be `plans/2026-11-14-0001-clean-rewrite.md`)
 - **Related:** `CLAUDE.md` (project rules), `references/README.md` (expert

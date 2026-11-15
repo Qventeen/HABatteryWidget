@@ -23,3 +23,7 @@ local.properties
 # Third-party reference clones, read-only (see references/README.md).
 # Our own notes (references/*.md) stay tracked.
 /references/*/
+
+# Build outputs
+*.apk
+*.aab

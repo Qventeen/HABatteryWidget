@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="unit_watts">%1$s Вт</string>
+    <string name="unit_kilowatts">%1$s кВт</string>
+    <string name="unit_volts">%1$s В</string>
+    <string name="unit_amps">%1$s А</string>
+    <string name="unit_millivolts">%1$s мВ</string>
+    <string name="charge_percent">%1$d%%</string>
+
+    <string name="status_charging">Заряджається %1$s</string>
+    <string name="status_discharging">Розряджається %1$s</string>
+    <string name="status_idle">Очікування</string>
+    <string name="status_full">Повна</string>
+    <string name="status_unknown">Невідомо</string>
+    <string name="time_to_full">Повна за %1$s</string>
+    <string name="time_to_empty">Порожня за %1$s</string>
+    <string name="status_with_time">%1$s · %2$s</string>
+
+    <string name="error_not_configured">Налаштуйте в застосунку</string>
+    <string name="error_insecure">Незахищений HTTP працює лише в локальній мережі</string>
+    <string name="error_unauthorized">Токен відхилено</string>
+    <string name="error_unreachable">Home Assistant недоступний</string>
+    <string name="error_http">Помилка Home Assistant %1$d</string>
+    <string name="error_bad_response">Несподівана відповідь від Home Assistant</string>
+
+    <plurals name="refresh_mode_auto">
+        <item quantity="one">авто, кожну %d хв</item>
+        <item quantity="few">авто, кожні %d хв</item>
+        <item quantity="many">авто, кожні %d хв</item>
+        <item quantity="other">авто, кожні %d хв</item>
+    </plurals>
+    <string name="refresh_mode_manual">вручну</string>
+
+    <string name="widget_name">Батарея HA</string>
+    <string name="widget_description">Заряд, потужність, струм, напруга, залишок часу та комірки з Home Assistant</string>
+    <string name="widget_refreshing">Оновлення…</string>
+    <string name="widget_no_data">Немає даних від Home Assistant</string>
+    <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
+    <string name="widget_updated_at">Оновлено %1$s</string>
+    <string name="widget_refresh_action">Оновити</string>
+    <string name="cell_label">%1$d</string>
+    <string name="delta_label">Δ %1$s</string>
+
+    <string name="notification_channel_full">Повний заряд</string>
+    <string name="notification_full_title">Батарея заряджена</string>
+    <string name="notification_full_text">Батарею повністю заряджено.</string>
+
+    <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
+    <string name="action_refresh_now">Оновити зараз</string>
+    <string name="action_add_widget">Додати віджет</string>
+    <string name="action_save">Зберегти</string>
+
+    <string name="connection_title">Підключення</string>
+    <string name="connection_primary">URL Home Assistant</string>
+    <string name="connection_fallback">Резервний URL (необов’язково)</string>
+
+    <string name="token_title">Токен доступу</string>
+    <string name="token_label">Довгостроковий токен доступу</string>
+    <string name="token_saved">Токен збережено</string>
+    <string name="token_show">Показати токен</string>
+    <string name="token_hide">Сховати токен</string>
+
+    <string name="entities_title">Сутності</string>
+    <string name="entity_charge">Заряд (обов’язково)</string>
+    <string name="entity_power">Потужність</string>
+    <string name="entity_fallback_power">Резервна потужність</string>
+    <string name="entity_current">Струм</string>
+    <string name="entity_total_voltage">Загальна напруга</string>
+    <string name="entity_cells">Напруги комірок</string>
+    <string name="entity_cell">Комірка %1$d</string>
+    <string name="entity_cell_add">Додати комірку</string>
+    <string name="entity_cell_remove">Видалити комірку %1$d</string>
+
+    <string name="refresh_title">Автооновлення</string>
+    <string name="refresh_auto">Оновлювати у фоновому режимі</string>
+    <string name="refresh_interval">Інтервал, хв</string>
+    <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
+
+    <string name="notify_title">Сповіщення</string>
+    <string name="notify_on_full">Сповіщати, коли батарея заряджена</string>
+    <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
+    <string name="notify_open_settings">Відкрити налаштування</string>
+
+    <string name="capacity_title">Ємність батареї</string>
+    <string name="capacity_label">Ємність, А·год</string>
+    <string name="capacity_hint">Необов’язково. Потрібна для розрахунку залишку часу.</string>
+
+    <string name="field_required">Обов’язкове поле</string>
+    <string name="field_url_invalid">Введіть повний URL, наприклад https://ha.example.com</string>
+    <string name="field_url_insecure">Використовуйте https://. Незахищений http:// працює лише в локальній мережі.</string>
+    <string name="field_token_not_saved">Не вдалося зберегти токен. Спробуйте ще раз.</string>
+    <string name="field_entity_invalid">Введіть ID сутності, наприклад sensor.battery_soc</string>
+    <string name="field_cells_too_many">Максимальна кількість комірок: %1$d</string>
+    <string name="field_interval_invalid">Введіть ціле число хвилин</string>
+    <string name="field_capacity_invalid">Введіть число</string>
+    <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
+
+    <string name="preview_voltage">26,56 В</string>
+    <string name="preview_current">0,4 А</string>
+    <string name="preview_delta">Δ 3 мВ</string>
+</resources>

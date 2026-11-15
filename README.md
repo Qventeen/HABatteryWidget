@@ -1,21 +1,69 @@
-# HA Battery Widget (Android)
+# HA Battery Widget
 
-Нативний Android-додаток із віджетом на базі **Jetpack Glance** для моніторингу акумулятора JK-BMS (`EVE 8S 314Ah`) з **Home Assistant**.
+An Android home-screen widget (Jetpack Glance) and a settings screen. They show
+a JK-BMS battery read from Home Assistant (HA): charge, power, current, total
+voltage and cell voltages. The app calls `POST {baseUrl}/api/template` with a
+long-lived HA token. The widget draws from the local cache only.
 
-## Можливості
-- **Заряд батареї (`%`)** та адаптивний прогрес-бар (`sensor.espjkbms_espjkbms_state_of_charge`)
-- **Загальна напруга (`V`) та струм (`A`)** (`sensor.espjkbms_espjkbms_total_voltage`, `sensor.espjkbms_espjkbms_current`)
-- **Потужність (`W` / `kW`) і залишок часу** (`sensor.espjkbms_espjkbms_power` з резервом `sensor.aninerel_anl_4200t_24l_w_pro_battery_power` + `sensor.battery_time_status`)
-- **Напруги комірок `01–08` у 2 колонки та дельта (`Δ mV`)** з підсвічуванням мінімальної та максимальної комірок
-- **Сповіщення про зарядку до 100%**: вмикається/вимикається чекбоксом у додатку; надсилає одне сповіщення при досягненні 100% (з повторним спрацюванням після зниження заряду `≤ 98%`)
-- **Режим оновлення**: вибір між **Автооновленням** (ручне задання інтервалу `1–1440 хв` через `WorkManager` / `AlarmManager`) та **Ручним** оновленням по `↻` на віджеті
-- **Світла / темна тема**: автоматично адаптується під тему Android
-- **Гнучке підключення та сутності**: основний локальний URL + резервний / зовнішній URL, токен доступу HA та ручне редагування всіх сутностей (`entity_id`) показників і комірок у налаштуваннях додатку
+## Requirements
 
-## Збірка з командного рядка
-```powershell
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot"
-.\gradlew.bat :app:testDebugUnitTest :app:assembleRelease
+- JDK 17
+- Android SDK (`ANDROID_HOME` or `~/Android/Sdk`)
+
+## Build and test
+
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk   # any JDK 17 path
+./gradlew :app:testDebugUnitTest                # unit tests
+./gradlew lint testDebugUnitTest assembleRelease  # full check
 ```
 
-Готовий підписаний APK: [`HA-Battery-Widget.apk`](HA-Battery-Widget.apk)
+## Release key
+
+`assembleRelease` needs a signing key. Create it once:
+
+```bash
+keytool -genkeypair -v -keystore ~/keys/habattery-release.jks \
+  -alias habattery -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Add these lines to `~/.gradle/gradle.properties` (never to the repo):
+
+```properties
+habattery.release.storeFile=/path/to/habattery-release.jks
+habattery.release.storePassword=<store-password>
+habattery.release.keyAlias=habattery
+habattery.release.keyPassword=<key-password>
+```
+
+CI can use the env variables `HABATTERY_RELEASE_STORE_FILE`,
+`HABATTERY_RELEASE_STORE_PASSWORD`, `HABATTERY_RELEASE_KEY_ALIAS` and
+`HABATTERY_RELEASE_KEY_PASSWORD` instead.
+
+Keep a backup of the key file and its passwords. If you lose the key, you
+cannot update installed apps.
+
+## Try it with the mock HA
+
+`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`.
+Local testing only — it accepts any token:
+
+```bash
+python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
+  --total-v 26.5 --cells 3.31,3.30,3.32,3.31   # add --status 401 to test errors
+```
+
+Options you leave out are returned as `null`. In the app on the Android
+emulator, set the HA URL to `http://10.0.2.2:8123` (the emulator's address for
+the host) and use any token.
+
+## Power sign in HA
+
+The app expects: **power > 0 means charging**, for both power entities. If a
+sensor uses the other sign, fix it in HA with a template sensor. The app does
+not flip signs.
+
+## Languages
+
+English (default) and Ukrainian. On Android 13+ you can set the language per
+app in system settings.

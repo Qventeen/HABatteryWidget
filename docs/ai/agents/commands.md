@@ -1,0 +1,34 @@
+# Commands
+
+Use JDK 17 for every Gradle run (the default `java` here is newer):
+`export JAVA_HOME=/usr/lib/jvm/java-17-openjdk`
+
+| Task | Command |
+|------|---------|
+| Unit tests | `./gradlew :app:testDebugUnitTest` |
+| One test class | `./gradlew :app:testDebugUnitTest --tests "<pattern>"` |
+| Done gate | `./gradlew lint testDebugUnitTest assembleRelease` |
+| Instrumented tests (emulator up) | `./gradlew connectedDebugAndroidTest` |
+
+- Robolectric runs at SDK 34 (`app/src/test/resources/robolectric.properties`);
+  JDK 17 cannot run SDK 35+.
+- Without the release key properties (`security.md`), `assembleRelease`
+  builds an unsigned APK.
+
+## Emulator
+
+- SDK: `~/Android/Sdk` (`emulator/`, `platform-tools/`), shared with Android
+  Studio.
+- AVDs: `Pixel_8_API_35` (main; API 33+ is needed for the notification
+  permission) and `Pixel_6` (API 31, older target). `Pixel_8_API_37` crashes in
+  surfaceflinger and restarts system_server: do not use it.
+- Headless start: `emulator -avd Pixel_8_API_35 -no-window -no-audio`, then
+  `adb wait-for-device` and wait until `adb shell getprop sys.boot_completed`
+  prints `1`.
+- Run one emulator at a time. Shut it down after use (`adb emu kill`).
+
+## Mock Home Assistant
+
+- `python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --cells 3.31,3.30`
+  (all options in README; `--status 401` returns an error).
+- In the app on the emulator use `http://10.0.2.2:8123` and any dummy token.
