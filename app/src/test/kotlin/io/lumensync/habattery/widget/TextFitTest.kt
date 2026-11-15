@@ -18,11 +18,24 @@ class TextFitTest {
     assertTrue("$size", 3.5f * size <= 100.01f && size > 100f / 3.5f - 0.3f)
   }
 
+  /**
+   * The box must hold the font's top (1.06 × size in the fake) and the ink below the baseline,
+   * with [TextFit.HEIGHT_SLACK_DP] to spare.
+   */
   @Test
   fun height_limitsATallRequest() {
-    // One line is 1.17 × size high (descent − ascent).
-    val size = fit(40f, Box(100f, 23.4f), "1")
-    assertTrue("$size", size <= 20f && size > 19.7f)
+    val size = fit(40f, Box(100f, 21.2f + TextFit.HEIGHT_SLACK_DP), "1")
+    assertTrue("$size", 1.06f * size <= 21.21f && size > 19.7f)
+  }
+
+  /** A decimal comma reaches below the baseline (Ukrainian "3,312 В"), so it needs more height. */
+  @Test
+  fun comma_needsRoomBelowTheBaseline() {
+    val box = Box(100f, 12f + TextFit.HEIGHT_SLACK_DP)
+    val point = fit(40f, box, "3.312")
+    val comma = fit(40f, box, "3,312")
+    assertTrue("$comma < $point", comma < point)
+    assertTrue("$comma", (1.06f + 0.15f) * comma <= 12.01f)
   }
 
   @Test

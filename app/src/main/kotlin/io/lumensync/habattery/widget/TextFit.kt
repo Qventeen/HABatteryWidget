@@ -69,26 +69,39 @@ object TextFit {
   /** Below 1 dp of ink outside the ring's inner circle is accepted (spec 0005, 5.5). */
   const val RING_TOLERANCE_DP = 1f
 
+  /** Room kept free in a box's height: views are laid out in whole pixels. */
+  const val HEIGHT_SLACK_DP = 0.5f
+
   private const val STEP_DP = 0.25f
   private const val FACTOR_STEP = 0.01f
   private const val EPSILON = 0.01f
 
   /**
    * The largest size ≤ [requested] at which [texts] side by side fit [box]: the sum of their widths
-   * within its width, one line within its height. One size for all of them.
+   * within its width, and their ink within its height. One size for all of them.
    */
   fun fit(texts: List<String>, requested: Float, weight: TextWeight, box: Box, measurer: TextMeasurer): Float {
     fun width(size: Float) = texts.sumOf { measurer.width(it, size, weight).toDouble() }.toFloat()
-    fun height(size: Float) = measurer.metrics(size, weight).height
-    fun fits(size: Float) = width(size) <= box.width + EPSILON && height(size) <= box.height + EPSILON
+    fun height(size: Float) = texts.maxOf { inkHeight(it, size, weight, measurer) }
+    val room = box.height - HEIGHT_SLACK_DP
+    fun fits(size: Float) = width(size) <= box.width + EPSILON && height(size) <= room + EPSILON
 
     if (requested <= 0f || fits(requested)) return requested.coerceAtLeast(0f)
     val w = width(requested)
     val h = height(requested)
-    var size = requested * minOf(if (w > 0f) box.width / w else 1f, if (h > 0f) box.height / h else 1f)
+    var size = requested * minOf(if (w > 0f) box.width / w else 1f, if (h > 0f) room / h else 1f)
     while (size > STEP_DP && !fits(size)) size -= STEP_DP
     return size.coerceAtLeast(0f)
   }
+
+  /**
+   * The height a one-line text view needs so that no ink is cut. Android draws the line from the
+   * font's top (font padding). In a box lower than the whole line the view is cut to the box and
+   * keeps its top, so the box must hold the font's top and the ink below the baseline (a decimal
+   * comma reaches below it); in a higher box the view is centred and fits anyway.
+   */
+  private fun inkHeight(text: String, size: Float, weight: TextWeight, measurer: TextMeasurer): Float =
+    -measurer.metrics(size, weight).top + maxOf(measurer.ink(text, size, weight).bottom, 0f)
 
   /**
    * One factor ≤ 1 for all three ring lines (spec 0005, 5.5): with every size × factor, the ink of
