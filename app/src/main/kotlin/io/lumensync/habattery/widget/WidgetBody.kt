@@ -1,6 +1,7 @@
 package io.lumensync.habattery.widget
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.glance.ColorFilter
@@ -168,43 +169,17 @@ private fun cellPills(model: WidgetModel.Data, look: WidgetLook): List<@Composab
   val temperatures: List<@Composable () -> Unit> =
     when (val t = model.temperatures) {
       Temperatures.None -> emptyList()
-      is Temperatures.One ->
+      is Temperatures.Battery ->
         listOf {
           TemperaturePill(
             R.drawable.ic_thermometer,
-            R.string.widget_battery_temperature,
-            null,
-            null,
+            if (t.sensors > 1) R.string.widget_average_temperature
+            else R.string.widget_battery_temperature,
             t.celsius,
             t.level,
             look,
           )
         }
-      is Temperatures.MaxMin ->
-        listOf(
-          {
-            TemperaturePill(
-              R.drawable.ic_thermometer,
-              null,
-              R.drawable.ic_arrow_up,
-              R.string.widget_highest_temperature,
-              t.max,
-              t.maxLevel,
-              look,
-            )
-          },
-          {
-            TemperaturePill(
-              R.drawable.ic_thermometer,
-              null,
-              R.drawable.ic_arrow_down,
-              R.string.widget_lowest_temperature,
-              t.min,
-              t.minLevel,
-              look,
-            )
-          },
-        )
     }
   return listOf<@Composable () -> Unit>(
     { TextPill(look.texts.averageCell(model), Level.PLAIN, look) },
@@ -215,8 +190,6 @@ private fun cellPills(model: WidgetModel.Data, look: WidgetLook): List<@Composab
       TemperaturePill(
         R.drawable.ic_chip,
         R.string.widget_mosfet_temperature,
-        null,
-        null,
         model.mosfet,
         model.mosfetLevel,
         look,
@@ -235,13 +208,11 @@ private fun TextPill(text: String, level: Level, look: WidgetLook) {
   }
 }
 
-/** Icon, a 10 dp arrow slot (empty without an arrow, so the numbers line up), the value. */
+/** Icon, a 3 dp space, the value. */
 @Composable
 private fun TemperaturePill(
   @DrawableRes icon: Int,
-  iconDescription: Int?,
-  @DrawableRes arrow: Int?,
-  arrowDescription: Int?,
+  @StringRes iconDescription: Int,
   celsius: Double?,
   level: Level,
   look: WidgetLook,
@@ -249,12 +220,7 @@ private fun TemperaturePill(
   val context = LocalContext.current
   val color = WidgetColors.pillText(level)
   SmallPill(level, look) {
-    WidgetIcon(icon, look.dp(13f), color, iconDescription?.let(context::getString))
-    if (arrow == null) {
-      Spacer(GlanceModifier.width(look.dp(10f)))
-    } else {
-      WidgetIcon(arrow, look.dp(10f), color, arrowDescription?.let(context::getString))
-    }
+    WidgetIcon(icon, look.dp(13f), color, context.getString(iconDescription))
     Text(
       look.texts.temperature(celsius),
       GlanceModifier.padding(start = look.dp(3f)),

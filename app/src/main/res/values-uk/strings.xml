@@ -35,8 +35,7 @@
     <string name="widget_balancing_unknown">Балансування невідоме</string>
     <string name="widget_sync_error">Помилка синхронізації</string>
     <string name="widget_battery_temperature">Температура батареї</string>
-    <string name="widget_highest_temperature">Найвища температура датчика</string>
-    <string name="widget_lowest_temperature">Найнижча температура датчика</string>
+    <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
     <string name="widget_auto_on">Автооновлення увімкнено</string>
     <string name="widget_auto_off">Автооновлення вимкнено</string>
