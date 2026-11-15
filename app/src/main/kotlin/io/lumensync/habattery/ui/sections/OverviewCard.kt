@@ -55,6 +55,9 @@ import io.lumensync.habattery.widget.WidgetTexts
  * The widget's layout drawn in Compose, from the same [WidgetModel] (spec 0003, 5.9). It scales by
  * its own width. ↻ runs [onRefresh]; the toggle runs [onToggleAuto]. Without data: the message only.
  */
+/** Test tag of the overview card on the main screen. */
+const val OVERVIEW_CARD_TAG = "overview-card"
+
 @Composable
 fun OverviewCard(
   model: WidgetModel,

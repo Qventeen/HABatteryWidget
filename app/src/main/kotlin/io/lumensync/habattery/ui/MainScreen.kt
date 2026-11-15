@@ -18,6 +18,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
@@ -34,6 +35,7 @@ import io.lumensync.habattery.ui.sections.CapacitySection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.NotificationSection
+import io.lumensync.habattery.ui.sections.OVERVIEW_CARD_TAG
 import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
@@ -103,6 +105,7 @@ private fun MainContent(
       syncing = state.syncing,
       onRefresh = actions.refreshNow,
       onToggleAuto = actions.toggleAutoRefresh,
+      modifier = Modifier.testTag(OVERVIEW_CARD_TAG),
     )
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
     AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
