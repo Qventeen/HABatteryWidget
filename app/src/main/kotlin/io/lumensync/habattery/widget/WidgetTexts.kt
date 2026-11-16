@@ -5,13 +5,32 @@ import androidx.annotation.StringRes
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.format.Formatters
 
-/** The texts of a [WidgetModel.Data], shared by the widget and the app card; "—" when missing. */
+/** The widget's texts of a [WidgetModel]; "—" when missing. */
 class WidgetTexts(private val context: Context, val formatters: Formatters) {
   val missing: String
     get() = context.getString(R.string.value_missing)
+
+  val socLabel: String
+    get() = context.getString(R.string.widget_soc_label)
+
+  val openApp: String
+    get() = context.getString(R.string.widget_open_app)
+
+  /** The sync error icon's content description: "Sync error: <reason>" (spec 0005, 5.3). */
+  fun syncErrorDescription(error: SyncError): String =
+    context.getString(R.string.widget_sync_error, formatters.error(error))
+
+  fun emptyTitle(kind: WidgetModel.EmptyKind): String =
+    context.getString(
+      when (kind) {
+        WidgetModel.EmptyKind.SETUP -> R.string.error_not_configured
+        WidgetModel.EmptyKind.NO_DATA -> R.string.widget_no_data
+      }
+    )
 
   fun timeLeft(m: WidgetModel.Data): String = m.timeLeft?.let(formatters::duration) ?: missing
 

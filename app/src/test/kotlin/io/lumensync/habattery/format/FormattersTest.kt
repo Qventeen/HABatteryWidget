@@ -91,14 +91,25 @@ class FormattersTest {
         assertFalse(text, text.contains("Jan"))
     }
 
+    /** Owner, 2026-11-16: an earlier day shows the date only. */
     @Test
-    fun updatedAt_olderDay_showsDateAndTime() {
+    fun updatedAt_olderDay_showsTheDateOnly() {
         val f = Formatters(context)
-        val twoDaysAgo = f.updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING)
-        assertTrue(twoDaysAgo, twoDaysAgo.contains("Jan 13") && twoDaysAgo.contains("8:00"))
+        assertEquals("Jan 13", f.updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING))
         // One minute before midnight is already "yesterday".
-        val lateYesterday = f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING)
-        assertTrue(lateYesterday, lateYesterday.contains("Jan 14") && lateYesterday.contains("11:59"))
+        assertEquals("Jan 14", f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING))
+    }
+
+    @Test
+    fun updatedAt_otherYear_showsTheYear() =
+        assertEquals("Dec 31, 2026", Formatters(context).updatedAt(MORNING - 15.days.inWholeMilliseconds, nowMillis = MORNING))
+
+    /** The month is in the app's language, not the device's default. */
+    @Test
+    @Config(qualifiers = "uk")
+    fun updatedAt_olderDay_uk_showsAUkrainianMonth() {
+        val text = Formatters(context).updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING)
+        assertTrue(text, text.contains("13") && text.contains("січ"))
     }
 
     @Test
@@ -116,18 +127,20 @@ class FormattersTest {
         assertEquals("100", f.socNumber(100))
     }
 
+    /** Owner, 2026-11-16: Android's narrow format. */
     @Test
     fun duration_underOneDay_hoursAndMinutes() {
         val f = Formatters(context)
-        assertEquals("59 min", f.duration(59.minutes))
-        assertEquals("23 hr, 59 min", f.duration((23 * 60 + 59).minutes))
+        assertEquals("59m", f.duration(59.minutes))
+        assertEquals("17h 16m", f.duration((17 * 60 + 16).minutes))
+        assertEquals("23h 59m", f.duration((23 * 60 + 59).minutes))
     }
 
     @Test
     fun duration_fromOneDay_daysAndHours() {
         val f = Formatters(context)
-        assertEquals("1 day, 0 hr", f.duration(24.hours))
-        assertEquals("2 days, 7 hr", f.duration(55.hours + 20.minutes))
+        assertEquals("1d 0h", f.duration(24.hours))
+        assertEquals("2d 7h", f.duration(55.hours + 20.minutes))
     }
 
     @Test

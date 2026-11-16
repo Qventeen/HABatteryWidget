@@ -37,10 +37,9 @@
     <string name="widget_balancing_on">Balancing on</string>
     <string name="widget_balancing_off">Balancing off</string>
     <string name="widget_balancing_unknown">Balancing unknown</string>
-    <string name="widget_sync_error">Sync error</string>
+    <string name="widget_sync_error">Sync error: %1$s</string>
     <string name="widget_battery_temperature">Battery temperature</string>
-    <string name="widget_highest_temperature">Highest sensor temperature</string>
-    <string name="widget_lowest_temperature">Lowest sensor temperature</string>
+    <string name="widget_average_temperature">Average battery temperature</string>
     <string name="widget_mosfet_temperature">MOSFET temperature</string>
     <string name="widget_auto_on">Auto refresh on</string>
     <string name="widget_auto_off">Auto refresh off</string>
@@ -52,8 +51,13 @@
 
     <!-- Main screen. -->
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
+    <!-- A size tab of the widget preview: columns × rows of home-screen cells. -->
+    <string name="preview_size" translatable="false">%1$d×%2$d</string>
+    <!-- TalkBack's name for the drawn widget; %1$s is the size tab, such as 4×2. -->
+    <string name="preview_description">Widget preview, %1$s</string>
     <string name="action_refresh_now">Refresh now</string>
     <string name="action_add_widget">Add widget</string>
+    <string name="action_add_widget_hint">The home screen adds it as 4×2. Resize it there.</string>
     <string name="action_save">Save</string>
 
     <string name="connection_title">Connection</string>
@@ -75,6 +79,8 @@
     <string name="entities_prefix">Prefix, like bps_bms</string>
     <string name="entities_fill">Fill</string>
     <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
+    <string name="entities_sensors_none">No temperature sensors found for this prefix</string>
+    <string name="entities_sensors_failed">Could not read the sensor list: %1$s</string>
     <string name="entity_capacity_remaining">Ah left (Ah)</string>
     <string name="entity_total_capacity">Total capacity (Ah)</string>
     <string name="entity_average_cell_voltage">Average cell voltage (V)</string>
@@ -102,6 +108,20 @@
     <string name="capacity_label">Battery capacity (Ah)</string>
     <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
 
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_theme">Theme</string>
+    <string name="appearance_language">Language</string>
+    <string name="appearance_system">System</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_language_english" translatable="false">English</string>
+    <string name="appearance_language_ukrainian" translatable="false">Українська</string>
+    <string name="appearance_summary_theme_system">System theme</string>
+    <string name="appearance_summary_theme_light">Light theme</string>
+    <string name="appearance_summary_theme_dark">Dark theme</string>
+    <string name="appearance_summary_language_system">System language</string>
+    <string name="appearance_summary">%1$s · %2$s</string>
+
     <string name="widget_settings_title">Widget</string>
     <string name="widget_under_soc">Under SOC</string>
     <string name="widget_choice_kwh">kWh</string>
@@ -114,9 +134,12 @@
     <string name="widget_font_main">Main values</string>
     <string name="widget_font_cell">Cell values</string>
     <string name="widget_font_small">Small text</string>
-    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_font_value">%1$d %%</string>
+    <string name="widget_scale_label">Home-screen scale</string>
+    <string name="widget_scale_hint">Only if your home screen draws widgets smaller. Most phones: 100 %.</string>
     <string name="widget_reset_sizes">Reset sizes</string>
     <string name="widget_summary">%1$s · %2$s</string>
+    <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
@@ -145,7 +168,7 @@
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
 
     <!-- Sample values for the widget picker preview. -->
-    <string name="preview_time_left">17 hr, 16 min</string>
+    <string name="preview_time_left">17h 16m</string>
     <string name="preview_updated" translatable="false">11:29</string>
     <string name="preview_soc" translatable="false">55</string>
     <string name="preview_kwh">4.58 kWh</string>

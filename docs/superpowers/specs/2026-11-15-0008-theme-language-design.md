@@ -1,7 +1,7 @@
 # Theme and language — design
 
 - **Date:** 2026-11-15
-- **Status:** approved by the owner (2026-11-15).
+- **Status:** approved by the owner (2026-11-15); built on branch `0008-theme-language`, merged into `epic-widget-v5`.
 - **Set:** `0008`. Code on branch `0008-theme-language`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).
@@ -117,3 +117,30 @@ are shown in their own language ("English", "Українська").
 
 The control style, the section's place if the 0007 order is not built yet
 (then: first section), and the Ukrainian wording.
+
+## 8. Build notes and review fixes (2026-11-16)
+
+- `ConfigWatcher` replaced the first `LocaleWatcher`. It watches the
+  language tags and the font scale, and the night mode only below Android 12
+  (API 31): from API 31 the widget carries both colours and the home screen
+  picks one.
+- Language names are not translated ("English", "Українська").
+- Below Android 13 the language row is hidden, and the Appearance summary
+  shows only the theme.
+- `system/LocaleChangedReceiver` (in the manifest, not exported) redraws
+  the widgets on `ACTION_LOCALE_CHANGED`. Android 13+ also sends it to the
+  app when its own language changes in Settings while the process is dead.
+
+### Known limits
+
+- A system night-mode switch while the process is dead is seen only at the
+  next redraw: there is no manifest broadcast for it.
+- The launcher inflates `widget_error.xml` (fixed light colours), the
+  loading layout and the picker preview with the system's language and night
+  mode, not the app's choice. So the in-app preview's error view is always
+  light.
+
+### Known risk
+
+- A short flash of the system theme can show on a cold start when the app
+  theme differs. The owner may fix it later in its own task.

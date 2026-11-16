@@ -5,7 +5,6 @@ import android.icu.text.MeasureFormat
 import android.icu.util.Measure
 import android.icu.util.MeasureUnit
 import android.text.format.DateFormat
-import android.text.format.DateUtils
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.SyncError
 import java.text.NumberFormat
@@ -66,13 +65,16 @@ class Formatters(private val context: Context) {
     fun chargePercent(percent: Double): String =
         context.getString(R.string.charge_percent, percent.roundToInt())
 
-    /** "45 min", "17 hr, 16 min"; from 24 h days and hours ("2 days, 7 hr"), minutes dropped. */
+    /**
+     * Android's narrow format (owner, 2026-11-16): "45m", "17h 16m"; from 24 h days and hours
+     * ("2d 7h"), minutes dropped. Other languages as Android writes them.
+     */
     fun duration(d: Duration): String {
         val totalMinutes = d.inWholeMinutes
         val days = totalMinutes / MINUTES_PER_DAY
         val hours = totalMinutes % MINUTES_PER_DAY / 60
         val minutes = totalMinutes % 60
-        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT)
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.NARROW)
         return when {
             days > 0L ->
                 format.formatMeasures(Measure(days, MeasureUnit.DAY), Measure(hours, MeasureUnit.HOUR))
@@ -82,13 +84,17 @@ class Formatters(private val context: Context) {
         }
     }
 
-    /** When a reading was taken: the time for today, else the date and the time. */
-    fun updatedAt(millis: Long, nowMillis: Long = System.currentTimeMillis()): String =
-        if (localDate(millis) == localDate(nowMillis)) {
-            DateFormat.getTimeFormat(context).format(Date(millis))
-        } else {
-            DateUtils.formatDateTime(context, millis, DATE_AND_TIME)
-        }
+    /**
+     * When a reading was taken: the time for today, else only the date (owner, 2026-11-16), in the
+     * app's language; the year only when it is not this year.
+     */
+    fun updatedAt(millis: Long, nowMillis: Long = System.currentTimeMillis()): String {
+        val day = localDate(millis)
+        val today = localDate(nowMillis)
+        if (day == today) return DateFormat.getTimeFormat(context).format(Date(millis))
+        val skeleton = if (day.year == today.year) MONTH_DAY else YEAR_MONTH_DAY
+        return android.icu.text.DateFormat.getInstanceForSkeleton(skeleton, locale).format(Date(millis))
+    }
 
     private fun localDate(millis: Long): LocalDate =
         Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -105,8 +111,8 @@ class Formatters(private val context: Context) {
         const val KILO = 1000.0
         const val MINUTES_PER_DAY = 24 * 60L
 
-        /** "Jan 14, 11:59 PM" style; the year only when it is not this year. */
-        const val DATE_AND_TIME =
-            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH
+        /** "Jan 14" / "14 січ." */
+        const val MONTH_DAY = "MMMd"
+        const val YEAR_MONTH_DAY = "yMMMd"
     }
 }

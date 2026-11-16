@@ -23,39 +23,52 @@ import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.ActionsRow
+import io.lumensync.habattery.ui.sections.AppearanceSection
 import io.lumensync.habattery.ui.sections.CapacitySection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.NotificationSection
-import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
+import io.lumensync.habattery.ui.sections.WidgetPreviewCard
 import io.lumensync.habattery.ui.sections.WidgetSection
 import java.util.Locale
 
-/** What the screen can ask for: the ViewModel's functions plus two system actions. */
+/** What the screen can ask for: the ViewModel's functions plus the system actions. */
 data class MainActions(
   val refreshNow: () -> Unit,
-  val toggleAutoRefresh: () -> Unit,
   val saveConnection: (url: String) -> Unit,
   val saveToken: (token: String) -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
+  val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
   val setNotifyOnFull: (Boolean) -> Unit,
   val saveCapacity: (text: String, locale: Locale) -> Unit,
   val saveDisplay: (DisplaySettings) -> Unit,
-  val saveFontSizes: (FontSizes) -> Unit,
+  val saveFontPercents: (FontPercents) -> Unit,
+  val saveHomeScale: (Int) -> Unit,
+  val resetWidgetSettings: () -> Unit,
+  val saveAppearance: (AppearanceSettings) -> Unit,
+  val setLanguage: (LanguageChoice) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(state: MainUiState, actions: MainActions) {
+fun MainScreen(
+  state: MainUiState,
+  actions: MainActions,
+  language: LanguageChoice?,
+  previewRequest: PreviewRequest,
+) {
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
     val overview = state.overview
     val widget = state.widget
@@ -65,7 +78,7 @@ fun MainScreen(state: MainUiState, actions: MainActions) {
         CircularProgressIndicator()
       }
     } else {
-      MainContent(state, overview, widget, actions, padding)
+      MainContent(state, overview, widget, actions, language, previewRequest, padding)
     }
   }
 }
@@ -76,6 +89,8 @@ private fun MainContent(
   overview: BatteryOverview,
   widget: WidgetModel,
   actions: MainActions,
+  language: LanguageChoice?,
+  previewRequest: PreviewRequest,
   padding: PaddingValues,
 ) {
   val settings = state.settings
@@ -89,14 +104,19 @@ private fun MainContent(
         .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    OverviewCard(
-      widget,
-      settings.fontSizes,
-      syncing = state.syncing,
-      onRefresh = actions.refreshNow,
-      onToggleAuto = actions.toggleAutoRefresh,
-    )
+    WidgetPreviewCard(widget, settings.fontPercents, settings.appearance.theme, previewRequest)
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
+    WidgetSection(
+      settings.display,
+      settings.fontPercents,
+      settings.homeScalePercent,
+      settings.textSizeChanged,
+      actions.saveDisplay,
+      actions.saveFontPercents,
+      actions.saveHomeScale,
+      actions.resetWidgetSettings,
+    )
+    AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
     ConnectionSection(
       settings.connection,
       state.errors,
@@ -113,6 +133,7 @@ private fun MainContent(
       settings.entities,
       state.errors,
       actions.saveEntities,
+      actions.findTemperatureSensors,
       initiallyExpanded = overview.setupNeeded,
     )
     RefreshSection(settings.refresh, state.errors, actions.saveRefresh)
@@ -122,6 +143,5 @@ private fun MainContent(
       actions.openNotificationSettings,
     )
     CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)
-    WidgetSection(settings.display, settings.fontSizes, actions.saveDisplay, actions.saveFontSizes)
   }
 }

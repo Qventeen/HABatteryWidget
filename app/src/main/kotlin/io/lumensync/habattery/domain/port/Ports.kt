@@ -3,6 +3,7 @@ package io.lumensync.habattery.domain.port
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +36,13 @@ interface BatterySource {
     entities: EntitySettings,
     token: String,
   ): SyncResult
+
+  /** Asks HA for every `sensor.<prefix>_temperature_sensor_N`; only the Fill action calls it. */
+  suspend fun listTemperatureSensors(
+    connection: ConnectionSettings,
+    prefix: String,
+    token: String,
+  ): SensorList
 }
 
 interface WidgetRefresher {

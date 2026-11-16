@@ -18,12 +18,16 @@ import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.ToggleAutoRefresh
+import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
 import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
 import io.lumensync.habattery.system.AndroidFullChargeNotifier
+import io.lumensync.habattery.system.AppLanguage
+import io.lumensync.habattery.system.ConfigWatcher
+import io.lumensync.habattery.system.TextConfig
 import io.lumensync.habattery.system.WorkManagerSyncScheduler
 import io.lumensync.habattery.widget.BatteryWidget
 import io.lumensync.habattery.widget.GlanceWidgetRefresher
@@ -79,11 +83,17 @@ class AppContainer(context: Context) {
       GlanceAppWidgetManager(appContext).getGlanceIds(BatteryWidget::class.java).isNotEmpty()
     }
 
+  val batterySource: BatterySource = HomeAssistantSource(defaultHttpClient())
+
+  val appLanguage = AppLanguage(appContext)
+
+  val configWatcher = ConfigWatcher(TextConfig.of(appContext.resources.configuration))
+
   val syncBattery: SyncBattery =
     SyncBattery(
       settings = settingsRepository,
       tokens = tokenStore,
-      source = HomeAssistantSource(defaultHttpClient()),
+      source = batterySource,
       cache = readingCache,
       notifier = AndroidFullChargeNotifier(appContext),
       widgets = widgetRefresher,

@@ -7,15 +7,18 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
-import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.SensorList
+import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
@@ -38,9 +41,9 @@ class MainViewModel(
   private val tokens: TokenStore,
   cache: ReadingCache,
   private val sync: SyncBattery,
-  private val toggleAuto: ToggleAutoRefresh,
   private val scheduler: SyncScheduler,
   private val widgets: WidgetRefresher,
+  private val source: BatterySource,
   private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
   /** Runs in flight (overlapping runs are possible) and the last validation errors. */
@@ -76,11 +79,6 @@ class MainViewModel(
         local.update { it.copy(running = it.running - 1) }
       }
     }
-  }
-
-  /** The overview card's auto toggle: the same action as the widget's. */
-  fun toggleAutoRefresh() {
-    viewModelScope.launch { guarded { toggleAuto() } }
   }
 
   fun saveConnection(url: String) {
@@ -123,6 +121,36 @@ class MainViewModel(
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }
 
+  /**
+   * Fill's second step (spec 0004, 5.4): asks HA, with the saved URL and token, for every battery
+   * temperature sensor of [prefix]. It changes nothing; the section puts the ids in its draft.
+   * [stillCurrent] tells whether the draft prefix is still the one asked for.
+   */
+  suspend fun findTemperatureSensors(prefix: String, stillCurrent: () -> Boolean): SensorSearch =
+    try {
+      val connection = settings.settings.first().connection
+      val token = tokens.get()
+      if (connection.url.isBlank() || token == null) {
+        SensorSearch.Skipped
+      } else {
+        val list = source.listTemperatureSensors(connection, prefix, token)
+        if (!stillCurrent()) {
+          SensorSearch.Superseded
+        } else {
+          when (list) {
+            is SensorList.Failed -> SensorSearch.Failed(list.error)
+            is SensorList.Found ->
+              if (list.ids.isEmpty()) SensorSearch.NoneFound else SensorSearch.Found(list.ids)
+          }
+        }
+      }
+    } catch (e: CancellationException) {
+      throw e
+    } catch (_: Exception) {
+      // Storage or Keystore failure: no note and no crash (the message could carry stored data).
+      SensorSearch.Skipped
+    }
+
   fun saveRefresh(auto: Boolean, intervalText: String) {
     val text = intervalText.trim()
     val minutes = if (text.isEmpty()) null else text.toIntOrNull()
@@ -142,9 +170,27 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(display = display) }
   }
 
-  fun saveFontSizes(sizes: FontSizes) {
-    val clamped = sizes.clamped()
-    save(emptyList(), syncAfter = false) { it.copy(fontSizes = clamped) }
+  /** The theme saves at once; the widgets redraw (no sync). */
+  fun saveAppearance(appearance: AppearanceSettings) {
+    save(emptyList(), syncAfter = false) { it.copy(appearance = appearance) }
+  }
+
+  fun saveFontPercents(percents: FontPercents) {
+    val clamped = percents.clamped()
+    save(emptyList(), syncAfter = false) { it.copy(fontPercents = clamped) }
+  }
+
+  /** The home-screen scale saves at once (clamped to 80–200); the widgets redraw with it. */
+  fun saveHomeScale(percent: Int) {
+    val clamped = HomeScale.clamp(percent)
+    save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = clamped) }
+  }
+
+  /** "Reset sizes": fonts 50 %, scale 100 %, saved together. */
+  fun resetWidgetSettings() {
+    save(emptyList(), syncAfter = false) {
+      it.copy(fontPercents = FontPercents(), homeScalePercent = HomeScale.DEFAULT)
+    }
   }
 
   fun saveCapacity(text: String, locale: Locale) {

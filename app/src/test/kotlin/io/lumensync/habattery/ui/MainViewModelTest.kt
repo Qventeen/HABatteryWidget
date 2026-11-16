@@ -4,16 +4,18 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
-import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
-import io.lumensync.habattery.domain.model.RefreshSettings
+import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.testing.FakeBatterySource
@@ -31,6 +33,7 @@ import java.util.Locale
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -69,8 +72,8 @@ class MainViewModelTest {
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
-    val toggle = ToggleAutoRefresh(settings, scheduler, widgets)
-    val vm = MainViewModel(settings, tokens, cache, sync, toggle, scheduler, widgets, clock = { 1_000L })
+    val vm = MainViewModel(
+        settings, tokens, cache, sync, scheduler, widgets, batterySource ?: source, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
     return vm
   }
@@ -93,15 +96,6 @@ class MainViewModelTest {
     val widget = state.widget
     assertTrue("$widget", widget is WidgetModel.Data)
     assertEquals(50, (widget as WidgetModel.Data).socPercent)
-  }
-
-  @Test fun toggleAutoRefresh_turnsOnWith15AndSyncs() = runTest(dispatcher) {
-    val vm = start()
-    vm.toggleAutoRefresh()
-    advanceUntilIdle()
-    assertEquals(RefreshSettings(true, 15), state.settings.refresh)
-    assertEquals(1, scheduler.syncNowCalls)
-    assertTrue((state.widget as WidgetModel.Data).autoRefresh)
   }
 
   @Test fun init_syncsOnce() = runTest(dispatcher) {
@@ -273,11 +267,50 @@ class MainViewModelTest {
     assertEquals(1, source.calls)
   }
 
-  @Test fun saveFontSizes_clamps() = runTest(dispatcher) {
+  @Test fun saveAppearance_storesAndRedraws() = runTest(dispatcher) {
     val vm = start()
-    vm.saveFontSizes(FontSizes(soc = 50f, small = 11.5f))
+    val before = widgets.refreshes
+    vm.saveAppearance(AppearanceSettings(ThemeChoice.DARK))
     advanceUntilIdle()
-    assertEquals(FontSizes(soc = 42f, small = 11.5f), state.settings.fontSizes)
+    assertEquals(ThemeChoice.DARK, state.settings.appearance.theme)
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveFontPercents_clamps() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveFontPercents(FontPercents(soc = 120, small = 75))
+    advanceUntilIdle()
+    assertEquals(FontPercents(soc = 100, small = 75), state.settings.fontPercents)
+  }
+
+  @Test fun saveHomeScale_clampsAndRedraws() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveHomeScale(128)
+    advanceUntilIdle()
+    assertEquals(128, state.settings.homeScalePercent)
+    assertTrue(widgets.refreshes > before)
+    vm.saveHomeScale(201)
+    advanceUntilIdle()
+    assertEquals(200, state.settings.homeScalePercent)
+    vm.saveHomeScale(79)
+    advanceUntilIdle()
+    assertEquals(80, state.settings.homeScalePercent)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun resetWidgetSettings_setsFontsTo50AndScaleTo100() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveFontPercents(FontPercents(soc = 90, small = 30))
+    vm.saveHomeScale(128)
+    advanceUntilIdle()
+    val before = widgets.refreshes
+    vm.resetWidgetSettings()
+    advanceUntilIdle()
+    assertEquals(FontPercents(), state.settings.fontPercents)
+    assertEquals(100, state.settings.homeScalePercent)
+    assertTrue(widgets.refreshes > before)
   }
 
   @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {
@@ -300,6 +333,12 @@ class MainViewModelTest {
           gate.await()
           return SyncResult.Success(reading())
         }
+
+        override suspend fun listTemperatureSensors(
+          connection: ConnectionSettings,
+          prefix: String,
+          token: String,
+        ): SensorList = SensorList.Found(emptyList())
       }
     val vm = start(source = blocking)
     assertTrue(state.syncing)
@@ -307,5 +346,101 @@ class MainViewModelTest {
     advanceUntilIdle()
     assertFalse(state.syncing)
     assertEquals(50.0, vm.uiState.value.overview?.reading?.chargePercent)
+  }
+
+  @Test fun findTemperatureSensors_found() = runTest(dispatcher) {
+    val vm = start()
+    val ids = listOf("sensor.bms_temperature_sensor_1", "sensor.bms_temperature_sensor_2")
+    source.sensors = SensorList.Found(ids)
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Found(ids), result.await())
+    assertEquals(listOf("bms"), source.sensorCalls)
+  }
+
+  @Test fun findTemperatureSensors_noneFound() = runTest(dispatcher) {
+    val vm = start()
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.NoneFound, result.await())
+  }
+
+  @Test fun findTemperatureSensors_failed() = runTest(dispatcher) {
+    val vm = start()
+    source.sensors = SensorList.Failed(SyncError.Unauthorized)
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Failed(SyncError.Unauthorized), result.await())
+  }
+
+  @Test fun findTemperatureSensors_skippedWithoutTokenOrUrl() = runTest(dispatcher) {
+    listOf(
+        start(token = null),
+        start(initial = configuredSettings().copy(connection = ConnectionSettings(""))),
+      )
+      .forEach { vm ->
+        val result = async { vm.findTemperatureSensors("bms") { true } }
+        advanceUntilIdle()
+        assertEquals(SensorSearch.Skipped, result.await())
+        assertEquals(emptyList<String>(), source.sensorCalls)
+      }
+  }
+
+  @Test fun findTemperatureSensors_droppedWhenTheDraftChangedDuringTheRequest() = runTest(dispatcher) {
+    val vm = start()
+    source.sensors = SensorList.Found(listOf("sensor.bms_temperature_sensor_1"))
+    val gate = CompletableDeferred<Unit>()
+    source.sensorGate = gate
+    var current = true
+    val result = async { vm.findTemperatureSensors("bms") { current } }
+    advanceUntilIdle()
+    assertEquals(listOf("bms"), source.sensorCalls) // the request is in flight
+    current = false
+    gate.complete(Unit)
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Superseded, result.await())
+  }
+
+  @Test fun findTemperatureSensors_failingStorageIsSkippedQuietly() = runTest(dispatcher) {
+    val vm = start()
+    source.sensorFailure = IllegalStateException("disk")
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Skipped, result.await())
+  }
+
+  @Test fun findTemperatureSensors_failingTokenStoreIsSkippedQuietly() = runTest(dispatcher) {
+    val vm = start()
+    tokens.getFailure = java.security.GeneralSecurityException("keystore")
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    assertEquals(SensorSearch.Skipped, result.await())
+  }
+
+  @Test fun findTemperatureSensors_cancellationIsNotSwallowed() = runTest(dispatcher) {
+    val vm = start()
+    source.sensorGate = CompletableDeferred()
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    result.cancel()
+    advanceUntilIdle()
+    assertTrue(result.isCancelled)
+  }
+
+  @Test fun findTemperatureSensors_changesNothingUntilSave() = runTest(dispatcher) {
+    val vm = start()
+    val before = state.settings
+    source.sensors = SensorList.Found(listOf("sensor.bms_temperature_sensor_1"))
+    async { vm.findTemperatureSensors("bms") { true } }.await()
+    advanceUntilIdle()
+    assertEquals(before, state.settings)
+  }
+
+  @Test fun saveEntities_storesTheFoundList() = runTest(dispatcher) {
+    val vm = start()
+    val ids = listOf("sensor.bms_temperature_sensor_1", "sensor.bms_temperature_sensor_2")
+    vm.saveEntities(state.settings.entities.copy(prefix = "bms", temperatures = ids))
+    advanceUntilIdle()
+    assertEquals(ids, state.settings.entities.temperatures)
   }
 }

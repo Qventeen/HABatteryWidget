@@ -1,6 +1,11 @@
 package io.lumensync.habattery.ui.sections
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -9,12 +14,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.EntityFill
@@ -22,6 +32,10 @@ import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.format.Formatters
+import io.lumensync.habattery.ui.SensorFill
+import io.lumensync.habattery.ui.SensorSearch
+import kotlinx.coroutines.launch
 
 /**
  * Saves the prefix, the ten single ids and the temperature ids. Strings only, so the draft
@@ -70,10 +84,16 @@ fun EntitiesSection(
   entities: EntitySettings,
   errors: List<FieldError>,
   onSave: (EntitySettings) -> Unit,
+  onFindSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   modifier: Modifier = Modifier,
   initiallyExpanded: Boolean = false,
 ) {
   var draft by rememberSaveable(entities, stateSaver = draftSaver(entities)) { mutableStateOf(entities) }
+
+  // Fill's question to Home Assistant: running, and the note under the list (spec 0004, 5.4).
+  val scope = rememberCoroutineScope()
+  var searching by remember { mutableStateOf(false) }
+  var note by remember { mutableStateOf<SensorSearch?>(null) }
 
   val summary =
     when {
@@ -90,16 +110,42 @@ fun EntitiesSection(
   SectionCard(R.string.entities_title, summary, initiallyExpanded, modifier) {
     SettingsTextField(
       value = draft.prefix,
-      onValueChange = { draft = draft.copy(prefix = it) },
+      onValueChange = {
+        draft = draft.copy(prefix = it)
+        note = null
+      },
       label = stringResource(R.string.entities_prefix),
       error = errors.errorFor(Field.PREFIX) ?: liveError,
       hint = stringResource(R.string.entities_fill_hint),
     )
-    OutlinedButton(
-      onClick = { draft = EntityFill.fromPrefix(draft.prefix, draft) },
-      enabled = prefixOk,
-    ) {
-      Text(stringResource(R.string.entities_fill))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      OutlinedButton(
+        onClick = {
+          draft = EntityFill.fromPrefix(draft.prefix, draft)
+          note = null
+          val asked = draft.prefix
+          val filled = draft.temperatures
+          searching = true
+          scope.launch {
+            try {
+              val found =
+                onFindSensors(asked) { SensorFill.isCurrent(draft, asked, filled) }
+              val outcome = SensorFill.apply(draft, asked, filled, found)
+              draft = outcome.draft
+              note = outcome.note
+            } finally {
+              searching = false
+            }
+          }
+        },
+        enabled = prefixOk && !searching,
+      ) {
+        Text(stringResource(R.string.entities_fill))
+      }
+      if (searching) {
+        Spacer(Modifier.width(8.dp))
+        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+      }
     }
 
     EntityField(R.string.entity_charge, draft.charge, errors.errorFor(Field.CHARGE)) {
@@ -161,10 +207,14 @@ fun EntitiesSection(
     TemperatureList(
       temperatures = draft.temperatures,
       errors = errors,
-      onChange = { draft = draft.copy(temperatures = it) },
+      onChange = {
+        draft = draft.copy(temperatures = it)
+        note = null
+      },
+      note = note,
     )
 
-    SaveButton { onSave(draft) }
+    SaveButton(enabled = !searching) { onSave(draft) }
   }
 }
 
@@ -173,6 +223,7 @@ private fun TemperatureList(
   temperatures: List<String>,
   errors: List<FieldError>,
   onChange: (List<String>) -> Unit,
+  note: SensorSearch?,
 ) {
   Text(stringResource(R.string.entity_temperatures), style = MaterialTheme.typography.titleSmall)
   temperatures.forEachIndexed { index, id ->
@@ -195,6 +246,14 @@ private fun TemperatureList(
   errors.errorFor(Field.TEMPERATURES)?.let {
     Text(fieldErrorText(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
   }
+  val noteText =
+    when (note) {
+      SensorSearch.NoneFound -> stringResource(R.string.entities_sensors_none)
+      is SensorSearch.Failed ->
+        stringResource(R.string.entities_sensors_failed, Formatters(LocalContext.current).error(note.error))
+      else -> null
+    }
+  noteText?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
   OutlinedButton(
     onClick = { onChange(temperatures + "") },
     enabled = temperatures.size < EntitySettings.MAX_TEMPERATURES,

@@ -3,8 +3,10 @@ package io.lumensync.habattery.data.settings
 import io.lumensync.habattery.data.store.JsonSerializer
 import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.jsonDataStore
+import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.ThemeChoice
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -61,11 +63,46 @@ class DataStoreSettingsRepositoryTest {
   }
 
   @Test
-  fun fontSizes_areClampedWhenRead() = runTest {
-    file.writeText("""{"schemaVersion":1,"settings":{"fontSizes":{"soc":99.0,"small":1.0}}}""")
-    val sizes = repo().settings.first().fontSizes
-    assertEquals(42f, sizes.soc)
-    assertEquals(9f, sizes.small)
+  fun fontPercents_areClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"fontPercents":{"soc":5,"small":150}}}""")
+    val percents = repo().settings.first().fontPercents
+    assertEquals(10, percents.soc)
+    assertEquals(100, percents.small)
+    assertEquals(50, percents.main)
+  }
+
+  @Test
+  fun homeScale_defaultsTo100_andRoundTrips() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"notifyOnFull":true}}""")
+    val r = repo()
+    assertEquals(100, r.settings.first().homeScalePercent)
+    r.update { it.copy(homeScalePercent = 128) }
+    assertEquals(128, r.settings.first().homeScalePercent)
+  }
+
+  @Test
+  fun homeScale_aboveTheRange_isClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"homeScalePercent":300}}""")
+    assertEquals(200, repo().settings.first().homeScalePercent)
+  }
+
+  @Test
+  fun homeScale_belowTheRange_isClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"homeScalePercent":10}}""")
+    assertEquals(80, repo().settings.first().homeScalePercent)
+  }
+
+  @Test
+  fun oldFileWithoutAppearance_loadsTheSystemTheme() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"notifyOnFull":true}}""")
+    assertEquals(ThemeChoice.SYSTEM, repo().settings.first().appearance.theme)
+  }
+
+  @Test
+  fun theme_roundTrips() = runTest {
+    val r = repo()
+    r.update { it.copy(appearance = AppearanceSettings(ThemeChoice.DARK)) }
+    assertEquals(ThemeChoice.DARK, r.settings.first().appearance.theme)
   }
 
   @Test

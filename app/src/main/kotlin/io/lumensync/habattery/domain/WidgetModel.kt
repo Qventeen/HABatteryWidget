@@ -10,8 +10,8 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 /**
- * What the widget and the app card show (spec 0003, 5.2). Both only draw it. A missing value stays
- * null here; the drawing shows "—".
+ * What the widget shows, on the home screen and in the app's preview (spec 0006); the drawing only
+ * reads it. A missing value stays null here; the drawing shows "—".
  */
 sealed interface WidgetModel {
   enum class EmptyKind {
@@ -26,14 +26,16 @@ sealed interface WidgetModel {
     NONE,
   }
 
-  /** The battery temperature pills, by the number of configured sensors (a stable layout). */
+  /**
+   * The battery temperature pill (spec 0004). [Battery.celsius] is the mean of the sensors that have
+   * a value; [Battery.level] is the worst level of those sensors, so one hot sensor is not hidden.
+   */
   sealed interface Temperatures {
+    /** No battery sensor configured: no battery pill. */
     data object None : Temperatures
 
-    data class One(val celsius: Double?, val level: Level) : Temperatures
-
-    data class MaxMin(val max: Double?, val maxLevel: Level, val min: Double?, val minLevel: Level) :
-      Temperatures
+    /** [sensors] is the number of configured sensors, not of those that have a value. */
+    data class Battery(val celsius: Double?, val level: Level, val sensors: Int) : Temperatures
   }
 
   data class Empty(val kind: EmptyKind, val error: SyncError?) : WidgetModel
@@ -126,17 +128,18 @@ sealed interface WidgetModel {
     }
 
     private fun temperatures(values: List<Double?>, configured: Int): Temperatures {
-      fun level(c: Double?) = c?.let { WidgetLevels.battery(shown(it)) } ?: Level.PLAIN
-      return when (configured) {
-        0 -> Temperatures.None
-        1 -> values.firstOrNull().let { Temperatures.One(it, level(it)) }
-        else -> {
-          val known = values.filterNotNull()
-          val max = known.maxOrNull()
-          val min = known.minOrNull()
-          Temperatures.MaxMin(max, level(max), min, level(min))
-        }
-      }
+      if (configured == 0) return Temperatures.None
+      val known = values.filterNotNull()
+      val worst =
+        known.map { WidgetLevels.battery(shown(it)) }.maxByOrNull(::severity) ?: Level.PLAIN
+      return Temperatures.Battery(known.takeIf { it.isNotEmpty() }?.average(), worst, configured)
     }
+
+    private fun severity(level: Level): Int =
+      when (level) {
+        Level.BAD -> 2
+        Level.WARN -> 1
+        else -> 0
+      }
   }
 }

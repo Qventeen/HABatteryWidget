@@ -21,3 +21,10 @@ sealed interface SyncResult {
 
   data class Failure(val error: SyncError) : SyncResult
 }
+
+/** The battery temperature sensors Home Assistant has for a prefix (spec 0004, 5.3). */
+sealed interface SensorList {
+  data class Found(val ids: List<String>) : SensorList
+
+  data class Failed(val error: SyncError) : SensorList
+}

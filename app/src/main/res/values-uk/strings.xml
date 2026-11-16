@@ -33,10 +33,9 @@
     <string name="widget_balancing_on">Балансування увімкнено</string>
     <string name="widget_balancing_off">Балансування вимкнено</string>
     <string name="widget_balancing_unknown">Балансування невідоме</string>
-    <string name="widget_sync_error">Помилка синхронізації</string>
+    <string name="widget_sync_error">Помилка синхронізації: %1$s</string>
     <string name="widget_battery_temperature">Температура батареї</string>
-    <string name="widget_highest_temperature">Найвища температура датчика</string>
-    <string name="widget_lowest_temperature">Найнижча температура датчика</string>
+    <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
     <string name="widget_auto_on">Автооновлення увімкнено</string>
     <string name="widget_auto_off">Автооновлення вимкнено</string>
@@ -48,8 +47,10 @@
     <string name="notification_full_text">Батарею повністю заряджено.</string>
 
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
+    <string name="preview_description">Попередній перегляд віджета, %1$s</string>
     <string name="action_refresh_now">Оновити зараз</string>
     <string name="action_add_widget">Додати віджет</string>
+    <string name="action_add_widget_hint">Головний екран додає віджет розміром 4×2. Змініть розмір там.</string>
     <string name="action_save">Зберегти</string>
 
     <string name="connection_title">Підключення</string>
@@ -71,6 +72,8 @@
     <string name="entities_prefix">Префікс, наприклад bps_bms</string>
     <string name="entities_fill">Заповнити</string>
     <string name="entities_fill_hint">Заповнює всі поля нижче. Перевірте їх і натисніть «Зберегти».</string>
+    <string name="entities_sensors_none">Для цього префікса датчиків температури не знайдено</string>
+    <string name="entities_sensors_failed">Не вдалося прочитати список датчиків: %1$s</string>
     <string name="entity_capacity_remaining">Залишок А·год (А·год)</string>
     <string name="entity_total_capacity">Повна ємність (А·год)</string>
     <string name="entity_average_cell_voltage">Середня напруга комірки (В)</string>
@@ -98,6 +101,18 @@
     <string name="capacity_label">Ємність батареї (А·год)</string>
     <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
 
+    <string name="appearance_title">Вигляд</string>
+    <string name="appearance_theme">Тема</string>
+    <string name="appearance_language">Мова</string>
+    <string name="appearance_system">Системна</string>
+    <string name="appearance_theme_light">Світла</string>
+    <string name="appearance_theme_dark">Темна</string>
+    <string name="appearance_summary_theme_system">Системна тема</string>
+    <string name="appearance_summary_theme_light">Світла тема</string>
+    <string name="appearance_summary_theme_dark">Темна тема</string>
+    <string name="appearance_summary_language_system">Системна мова</string>
+    <string name="appearance_summary">%1$s · %2$s</string>
+
     <string name="widget_settings_title">Віджет</string>
     <string name="widget_under_soc">Під SOC</string>
     <string name="widget_choice_kwh">кВт·год</string>
@@ -110,9 +125,12 @@
     <string name="widget_font_main">Основні значення</string>
     <string name="widget_font_cell">Значення комірок</string>
     <string name="widget_font_small">Дрібний текст</string>
-    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_font_value">%1$d %%</string>
+    <string name="widget_scale_label">Масштаб на головному екрані</string>
+    <string name="widget_scale_hint">Лише якщо ваш головний екран малює віджети меншими. Більшість телефонів: 100 %.</string>
     <string name="widget_reset_sizes">Скинути розміри</string>
     <string name="widget_summary">%1$s · %2$s</string>
+    <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
 
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>
@@ -140,7 +158,7 @@
     <string name="field_capacity_invalid">Введіть число</string>
     <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
 
-    <string name="preview_time_left">17 год 16 хв</string>
+    <string name="preview_time_left">17г і 16х</string>
     <string name="preview_kwh">4,58 кВт·год</string>
     <string name="preview_voltage">26,50 В</string>
     <string name="preview_current">10,0 А</string>

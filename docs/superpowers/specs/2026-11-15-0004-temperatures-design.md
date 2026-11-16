@@ -1,7 +1,7 @@
 # Temperatures — design
 
 - **Date:** 2026-11-15
-- **Status:** approved by the owner (2026-11-15).
+- **Status:** approved by the owner (2026-11-15); built on branch `0004-temperatures`, merged into `epic-widget-v5`.
 - **Set:** `0004`. Code on branch `0004-temperatures`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).
@@ -188,3 +188,13 @@ builder checks).
 
 The exact template text and escaping, the progress look on Fill, the
 Ukrainian wording, and where the notes sit in the Entities section.
+
+## 8. Build notes (2026-11-15)
+
+- `Temperatures.Battery` has a `sensors: Int` field (the number of
+  configured sensors), so the content description can tell one sensor from
+  several.
+- The pill's content description is the icon label only ("Battery
+  temperature" / "Average battery temperature"). The value is read from its
+  own text, as with the other pills, and no level is added because no pill
+  adds one.

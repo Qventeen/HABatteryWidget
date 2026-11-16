@@ -2,6 +2,7 @@ package io.lumensync.habattery.widget
 
 import android.content.ComponentName
 import android.content.Context
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
@@ -11,12 +12,21 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
 import androidx.glance.appwidget.testing.unit.hasRunCallbackClickAction
+import androidx.glance.testing.unit.hasClickAction
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
+import androidx.glance.testing.GlanceNodeMatcher
+import androidx.glance.testing.unit.MappedNode
+import androidx.glance.text.EmittableText
 import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasContentDescriptionEqualTo
 import androidx.glance.testing.unit.hasStartActivityClickAction
+import androidx.glance.testing.unit.hasTestTag
+import androidx.glance.testing.unit.hasAnyDescendant
+import androidx.glance.layout.EmittableRow
 import androidx.glance.testing.unit.hasText
 import androidx.glance.testing.unit.hasTextEqualTo
+import androidx.glance.Emittable
+import androidx.glance.EmittableWithChildren
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
@@ -24,7 +34,8 @@ import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.DisplaySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
@@ -32,6 +43,8 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.testing.configuredSettings
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -86,32 +99,44 @@ class WidgetContentTest {
     }
 
   @Test
-  fun oneSensor_onePillWithoutArrow() =
+  fun oneSensor_batteryAndMosfetPills() =
     render(model()) {
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature))).assertExists()
-      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_highest_temperature)))
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_average_temperature)))
+        .assertCountEquals(0)
+    }
+
+  @Test
+  fun twoSensors_oneAveragePill() =
+    render(model(sample.copy(temperaturesC = listOf(44.0, 47.0)), settings(sensors = 2))) {
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_average_temperature))).assertExists()
+      onNode(hasTextEqualTo(formatters.temperature(45.5))).assertExists()
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature)))
         .assertCountEquals(0)
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
   @Test
-  fun twoSensors_highestAndLowest() =
-    render(model(sample.copy(temperaturesC = listOf(44.0, 47.0)), settings(sensors = 2))) {
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_highest_temperature))).assertExists()
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_lowest_temperature))).assertExists()
-      onNode(hasTextEqualTo(formatters.temperature(47.0))).assertExists()
-      onNode(hasTextEqualTo(formatters.temperature(44.0))).assertExists()
+  fun noSensor_onlyMosfetPill() =
+    render(model(settings = settings(sensors = 0))) {
       onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature)))
         .assertCountEquals(0)
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_average_temperature)))
+        .assertCountEquals(0)
+      onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
+  /** Spec 0005, 5.3: a red icon only, the reason in its content description, no error text. */
   @Test
-  fun error_replacesUpdateTime() =
-    render(model(error = SyncError.Unreachable)) {
-      onNode(hasTextEqualTo(text(R.string.error_unreachable))).assertExists()
-      onNode(hasContentDescriptionEqualTo(text(R.string.widget_sync_error))).assertExists()
-      onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
-      onNode(hasTextEqualTo("55")).assertExists()
+  fun error_showsIconOnly() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(error = SyncError.Unreachable), spec.bucketWidth, spec.bucketHeight) {
+        onNode(hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable")).assertExists()
+        onAllNodes(hasText(text(R.string.error_unreachable))).assertCountEquals(0)
+        onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
+        onNode(hasTextEqualTo("55")).assertExists()
+      }
     }
 
   @Test
@@ -185,36 +210,177 @@ class WidgetContentTest {
       onNode(hasTextEqualTo(text(R.string.widget_open_app))).assertExists()
     }
 
+  /** The app's preview (spec 0006): every layout draws, nothing takes taps. */
   @Test
-  fun belowMinimumSize_stillRendersEverything() =
-    render(model(), widthDp = 276, heightDp = 140) {
-      onNode(hasTextEqualTo("55")).assertExists()
-      onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
-      onNode(hasTextEqualTo(formatters.temperature(27.0))).assertExists()
+  fun noActions_eachBucket_nothingTakesTaps() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
+        onNode(hasTestTag("layout_${spec.name}")).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+        onAllNodes(hasClickAction()).assertCountEquals(0)
+      }
+    }
+
+  /** We are already in the app: the preview's empty state has no "Open app". */
+  @Test
+  fun noActions_empty_noOpenApp() =
+    render(model(reading = null, error = SyncError.Unauthorized), withActions = false) {
+      onNode(hasTextEqualTo(text(R.string.widget_no_data))).assertExists()
+      onNode(hasTextEqualTo(text(R.string.error_unauthorized))).assertExists()
+      onAllNodes(hasTextEqualTo(text(R.string.widget_open_app))).assertCountEquals(0)
+      onAllNodes(hasClickAction()).assertCountEquals(0)
+    }
+
+  /** The preview's circles do nothing, so TalkBack skips them; the values stay described. */
+  @Test
+  fun noActions_eachBucket_buttonsAreNotDescribed() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
+        listOf(R.string.widget_refresh_action, R.string.widget_auto_off).forEach {
+          onAllNodes(hasContentDescriptionEqualTo(text(it))).assertCountEquals(0)
+        }
+        onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+      }
+    }
+
+  @Test
+  fun eachBucket_drawsItsLayout() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight) {
+        onNode(hasTestTag("layout_${spec.name}")).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+        onNode(hasTextEqualTo(formatters.voltage(26.5))).assertExists()
+        onNode(hasTextEqualTo(formatters.temperature(27.0))).assertExists()
+      }
+    }
+
+  /**
+   * The home-screen scale changes sizes only: at 1.28 each bucket draws the same tree as at 1.0
+   * (a scaled spec once missed the 5×2 and 4×3 layouts and drew 4×2's).
+   */
+  @Test
+  fun hostScale_eachBucket_drawsItsLayout() =
+    LayoutSpec.all.forEach { spec ->
+      assertEquals(spec.name, shape(spec, 1f), shape(spec, 1.28f))
+    }
+
+  /** `WidgetContent(hostScale)` sizes the SOC number: bigger at 1.28 than at 1.0, smaller at 0.8. */
+  @Test
+  fun hostScale_makesTheSocNumberBigger() {
+    assertTrue(socSize(1.28f) > socSize(1f))
+    assertTrue(socSize(1f) > socSize(0.8f))
+  }
+
+  private fun socSize(hostScale: Float): Float {
+    var size = 0f
+    render(model(), hostScale = hostScale) {
+      onNode(
+          GlanceNodeMatcher<MappedNode>("SOC number") { node ->
+            val text = node.value.emittable as? EmittableText
+            (text?.text == "55").also { if (it) size = text!!.style?.fontSize?.value ?: 0f }
+          }
+        )
+        .assertExists()
+    }
+    return size
+  }
+
+  @Test
+  fun fiveByFour_stretchesFiveByThree() =
+    render(model(), 340f, 278f) { onNode(hasTestTag("layout_5x3")).assertExists() }
+
+  @Test
+  fun belowMinimumSize_drawsFourByTwo() =
+    render(model(), 240f, 110f) { onNode(hasTestTag("layout_4x2")).assertExists() }
+
+  @Test
+  fun grid_noSensor_mosfetAloneInRowTwo() =
+    render(model(settings = settings(sensors = 0)), LayoutSpec.L4x3.bucketWidth, LayoutSpec.L4x3.bucketHeight) {
+      val mosfet = hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))
+      onNode(rowWithChildren(1) and hasAnyDescendant(mosfet)).assertExists()
+      onAllNodes(rowWithChildren(3) and hasAnyDescendant(hasText("mV"))).assertCountEquals(1)
+    }
+
+  @Test
+  fun grid_twoRowsOfTwo() =
+    render(model(), LayoutSpec.L4x3.bucketWidth, LayoutSpec.L4x3.bucketHeight) {
+      val mosfet = hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))
+      val battery = hasContentDescriptionEqualTo(text(R.string.widget_battery_temperature))
+      onNode(rowWithChildren(3) and hasAnyDescendant(mosfet) and hasAnyDescendant(battery)).assertExists()
     }
 
   @Test
   fun largeFonts_stillRender() =
-    render(model(), fontSizes = FontSizes(soc = 42f, underSoc = 12f, main = 24f, cell = 15f, small = 12f)) {
+    render(model(), fontPercents = FontPercents(soc = 100, underSoc = 100, main = 100, cell = 100, small = 100)) {
       onNode(hasTextEqualTo("55")).assertExists()
+    }
+
+  /** The chosen theme reaches the drawing: the SOC number takes the palette's text colour. */
+  @Test
+  @Config(qualifiers = "en-notnight")
+  fun darkTheme_drawsDarkColoursByDay() =
+    render(model(), colors = WidgetColors(ThemeChoice.DARK)) {
+      onNode(hasTextEqualTo("55") and hasTextColor(WidgetPalette.Dark.text)).assertExists()
+    }
+
+  @Test
+  @Config(qualifiers = "en-notnight")
+  fun systemTheme_drawsLightColoursByDay() =
+    render(model(), colors = WidgetColors(ThemeChoice.SYSTEM)) {
+      onNode(hasTextEqualTo("55") and hasTextColor(WidgetPalette.Light.text)).assertExists()
+    }
+
+  /** The tree of the layout drawn at [spec]'s bucket: element types only, no sizes. */
+  private fun shape(spec: LayoutSpec, hostScale: Float): String {
+    var shape = ""
+    val tag = hasTestTag("layout_${spec.name}")
+    render(model(), spec.bucketWidth, spec.bucketHeight, hostScale = hostScale) {
+      onNode(
+          GlanceNodeMatcher<MappedNode>("layout ${spec.name}") { node ->
+            tag.matches(node).also { if (it) shape = shapeOf(node.value.emittable) }
+          }
+        )
+        .assertExists()
+    }
+    return shape
+  }
+
+  private fun shapeOf(e: Emittable): String =
+    e.javaClass.simpleName +
+      ((e as? EmittableWithChildren)?.children?.joinToString(",", "(", ")", transform = ::shapeOf) ?: "")
+
+  /** A Row with [n] children (pills and the spacers between them). */
+  private fun rowWithChildren(n: Int) =
+    GlanceNodeMatcher<MappedNode>("row with $n children") { node ->
+      (node.value.emittable as? EmittableRow)?.children?.size == n
+    }
+
+  private fun hasTextColor(expected: Color) =
+    GlanceNodeMatcher<MappedNode>("has text colour $expected") { node ->
+      (node.value.emittable as? EmittableText)?.style?.color?.getColor(context) == expected
     }
 
   private fun render(
     model: WidgetModel,
-    widthDp: Int = 360,
-    heightDp: Int = 180,
-    fontSizes: FontSizes = FontSizes(),
+    widthDp: Float = LayoutSpec.L4x2.bucketWidth,
+    heightDp: Float = LayoutSpec.L4x2.bucketHeight,
+    fontPercents: FontPercents = FontPercents(),
+    colors: WidgetColors = WidgetColors(ThemeChoice.SYSTEM),
+    hostScale: Float = 1f,
+    withActions: Boolean = true,
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
   ) = runGlanceAppWidgetUnitTest {
     setContext(context)
     setAppWidgetSize(DpSize(widthDp.dp, heightDp.dp))
     val actions =
       WidgetActions(
-        openApp = actionStartActivity(openAppComponent),
-        refresh = actionRunCallback<NoOpRefresh>(),
-        toggleAuto = actionRunCallback<NoOpToggle>(),
-      )
-    provideComposable { WidgetContent(model, fontSizes, actions) }
+          openApp = actionStartActivity(openAppComponent),
+          refresh = actionRunCallback<NoOpRefresh>(),
+          toggleAuto = actionRunCallback<NoOpToggle>(),
+        )
+        .takeIf { withActions }
+    provideComposable { WidgetContent(model, fontPercents, colors, actions, hostScale, FakeMeasurer) }
     assertions()
   }
 
