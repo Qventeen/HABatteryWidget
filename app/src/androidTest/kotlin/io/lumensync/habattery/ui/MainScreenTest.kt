@@ -17,8 +17,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -167,7 +166,7 @@ class MainScreenTest {
     compose.onNodeWithText(text(R.string.widget_choice_kwh)).performScrollTo().performClick()
   }
 
-  private fun top(node: androidx.compose.ui.test.SemanticsNodeInteraction) =
+  private fun top(node: SemanticsNodeInteraction) =
     node.fetchSemanticsNode().positionInRoot.y
 
   /** After the preview and the actions come Widget, then Appearance, then Connection. */
@@ -193,7 +192,15 @@ class MainScreenTest {
     waitForContent()
     compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
     val slider = compose.onNodeWithContentDescription(text(R.string.widget_scale_label))
-    slider.performScrollTo().performTouchInput { swipeRight() }
+    slider.performScrollTo()
+    // Inside the track: the semantics bounds are wider than the draggable area.
+    slider.performTouchInput {
+      down(center)
+      moveTo(centerRight)
+    }
+    compose.waitForIdle()
+    assertEquals(HomeScale.DEFAULT, storedSettings().homeScalePercent)
+    slider.performTouchInput { up() }
     compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().homeScalePercent == HomeScale.MAX }
     compose.onNodeWithText(text(R.string.widget_reset_defaults)).performScrollTo().performClick()
   }
