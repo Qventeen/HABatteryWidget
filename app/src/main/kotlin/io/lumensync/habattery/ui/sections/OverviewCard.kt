@@ -49,6 +49,7 @@ import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.WidgetTexts
+import kotlin.math.min
 
 /**
  * The widget's layout drawn in Compose, from the same [WidgetModel] (spec 0003, 5.9). It scales by
@@ -98,8 +99,9 @@ fun OverviewCard(
 }
 
 /**
- * Sizes for one drawing: [s] scales fixed sizes. The fonts are the v4 sizes × percent / 50 × the
- * system font scale, without fitting (spec 0005, 5.7; spec 0006 replaces the card).
+ * Sizes for one drawing: [s] scales fixed sizes. The fonts are the v4 sizes × the system font
+ * scale, capped at the v4 maximum, × percent / 50, without fitting (spec 0005, 5.7; spec 0006
+ * replaces the card).
  */
 internal class CardLook(
   val s: Float,
@@ -111,8 +113,10 @@ internal class CardLook(
   fun dp(value: Float): Dp = (value * s).dp
 
   /** The shown size in dp; the card runs with font scale 1, so sp equals it. */
-  fun shownSize(group: FontGroup): Float =
-    fontPercents.requestedDp(group, V4_SIZES.getValue(group), fontScale) * s
+  fun shownSize(group: FontGroup): Float {
+    val capped = min(V4_SIZES.getValue(group) * fontScale, V4_MAX.getValue(group))
+    return fontPercents.requestedDp(group, capped, 1f) * s
+  }
 
   fun font(group: FontGroup): TextUnit = shownSize(group).sp
 }
@@ -226,6 +230,16 @@ private val V4_SIZES =
     FontGroup.MAIN to 22f,
     FontGroup.CELL to 14f,
     FontGroup.SMALL to 10.5f,
+  )
+
+/** The v4 maximum sizes (sp): the system font scale grows the card's text up to these. */
+private val V4_MAX =
+  mapOf(
+    FontGroup.SOC to 42f,
+    FontGroup.UNDER_SOC to 12f,
+    FontGroup.MAIN to 24f,
+    FontGroup.CELL to 15f,
+    FontGroup.SMALL to 12f,
   )
 
 private val TOUCH = 44.dp
