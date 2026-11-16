@@ -1,7 +1,9 @@
 package io.lumensync.habattery
 
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.provider.Settings
@@ -15,6 +17,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -25,6 +29,7 @@ import io.lumensync.habattery.system.AppLanguage
 import io.lumensync.habattery.ui.MainActions
 import io.lumensync.habattery.ui.MainScreen
 import io.lumensync.habattery.ui.MainViewModel
+import io.lumensync.habattery.ui.PreviewTab
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import kotlinx.coroutines.launch
@@ -59,6 +64,7 @@ class MainActivity : ComponentActivity() {
     val appLanguage = application.container.appLanguage
     language = if (appLanguage.supported) appLanguage.current() else null
     val actions = mainActions(appLanguage)
+    val firstPreviewTab = firstPreviewTab()
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
       val dark = state.settings.appearance.theme.isDark(isSystemInDarkTheme())
@@ -70,7 +76,7 @@ class MainActivity : ComponentActivity() {
         )
         onDispose {}
       }
-      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language) }
+      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language, firstPreviewTab) }
     }
   }
 
@@ -79,11 +85,36 @@ class MainActivity : ComponentActivity() {
    * widget unless the result is OK. Nothing needs configuring per widget, so confirm at once.
    */
   private fun confirmWidgetPlacement() {
-    val id =
-      intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-    if (id != AppWidgetManager.INVALID_APPWIDGET_ID) {
-      setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+    val id = configuredWidgetId() ?: return
+    setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+  }
+
+  /** The widget this activity was opened for: placement on API 26–30, reconfigure on 31+. */
+  private fun configuredWidgetId(): Int? =
+    intent
+      .getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+      .takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
+
+  /**
+   * The preview's first tab (spec 0006, B1): from the size Android reports for the configured
+   * widget, else for the first placed widget. The size is the one for the current orientation, as
+   * the widget options give it (portrait: min width × max height).
+   */
+  private fun firstPreviewTab(): PreviewTab {
+    val manager = AppWidgetManager.getInstance(this)
+    val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
+    fun reportedSize(id: Int): DpSize {
+      val options = manager.getAppWidgetOptions(id)
+      fun dp(key: String) = options.getInt(key).dp
+      return if (portrait) {
+        DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT))
+      } else {
+        DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
+      }
     }
+    val firstPlaced =
+      manager.getAppWidgetIds(ComponentName(this, BatteryWidgetReceiver::class.java)).firstOrNull()
+    return PreviewTab.first(configuredWidgetId()?.let(::reportedSize), firstPlaced?.let(::reportedSize))
   }
 
   private fun mainActions(appLanguage: AppLanguage) =

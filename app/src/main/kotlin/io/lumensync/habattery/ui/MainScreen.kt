@@ -18,7 +18,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
@@ -35,10 +34,9 @@ import io.lumensync.habattery.ui.sections.CapacitySection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.NotificationSection
-import io.lumensync.habattery.ui.sections.OVERVIEW_CARD_TAG
-import io.lumensync.habattery.ui.sections.OverviewCard
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
+import io.lumensync.habattery.ui.sections.WidgetPreviewCard
 import io.lumensync.habattery.ui.sections.WidgetSection
 import java.util.Locale
 
@@ -63,7 +61,12 @@ data class MainActions(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(state: MainUiState, actions: MainActions, language: LanguageChoice?) {
+fun MainScreen(
+  state: MainUiState,
+  actions: MainActions,
+  language: LanguageChoice?,
+  firstPreviewTab: PreviewTab,
+) {
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
     val overview = state.overview
     val widget = state.widget
@@ -73,7 +76,7 @@ fun MainScreen(state: MainUiState, actions: MainActions, language: LanguageChoic
         CircularProgressIndicator()
       }
     } else {
-      MainContent(state, overview, widget, actions, language, padding)
+      MainContent(state, overview, widget, actions, language, firstPreviewTab, padding)
     }
   }
 }
@@ -85,6 +88,7 @@ private fun MainContent(
   widget: WidgetModel,
   actions: MainActions,
   language: LanguageChoice?,
+  firstPreviewTab: PreviewTab,
   padding: PaddingValues,
 ) {
   val settings = state.settings
@@ -98,15 +102,7 @@ private fun MainContent(
         .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    OverviewCard(
-      widget,
-      settings.fontPercents,
-      settings.appearance.theme,
-      syncing = state.syncing,
-      onRefresh = actions.refreshNow,
-      onToggleAuto = actions.toggleAutoRefresh,
-      modifier = Modifier.testTag(OVERVIEW_CARD_TAG),
-    )
+    WidgetPreviewCard(widget, settings.fontPercents, settings.appearance.theme, firstPreviewTab)
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
     AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
     ConnectionSection(
