@@ -14,9 +14,8 @@ import io.lumensync.habattery.domain.model.ThemeChoice
 const val LANGUAGE_ROW_TAG = "appearance-language"
 
 /**
- * Theme and language of the app and the widget. A choice applies at once, no
- * Save. [language] is null where the system has no per-app language (before Android 13): the
- * row is hidden then.
+ * Theme and language of the app and the widget. A choice applies at once, no Save. [language] is
+ * null where the system has no per-app language (before Android 13): the row is hidden then.
  */
 @Composable
 fun AppearanceSection(
