@@ -69,14 +69,14 @@ fun WidgetContent(
   val fontScale = context.resources.configuration.fontScale
   val look = WidgetLook(spec, colors, context.resources.displayMetrics, fontScale)
 
-  Box(
+  val card =
     GlanceModifier.fillMaxSize()
       .background(colors.card)
       .cornerRadius(spec.corner.dp) // Android 12+ only; square before (spec 0003, approach D1)
       .clickable(actions.openApp)
       .padding(spec.padding.dp)
       .semantics { testTag = "layout_${spec.name}" }
-  ) {
+  val content: @Composable () -> Unit = {
     when (model) {
       is WidgetModel.Empty -> EmptyContent(model, look, texts, fontPercents, m, actions.openApp)
       is WidgetModel.Data -> {
@@ -92,6 +92,10 @@ fun WidgetContent(
       }
     }
   }
+  // 4×3 gets its own root type, so its root layout differs from 4×2 / 5×3. A launcher that moves
+  // to 4×3 must then inflate fresh instead of reapplying onto the other size's views, where
+  // Glance's index-based view ids collide (HyperOS: an empty body until the next update).
+  if (layout == LayoutSpec.L4x3) Column(card) { content() } else Box(card) { content() }
 }
 
 /** The layout and the colours of one drawing, and the font size Glance needs. */
