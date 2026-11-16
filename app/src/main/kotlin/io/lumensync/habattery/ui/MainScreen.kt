@@ -28,6 +28,7 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.ActionsRow
 import io.lumensync.habattery.ui.sections.AppearanceSection
 import io.lumensync.habattery.ui.sections.CapacitySection
@@ -52,6 +53,8 @@ data class MainActions(
   val saveCapacity: (text: String, locale: Locale) -> Unit,
   val saveDisplay: (DisplaySettings) -> Unit,
   val saveFontPercents: (FontPercents) -> Unit,
+  val saveHomeScale: (Int) -> Unit,
+  val resetWidgetSettings: () -> Unit,
   val saveAppearance: (AppearanceSettings) -> Unit,
   val setLanguage: (LanguageChoice) -> Unit,
   val requestPinWidget: () -> Unit,
@@ -103,6 +106,16 @@ private fun MainContent(
   ) {
     WidgetPreviewCard(widget, settings.fontPercents, settings.appearance.theme, previewRequest)
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
+    WidgetSection(
+      settings.display,
+      settings.fontPercents,
+      settings.homeScalePercent,
+      settings.textSizeChanged,
+      actions.saveDisplay,
+      actions.saveFontPercents,
+      actions.saveHomeScale,
+      actions.resetWidgetSettings,
+    )
     AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
     ConnectionSection(
       settings.connection,
@@ -130,6 +143,5 @@ private fun MainContent(
       actions.openNotificationSettings,
     )
     CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)
-    WidgetSection(settings.display, settings.fontPercents, actions.saveDisplay, actions.saveFontPercents)
   }
 }

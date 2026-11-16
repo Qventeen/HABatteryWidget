@@ -20,26 +20,32 @@ import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
 import kotlin.math.roundToInt
 
 /**
- * What the widget shows, and its font sizes as percents (app-wide; 50 % is
- * the design). Every change saves at once and redraws the widgets; a slider saves when released.
+ * What the widget shows, its font sizes as percents (app-wide; 50 % is the design) and the
+ * home-screen scale (80–150 %, 100 = as reported). Every change saves at once and redraws the
+ * widgets; a slider saves when released. One button puts fonts and scale back to the defaults.
  */
 @Composable
 fun WidgetSection(
   display: DisplaySettings,
   fontPercents: FontPercents,
+  homeScalePercent: Int,
+  textSizeChanged: Boolean,
   onSaveDisplay: (DisplaySettings) -> Unit,
   onSaveFontPercents: (FontPercents) -> Unit,
+  onSaveHomeScale: (Int) -> Unit,
+  onReset: () -> Unit,
   modifier: Modifier = Modifier,
   initiallyExpanded: Boolean = false,
 ) {
   val summary =
     stringResource(
-      R.string.widget_summary,
+      if (textSizeChanged) R.string.widget_summary_changed else R.string.widget_summary,
       stringResource(underSocLabel(display.underSoc)),
       stringResource(mainValueLabel(display.mainValue)),
     )
@@ -54,10 +60,33 @@ fun WidgetSection(
     FontGroup.entries.forEach { group ->
       FontSlider(group, fontPercents[group]) { onSaveFontPercents(fontPercents.with(group, it)) }
     }
-    OutlinedButton(onClick = { onSaveFontPercents(FontPercents()) }) {
-      Text(stringResource(R.string.widget_reset_sizes))
-    }
+    HomeScaleSlider(homeScalePercent, onSaveHomeScale)
+    OutlinedButton(onClick = onReset) { Text(stringResource(R.string.widget_reset_defaults)) }
   }
+}
+
+/** The home-screen scale: a slider from 80 to 150 % in steps of 1, and a line saying what it is for. */
+@Composable
+private fun HomeScaleSlider(stored: Int, onSave: (Int) -> Unit) {
+  var value by rememberSaveable(stored) { mutableIntStateOf(stored) }
+  val name = stringResource(R.string.widget_scale_label)
+  Row(Modifier.fillMaxWidth()) {
+    Text(name, Modifier.weight(1f))
+    Text(stringResource(R.string.widget_font_value, value))
+  }
+  Slider(
+    value = value.toFloat(),
+    onValueChange = { value = it.roundToInt() },
+    onValueChangeFinished = { onSave(value) },
+    valueRange = HomeScale.MIN.toFloat()..HomeScale.MAX.toFloat(),
+    steps = HomeScale.MAX - HomeScale.MIN - 1,
+    modifier = Modifier.semantics { contentDescription = name },
+  )
+  Text(
+    stringResource(R.string.widget_scale_hint),
+    style = MaterialTheme.typography.bodySmall,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
 }
 
 /** One font group: its name, the percent, and a slider from 25 to 100 % in steps of 5. */

@@ -134,8 +134,11 @@
     <string name="widget_font_cell">Cell values</string>
     <string name="widget_font_small">Small text</string>
     <string name="widget_font_value">%1$d %%</string>
-    <string name="widget_reset_sizes">Reset sizes</string>
+    <string name="widget_scale_label">Home-screen scale</string>
+    <string name="widget_scale_hint">Increase if the widget looks small on your home screen</string>
+    <string name="widget_reset_defaults">Reset to defaults</string>
     <string name="widget_summary">%1$s · %2$s</string>
+    <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
