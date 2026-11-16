@@ -150,9 +150,9 @@ data class LayoutSpec(
 
   /**
    * Every size × [k]: the bucket and its rounding (so the fit boxes are the space the home screen
-   * really gives), paddings, gaps, icons, ring and fonts; line-height ratios and the shape stay. A
-   * launcher that draws widgets smaller (HyperOS about 0.78) gives the layout 1 / 0.78 of the
-   * reported size (the stored home-screen scale, `Settings.homeScalePercent`).
+   * really gives), paddings, gaps, icons, ring and fonts; the shape stays. A launcher that draws
+   * widgets smaller (HyperOS about 0.78) gives the layout 1 / 0.78 of the reported size (the
+   * stored home-screen scale, `Settings.homeScalePercent`).
    */
   fun scaled(k: Float): LayoutSpec =
     if (k == 1f) this

@@ -121,7 +121,7 @@ class LayoutSpecTest {
       assertEquals(spec.name, smallest, scaled.fitBoxes(4))
     }
 
-  /** The home-screen scale: every dp size and font × k; the shape and the line-height ratios stay. */
+  /** The home-screen scale: every dp size and font × k; the shape stays. */
   @Test
   fun scaled_multipliesEverySizeAndFont() =
     LayoutSpec.all.forEach { spec ->
@@ -139,10 +139,7 @@ class LayoutSpecTest {
 
   @Test fun scaled_byOne_isTheSameSpec() = LayoutSpec.all.forEach { assertSame(it, it.scaled(1f)) }
 
-  /**
-   * Every non-static `Float` field (a dp or sp size) by name, so a new size cannot miss the scale.
-   * The line heights are `Float?` ratios and stay out.
-   */
+  /** Every non-static `Float` field (a dp or sp size) by name, so a new size cannot miss the scale. */
   private fun sizes(o: Any): Map<String, Float> =
     o.javaClass.declaredFields
       .filter { it.type == Float::class.javaPrimitiveType && !Modifier.isStatic(it.modifiers) }
