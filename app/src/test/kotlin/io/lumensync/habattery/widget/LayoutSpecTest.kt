@@ -122,10 +122,11 @@ class LayoutSpecTest {
       assertEquals(spec.name, sizes(spec).mapValues { it.value * k }, sizes(scaled))
       assertEquals(spec.name, sizes(spec.fonts).mapValues { it.value * k }, sizes(scaled.fonts))
       assertEquals(spec.name, sizes(spec.empty).mapValues { it.value * k }, sizes(scaled.empty))
-      assertEquals(spec.labelLineHeight, scaled.labelLineHeight)
-      assertEquals(spec.underLineHeight, scaled.underLineHeight)
+      assertEquals(spec.name, spec.ringTextGap * k, scaled.ringTextGap, 1e-4f)
       assertEquals(listOf(spec.name, spec.ringFullHeight, spec.cellGrid), listOf(scaled.name, scaled.ringFullHeight, scaled.cellGrid))
     }
+
+  @Test fun ringTextGap_isSixDpInEveryLayout() = LayoutSpec.all.forEach { assertEquals(it.name, 6f, it.ringTextGap, 0f) }
 
   @Test fun scaled_byOne_isTheSameSpec() = LayoutSpec.all.forEach { assertSame(it, it.scaled(1f)) }
 

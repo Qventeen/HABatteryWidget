@@ -35,32 +35,32 @@ interface TextMeasurer {
 data class Box(val width: Float, val height: Float)
 
 /**
- * One line of the ring's text stack. [lineHeight] is the canvas CSS line height as a factor of the
- * size; null is CSS "normal" (the font's content height). [floor] is the line's size at 50 %: a
- * line asking for more is raised, and shrinks first when the ring is too small (review, 0005).
+ * One line of the ring's text stack. [floor] is the line's size at 50 %: a line asking for more is
+ * raised, and shrinks first when the ring is too small (review, 0005).
  */
 data class RingLine(
   val text: String,
   val requested: Float,
   val weight: TextWeight,
-  val lineHeight: Float?,
   val floor: Float = requested,
 )
 
 /**
- * The ring's three lines as the canvas stacks them: line boxes with [gap] between them, the whole
- * stack centred on the ring, each baseline where CSS puts it (half-leading above the content area).
+ * The ring's three lines placed by their visible ink (owner, 2026-11-16): a line's visible box is its
+ * cap height above its baseline, and the boxes are [gap] apart, the same gap for every layout. The cap
+ * height is the ink of the reference text "0", not of the line's own text, so the stack does not move
+ * when the text changes; descenders hang below and are ignored. The whole stack is centred on the ring.
  */
 object RingStack {
+  private const val REFERENCE = "0"
+
   /** Baselines in dp from the ring centre (down is positive), with the lines at [sizes]. */
   fun baselines(lines: List<RingLine>, sizes: List<Float>, gap: Float, measurer: TextMeasurer): List<Float> {
-    val metrics = lines.mapIndexed { i, line -> measurer.metrics(line.text, sizes[i], line.weight) }
-    val heights = lines.mapIndexed { i, line -> line.lineHeight?.let { it * sizes[i] } ?: metrics[i].height }
-    var top = -(heights.sum() + gap * (lines.size - 1)) / 2
+    val caps = lines.mapIndexed { i, line -> -measurer.ink(REFERENCE, sizes[i], line.weight).top }
+    var top = -(caps.sum() + gap * (lines.size - 1)) / 2
     return lines.indices.map { i ->
-      val m = metrics[i]
-      val baseline = top + (heights[i] - m.height) / 2 - m.ascent
-      top += heights[i] + gap
+      val baseline = top + caps[i]
+      top += caps[i] + gap
       baseline
     }
   }

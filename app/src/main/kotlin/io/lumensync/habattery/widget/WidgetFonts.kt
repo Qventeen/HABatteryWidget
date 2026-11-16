@@ -123,9 +123,9 @@ internal object WidgetFonts {
     fun fifty(sp: Float) = sp * fontScale
     val requestedRing =
       listOf(
-        RingLine(texts.socLabel, requested(FontGroup.SMALL, design.ringLabel), TextWeight.NORMAL, spec.labelLineHeight, fifty(design.ringLabel)),
-        RingLine(texts.soc, requested(FontGroup.SOC, design.soc), TextWeight.BOLD, 1f, fifty(design.soc)),
-        RingLine(texts.underSoc, requested(FontGroup.UNDER_SOC, design.underSoc), TextWeight.MEDIUM, spec.underLineHeight, fifty(design.underSoc)),
+        RingLine(texts.socLabel, requested(FontGroup.SMALL, design.ringLabel), TextWeight.NORMAL, fifty(design.ringLabel)),
+        RingLine(texts.soc, requested(FontGroup.SOC, design.soc), TextWeight.BOLD, fifty(design.soc)),
+        RingLine(texts.underSoc, requested(FontGroup.UNDER_SOC, design.underSoc), TextWeight.MEDIUM, fifty(design.underSoc)),
       )
     // The ring's own size, not the bucket's: below the design card the ring shrinks to its row
     // while the fonts stay (5.1), so its text matches the design at the owner's sizes.

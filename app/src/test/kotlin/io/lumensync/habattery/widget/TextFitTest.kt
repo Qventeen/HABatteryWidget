@@ -59,9 +59,9 @@ class TextFitTest {
   /** The 4×2 ring lines; [soc] and [under] are the requested sizes, floors at the 50 % sizes. */
   private fun ringLines(soc: Float = 28f, under: String = "4.58 kWh", label: Float = 8.5f, underSize: Float = 10f) =
     listOf(
-      RingLine("SOC", label, TextWeight.NORMAL, lineHeight = 1.1f, floor = 8.5f),
-      RingLine("55", soc, TextWeight.BOLD, lineHeight = 1f, floor = 28f),
-      RingLine(under, underSize, TextWeight.MEDIUM, lineHeight = 1.2f, floor = 10f),
+      RingLine("SOC", label, TextWeight.NORMAL, floor = 8.5f),
+      RingLine("55", soc, TextWeight.BOLD, floor = 28f),
+      RingLine(under, underSize, TextWeight.MEDIUM, floor = 10f),
     )
 
   /** The farthest ink corner of [lines] at [sizes] from the ring centre. */
@@ -148,28 +148,46 @@ class TextFitTest {
   fun tallStack_shrinksByOneFactor() {
     val lines =
       listOf(
-        RingLine("", 20f, TextWeight.NORMAL, lineHeight = 1f),
-        RingLine("b", 40f, TextWeight.BOLD, lineHeight = 1f),
-        RingLine("", 20f, TextWeight.NORMAL, lineHeight = 1f),
+        RingLine("", 20f, TextWeight.NORMAL),
+        RingLine("b", 40f, TextWeight.BOLD),
+        RingLine("", 20f, TextWeight.NORMAL),
       )
-    val sizes = fitRing(lines, radius = 30f)
+    val sizes = fitRing(lines, radius = 25f)
     assertTrue("$sizes", sizes[1] < 40f)
     assertEquals(sizes[0] / 20f, sizes[1] / 40f, 1e-3f)
     assertEquals(sizes[2] / 20f, sizes[1] / 40f, 1e-3f)
   }
 
+  /** The visible gap between a line's baseline and the next line's cap top (ink of "0"). */
+  private fun gaps(lines: List<RingLine>, sizes: List<Float>, gap: Float): List<Float> {
+    val b = RingStack.baselines(lines, sizes, gap, FakeMeasurer)
+    return (0 until lines.lastIndex).map { i ->
+      b[i + 1] + FakeMeasurer.ink("0", sizes[i + 1], lines[i + 1].weight).top - b[i]
+    }
+  }
+
+  @Test
+  fun visibleGap_isExactlyTheGap() {
+    val lines = ringLines()
+    listOf(listOf(8.5f, 28f, 10f), listOf(17f, 56f, 20f)).forEach { sizes ->
+      gaps(lines, sizes, 6f).forEach { assertEquals("$sizes", 6f, it, 1e-4f) }
+    }
+  }
+
   @Test
   fun stack_isCentredOnTheRing() {
-    // Equal line boxes above and below: the middle line's box centre sits on the ring centre.
-    val lines =
-      listOf(
-        RingLine("a", 10f, TextWeight.NORMAL, lineHeight = 1f),
-        RingLine("b", 20f, TextWeight.NORMAL, lineHeight = 1f),
-        RingLine("c", 10f, TextWeight.NORMAL, lineHeight = 1f),
-      )
-    val baseline = RingStack.baselines(lines, listOf(10f, 20f, 10f), gap = 2f, measurer = FakeMeasurer)[1]
-    // Content area 1.17 × 20 centred in a 20 dp box: the baseline is 0.93 × 20 below its top.
-    val contentTop = -(1.17f * 20f) / 2
-    assertEquals(contentTop + 0.93f * 20f, baseline, 1e-3f)
+    val lines = ringLines()
+    val sizes = listOf(8.5f, 28f, 10f)
+    val b = RingStack.baselines(lines, sizes, gap = 6f, measurer = FakeMeasurer)
+    val top = b[0] + FakeMeasurer.ink("0", sizes[0], lines[0].weight).top
+    assertEquals(-top, b[2], 1e-3f)
+  }
+
+  @Test
+  fun changingTheText_doesNotMoveTheBaselines() {
+    val sizes = listOf(8.5f, 28f, 10f)
+    val a = RingStack.baselines(ringLines(under = "4.58 kWh"), sizes, 6f, FakeMeasurer)
+    val b = RingStack.baselines(ringLines(under = "3,5 кВт·год"), sizes, 6f, FakeMeasurer)
+    assertEquals(a, b)
   }
 }

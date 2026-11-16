@@ -327,8 +327,9 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
   low (100 %, 2-row layouts).
 - Ring: track and arc are tinted alpha bitmaps at the layout's size and
   stroke, in a box as wide as the ring and as high as its row
-  (`ContentScale.Fit`). The three lines are placed like the canvas CSS
-  stack (gap, line heights), with the font padding taken out. Their fit
+  (`ContentScale.Fit`). The three lines are placed by their visible ink
+  (cap height of "0"), 6 dp apart in every layout (owner, 2026-11-16: "visible
+  gap"), with the font padding taken out. Their fit
   checks the ink corners against the inner circle, 1 dp tolerance.
 - 2-row layouts: the canvas has 6 dp between the 32 dp buttons; each
   touch area grows 3 dp toward the other, so they touch and the circles
