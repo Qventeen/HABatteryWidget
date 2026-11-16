@@ -161,6 +161,16 @@ class WidgetPreviewTest {
     compose.onNodeWithText(context.getString(R.string.widget_sync_error, reason)).assertExists()
   }
 
+  /** Without a reading the widget cuts the reason to one line; the full reason is under it. */
+  @Test
+  fun noDataError_fullReasonUnderThePreview() {
+    show(model(null, SyncError.Unreachable))
+    waitForWidgetText(context.getString(R.string.widget_no_data))
+    val reason = Formatters(context).error(SyncError.Unreachable)
+    compose.onNodeWithText(context.getString(R.string.widget_sync_error, reason)).assertExists()
+    compose.onNodeWithText(context.getString(R.string.overview_setup)).assertDoesNotExist()
+  }
+
   /**
    * At 300 dp the 340 dp wide 5×3 shrinks to the width and keeps its shape: its views keep their
    * design size and are drawn scaled.

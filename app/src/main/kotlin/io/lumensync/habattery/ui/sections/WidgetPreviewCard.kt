@@ -144,11 +144,18 @@ private fun WidgetPreview(
 /** The views of one layout, as composed for it; null when Glance failed to draw them. */
 private class Drawn(val layout: LayoutSpec, val views: RemoteViews?)
 
-/** What the widget cannot say: the full sync error of a reading, or what to set up. */
+/**
+ * What the widget cannot say: the full sync error (with a reading the widget shows only an icon,
+ * without one a line cut to fit), or what to set up. A model that needs setup carries no error.
+ */
 @Composable
 private fun PreviewNote(model: WidgetModel) {
   val context = LocalContext.current
-  val error: SyncError? = (model as? WidgetModel.Data)?.error
+  val error: SyncError? =
+    when (model) {
+      is WidgetModel.Data -> model.error
+      is WidgetModel.Empty -> model.error
+    }
   when {
     error != null -> {
       val reason = remember(context, error) { Formatters(context).error(error) }
