@@ -460,6 +460,41 @@ others at 50 %: English 29.7 / 37.8 / 62.0 / 52.9 sp, Ukrainian
 28.8 / 32.6 / 44.8 / 42.8 sp. 4×2 Ukrainian at 50 %: SOC 28.0 sp (23.2
 before finding 4); "4,58 кВт·год" 7.6 sp at 50 % and at all 100 %.
 
+### Owner decisions, 2026-11-16 (phone tuning)
+
+- **HyperOS draws widgets smaller.** On the owner's phone (density 3.25,
+  API 36, `com.miui.home`) a uiautomator dump showed every widget element
+  at about 0.78 of its dp × 3.25 px: the 4×3 top row (44 dp) was 112 px,
+  not 143 px; the 267 × 205 dp card was 869 × 666 px. So the layout really
+  gets about 1 / 0.78 ≈ 1.28 × the reported size (about 342 × 262 dp for
+  4×3), and the design looked small.
+- **Home-screen scale 1.28.** `LayoutSpec.scaled(k)` multiplies every dp
+  size, the bucket (so the fit boxes are the real space) and every design
+  font by k; line-height ratios stay. `WidgetContent` takes `hostScale`
+  (default 1; the tests use 1); `BatteryWidget` passes
+  `LayoutSpec.HOST_SCALE` = 1.28 for now. Spec 0007 replaces the constant
+  with a stored Widget setting: default 100 %, the owner sets 128 %. The
+  layout is still picked at the reported size; only its numbers change.
+- **The ring is the base.** In 4×2, 4×3 and 5×3 the ring and the pack
+  column share the width the cell column leaves (equal weights), and the
+  ring fills its column up to the row height. Target about 40 : 35 : 25
+  (ring : pack : cells); at the 4×2 design size the columns are 87.5 :
+  87.5 : 56 dp. 5×2 keeps its full-height ring at 112 dp. The ring bitmaps
+  are drawn 1.25 × larger, so a grown ring stays sharp; the ring text still
+  fits the design ring.
+- **Narrower cell column:** 4×2 56 dp (was 66), 5×2 and 5×3 74 dp (was
+  84).
+- **Radii:** pack pills 16 dp corners (were fully round); cell pills keep
+  fully round ends.
+- **App card** (until spec 0006): pack pills 16 dp corners; cell pills
+  fully round, filling the column by weight with 4 dp gaps instead of
+  `SpaceBetween`.
+- **Build fix:** the first version chose the layout with `when (spec)` on
+  the scaled copy, which never equals `L5x2` or `L4x3`, so 5×2 and 4×3
+  drew the 4×2 layout (4×3 with a 0 dp cell column: ring and pack filled
+  the body, no cell grid). The choice now uses the unscaled layout;
+  `hostScale_eachBucket_drawsItsLayout` checks it.
+
 ### Known risks (docs only)
 
 - A system font-scale change while the app's process is not running is
