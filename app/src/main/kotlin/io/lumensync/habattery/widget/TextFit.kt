@@ -69,8 +69,9 @@ object TextFit {
   /** Below 1 dp of ink outside the ring's inner circle is accepted (spec 0005, 5.5). */
   const val RING_TOLERANCE_DP = 1f
 
-  /** Room kept free in a box's height: views are laid out in whole pixels. */
+  /** Room kept free in a box's height and width: views are laid out in whole pixels. */
   const val HEIGHT_SLACK_DP = 0.5f
+  const val WIDTH_SLACK_DP = 0.5f
 
   private const val STEP_DP = 0.25f
   private const val FACTOR_STEP = 0.01f
@@ -83,13 +84,14 @@ object TextFit {
   fun fit(texts: List<String>, requested: Float, weight: TextWeight, box: Box, measurer: TextMeasurer): Float {
     fun width(size: Float) = texts.sumOf { measurer.width(it, size, weight).toDouble() }.toFloat()
     fun height(size: Float) = texts.maxOf { inkHeight(it, size, weight, measurer) }
-    val room = box.height - HEIGHT_SLACK_DP
-    fun fits(size: Float) = width(size) <= box.width + EPSILON && height(size) <= room + EPSILON
+    val roomW = box.width - WIDTH_SLACK_DP
+    val roomH = box.height - HEIGHT_SLACK_DP
+    fun fits(size: Float) = width(size) <= roomW + EPSILON && height(size) <= roomH + EPSILON
 
     if (requested <= 0f || fits(requested)) return requested.coerceAtLeast(0f)
     val w = width(requested)
     val h = height(requested)
-    var size = requested * minOf(if (w > 0f) box.width / w else 1f, if (h > 0f) room / h else 1f)
+    var size = requested * minOf(if (w > 0f) roomW / w else 1f, if (h > 0f) roomH / h else 1f)
     while (size > STEP_DP && !fits(size)) size -= STEP_DP
     return size.coerceAtLeast(0f)
   }

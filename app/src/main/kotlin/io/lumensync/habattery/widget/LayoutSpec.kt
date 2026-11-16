@@ -100,6 +100,13 @@ data class LayoutSpec(
   val gridHeight: Float
     get() = 2 * gridPill + cellGap
 
+  /**
+   * The boxes the texts are fitted to: the bucket less [PLATFORM_ROUNDING_DP] each way, because
+   * Android shows a bucket from about 1 dp below it (`ceil(size) + 1 > bucket`).
+   */
+  fun fitBoxes(cellPills: Int): LayoutBoxes =
+    boxes(bucketWidth - PLATFORM_ROUNDING_DP, bucketHeight - PLATFORM_ROUNDING_DP, cellPills)
+
   /** The boxes at a widget of [width] × [height] dp with [cellPills] (3 or 4) cell pills. */
   fun boxes(width: Float, height: Float, cellPills: Int): LayoutBoxes {
     val innerW = width - 2 * padding
@@ -123,6 +130,9 @@ data class LayoutSpec(
   }
 
   companion object {
+    /** How far below a bucket Android still shows it (`RemoteViews.fitsIn`). */
+    const val PLATFORM_ROUNDING_DP = 1f
+
     private val EMPTY_2_ROWS = EmptySpec(22f, 5f, 14f, 34f, 18f, 13f, 0f)
     private val EMPTY_3_ROWS = EmptySpec(28f, 8f, 15f, 40f, 20f, 14f, 2f)
 

@@ -67,4 +67,11 @@ class LayoutSpecTest {
     assertEquals(Box(83f, 32f), b.packPill)
     assertEquals(Box(66f, 14.5f), b.cellPill)
   }
+
+  /** Android shows a bucket from 1 dp below it, so the texts are fitted 1 dp smaller each way. */
+  @Test
+  fun fitBoxes_areOneDpBelowTheBucket() =
+    LayoutSpec.all.forEach { spec ->
+      assertEquals(spec.boxes(spec.bucketWidth - 1f, spec.bucketHeight - 1f, 4), spec.fitBoxes(4))
+    }
 }

@@ -93,8 +93,8 @@ internal data class EmptyFonts(val title: Float, val reason: Float, val button: 
 /**
  * Spec 0005, 5.5 (approach C1): every text asks for its layout's design size × percent / 50 × the
  * system font scale and is shown at that size, or smaller when the text as it is now does not fit
- * its box. The pill and top-row boxes come from the layout at its bucket size: a real widget is
- * never smaller, so the result is safe when the layout stretches. The ring text fits the ring at
+ * its box. The pill and top-row boxes come from the layout at its bucket size ([LayoutSpec.fitBoxes]):
+ * a real widget is never smaller, so the result is safe when the layout stretches. The ring text fits the ring at
  * its design size (see [data]).
  */
 internal object WidgetFonts {
@@ -106,7 +106,7 @@ internal object WidgetFonts {
     fontScale: Float,
     measurer: TextMeasurer,
   ): DataFonts {
-    val boxes = spec.boxes(spec.bucketWidth, spec.bucketHeight, texts.cells.size)
+    val boxes = spec.fitBoxes(texts.cells.size)
     val design = spec.fonts
     fun requested(group: FontGroup, sp: Float) = percents.requestedDp(group, sp, fontScale)
     fun fit(text: String, size: Float, weight: TextWeight, box: Box) =
@@ -161,7 +161,7 @@ internal object WidgetFonts {
     fontScale: Float,
     measurer: TextMeasurer,
   ): EmptyFonts {
-    val box = spec.boxes(spec.bucketWidth, spec.bucketHeight, cellPills = 4).empty
+    val box = spec.fitBoxes(cellPills = 4).empty
     val e = spec.empty
     val title = TextFit.fit(listOf(titleText), e.title * fontScale, TextWeight.MEDIUM, box, measurer)
     // The column (icon, title, reason, button) must not be taller than the card: what is left

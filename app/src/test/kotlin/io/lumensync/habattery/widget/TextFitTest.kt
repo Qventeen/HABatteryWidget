@@ -13,9 +13,10 @@ class TextFitTest {
 
   @Test
   fun longValue_shrinksToItsBox() {
-    // "125.5 A" is 7 characters: 3.5 × size must be ≤ 100.
+    // "125.5 A" is 7 characters: 3.5 × size must be ≤ 100 less the width slack.
+    val room = 100f - TextFit.WIDTH_SLACK_DP
     val size = fit(40f, Box(100f, 60f), "125.5 A")
-    assertTrue("$size", 3.5f * size <= 100.01f && size > 100f / 3.5f - 0.3f)
+    assertTrue("$size", 3.5f * size <= room + 0.01f && size > room / 3.5f - 0.3f)
   }
 
   /**
@@ -40,8 +41,8 @@ class TextFitTest {
 
   @Test
   fun sharedBox_fitsTheSumOfWidths() {
-    // 4 + 5 characters share 45 dp: 4.5 × size ≤ 45.
-    val size = fit(20f, Box(45f, 40f), "17 h", "11:29")
+    // 4 + 5 characters share 45 dp (and the width slack): 4.5 × size ≤ 45.
+    val size = fit(20f, Box(45f + TextFit.WIDTH_SLACK_DP, 40f), "17 h", "11:29")
     assertTrue("$size", size <= 10f && size > 9.7f)
   }
 
