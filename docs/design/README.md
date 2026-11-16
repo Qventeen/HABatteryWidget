@@ -66,10 +66,10 @@ row spans the full width and the ring sits below it.
   the colour show the direction. "↓ 125.5 A" and "↑ 3.98 kW" fit at the
   design card sizes; the widget fits its texts to the boxes at its bucket
   sizes (6 dp smaller, spec 0005), where these long values shrink a little
-  ("↑ 3.98 kW" about 16 sp in 4×2).
+  ("↑ 3.98 kW" about 16 sp in 4×2). Corner 16 (owner, 2026-11-16).
 - **Cell pills:** a small fixed gap, and the pills grow to fill the space,
   so the cell column starts and ends with the pack pills. Never spread the
-  pills with big gaps.
+  pills with big gaps. Round ends.
 - **4 cell pills:** average cell voltage, cell delta, battery
   temperature, MOSFET temperature (always last); 3 when no battery sensor
   is set.

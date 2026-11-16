@@ -52,6 +52,8 @@ data class LayoutSpec(
   val cellGrid: Boolean = false,
   val padding: Float = 10f,
   val corner: Float = 24f,
+  /** Corner radius of the central (pack) pills; owner, 2026-11-16. */
+  val packRadius: Float = 16f,
   /** Between ring, pack column and cell column. */
   val columnGap: Float = 8f,
   /** Under the top row. */

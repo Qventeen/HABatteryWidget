@@ -36,8 +36,8 @@ import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel.Flow
 import kotlin.math.roundToInt
 
-/** Fully round pill ends; Android clamps the radius to half the pill's height. */
-private val PILL_RADIUS = 999.dp
+/** Cell pills keep fully round ends; Android clamps the radius to half the pill's height. */
+private val CELL_RADIUS = 999.dp
 
 /**
  * Time left, balancing, the update time (or the red sync error icon in its place), the auto-refresh
@@ -214,7 +214,7 @@ private fun PackPill(
   Box(
     modifier
       .background(d.colors.pillBackground(level))
-      .cornerRadius(PILL_RADIUS)
+      .cornerRadius(s.packRadius.dp)
       .padding(horizontal = s.packPadding.dp),
     contentAlignment = Alignment.Center,
   ) {
@@ -273,7 +273,7 @@ private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: Glan
   Box(
     modifier
       .background(d.colors.pillBackground(pill.level))
-      .cornerRadius(PILL_RADIUS)
+      .cornerRadius(CELL_RADIUS)
       .padding(horizontal = s.cellPadding.dp),
     contentAlignment = Alignment.Center,
   ) {
