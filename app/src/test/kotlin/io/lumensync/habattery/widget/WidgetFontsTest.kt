@@ -61,15 +61,32 @@ class WidgetFontsTest {
   fun systemFontScale_raisesTheRequest() =
     assertEquals(22f * 1.3f, fonts(LayoutSpec.L4x3, fontScale = 1.3f).voltage.coerceAtMost(28.6f), 0.3f)
 
-  /** All ring groups raised: they shrink together toward their 50 % sizes. */
+  /**
+   * Re-review finding 1: in every layout, English and Ukrainian, no text is smaller at a raised
+   * setting than at 50 %.
+   */
   @Test
-  fun ringLines_raisedTogether_shrinkTogether() {
-    val f = fonts(LayoutSpec.L4x2, percents = FontPercents(soc = 100, underSoc = 100, small = 100))
-    val factor = f.soc / 56f
-    assertTrue("$factor", factor < 1f && factor >= 0.5f)
-    assertEquals(factor, f.underSoc / 20f, 0.02f)
-    assertEquals(factor, f.ringLabel / 17f, 0.02f)
+  fun raisedSettings_noTextSmallerThanAtFifty() {
+    val raised =
+      listOf(
+        FontPercents(soc = 100),
+        FontPercents(underSoc = 100),
+        FontPercents(small = 100),
+        FontPercents(soc = 100, underSoc = 100, main = 100, cell = 100, small = 100),
+      )
+    for (under in listOf("4.58 kWh", "4,58 кВт·год")) {
+      val t = texts().copy(underSoc = under)
+      for (spec in LayoutSpec.all) {
+        val at50 = sizesOf(fonts(spec, t))
+        raised.forEach { p ->
+          val at = sizesOf(fonts(spec, t, p))
+          at50.indices.forEach { assertTrue("${spec.name} $under $p: $at vs $at50", at[it] >= at50[it] - 1e-3f) }
+        }
+      }
+    }
   }
+
+  private fun sizesOf(f: DataFonts) = listOf(f.small, f.ringLabel, f.soc, f.underSoc, f.voltage, f.main) + f.cells
 
   /** Review finding 1: the error icon takes the update time's place, the text size stays. */
   @Test

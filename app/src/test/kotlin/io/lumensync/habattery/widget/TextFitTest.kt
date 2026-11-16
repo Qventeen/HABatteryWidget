@@ -101,6 +101,40 @@ class TextFitTest {
     assertTrue(farthest(ringLines(soc = 56f), at100) <= 31f + TextFit.RING_TOLERANCE_DP)
   }
 
+  /**
+   * Re-review finding 1: a kWh line too wide even at 50 % no longer pulls a raised SOC number back
+   * to its 50 % size first. The number can grow only while the kWh line still fits its chord: the
+   * stack is centred, so a larger number moves the kWh line down. Here (the fake's kWh line is at
+   * its limit) it stays at 28; no line gets smaller than at 50 %.
+   */
+  @Test
+  fun wideUnderLine_raisedSoc_keepsEveryLineAtLeastAtFifty() {
+    val at50 = fitRing(ringLines(under = "4,58 кВт·год"), radius = 31f)
+    val at100 = fitRing(ringLines(soc = 56f, under = "4,58 кВт·год"), radius = 31f)
+    at50.indices.forEach { assertTrue("$at100 vs $at50", at100[it] >= at50[it]) }
+    assertTrue(farthest(ringLines(soc = 56f, under = "4,58 кВт·год"), at100) <= 31f + TextFit.RING_TOLERANCE_DP)
+  }
+
+  /** A raised SOC number grows as far as the circle allows, in steps of its 50 % size. */
+  @Test
+  fun raisedSoc_growsWhileTheCircleHasRoom() {
+    val sizes = fitRing(ringLines(soc = 56f), radius = 36f)
+    assertTrue("$sizes", sizes[1] > 28f && sizes[1] <= 56f)
+    assertEquals(8.5f, sizes[0], 0f)
+    assertEquals(10f, sizes[2], 0f)
+    assertTrue(farthest(ringLines(soc = 56f), sizes) <= 36f + TextFit.RING_TOLERANCE_DP)
+  }
+
+  /** Every line raised: none ends smaller than at 50 % (re-review finding 5). */
+  @Test
+  fun allRaised_noLineSmallerThanAtFifty() {
+    for (under in listOf("4.58 kWh", "4,58 кВт·год")) {
+      val at50 = fitRing(ringLines(under = under), radius = 31f)
+      val at100 = fitRing(ringLines(soc = 56f, under = under, label = 17f, underSize = 20f), radius = 31f)
+      at50.indices.forEach { assertTrue("$under $at100 vs $at50", at100[it] >= at50[it]) }
+    }
+  }
+
   /** A stack taller than the circle shrinks all lines by one factor (no width: only the height). */
   @Test
   fun tallStack_shrinksByOneFactor() {
