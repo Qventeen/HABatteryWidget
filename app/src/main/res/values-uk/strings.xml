@@ -48,6 +48,7 @@
 
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
     <string name="preview_size">%1$d×%2$d</string>
+    <string name="preview_description">Попередній перегляд віджета, %1$s</string>
     <string name="action_refresh_now">Оновити зараз</string>
     <string name="action_add_widget">Додати віджет</string>
     <string name="action_save">Зберегти</string>

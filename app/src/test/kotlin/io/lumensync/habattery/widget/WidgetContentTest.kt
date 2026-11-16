@@ -230,6 +230,19 @@ class WidgetContentTest {
       onAllNodes(hasClickAction()).assertCountEquals(0)
     }
 
+  /** The preview's circles do nothing, so TalkBack skips them; the values stay described. */
+  @Test
+  fun noActions_eachBucket_buttonsAreNotDescribed() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
+        listOf(R.string.widget_refresh_action, R.string.widget_auto_off).forEach {
+          onAllNodes(hasContentDescriptionEqualTo(text(it))).assertCountEquals(0)
+        }
+        onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+      }
+    }
+
   @Test
   fun eachBucket_drawsItsLayout() =
     LayoutSpec.all.forEach { spec ->

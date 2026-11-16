@@ -101,7 +101,8 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
 
 /**
  * A circle in its touch area. The touch area grows by [growStart] / [growEnd] toward the other
- * button, so the two touch areas touch while the circles stay where the design has them.
+ * button, so the two touch areas touch while the circles stay where the design has them. Without
+ * [action] (the app's preview) the circle does nothing, so TalkBack does not announce it.
  */
 @Composable
 private fun CircleButton(
@@ -115,11 +116,13 @@ private fun CircleButton(
   growEnd: Float = 0f,
 ) {
   val s = d.spec
+  val described =
+    if (action == null) GlanceModifier else GlanceModifier.semantics { contentDescription = description }
   Box(
     GlanceModifier.width((s.buttonTouch + growStart + growEnd).dp)
       .height(s.buttonTouch.dp)
       .tapAction(action)
-      .semantics { contentDescription = description }
+      .then(described)
       .padding(start = growStart.dp, end = growEnd.dp),
     contentAlignment = Alignment.Center,
   ) {

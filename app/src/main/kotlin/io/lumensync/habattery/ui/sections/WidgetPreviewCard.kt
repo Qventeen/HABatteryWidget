@@ -100,7 +100,8 @@ fun WidgetPreviewCard(
 
 /**
  * The widget drawn by Glance ([PreviewWidget]) and applied into a [PreviewHost]. The box takes the
- * size of the layout shown, so it changes together with the views, not before them.
+ * size of the layout shown, so it changes together with the views, not before them; so does its
+ * TalkBack name.
  */
 @Composable
 private fun WidgetPreview(
@@ -123,10 +124,14 @@ private fun WidgetPreview(
   val design = shown.designSize
   val scale = PreviewTab.scale(design.width.value, availableWidth)
   val density = LocalDensity.current
+  val shownTab = PreviewTab.entries.first { it.layout === shown }
+  val description =
+    stringResource(R.string.preview_description, stringResource(R.string.preview_size, shownTab.columns, shownTab.rows))
   AndroidView(
     factory = ::PreviewHost,
     modifier = Modifier.size(design * scale).testTag(WIDGET_PREVIEW_TAG),
     update = { host ->
+      host.contentDescription = description
       drawn?.let {
         with(density) {
           host.show(it, design.width.roundToPx(), design.height.roundToPx())
