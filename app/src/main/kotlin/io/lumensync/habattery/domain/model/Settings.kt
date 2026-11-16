@@ -41,6 +41,9 @@ object HomeScale {
   const val MAX = 150
 
   fun clamp(percent: Int): Int = percent.coerceIn(MIN, MAX)
+
+  /** The multiplier the widget layout uses: 128 % is 1.28. */
+  fun factor(percent: Int): Float = percent / 100f
 }
 
 @Serializable

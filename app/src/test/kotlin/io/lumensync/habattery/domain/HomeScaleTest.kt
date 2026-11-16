@@ -23,6 +23,13 @@ class HomeScaleTest {
   }
 
   @Test
+  fun factor_isThePercentOver100() {
+    assertEquals(1.28f, HomeScale.factor(128), 0.0001f)
+    assertEquals(1f, HomeScale.factor(100), 0.0001f)
+    assertEquals(0.8f, HomeScale.factor(80), 0.0001f)
+  }
+
+  @Test
   fun settingsClamped_clampsBothParts() {
     val c = Settings(fontPercents = FontPercents(soc = 5), homeScalePercent = 200).clamped()
     assertEquals(25, c.fontPercents.soc)

@@ -265,7 +265,7 @@ class WidgetContentTest {
       assertEquals(spec.name, shape(spec, 1f), shape(spec, 1.28f))
     }
 
-  /** The stored home-screen scale reaches the drawing: the SOC number is bigger at 1.28 than at 1.0. */
+  /** `WidgetContent(hostScale)` sizes the SOC number: bigger at 1.28 than at 1.0, smaller at 0.8. */
   @Test
   fun hostScale_makesTheSocNumberBigger() {
     assertTrue(socSize(1.28f) > socSize(1f))
