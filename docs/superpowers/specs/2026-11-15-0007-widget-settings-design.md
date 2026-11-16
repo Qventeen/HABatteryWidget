@@ -147,3 +147,20 @@ replaces the number fields of §3.1, §5.2 and §5.3.
   changed" when the scale is not 100 %; strings in both languages.
 - Tests: the order, slider save, the scale reaching the widget, Reset;
   the validation tests of §6 go.
+
+### Build notes
+
+- The scale is `Settings.homeScalePercent` (an `Int`, default 100), stored in the settings JSON
+  beside `fontPercents`; `HomeScale` holds 80 / 100 / 150 and `clamp`. The repository clamps it on
+  read (`Settings.clamped()`), the ViewModel on save. Old files without it load with 100.
+- `BatteryWidget` already collects settings as state, so a saved scale recomposes live Glance
+  sessions the same way a font change does; `HOST_SCALE` is gone. The preview keeps scale 1.
+- "Reset to defaults" is one ViewModel call (`resetWidgetSettings`): fonts 50, scale 100, one write.
+- Summary rule is `Settings.textSizeChanged` (any font off 50 or scale off 100), tested in the
+  domain; its text is a separate string `widget_summary_changed`.
+- Ukrainian: "Масштаб на головному екрані", "Скинути до типових", "розмір тексту змінено".
+- Screen order: preview, actions, Widget, Appearance, Connection, Token, Entities, Refresh,
+  Notification, Capacity.
+- Not run: instrumented tests (compile only); the owner checks 150 % on the phone. A launcher
+  that does not shrink widgets shows the layout 1.5 times bigger than the cell, so it may clip;
+  the fit rule keeps texts inside their boxes, not the box inside the cell.

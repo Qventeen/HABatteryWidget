@@ -32,6 +32,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   with `GlanceAppWidget.compose()` at the layout's bucket, without actions and at
   home-screen scale 1, and applies the `RemoteViews` fresh for each drawing (never
   `reapply`: 4×3 has its own root).
+  The home-screen scale (`Settings.homeScalePercent`, 80–150 %, default 100; spec 0007) goes
+  from `BatteryWidget` into `WidgetContent(hostScale)`; the preview never takes it.
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
 - `ui/`: Compose screen, `MainViewModel`, `PreviewTab` (size tabs, first-tab rule),
