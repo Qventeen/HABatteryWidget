@@ -412,8 +412,9 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
     fitted when the icon takes its place.
   - Texts are fitted to the boxes at the bucket − 1 dp (Android shows a
     bucket from about 1 dp below it), with 0.5 dp width slack.
-  - Line metrics count fallback fonts (Android 10+,
-    `Paint.getFontMetricsInt` per text).
+  - Line metrics count fallback fonts (`Paint.getFontMetricsInt` per
+    text; the call exists from Android 13, so before 13 the main font's
+    metrics are used).
   - The app card caps the system font scale at the v4 maximum again.
   - A system font-scale change redraws the widget (`ConfigWatcher`, which
     replaces 0008's `LocaleWatcher` and also watches the language).
