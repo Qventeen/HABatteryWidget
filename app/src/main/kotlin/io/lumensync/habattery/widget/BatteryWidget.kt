@@ -37,10 +37,11 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       val cache by container.readingCache.state.collectAsState(initialCache)
       val settings by container.settingsRepository.settings.collectAsState(initialSettings)
       val hasToken by container.tokenStore.hasToken.collectAsState(initialHasToken)
-      val locale by container.localeWatcher.tags.collectAsState()
+      val config by container.configWatcher.config.collectAsState()
       val overview = BatteryOverview.build(cache, settings, hasToken, System.currentTimeMillis())
-      // A new key makes a new composition, also in a live session (the texts come from resources).
-      key(locale) {
+      // A new key makes a new composition, also in a live session: the texts come from resources,
+      // and their fitted sizes and the sp handed to Glance from the font scale.
+      key(config) {
         WidgetContent(
           model = WidgetModel.build(overview, settings),
           fontPercents = settings.fontPercents,
