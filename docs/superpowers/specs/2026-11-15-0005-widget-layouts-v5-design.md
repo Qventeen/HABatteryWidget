@@ -425,6 +425,8 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
     10 dp would leave it by 2.7 dp); `WidgetFitTest` checks both.
   - `WidgetFitTest` also runs just under each bucket and at font scale
     1.3 in Ukrainian, and checks the ring ink at the design sizes.
+  - The sp handed to Glance never shows above the fitted size (font scale
+    1.3: 34.999996 px came back as 35.0 px, where the text is 7 px wider).
 
 ### Ring text fit (review finding 4 and re-review finding 1, the reviewer's calls)
 

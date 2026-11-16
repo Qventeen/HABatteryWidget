@@ -99,14 +99,25 @@ internal class WidgetLook(
   /**
    * Glance takes sp only, and the system scales sp by its font scale again. So hand over the sp
    * that shows at [dp] (the shown size already holds the font scale): on Android 14+ sp scales
-   * non-linearly, so use the converter's exact inverse; before that, divide the font scale back out.
+   * non-linearly, so use the converter's inverse; before that, divide the font scale back out.
+   *
+   * The system's float math can bring the sp back a hair larger than [dp]. A fitted size often sits
+   * just under a whole pixel, where the text gets a pixel or more wider, so step the sp down until
+   * it never shows larger than [dp].
    */
-  fun sp(dp: Float): TextUnit =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-      TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, dp * metrics.density, metrics).sp
-    } else {
-      (dp / fontScale).sp
+  fun sp(dp: Float): TextUnit {
+    val px = dp * metrics.density
+    var sp =
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, px, metrics)
+      } else {
+        dp / fontScale
+      }
+    while (sp > 0f && TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, metrics) > px) {
+      sp = Math.nextDown(sp)
     }
+    return sp.sp
+  }
 }
 
 /** Everything the parts of a widget with data draw from. */
