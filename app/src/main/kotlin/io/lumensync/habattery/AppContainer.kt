@@ -87,10 +87,7 @@ class AppContainer(context: Context) {
 
   val appLanguage = AppLanguage(appContext)
 
-  val configWatcher =
-    appContext.resources.configuration.let {
-      ConfigWatcher(TextConfig(it.locales.toLanguageTags(), it.fontScale))
-    }
+  val configWatcher = ConfigWatcher(TextConfig.of(appContext.resources.configuration))
 
   val syncBattery: SyncBattery =
     SyncBattery(
