@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -36,6 +37,7 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
+import io.lumensync.habattery.ui.PreviewRequest
 import io.lumensync.habattery.ui.PreviewTab
 import io.lumensync.habattery.widget.LayoutSpec
 import io.lumensync.habattery.widget.PreviewWidget
@@ -57,10 +59,19 @@ fun WidgetPreviewCard(
   model: WidgetModel,
   fontPercents: FontPercents,
   theme: ThemeChoice,
-  firstTab: PreviewTab,
+  request: PreviewRequest,
   modifier: Modifier = Modifier,
 ) {
-  var tab by rememberSaveable { mutableStateOf(firstTab) }
+  var tab by rememberSaveable { mutableStateOf(request.tab) }
+  // The last request count seen. A new activity starts at count 0, so a recreation (rotation)
+  // never replays a request and keeps the user's own tab; only a later, higher count switches it.
+  var seenCount by rememberSaveable { mutableIntStateOf(request.count) }
+  LaunchedEffect(request.count) {
+    if (request.count != seenCount) {
+      if (request.count > 0) tab = request.tab
+      seenCount = request.count
+    }
+  }
   Column(
     modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(12.dp),

@@ -83,7 +83,7 @@ class WidgetPreviewTest {
     compose.setContent {
       HaBatteryTheme {
         Box(if (width == null) Modifier else Modifier.width(width)) {
-          WidgetPreviewCard(model, FontPercents(), ThemeChoice.SYSTEM, firstTab)
+          WidgetPreviewCard(model, FontPercents(), ThemeChoice.SYSTEM, PreviewRequest(firstTab))
         }
       }
     }
@@ -173,7 +173,7 @@ class WidgetPreviewTest {
   fun appTheme_drawsItsCard() {
     var theme by mutableStateOf(ThemeChoice.DARK)
     compose.setContent {
-      HaBatteryTheme { WidgetPreviewCard(model(sample), FontPercents(), theme, PreviewTab.TAB_4X2) }
+      HaBatteryTheme { WidgetPreviewCard(model(sample), FontPercents(), theme, PreviewRequest(PreviewTab.TAB_4X2)) }
     }
     waitForCard(WidgetPalette.Dark.card)
     theme = ThemeChoice.LIGHT

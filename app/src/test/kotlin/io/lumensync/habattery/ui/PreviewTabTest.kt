@@ -22,14 +22,14 @@ class PreviewTabTest {
 
   @Test
   fun configured_ownerSizes_openTheirTab() {
-    assertEquals(TAB_4X2, PreviewTab.first(size(267.3f, 131.6f), null))
-    assertEquals(TAB_5X2, PreviewTab.first(size(340f, 132f), null))
-    assertEquals(TAB_4X3, PreviewTab.first(size(267f, 205f), null))
-    assertEquals(TAB_5X3, PreviewTab.first(size(340f, 205f), null))
+    assertEquals(TAB_4X2, PreviewTab.first(size(267.3f, 131.6f), null, null))
+    assertEquals(TAB_5X2, PreviewTab.first(size(340f, 132f), null, null))
+    assertEquals(TAB_4X3, PreviewTab.first(size(267f, 205f), null, null))
+    assertEquals(TAB_5X3, PreviewTab.first(size(340f, 205f), null, null))
   }
 
   @Test
-  fun configured_fiveByFour_opensFiveByThree() = assertEquals(TAB_5X3, PreviewTab.first(size(340f, 278f), null))
+  fun configured_fiveByFour_opensFiveByThree() = assertEquals(TAB_5X3, PreviewTab.first(size(340f, 278f), null, null))
 
   /** Android shows a bucket from about 1 dp below it (`ceil(size) + 1 > bucket`). */
   @Test
@@ -37,31 +37,48 @@ class PreviewTabTest {
     PreviewTab.entries.forEach {
       val w = it.layout.bucketWidth
       val h = it.layout.bucketHeight
-      assertEquals(it.name, it, PreviewTab.first(size(w, h), null))
-      assertEquals(it.name, it, PreviewTab.first(size(w - 0.9f, h - 0.9f), null))
+      assertEquals(it.name, it, PreviewTab.first(size(w, h), null, null))
+      assertEquals(it.name, it, PreviewTab.first(size(w - 0.9f, h - 0.9f), null, null))
     }
 
   @Test
   fun edges_oneDpBelowABucket_openTheSmallerTab() {
-    assertEquals(TAB_4X2, PreviewTab.first(size(333f, 126f), null))
-    assertEquals(TAB_4X2, PreviewTab.first(size(261f, 198f), null))
-    assertEquals(TAB_4X3, PreviewTab.first(size(333f, 199f), null))
-    assertEquals(TAB_5X2, PreviewTab.first(size(334f, 198f), null))
-    assertEquals(TAB_4X2, PreviewTab.first(size(260f, 125f), null))
+    assertEquals(TAB_4X2, PreviewTab.first(size(333f, 126f), null, null))
+    assertEquals(TAB_4X2, PreviewTab.first(size(261f, 198f), null, null))
+    assertEquals(TAB_4X3, PreviewTab.first(size(333f, 199f), null, null))
+    assertEquals(TAB_5X2, PreviewTab.first(size(334f, 198f), null, null))
+    assertEquals(TAB_4X2, PreviewTab.first(size(260f, 125f), null, null))
   }
 
   @Test
-  fun configured_winsOverPlaced() = assertEquals(TAB_4X3, PreviewTab.first(size(267f, 205f), size(340f, 205f)))
+  fun configured_winsOverPlaced() = assertEquals(TAB_4X3, PreviewTab.first(size(267f, 205f), null, size(340f, 205f)))
 
   /** A widget being placed has no size yet: it opens on the smallest, not on another widget's. */
   @Test
-  fun configured_withoutSize_opensFourByTwo() = assertEquals(TAB_4X2, PreviewTab.first(size(0f, 0f), size(340f, 205f)))
+  fun configured_withoutSize_opensFourByTwo() = assertEquals(TAB_4X2, PreviewTab.first(size(0f, 0f), null, size(340f, 205f)))
 
   @Test
-  fun noConfigured_firstPlacedWidget() = assertEquals(TAB_5X2, PreviewTab.first(null, size(340f, 132f)))
+  fun tapped_beatsFirstPlaced() = assertEquals(TAB_4X3, PreviewTab.first(null, size(267f, 205f), size(340f, 132f)))
 
   @Test
-  fun noWidget_opensFourByTwo() = assertEquals(TAB_4X2, PreviewTab.first(null, null))
+  fun configured_beatsTapped() = assertEquals(TAB_5X2, PreviewTab.first(size(340f, 132f), size(267f, 205f), size(267f, 131f)))
+
+  /** Like a configured widget: a tapped widget without a size opens the smallest, not another's. */
+  @Test
+  fun tapped_withoutSize_opensFourByTwo() = assertEquals(TAB_4X2, PreviewTab.first(null, size(0f, 0f), size(340f, 205f)))
+
+  @Test
+  fun named_configuredThenTappedElseNull() {
+    assertEquals(TAB_5X2, PreviewTab.named(size(340f, 132f), size(267f, 205f)))
+    assertEquals(TAB_4X3, PreviewTab.named(null, size(267f, 205f)))
+    assertEquals(null, PreviewTab.named(null, null))
+  }
+
+  @Test
+  fun noConfigured_firstPlacedWidget() = assertEquals(TAB_5X2, PreviewTab.first(null, null, size(340f, 132f)))
+
+  @Test
+  fun noWidget_opensFourByTwo() = assertEquals(TAB_4X2, PreviewTab.first(null, null, null))
 
   @Test
   fun scale_fits_staysOne() {

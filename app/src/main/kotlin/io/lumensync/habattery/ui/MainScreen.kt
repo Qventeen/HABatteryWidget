@@ -64,7 +64,7 @@ fun MainScreen(
   state: MainUiState,
   actions: MainActions,
   language: LanguageChoice?,
-  firstPreviewTab: PreviewTab,
+  previewRequest: PreviewRequest,
 ) {
   Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) }) { padding ->
     val overview = state.overview
@@ -75,7 +75,7 @@ fun MainScreen(
         CircularProgressIndicator()
       }
     } else {
-      MainContent(state, overview, widget, actions, language, firstPreviewTab, padding)
+      MainContent(state, overview, widget, actions, language, previewRequest, padding)
     }
   }
 }
@@ -87,7 +87,7 @@ private fun MainContent(
   widget: WidgetModel,
   actions: MainActions,
   language: LanguageChoice?,
-  firstPreviewTab: PreviewTab,
+  previewRequest: PreviewRequest,
   padding: PaddingValues,
 ) {
   val settings = state.settings
@@ -101,7 +101,7 @@ private fun MainContent(
         .padding(16.dp),
     verticalArrangement = Arrangement.spacedBy(16.dp),
   ) {
-    WidgetPreviewCard(widget, settings.fontPercents, settings.appearance.theme, firstPreviewTab)
+    WidgetPreviewCard(widget, settings.fontPercents, settings.appearance.theme, previewRequest)
     ActionsRow(state.syncing, actions.refreshNow, actions.requestPinWidget)
     AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
     ConnectionSection(

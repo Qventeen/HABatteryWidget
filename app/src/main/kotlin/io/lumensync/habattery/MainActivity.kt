@@ -29,9 +29,11 @@ import io.lumensync.habattery.system.AppLanguage
 import io.lumensync.habattery.ui.MainActions
 import io.lumensync.habattery.ui.MainScreen
 import io.lumensync.habattery.ui.MainViewModel
+import io.lumensync.habattery.ui.PreviewRequest
 import io.lumensync.habattery.ui.PreviewTab
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
+import io.lumensync.habattery.widget.EXTRA_TAPPED_WIDGET_ID
 import kotlinx.coroutines.launch
 
 /** The app screen. It is also the widget's configure activity (see [confirmWidgetPlacement]). */
@@ -56,6 +58,12 @@ class MainActivity : ComponentActivity() {
   /** The language choice shown; null where the system has no per-app language (before Android 13). */
   private var language by mutableStateOf<LanguageChoice?>(null)
 
+  /**
+   * What the preview card shows (spec 0006, B1). Made again with a higher count by [onNewIntent];
+   * a new activity (rotation, language) starts at count 0, so the card keeps the user's own tab.
+   */
+  private var previewRequest by mutableStateOf(PreviewRequest(PreviewTab.TAB_4X2))
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge() // first frame: the system's mode; the effect below applies the chosen theme
     super.onCreate(savedInstanceState)
@@ -63,7 +71,7 @@ class MainActivity : ComponentActivity() {
     val appLanguage = application.container.appLanguage
     language = if (appLanguage.supported) appLanguage.current() else null
     val actions = mainActions(appLanguage)
-    val firstPreviewTab = firstPreviewTab()
+    previewRequest = PreviewRequest(firstPreviewTab())
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
       val dark = state.settings.appearance.theme.isDark(isSystemInDarkTheme())
@@ -75,8 +83,20 @@ class MainActivity : ComponentActivity() {
         )
         onDispose {}
       }
-      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language, firstPreviewTab) }
+      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language, previewRequest) }
     }
+  }
+
+  /**
+   * A widget tap (or the launcher) while the app is open (`singleTop`: one instance). A tap names
+   * its widget: the preview switches to that widget's tab. Without a widget id (the launcher
+   * icon) the tab stays.
+   */
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    confirmWidgetPlacement()
+    namedPreviewTab()?.let { previewRequest = PreviewRequest(it, previewRequest.count + 1) }
   }
 
   /**
@@ -89,31 +109,47 @@ class MainActivity : ComponentActivity() {
   }
 
   /** The widget this activity was opened for: placement on API 26–30, reconfigure on 31+. */
-  private fun configuredWidgetId(): Int? =
-    intent
-      .getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-      .takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
+  private fun configuredWidgetId(): Int? = widgetIdExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)
+
+  /** The widget the user tapped to open the app (see [EXTRA_TAPPED_WIDGET_ID]). */
+  private fun tappedWidgetId(): Int? = widgetIdExtra(EXTRA_TAPPED_WIDGET_ID)
+
+  private fun widgetIdExtra(name: String): Int? =
+    intent.getIntExtra(name, AppWidgetManager.INVALID_APPWIDGET_ID).takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
 
   /**
-   * The preview's first tab (spec 0006, B1): from the size Android reports for the configured
-   * widget, else for the first placed widget. The size is the one for the current orientation, as
-   * the widget options give it (portrait: min width × max height).
+   * The size Android reports for widget [id], for the current orientation, as the widget options
+   * give it (portrait: min width × max height).
+   */
+  private fun reportedSize(id: Int): DpSize {
+    val options = AppWidgetManager.getInstance(this).getAppWidgetOptions(id)
+    fun dp(key: String) = options.getInt(key).dp
+    val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
+    return if (portrait) {
+      DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT))
+    } else {
+      DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
+    }
+  }
+
+  /** The tab of the configured widget, else of the tapped one; null when the intent names none. */
+  private fun namedPreviewTab(): PreviewTab? =
+    PreviewTab.named(configuredWidgetId()?.let(::reportedSize), tappedWidgetId()?.let(::reportedSize))
+
+  /**
+   * The preview's first tab (spec 0006, B1): the configured widget, else the tapped one, else the
+   * first placed widget, else 4×2.
    */
   private fun firstPreviewTab(): PreviewTab {
-    val manager = AppWidgetManager.getInstance(this)
-    val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
-    fun reportedSize(id: Int): DpSize {
-      val options = manager.getAppWidgetOptions(id)
-      fun dp(key: String) = options.getInt(key).dp
-      return if (portrait) {
-        DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT))
-      } else {
-        DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
-      }
-    }
     val firstPlaced =
-      manager.getAppWidgetIds(ComponentName(this, BatteryWidgetReceiver::class.java)).firstOrNull()
-    return PreviewTab.first(configuredWidgetId()?.let(::reportedSize), firstPlaced?.let(::reportedSize))
+      AppWidgetManager.getInstance(this)
+        .getAppWidgetIds(ComponentName(this, BatteryWidgetReceiver::class.java))
+        .firstOrNull()
+    return PreviewTab.first(
+      configuredWidgetId()?.let(::reportedSize),
+      tappedWidgetId()?.let(::reportedSize),
+      firstPlaced?.let(::reportedSize),
+    )
   }
 
   private fun mainActions(appLanguage: AppLanguage) =
