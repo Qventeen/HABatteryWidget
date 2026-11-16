@@ -1,6 +1,9 @@
 package io.lumensync.habattery.ui
 
+import android.appwidget.AppWidgetManager
+import android.os.Bundle
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.widget.LayoutSpec
 import kotlin.math.min
 
@@ -9,6 +12,20 @@ import kotlin.math.min
  * widget while the app is open; the card applies a request once per [count].
  */
 data class PreviewRequest(val tab: PreviewTab, val count: Int = 0)
+
+/**
+ * The size Android reports in a widget's [options] for the current orientation (the widget options
+ * give a range per orientation; portrait: min width × max height, landscape: max width × min
+ * height). A missing key counts as 0, so a widget without a size yet is 0 × 0.
+ */
+fun reportedWidgetSize(options: Bundle, portrait: Boolean): DpSize {
+  fun dp(key: String) = options.getInt(key).dp
+  return if (portrait) {
+    DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT))
+  } else {
+    DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
+  }
+}
 
 /** The preview's size tabs (spec 0006, 5.2): each v5 layout with its home-screen cells. */
 enum class PreviewTab(val layout: LayoutSpec, val columns: Int, val rows: Int) {

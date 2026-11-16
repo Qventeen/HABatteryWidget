@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +30,7 @@ import io.lumensync.habattery.ui.MainScreen
 import io.lumensync.habattery.ui.MainViewModel
 import io.lumensync.habattery.ui.PreviewRequest
 import io.lumensync.habattery.ui.PreviewTab
+import io.lumensync.habattery.ui.reportedWidgetSize
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.EXTRA_TAPPED_WIDGET_ID
@@ -123,13 +123,8 @@ class MainActivity : ComponentActivity() {
    */
   private fun reportedSize(id: Int): DpSize {
     val options = AppWidgetManager.getInstance(this).getAppWidgetOptions(id)
-    fun dp(key: String) = options.getInt(key).dp
     val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
-    return if (portrait) {
-      DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT))
-    } else {
-      DpSize(dp(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH), dp(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
-    }
+    return reportedWidgetSize(options, portrait)
   }
 
   /** The tab of the configured widget, else of the tapped one; null when the intent names none. */
