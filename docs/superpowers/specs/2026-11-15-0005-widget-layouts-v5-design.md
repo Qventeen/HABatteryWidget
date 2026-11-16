@@ -1,7 +1,7 @@
 # Widget layouts v5 — design
 
 - **Date:** 2026-11-15
-- **Status:** approved by the owner (2026-11-15).
+- **Status:** approved by the owner (2026-11-15); built on branch `0005-widget-layouts`, merged into `epic-widget-v5`.
 - **Set:** `0005`. Code on branch `0005-widget-layouts`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).
@@ -326,8 +326,9 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
   ("3,312 В") were cut at the bottom. In such a pill the text sits a bit
   low (100 %, 2-row layouts).
 - Ring: track and arc are tinted alpha bitmaps at the layout's size and
-  stroke, in a box as wide as the ring and as high as its row
-  (`ContentScale.Fit`). The three lines are placed by their visible ink
+  stroke, in a box as high as its row (`ContentScale.Fit`); in 5×2 the box is
+  as wide as the ring, in the other layouts the columns share the width by
+  weight (owner, 2026-11-16, below). The three lines are placed by their visible ink
   (cap height of "0"), 6 dp apart in every layout (owner, 2026-11-16: "visible
   gap"), with the font padding taken out. Their fit
   checks the ink corners against the inner circle, 1 dp tolerance.
@@ -471,7 +472,7 @@ before finding 4); "4,58 кВт·год" 7.6 sp at 50 % and at all 100 %.
   4×3), and the design looked small.
 - **Home-screen scale 1.28.** `LayoutSpec.scaled(k)` multiplies every dp
   size, the bucket (so the fit boxes are the real space) and every design
-  font by k; line-height ratios stay. `WidgetContent` takes `hostScale`
+  font by k (line heights were removed in 354a080). `WidgetContent` takes `hostScale`
   (default 1; the tests use 1); `BatteryWidget` passes
   `LayoutSpec.HOST_SCALE` = 1.28 for now. Spec 0007 replaces the constant
   with a stored Widget setting: default 100 %, the owner sets 128 %. The
@@ -515,3 +516,13 @@ before finding 4); "4,58 кВт·год" 7.6 sp at 50 % and at all 100 %.
 - 5×2 keeps the design's layout B (ring over the full card height); the
   owner compared it on the phone with the top-row-across variant and chose
   B (2026-11-16).
+
+### Final review fixes (2026-11-16)
+
+- The small 4×2 ring accepts its ring lines at 95 % or more of their 50 %
+  size (owner: the "SOC" label is 1.5 × bigger, the gap is 6 dp). Every
+  other text must show at least its 50 % size. The fit test is renamed
+  `fiftyPercent_designValues_showTheirFiftyPercentSizes`.
+- The picker preview is redrawn to the current 4×2 at 50 %. The kWh line is
+  7.5 dp in English and 5.5 dp in Ukrainian, so it fits the preview's 70 dp
+  ring.

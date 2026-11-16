@@ -13,11 +13,11 @@ class App : Application() {
 
   /**
    * A new app language or system font scale redraws every widget (a live Glance session would keep
-   * the old texts and sizes).
+   * the old texts and sizes); before Android 12 a night-mode switch does too ([TextConfig]).
    */
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
-    if (container.configWatcher.changed(TextConfig(newConfig.locales.toLanguageTags(), newConfig.fontScale))) {
+    if (container.configWatcher.changed(TextConfig.of(newConfig))) {
       container.appScope.launch { container.widgetRefresher.refreshAll() }
     }
   }

@@ -57,6 +57,7 @@
     <string name="preview_description">Widget preview, %1$s</string>
     <string name="action_refresh_now">Refresh now</string>
     <string name="action_add_widget">Add widget</string>
+    <string name="action_add_widget_hint">The home screen adds it as 4×2. Resize it there.</string>
     <string name="action_save">Save</string>
 
     <string name="connection_title">Connection</string>

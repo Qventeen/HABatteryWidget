@@ -1,6 +1,6 @@
 # Widget design — 4×2, 5×2, 4×3, 5×3
 
-Status: approved (v5), to be built in spec 0005 (layouts); temperatures in
+Status: approved (v5), built in spec 0005 (layouts); temperatures in
 spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
 
 The design was made on a design canvas; this folder keeps the latest
@@ -190,6 +190,5 @@ The app theme is green; no blue.
 - `minSdk` is 26. Glance's rounded corners work only from Android 12
   (likely); older versions need rounded background drawables for the pills
   and the card.
-- The app's overview card shows the same layout, drawn in Compose. Keep
-  one plain-Kotlin model for both (which pills, texts and colours), so only
-  the drawing is written twice.
+- The app shows the real widget as its preview (Glance `compose()`, spec
+  0006), so there is no second drawing to keep in sync.

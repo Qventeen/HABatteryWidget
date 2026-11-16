@@ -3,9 +3,9 @@ package io.lumensync.habattery.domain.model
 import kotlinx.serialization.Serializable
 
 /**
- * Stored settings. Defaults are empty values (0001 §14), except the display choices and font
- * percents and home-screen scale: they are not user data, so they default to the design values
- * (specs 0003, 0005, 0007).
+ * Stored settings. Defaults are empty values (0001 §14), except the display choices, the font
+ * percents, the home-screen scale and the [appearance] (theme): they are not user data, so they
+ * default to the design values (specs 0003, 0005, 0007, 0008).
  */
 @Serializable
 data class Settings(

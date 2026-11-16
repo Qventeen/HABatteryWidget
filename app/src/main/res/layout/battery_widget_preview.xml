@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget picker preview: design v5, 4x2, normal state (light theme, sample values; spec 0005, 5.6).
-     Sizes from docs/design/README.md. The card has the 4x2 bucket size (261 x 126 dp), centred: a
-     launcher may give the preview another box, and a smaller one would cut a bigger card. Text
-     sizes are dp, so a large system font cannot overflow the fixed card. RemoteViews-safe views only. -->
+<!-- Widget picker preview: the 4x2 layout at 50 % in its normal state (light theme, sample values;
+     spec 0005). The card has the 4x2 bucket size (261 x 126 dp), centred: a launcher may give the
+     preview another box, and a smaller one would cut a bigger card. As in the widget, ring and pack
+     share the width the cell column leaves. Text sizes are dp, so a large system font cannot
+     overflow the fixed card. RemoteViews-safe views only. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -36,7 +37,7 @@
                 android:maxLines="1"
                 android:text="@string/preview_time_left"
                 android:textColor="#5C625E"
-                android:textSize="10.5dp" />
+                android:textSize="15.75dp" />
             <ImageView
                 android:layout_width="15dp"
                 android:layout_height="15dp"
@@ -53,7 +54,7 @@
                 android:maxLines="1"
                 android:text="@string/preview_updated"
                 android:textColor="#5C625E"
-                android:textSize="10.5dp" />
+                android:textSize="15.75dp" />
             <FrameLayout
                 android:layout_width="32dp"
                 android:layout_height="32dp"
@@ -95,8 +96,9 @@
             android:baselineAligned="false"
             android:orientation="horizontal">
             <FrameLayout
-                android:layout_width="76dp"
-                android:layout_height="match_parent">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
 
                 <ImageView
                     android:layout_width="match_parent"
@@ -105,22 +107,22 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/preview_ring" />
 
-                <!-- Each line is centred, then moved by padding on one side (twice the shift). -->
+                <!-- Each line is centred, then moved by padding on one side (dimens.xml). -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:paddingBottom="43dp"
+                    android:paddingBottom="@dimen/preview_label_shift"
                     android:maxLines="1"
                     android:text="@string/widget_soc_label"
                     android:textColor="#5C625E"
-                    android:textSize="8.5dp" />
+                    android:textSize="12.75dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:paddingBottom="5dp"
+                    android:paddingTop="@dimen/preview_soc_shift"
                     android:maxLines="1"
                     android:text="@string/preview_soc"
                     android:textColor="#1B1D1C"
@@ -131,7 +133,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:paddingTop="38dp"
+                    android:paddingTop="@dimen/preview_kwh_shift"
                     android:maxLines="1"
                     android:text="@string/preview_kwh"
                     android:textColor="#1B1D1C"
@@ -191,7 +193,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="66dp"
+                android:layout_width="56dp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="8dp"
                 android:orientation="vertical">

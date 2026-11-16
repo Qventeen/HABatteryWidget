@@ -1,7 +1,7 @@
 # Widget settings — design
 
 - **Date:** 2026-11-15
-- **Status:** approved by the owner (2026-11-15).
+- **Status:** approved by the owner (2026-11-15); built on branch `0007-widget-settings`, merged into `epic-widget-v5`.
 - **Set:** `0007`. Code on branch `0007-widget-settings`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).
@@ -187,3 +187,9 @@ replaces the number fields of §3.1, §5.2 and §5.3.
   state's reason. The fit rule still shrinks a text that does not fit its box.
 - The font sliders go from **10 %** (was 25 %) to 100 %, steps of 5; stored values below 10 are
   clamped to 10.
+
+### Final review fixes (2026-11-16)
+
+- The scale slider sits above the font sliders (owner, bd6e2b4).
+- `LayoutSpec.bucketRounding` (1 dp) scales with the home-screen scale, so
+  the fit boxes are `(bucket − 1) × k`.

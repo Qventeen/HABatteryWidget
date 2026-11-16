@@ -186,7 +186,7 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = clamped) }
   }
 
-  /** "Reset to defaults": fonts 50 %, scale 100 %, saved together. */
+  /** "Reset sizes": fonts 50 %, scale 100 %, saved together. */
   fun resetWidgetSettings() {
     save(emptyList(), syncAfter = false) {
       it.copy(fontPercents = FontPercents(), homeScalePercent = HomeScale.DEFAULT)

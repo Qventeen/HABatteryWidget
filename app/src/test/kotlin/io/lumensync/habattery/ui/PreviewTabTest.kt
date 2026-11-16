@@ -7,6 +7,7 @@ import io.lumensync.habattery.ui.PreviewTab.TAB_4X3
 import io.lumensync.habattery.ui.PreviewTab.TAB_5X2
 import io.lumensync.habattery.ui.PreviewTab.TAB_5X3
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class PreviewTabTest {
@@ -91,4 +92,47 @@ class PreviewTabTest {
 
   @Test
   fun scale_neverGrows() = assertEquals(1f, PreviewTab.scale(267f, 600f), 0f)
+
+  /** A widget tap while the app is open: a new request with a higher count. */
+  @Test
+  fun next_namedTab_isANewRequest() =
+    assertEquals(PreviewRequest(TAB_5X3, 3), PreviewRequest(TAB_4X2, 2).next(TAB_5X3))
+
+  /** The launcher icon names no widget: the request stays, so the card keeps its tab. */
+  @Test
+  fun next_noneNamed_keepsTheRequest() {
+    val request = PreviewRequest(TAB_4X3, 2)
+    assertSame(request, request.next(null))
+  }
+
+  @Test
+  fun tabFor_firstDrawing_showsTheFirstTab() = assertEquals(TAB_4X3, PreviewRequest(TAB_4X3).tabFor(TAB_4X3, seenCount = 0))
+
+  @Test
+  fun tabFor_newRequest_switchesToItsTab() = assertEquals(TAB_5X3, PreviewRequest(TAB_5X3, 1).tabFor(TAB_4X2, seenCount = 0))
+
+  /** The card left and came back (a scrolled-away list item): the user's tab stays. */
+  @Test
+  fun tabFor_seenRequest_keepsTheUserTab() = assertEquals(TAB_4X2, PreviewRequest(TAB_5X3, 1).tabFor(TAB_4X2, seenCount = 1))
+
+  /** Spec 0006: tap, the user picks a tab, rotation (count 0 again), then another tap. */
+  @Test
+  fun tapRotationTap_keepsTheUserTabUntilTheNextTap() {
+    var request = PreviewRequest(TAB_4X2)
+    var tab = request.tab
+    var seen = request.count
+    fun arrive(new: PreviewRequest) {
+      request = new
+      tab = request.tabFor(tab, seen)
+      seen = request.count
+    }
+
+    arrive(request.next(TAB_5X3))
+    assertEquals(TAB_5X3, tab)
+    tab = TAB_4X3 // the user picks a tab
+    arrive(PreviewRequest(TAB_4X2)) // the new activity after rotation
+    assertEquals(TAB_4X3, tab)
+    arrive(request.next(TAB_5X2))
+    assertEquals(TAB_5X2, tab)
+  }
 }

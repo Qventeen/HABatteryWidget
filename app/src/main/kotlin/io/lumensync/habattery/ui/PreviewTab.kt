@@ -11,7 +11,18 @@ import kotlin.math.min
  * A request to show [tab]. The activity makes a new one (higher [count]) when a widget tap names a
  * widget while the app is open; the card applies a request once per [count].
  */
-data class PreviewRequest(val tab: PreviewTab, val count: Int = 0)
+data class PreviewRequest(val tab: PreviewTab, val count: Int = 0) {
+  /** The request after an intent that names a widget's tab ([named]); none named keeps this one. */
+  fun next(named: PreviewTab?): PreviewRequest = named?.let { PreviewRequest(it, count + 1) } ?: this
+
+  /**
+   * The card's tab once this request reaches a card that shows [current] and last saw
+   * [seenCount]. Only a request the card has not seen, with a count above 0, switches the tab: a
+   * new activity (rotation, language) starts at count 0, so a recreation keeps the user's own tab.
+   */
+  fun tabFor(current: PreviewTab, seenCount: Int): PreviewTab =
+    if (count != seenCount && count > 0) tab else current
+}
 
 /**
  * The size Android reports in a widget's [options] for the current orientation (the widget options

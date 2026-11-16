@@ -94,11 +94,12 @@ internal data class DataFonts(
 internal data class EmptyFonts(val title: Float, val reason: Float, val button: Float)
 
 /**
- * Spec 0005, 5.5 (approach C1): every text asks for its layout's design size × percent / 50 × the
- * system font scale and is shown at that size, or smaller when the text as it is now does not fit
- * its box. The pill and top-row boxes come from the layout at its bucket size ([LayoutSpec.fitBoxes]):
- * a real widget is never smaller, so the result is safe when the layout stretches. The ring text fits the ring at
- * its design size (see [data]).
+ * Spec 0005, approach C1: every text asks for its layout's design size × its group's base ×
+ * percent / 50 × the system font scale ([FontPercents.requestedDp]) and is shown at that size, or
+ * smaller when the text as it is now does not fit its box. The pill and top-row boxes come from
+ * the layout at its bucket size ([LayoutSpec.fitBoxes]): a real widget is never smaller, so the
+ * result is safe when the layout stretches. The ring text fits the ring at its design size (see
+ * [data]).
  */
 internal object WidgetFonts {
   fun data(

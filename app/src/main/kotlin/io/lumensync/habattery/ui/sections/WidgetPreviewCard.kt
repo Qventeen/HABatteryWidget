@@ -66,14 +66,10 @@ fun WidgetPreviewCard(
   modifier: Modifier = Modifier,
 ) {
   var tab by rememberSaveable { mutableStateOf(request.tab) }
-  // The last request count seen. A new activity starts at count 0, so a recreation (rotation)
-  // never replays a request and keeps the user's own tab; only a later, higher count switches it.
   var seenCount by rememberSaveable { mutableIntStateOf(request.count) }
   LaunchedEffect(request.count) {
-    if (request.count != seenCount) {
-      if (request.count > 0) tab = request.tab
-      seenCount = request.count
-    }
+    tab = request.tabFor(tab, seenCount)
+    seenCount = request.count
   }
   Column(
     modifier.fillMaxWidth(),
