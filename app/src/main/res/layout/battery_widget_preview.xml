@@ -131,11 +131,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:paddingTop="36dp"
+                    android:paddingTop="38dp"
                     android:maxLines="1"
                     android:text="@string/preview_kwh"
                     android:textColor="#1B1D1C"
-                    android:textSize="10dp"
+                    android:textSize="@dimen/preview_kwh_size"
                     android:fontFamily="sans-serif-medium" />
             </FrameLayout>
 

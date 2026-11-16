@@ -127,6 +127,31 @@ class WidgetFitTest {
     assertTrue(problems.joinToString("\n"), problems.isEmpty())
   }
 
+  /**
+   * The picker preview (a static layout at the 4×2 bucket size): its ring text stays inside the
+   * ring's inner circle, in English and Ukrainian (1 dp tolerance, as the widget).
+   */
+  @Test
+  fun pickerPreview_ringTextStaysInside() {
+    val problems = mutableListOf<String>()
+    for (lang in listOf("en", "uk")) {
+      val context = context(lang, 1f)
+      val root = android.view.LayoutInflater.from(context).inflate(io.lumensync.habattery.R.layout.battery_widget_preview, FrameLayout(context), false)
+      val density = context.resources.displayMetrics.density
+      val w = (LayoutSpec.L4x2.bucketWidth * density).roundToInt()
+      val h = (LayoutSpec.L4x2.bucketHeight * density).roundToInt()
+      root.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
+      root.layout(0, 0, w, h)
+      val image = find(root) { it is android.widget.ImageView && it.parent is FrameLayout && (it.parent as ViewGroup).childCount == 4 }
+      if (image == null) {
+        problems += "$lang: preview ring missing"
+        continue
+      }
+      inkOutsideCircle(root, image.parent as View, image, LayoutSpec.L4x2).forEach { problems += "$lang: $it" }
+    }
+    assertTrue(problems.joinToString("\n"), problems.isEmpty())
+  }
+
   /** Review finding 7: a glyph from a fallback font (Myanmar, a tall font) counts in the line. */
   @Test
   fun fallbackFonts_countInTheLineMetrics() {
@@ -348,6 +373,11 @@ class WidgetFitTest {
   private fun ringInkOutside(root: View, spec: LayoutSpec, description: String): List<String> {
     val ring = find(root) { it.contentDescription?.toString() == description } ?: return listOf("ring missing")
     val image = find(ring) { it is android.widget.ImageView } ?: return listOf("ring image missing")
+    return inkOutsideCircle(root, ring, image, spec)
+  }
+
+  /** Text in [group] whose ink leaves the circle drawn fit-centre by [image] ([spec]'s stroke). */
+  private fun inkOutsideCircle(root: View, group: View, image: View, spec: LayoutSpec): List<String> {
     val box = rectIn(image, root)
     val d = minOf(box.width(), box.height())
     val inner = d / 2 - spec.ringStroke / spec.ring * d
@@ -363,7 +393,7 @@ class WidgetFitTest {
       }
       if (v is ViewGroup) for (i in 0 until v.childCount) visit(v.getChildAt(i))
     }
-    visit(ring)
+    visit(group)
     return found
   }
 
