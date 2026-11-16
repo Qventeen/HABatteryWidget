@@ -9,12 +9,24 @@ long-lived HA token. The widget draws from the local cache only.
 The widget follows design v5 (`docs/design/`): a SOC ring, two big pack values,
 cell and temperature pills, time left, and an auto-refresh toggle. The app
 shows a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3). The
-"Widget" settings section picks kWh or Ah under SOC, current or power, and the
-font sizes.
-The "Home-screen scale" setting grows the widget for launchers that draw it
-smaller.
+"Widget" settings section picks kWh or Ah under SOC, current or power, the
+home-screen scale and the font sizes.
 The "Appearance" section sets the theme (system, light, dark) and, on
 Android 13+, the app language.
+
+## The widget on the home screen
+
+- Add it from the launcher's widget list or with "Add widget" in the app. The
+  home screen adds it as 4×2; resize it there to 5×2, 4×3 or 5×3. Each size has
+  its own layout.
+- Tap the widget to open the app on that widget's size tab. ↻ syncs now; the
+  toggle turns auto refresh on or off.
+- Some launchers draw widgets smaller than their size (HyperOS: about 78 %).
+  Set "Home-screen scale" (80–200 %, default 100) to make up for it; about
+  128 % on HyperOS. The app preview always shows 100 %.
+- Font sizes are set per group from 10 to 100 %; 50 % is the design size. A
+  text that does not fit its box at the chosen size is shown smaller. "Reset
+  sizes" restores the font sizes and the scale.
 
 ## Requirements
 
@@ -27,6 +39,14 @@ Android 13+, the app language.
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk   # any JDK 17 path
 ./gradlew :app:testDebugUnitTest                # unit tests
 ./gradlew lint testDebugUnitTest assembleRelease  # full check
+```
+
+Instrumented tests run on an emulator. They wipe the app's data, and Gradle
+uninstalls the app afterwards, on every attached device. With a phone
+attached, name the emulator:
+
+```bash
+ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest
 ```
 
 ## Release key
@@ -80,5 +100,6 @@ owner's BMS, 2026-11-15); another BMS integration may use the opposite sign.
 
 ## Languages
 
-English (default) and Ukrainian. On Android 13+ you can set the language per
-app in system settings.
+English (default) and Ukrainian. On Android 13+ you can set the app language
+in the app ("Appearance") or in the system settings. The widget follows it,
+also when the app is closed.

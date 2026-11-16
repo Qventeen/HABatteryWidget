@@ -7,8 +7,14 @@ Use JDK 17 for every Gradle run (the default `java` here is newer):
 |------|---------|
 | Unit tests | `./gradlew :app:testDebugUnitTest` |
 | One test class | `./gradlew :app:testDebugUnitTest --tests "<pattern>"` |
-| Done gate | `./gradlew lint testDebugUnitTest assembleRelease` |
-| Instrumented tests (emulator up) | `./gradlew connectedDebugAndroidTest` |
+| Done gate | `./gradlew lint testDebugUnitTest assembleRelease :app:compileDebugAndroidTestKotlin` |
+| Instrumented tests (emulator up) | `ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest` |
+
+- `connectedDebugAndroidTest` runs on every attached device, wipes the app's
+  data (`MainScreenTest`) and uninstalls the app afterwards. The owner's phone
+  may be on adb with the real app, token and widgets: always set
+  `ANDROID_SERIAL` to the emulator and use `adb -s <serial>`. Never run
+  connected tests or `adb uninstall` on the phone.
 
 - Robolectric runs at SDK 34 (`app/src/test/resources/robolectric.properties`);
   JDK 17 cannot run SDK 35+.

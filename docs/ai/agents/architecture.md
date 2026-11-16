@@ -2,7 +2,9 @@
 
 Design authority: `docs/superpowers/specs/2026-11-14-0001-clean-rewrite-design.md`
 (§8 architecture, §9 battery math, §12 strings, §13 refresh and widget,
-§14 stored data). Read the sections you touch before you change code.
+§14 stored data). Later specs in `docs/superpowers/specs/` change parts of it
+(0002 corrections, 0003 widget v4, 0004–0008 widget v5); on one topic the
+newest spec wins. Read the sections you touch before you change code.
 
 ## Packages
 
@@ -12,7 +14,7 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   place), `MainActivity` (launcher and widget configure activity; `singleTop`; reads
   `EXTRA_TAPPED_WIDGET_ID`; first preview tab: configured, tapped, first placed, 4×2).
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
-  `BatteryMath`, `BatteryOverview`, `FullChargeRule`, `RefreshPolicy`,
+  `BatteryMath`, `BatteryOverview`, `EntityFill`, `FullChargeRule`, `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
   `WidgetLevels`, `ToggleAutoRefresh`.
 - `data/`: `ha/` (HTTP source, template, response), `settings/`, `cache/`,
@@ -28,7 +30,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
 - `widget/`: Glance widget with four layouts in `SizeMode.Responsive` (spec 0005):
   `LayoutSpec` holds each layout's design numbers and bucket, `WidgetLayouts` /
   `WidgetParts` draw them, `WidgetFonts` fits every text to its box (`TextFit`,
-  measured by `PaintTextMeasurer`), ring bitmaps, `BatteryWidgetReceiver`, ↻ and
+  measured by `PaintTextMeasurer`), `RingLayout` (the ring's three text lines, placed
+  by their visible ink, `ringTextGap` apart), ring bitmaps, `BatteryWidgetReceiver`, ↻ and
   auto-toggle actions, refresher, `WidgetPalette` / `WidgetTexts`, and
   `PreviewWidget` (spec 0006): the app's preview composes the same `WidgetContent`
   with `GlanceAppWidget.compose()` at the layout's bucket, without actions and at
@@ -42,7 +45,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
 - `ui/`: Compose screen, `MainViewModel`, `PreviewTab` (size tabs, first-tab rule),
-  `sections/` (`WidgetPreviewCard` hosts the preview), `theme/`.
+  `SensorSearch` / `SensorFill` (Fill: what HA answered and the new Entities draft), `sections/`
+  (`WidgetPreviewCard` hosts the preview), `theme/`.
 
 Dependency rule: `ui`, `widget`, `system`, `data` → `domain`. `domain` depends
 on nothing Android. Names of `MainActivity` and `BatteryWidgetReceiver` are
