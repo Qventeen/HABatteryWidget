@@ -116,18 +116,20 @@ class FormattersTest {
         assertEquals("100", f.socNumber(100))
     }
 
+    /** Owner, 2026-11-16: Android's narrow format. */
     @Test
     fun duration_underOneDay_hoursAndMinutes() {
         val f = Formatters(context)
-        assertEquals("59 min", f.duration(59.minutes))
-        assertEquals("23 hr, 59 min", f.duration((23 * 60 + 59).minutes))
+        assertEquals("59m", f.duration(59.minutes))
+        assertEquals("17h 16m", f.duration((17 * 60 + 16).minutes))
+        assertEquals("23h 59m", f.duration((23 * 60 + 59).minutes))
     }
 
     @Test
     fun duration_fromOneDay_daysAndHours() {
         val f = Formatters(context)
-        assertEquals("1 day, 0 hr", f.duration(24.hours))
-        assertEquals("2 days, 7 hr", f.duration(55.hours + 20.minutes))
+        assertEquals("1d 0h", f.duration(24.hours))
+        assertEquals("2d 7h", f.duration(55.hours + 20.minutes))
     }
 
     @Test

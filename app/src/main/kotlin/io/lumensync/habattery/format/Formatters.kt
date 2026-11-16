@@ -66,13 +66,16 @@ class Formatters(private val context: Context) {
     fun chargePercent(percent: Double): String =
         context.getString(R.string.charge_percent, percent.roundToInt())
 
-    /** "45 min", "17 hr, 16 min"; from 24 h days and hours ("2 days, 7 hr"), minutes dropped. */
+    /**
+     * Android's narrow format (owner, 2026-11-16): "45m", "17h 16m"; from 24 h days and hours
+     * ("2d 7h"), minutes dropped. Other languages as Android writes them.
+     */
     fun duration(d: Duration): String {
         val totalMinutes = d.inWholeMinutes
         val days = totalMinutes / MINUTES_PER_DAY
         val hours = totalMinutes % MINUTES_PER_DAY / 60
         val minutes = totalMinutes % 60
-        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT)
+        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.NARROW)
         return when {
             days > 0L ->
                 format.formatMeasures(Measure(days, MeasureUnit.DAY), Measure(hours, MeasureUnit.HOUR))
