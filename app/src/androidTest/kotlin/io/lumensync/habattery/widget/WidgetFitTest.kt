@@ -50,7 +50,7 @@ import org.junit.runner.RunWith
 
 /**
  * The fit check of spec 0005 (§6): the real widget composed by Glance at each bucket, laid out at
- * the bucket and at the owner's sizes, with worst-case and typical values, every font group at 25,
+ * the bucket and at the owner's sizes, with worst-case and typical values, every font group at 10,
  * 50 and 100 %, in English and Ukrainian. Every text must show whole: one line, as wide as it
  * needs, inside every view that clips it. With `-e fitShots true` the drawings are saved to the
  * app's files (`fit/`) for comparing with the design PNGs.
@@ -90,7 +90,7 @@ class WidgetFitTest {
   fun everyText_fits_atEverySizeSettingAndLanguage() {
     val problems = mutableListOf<String>()
     for (lang in listOf("en", "uk")) {
-      for (percent in listOf(25, 50, 100)) {
+      for (percent in listOf(10, 50, 100)) {
         val percents = FontPercents(percent, percent, percent, percent, percent)
         for ((name, model) in models(context(lang, 1f))) {
           for (spec in LayoutSpec.all) {

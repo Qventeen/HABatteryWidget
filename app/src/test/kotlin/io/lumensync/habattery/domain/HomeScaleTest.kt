@@ -32,7 +32,7 @@ class HomeScaleTest {
   @Test
   fun settingsClamped_clampsBothParts() {
     val c = Settings(fontPercents = FontPercents(soc = 5), homeScalePercent = 250).clamped()
-    assertEquals(25, c.fontPercents.soc)
+    assertEquals(10, c.fontPercents.soc)
     assertEquals(200, c.homeScalePercent)
   }
 

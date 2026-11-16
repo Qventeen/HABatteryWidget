@@ -182,3 +182,8 @@ replaces the number fields of §3.1, §5.2 and §5.3.
 
 - The scale goes up to **200 %** (was 150 %): 150 % was not enough for the owner. Range 80–200 %,
   step 1, default 100 %.
+- Small text is bigger: the "Small text" group's 50 % is 1.5 × the design size (the old 75 %),
+  100 % is 3 × (the old 150 %). It covers the top row, the ring's "SOC" label and the empty
+  state's reason. The fit rule still shrinks a text that does not fit its box.
+- The font sliders go from **10 %** (was 25 %) to 100 %, steps of 5; stored values below 10 are
+  clamped to 10.

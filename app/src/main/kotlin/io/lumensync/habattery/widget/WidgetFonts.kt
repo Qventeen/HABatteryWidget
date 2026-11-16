@@ -119,13 +119,13 @@ internal object WidgetFonts {
     val topTexts = listOf(texts.timeLeft, texts.updatedAt)
     val small = TextFit.fit(topTexts, requested(FontGroup.SMALL, design.small), TextWeight.NORMAL, boxes.topTexts, measurer)
 
-    // A ring line's size at 50 %: its design size × the system font scale.
-    fun fifty(sp: Float) = sp * fontScale
+    // A ring line's size at 50 %.
+    fun fifty(group: FontGroup, sp: Float) = FontPercents().requestedDp(group, sp, fontScale)
     val requestedRing =
       listOf(
-        RingLine(texts.socLabel, requested(FontGroup.SMALL, design.ringLabel), TextWeight.NORMAL, fifty(design.ringLabel)),
-        RingLine(texts.soc, requested(FontGroup.SOC, design.soc), TextWeight.BOLD, fifty(design.soc)),
-        RingLine(texts.underSoc, requested(FontGroup.UNDER_SOC, design.underSoc), TextWeight.MEDIUM, fifty(design.underSoc)),
+        RingLine(texts.socLabel, requested(FontGroup.SMALL, design.ringLabel), TextWeight.NORMAL, fifty(FontGroup.SMALL, design.ringLabel)),
+        RingLine(texts.soc, requested(FontGroup.SOC, design.soc), TextWeight.BOLD, fifty(FontGroup.SOC, design.soc)),
+        RingLine(texts.underSoc, requested(FontGroup.UNDER_SOC, design.underSoc), TextWeight.MEDIUM, fifty(FontGroup.UNDER_SOC, design.underSoc)),
       )
     // The ring's own size, not the bucket's: below the design card the ring shrinks to its row
     // while the fonts stay (5.1), so its text matches the design at the owner's sizes.

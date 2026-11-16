@@ -107,18 +107,22 @@ data class DisplaySettings(
   val mainValue: MainValue = MainValue.CURRENT,
 )
 
-/** The font-size groups of the widget (README "Font sizes"). */
-enum class FontGroup {
+/**
+ * The font-size groups of the widget (README "Font sizes"). [base] multiplies the design size: the
+ * small texts read too small on the phone, so their 50 % is 1.5 × the design (owner, 2026-11-16).
+ */
+enum class FontGroup(val base: Float = 1f) {
   SOC,
   UNDER_SOC,
   MAIN,
   CELL,
-  SMALL,
+  SMALL(base = 1.5f),
 }
 
 /**
- * Font sizes as percents (spec 0005, 5.4): 50 % is each layout's design size, 100 % twice it, 25 %
- * half. One value per group for all layouts. Stored values outside 25–100 are clamped when read.
+ * Font sizes as percents (spec 0005, 5.4): 50 % is each layout's design size (× the group's
+ * [FontGroup.base]), 100 % twice it, 10 % a fifth. One value per group for all layouts. Stored
+ * values outside 10–100 are clamped when read.
  */
 @Serializable
 data class FontPercents(
@@ -150,14 +154,15 @@ data class FontPercents(
     FontGroup.entries.fold(this) { p, group -> p.with(group, p[group].coerceIn(MIN, MAX)) }
 
   /**
-   * The size a text asks for, in dp: the layout's design size × percent / 50 × the system font
-   * scale. The drawing may show it smaller when the text does not fit its box (spec 0005, C1).
+   * The size a text asks for, in dp: the layout's design size × the group's [FontGroup.base] ×
+   * percent / 50 × the system font scale. The drawing may show it smaller when the text does not
+   * fit its box (spec 0005, C1).
    */
   fun requestedDp(group: FontGroup, designSp: Float, fontScale: Float): Float =
-    designSp * this[group] / DEFAULT * fontScale
+    designSp * group.base * this[group] / DEFAULT * fontScale
 
   companion object {
-    const val MIN = 25
+    const val MIN = 10
     const val DEFAULT = 50
     const val MAX = 100
     const val STEP = 5

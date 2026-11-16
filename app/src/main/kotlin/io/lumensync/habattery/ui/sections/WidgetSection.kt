@@ -100,7 +100,7 @@ private fun HomeScaleSlider(stored: Int, onSave: (Int) -> Unit) {
   )
 }
 
-/** One font group: its name, the percent, and a slider from 25 to 100 % in steps of 5. */
+/** One font group: its name, the percent, and a slider from 10 to 100 % in steps of 5. */
 @Composable
 private fun FontSlider(group: FontGroup, stored: Int, onSave: (Int) -> Unit) {
   var dragValue by rememberSaveable { mutableStateOf<Int?>(null) }
