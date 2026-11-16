@@ -14,7 +14,8 @@ import androidx.glance.layout.width
 
 /*
  * The four v5 layouts (docs/design/README.md). Fixed parts use the design sizes; the pack column
- * and the pills fill by weight, so a bigger widget stretches the layout (spec 0005, B1).
+ * and the pills fill by weight, so a bigger widget stretches the layout (spec 0005, B1). Except in
+ * 5×2, the ring shares the width with the pack column by weight too (owner, 2026-11-16).
  */
 
 /** 4×2: the top row over the full width; ring, pack and cell column below it. */
@@ -30,7 +31,7 @@ internal fun Layout5x3(d: DataLook, actions: WidgetActions) = TopRowOverColumns(
 internal fun Layout5x2(d: DataLook, actions: WidgetActions) {
   val s = d.spec
   Row(GlanceModifier.fillMaxSize()) {
-    Ring(d, GlanceModifier.fillMaxHeight())
+    Ring(d, GlanceModifier.width(s.ring.dp).fillMaxHeight())
     Spacer(GlanceModifier.width(s.columnGap.dp))
     Column(GlanceModifier.defaultWeight().fillMaxHeight()) {
       TopRow(d, actions)
@@ -52,7 +53,7 @@ internal fun Layout4x3(d: DataLook, actions: WidgetActions) {
     TopRow(d, actions)
     Spacer(GlanceModifier.height(s.bodyTop.dp))
     Row(GlanceModifier.defaultWeight().fillMaxWidth()) {
-      Ring(d, GlanceModifier.fillMaxHeight())
+      Ring(d, GlanceModifier.defaultWeight().fillMaxHeight())
       Spacer(GlanceModifier.width(s.columnGap.dp))
       PackColumn(d, GlanceModifier.defaultWeight().fillMaxHeight())
     }
@@ -68,7 +69,7 @@ private fun TopRowOverColumns(d: DataLook, actions: WidgetActions) {
     TopRow(d, actions)
     Spacer(GlanceModifier.height(s.bodyTop.dp))
     Row(GlanceModifier.defaultWeight().fillMaxWidth()) {
-      Ring(d, GlanceModifier.fillMaxHeight())
+      Ring(d, GlanceModifier.defaultWeight().fillMaxHeight())
       Spacer(GlanceModifier.width(s.columnGap.dp))
       PackColumn(d, GlanceModifier.defaultWeight().fillMaxHeight())
       Spacer(GlanceModifier.width(s.columnGap.dp))

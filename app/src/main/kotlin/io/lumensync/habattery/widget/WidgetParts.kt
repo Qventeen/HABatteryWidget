@@ -39,6 +39,9 @@ import kotlin.math.roundToInt
 /** Cell pills keep fully round ends; Android clamps the radius to half the pill's height. */
 private val CELL_RADIUS = 999.dp
 
+/** The ring bitmaps are drawn this much larger than the design ring, so they stay sharp when the ring grows. */
+private const val RING_RENDER_SCALE = 1.25f
+
 /**
  * Time left, balancing, the update time (or the red sync error icon in its place), the auto-refresh
  * toggle and ↻ (spec 0005, 5.3). The error takes the update time's place, so nothing else moves.
@@ -131,9 +134,10 @@ private fun CircleButton(
 }
 
 /**
- * The SOC ring: track and arc bitmaps at the layout's size and stroke, in a box as wide as the ring
- * and as high as its row. Below the design size the ring shrinks to the row (`ContentScale.Fit`);
- * above it, it stays at the design size, centred. The three lines are placed by [RingLayout].
+ * The SOC ring: track and arc bitmaps at the layout's size and stroke, in a box the caller sizes
+ * (5×2: the ring's width; the other layouts: a share of the row). The ring fits the box's shorter
+ * side (`ContentScale.Fit`), so it grows or shrinks with it; its text keeps the design ring's
+ * sizes. The three lines are placed by [RingLayout].
  */
 @Composable
 internal fun Ring(d: DataLook, modifier: GlanceModifier) {
@@ -141,12 +145,12 @@ internal fun Ring(d: DataLook, modifier: GlanceModifier) {
   val s = d.spec
   val c = d.colors
   val density = context.resources.displayMetrics.density
-  val sizePx = (s.ring * density).roundToInt().coerceAtLeast(1)
-  val strokePx = s.ringStroke * density
+  val sizePx = (s.ring * density * RING_RENDER_SCALE).roundToInt().coerceAtLeast(1)
+  val strokePx = s.ringStroke * density * RING_RENDER_SCALE
   val description = context.resources.getQuantityString(R.plurals.widget_soc_description, d.model.socPercent, d.model.socPercent)
 
   Box(
-    modifier.width(s.ring.dp).semantics { contentDescription = description },
+    modifier.semantics { contentDescription = description },
     contentAlignment = Alignment.Center,
   ) {
     Image(

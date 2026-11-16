@@ -30,8 +30,9 @@ class LayoutSpecTest {
   @Test
   fun boxes4x2_atTheDesignSize_matchTheReadme() {
     val b = LayoutSpec.L4x2.boxes(267f, 132f, cellPills = 4)
-    assertEquals(Box(89f, 35f), b.packPill)
-    assertEquals(Box(66f, 16f), b.cellPill)
+    // (247 − 8 − 8 − 56) / 2
+    assertEquals(Box(87.5f, 35f), b.packPill)
+    assertEquals(Box(56f, 16f), b.cellPill)
     // 247 − (2 + 12 + 4) − 6 − 15 − 6 − 6 − 32 − 6 − 32
     assertEquals(Box(126f, 32f), b.topTexts)
   }
@@ -39,15 +40,17 @@ class LayoutSpecTest {
   @Test
   fun boxes5x2_ringTakesTheFullHeight() {
     val b = LayoutSpec.L5x2.boxes(340f, 132f, cellPills = 4)
-    assertEquals(Box(108f, 35f), b.packPill)
-    assertEquals(Box(84f, 16f), b.cellPill)
+    // The top row beside the ring: 320 − 112 − 8 = 200; the pack takes what the cells leave.
+    assertEquals(Box(200f - 8f - 74f, 35f), b.packPill)
+    assertEquals(Box(74f, 16f), b.cellPill)
     assertEquals(200f - 121f, b.topTexts.width, 0f)
   }
 
   @Test
   fun boxes4x3_gridUnderRingAndPack() {
     val b = LayoutSpec.L4x3.boxes(267f, 205f, cellPills = 4)
-    assertEquals(Box(153f, 40f), b.packPill)
+    // (247 − 8) / 2
+    assertEquals(Box(119.5f, 40f), b.packPill)
     assertEquals(Box(121f, 20f), b.cellPill)
     assertEquals(Box(121f, 20f), b.mosfetPill)
     assertEquals(Box(247f, 20f), LayoutSpec.L4x3.boxes(267f, 205f, cellPills = 3).mosfetPill)
@@ -56,16 +59,39 @@ class LayoutSpecTest {
   @Test
   fun boxes5x3_columns() {
     val b = LayoutSpec.L5x3.boxes(340f, 205f, cellPills = 4)
-    assertEquals(Box(112f, 63f), b.packPill)
-    assertEquals(Box(84f, 28.75f), b.cellPill)
-    assertEquals(Box(84f, (133f - 12f) / 3f), LayoutSpec.L5x3.boxes(340f, 205f, cellPills = 3).cellPill)
+    // (320 − 8 − 8 − 74) / 2
+    assertEquals(Box(115f, 63f), b.packPill)
+    assertEquals(Box(74f, 28.75f), b.cellPill)
+    assertEquals(Box(74f, (133f - 12f) / 3f), LayoutSpec.L5x3.boxes(340f, 205f, cellPills = 3).cellPill)
   }
 
   @Test
   fun boxes_atTheBucket_pillsShrink() {
     val b = LayoutSpec.L4x2.boxes(261f, 126f, cellPills = 4)
-    assertEquals(Box(83f, 32f), b.packPill)
-    assertEquals(Box(66f, 14.5f), b.cellPill)
+    assertEquals(Box(84.5f, 32f), b.packPill)
+    assertEquals(Box(56f, 14.5f), b.cellPill)
+  }
+
+  /** Owner, 2026-11-16: ring and pack share the width the cell column leaves (4×2, 5×3, 4×3). */
+  @Test
+  fun boxes_ringColumnIsThePackWidth() =
+    listOf(LayoutSpec.L4x2, LayoutSpec.L5x3, LayoutSpec.L4x3).forEach { spec ->
+      listOf(spec.bucketWidth to spec.bucketHeight, spec.bucketWidth + 6 to spec.bucketHeight + 6, 400f to 300f).forEach { (w, h) ->
+        val pack = spec.boxes(w, h, cellPills = 4).packPill.width
+        val cells = if (spec.cellGrid) 0f else spec.columnGap + spec.cellColumn
+        // ring column + gap + pack (+ gap + cells) = the inner width, with ring column = pack
+        assertEquals("${spec.name} at $w", w - 2 * spec.padding, pack + spec.columnGap + pack + cells, 1e-4f)
+      }
+    }
+
+  /** 5×2 keeps a ring column of the design ring; the pack takes the rest beside the cell column. */
+  @Test
+  fun boxes5x2_packTakesTheRest() {
+    val s = LayoutSpec.L5x2
+    listOf(334f, 340f, 400f).forEach { w ->
+      val expected = w - 2 * s.padding - s.ring - s.columnGap - s.columnGap - s.cellColumn
+      assertEquals("at $w", expected, s.boxes(w, 132f, cellPills = 4).packPill.width, 1e-4f)
+    }
   }
 
   /** Android shows a bucket from 1 dp below it, so the texts are fitted 1 dp smaller each way. */

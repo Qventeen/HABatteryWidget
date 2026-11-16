@@ -113,12 +113,24 @@ data class LayoutSpec(
   fun boxes(width: Float, height: Float, cellPills: Int): LayoutBoxes {
     val innerW = width - 2 * padding
     val innerH = height - 2 * padding
-    val topRowWidth = if (ringFullHeight) innerW - ring - columnGap else innerW
+    // Ring and pack share the width left by the cell column equally (owner, 2026-11-16: ring as
+    // the base, about 40 : 35 : 25); 5×2 keeps its full-height ring beside the top row.
+    val ringColumn =
+      when {
+        ringFullHeight -> ring
+        cellGrid -> (innerW - columnGap) / 2
+        else -> (innerW - 2 * columnGap - cellColumn) / 2
+      }
+    val topRowWidth = if (ringFullHeight) innerW - ringColumn - columnGap else innerW
     val topFixed =
       timeStart + hourglass + hourglassGap + topGap + statusIcon + topGap + toButtons +
         2 * buttonTouch + buttonGap
     val body = innerH - topRow - bodyTop - if (cellGrid) gridGap + gridHeight else 0f
-    val packWidth = innerW - ring - columnGap - if (cellGrid) 0f else columnGap + cellColumn
+    val packWidth =
+      when {
+        ringFullHeight -> topRowWidth - columnGap - cellColumn
+        else -> ringColumn
+      }
     val cell =
       if (cellGrid) Box((innerW - gridColumnGap) / 2, gridPill)
       else Box(cellColumn, (body - (cellPills - 1) * cellGap) / cellPills)
@@ -161,7 +173,7 @@ data class LayoutSpec(
         packPadding = 4f,
         arrow = 14f,
         arrowGap = 3f,
-        cellColumn = 66f,
+        cellColumn = 56f,
         cellGap = 4f,
         cellPadding = 4f,
         tempIcon = 11f,
@@ -179,7 +191,7 @@ data class LayoutSpec(
         ringStroke = 8f,
         arrow = 16f,
         arrowGap = 4f,
-        cellColumn = 84f,
+        cellColumn = 74f,
         cellPadding = 5f,
         fonts = DesignFonts(soc = 40f, underSoc = 12f, ringLabel = 10.5f, main = 21f, cell = 12f, small = 10.5f),
       )
@@ -242,7 +254,7 @@ data class LayoutSpec(
         packPadding = 4f,
         arrow = 17f,
         arrowGap = 4f,
-        cellColumn = 84f,
+        cellColumn = 74f,
         cellGap = 6f,
         cellPadding = 5f,
         tempIcon = 14f,

@@ -39,13 +39,15 @@ current, then cell details.
 | Top row | 32 high, full width | 32 high, beside the ring | 44 high, full width | 48 high, full width |
 | Buttons (touch / circle / icon) | 32 / 30 / 16 | 32 / 30 / 16 | 44 / 36 / 18 | 48 / 40 / 20 |
 | Ring (size, stroke) | 76, 7 | 112, 8 — full card height, left | 86, 7 | 108, 8 |
-| Pack pills (voltage, current) | 2 stacked, 6 gap, 89 wide | 2 stacked, 6 gap, 108 wide | 2 stacked, 6 gap, fill the width | 2 stacked, 7 gap, fill the width |
-| Cell pills | column 66 wide, 4 gap | column 84 wide, 4 gap | 2 × 2 grid under ring and pack, 20 high, 5 / 4 gap | column 84 wide, 6 gap |
+| Pack pills (voltage, current) | 2 stacked, 6 gap, 87.5 wide | 2 stacked, 6 gap, 118 wide | 2 stacked, 6 gap, 119.5 wide | 2 stacked, 7 gap, 115 wide |
+| Cell pills | column 56 wide, 4 gap | column 74 wide, 4 gap | 2 × 2 grid under ring and pack, 20 high, 5 / 4 gap | column 74 wide, 6 gap |
 
 All sizes in dp. Gaps: 8 between ring, pack and cells; 4 under the top row
-(4×3: 7 between the upper part and the cell grid). 4×2 is too narrow for
-the 5×2 layout (the top row needs about 200 dp beside the ring), so its top
-row spans the full width and the ring sits below it.
+(4×3: 7 between the upper part and the cell grid). Except in 5×2, ring and
+pack share the width the cells leave equally, and the ring fills its column
+up to the row height (owner, 2026-11-16; the PNGs show the older widths).
+4×2 is too narrow for the 5×2 layout (the top row needs about 200 dp beside
+the ring), so its top row spans the full width and the ring sits below it.
 
 ```
 5×2                                 4×3                     5×3
