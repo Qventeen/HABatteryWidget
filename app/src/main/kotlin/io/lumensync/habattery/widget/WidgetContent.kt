@@ -46,7 +46,9 @@ data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAut
 /**
  * The whole widget, drawn from [model] and [colors] only (design v5). The layout is the one made
  * for `LocalSize` (the `SizeMode.Responsive` bucket, spec 0005, A1); its texts are fitted before
- * drawing ([WidgetFonts]). Tapping the card opens the app.
+ * drawing ([WidgetFonts]). Tapping the card opens the app. [hostScale] multiplies every size and
+ * font of the layout, for a home screen that draws widgets smaller than their reported size
+ * ([LayoutSpec.scaled]).
  */
 @Composable
 fun WidgetContent(
@@ -54,11 +56,14 @@ fun WidgetContent(
   fontPercents: FontPercents,
   colors: WidgetColors,
   actions: WidgetActions,
+  hostScale: Float = 1f,
   measurer: TextMeasurer? = null,
 ) {
   val context = LocalContext.current
   val size = LocalSize.current
-  val spec = LayoutSpec.forSize(size.width.value, size.height.value)
+  // The layout is picked by the reported size; the scale changes its numbers only.
+  val layout = LayoutSpec.forSize(size.width.value, size.height.value)
+  val spec = layout.scaled(hostScale)
   val texts = remember(context) { WidgetTexts(context, Formatters(context)) }
   val m = measurer ?: remember(context) { PaintTextMeasurer(context) }
   val fontScale = context.resources.configuration.fontScale
@@ -78,7 +83,7 @@ fun WidgetContent(
         val dataTexts = DataTexts.of(model, texts)
         val fonts = WidgetFonts.data(model, dataTexts, spec, fontPercents, fontScale, m)
         val d = DataLook(model, look, dataTexts, fonts)
-        when (spec) {
+        when (layout) {
           LayoutSpec.L5x2 -> Layout5x2(d, actions)
           LayoutSpec.L4x3 -> Layout4x3(d, actions)
           LayoutSpec.L5x3 -> Layout5x3(d, actions)

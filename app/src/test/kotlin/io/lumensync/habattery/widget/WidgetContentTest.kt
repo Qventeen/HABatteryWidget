@@ -24,6 +24,8 @@ import androidx.glance.testing.unit.hasAnyDescendant
 import androidx.glance.layout.EmittableRow
 import androidx.glance.testing.unit.hasText
 import androidx.glance.testing.unit.hasTextEqualTo
+import androidx.glance.Emittable
+import androidx.glance.EmittableWithChildren
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
@@ -40,6 +42,7 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.testing.configuredSettings
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -216,6 +219,16 @@ class WidgetContentTest {
       }
     }
 
+  /**
+   * The home-screen scale changes sizes only: at 1.28 each bucket draws the same tree as at 1.0
+   * (a scaled spec once missed the 5×2 and 4×3 layouts and drew 4×2's).
+   */
+  @Test
+  fun hostScale_eachBucket_drawsItsLayout() =
+    LayoutSpec.all.forEach { spec ->
+      assertEquals(spec.name, shape(spec, 1f), shape(spec, LayoutSpec.HOST_SCALE))
+    }
+
   @Test
   fun fiveByFour_stretchesFiveByThree() =
     render(model(), 340f, 278f) { onNode(hasTestTag("layout_5x3")).assertExists() }
@@ -261,6 +274,25 @@ class WidgetContentTest {
       onNode(hasTextEqualTo("55") and hasTextColor(WidgetPalette.Light.text)).assertExists()
     }
 
+  /** The tree of the layout drawn at [spec]'s bucket: element types only, no sizes. */
+  private fun shape(spec: LayoutSpec, hostScale: Float): String {
+    var shape = ""
+    val tag = hasTestTag("layout_${spec.name}")
+    render(model(), spec.bucketWidth, spec.bucketHeight, hostScale = hostScale) {
+      onNode(
+          GlanceNodeMatcher<MappedNode>("layout ${spec.name}") { node ->
+            tag.matches(node).also { if (it) shape = shapeOf(node.value.emittable) }
+          }
+        )
+        .assertExists()
+    }
+    return shape
+  }
+
+  private fun shapeOf(e: Emittable): String =
+    e.javaClass.simpleName +
+      ((e as? EmittableWithChildren)?.children?.joinToString(",", "(", ")", transform = ::shapeOf) ?: "")
+
   /** A Row with [n] children (pills and the spacers between them). */
   private fun rowWithChildren(n: Int) =
     GlanceNodeMatcher<MappedNode>("row with $n children") { node ->
@@ -278,6 +310,7 @@ class WidgetContentTest {
     heightDp: Float = LayoutSpec.L4x2.bucketHeight,
     fontPercents: FontPercents = FontPercents(),
     colors: WidgetColors = WidgetColors(ThemeChoice.SYSTEM),
+    hostScale: Float = 1f,
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
   ) = runGlanceAppWidgetUnitTest {
     setContext(context)
@@ -288,7 +321,7 @@ class WidgetContentTest {
         refresh = actionRunCallback<NoOpRefresh>(),
         toggleAuto = actionRunCallback<NoOpToggle>(),
       )
-    provideComposable { WidgetContent(model, fontPercents, colors, actions, FakeMeasurer) }
+    provideComposable { WidgetContent(model, fontPercents, colors, actions, hostScale, FakeMeasurer) }
     assertions()
   }
 

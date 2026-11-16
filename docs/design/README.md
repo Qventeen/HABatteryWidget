@@ -28,6 +28,11 @@ The PNGs are rendered at 2× scale; 1 px of the design = 1 dp.
 Card sizes are the owner's home screen grid (font scale 1.0, measured
 2026-11-15). Each size has its own layout; it is not one layout scaled.
 
+Home-screen scale: the owner's HyperOS launcher draws widgets at about
+78 % of their size, so the widget multiplies every size and font below by
+1.28 to look like the design there (spec 0005 §8). For now this is a fixed
+number in code; spec 0007 makes it a Widget setting (default 100 %).
+
 Main rule (as in v4): the most important data sits on the left, and
 importance drops to the right, then down: SOC, then pack voltage and
 current, then cell details.

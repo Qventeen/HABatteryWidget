@@ -143,7 +143,75 @@ data class LayoutSpec(
     )
   }
 
+  /**
+   * Every size × [k]: the bucket (so the fit boxes are the space the home screen really gives),
+   * paddings, gaps, icons, ring and fonts; line-height ratios and the shape stay. A launcher that
+   * draws widgets smaller (HyperOS about 0.78) gives the layout 1 / 0.78 of the reported size
+   * ([HOST_SCALE]).
+   */
+  fun scaled(k: Float): LayoutSpec =
+    if (k == 1f) this
+    else copy(
+      bucketWidth = bucketWidth * k,
+      bucketHeight = bucketHeight * k,
+      padding = padding * k,
+      corner = corner * k,
+      packRadius = packRadius * k,
+      columnGap = columnGap * k,
+      bodyTop = bodyTop * k,
+      topRow = topRow * k,
+      topGap = topGap * k,
+      toButtons = toButtons * k,
+      buttonGap = buttonGap * k,
+      timeStart = timeStart * k,
+      hourglass = hourglass * k,
+      hourglassGap = hourglassGap * k,
+      statusIcon = statusIcon * k,
+      buttonTouch = buttonTouch * k,
+      buttonFace = buttonFace * k,
+      buttonIcon = buttonIcon * k,
+      ring = ring * k,
+      ringStroke = ringStroke * k,
+      ringTextGap = ringTextGap * k,
+      packGap = packGap * k,
+      packPadding = packPadding * k,
+      arrow = arrow * k,
+      arrowGap = arrowGap * k,
+      cellColumn = cellColumn * k,
+      cellGap = cellGap * k,
+      cellPadding = cellPadding * k,
+      tempIcon = tempIcon * k,
+      tempIconGap = tempIconGap * k,
+      gridGap = gridGap * k,
+      gridPill = gridPill * k,
+      gridColumnGap = gridColumnGap * k,
+      fonts = DesignFonts(
+        soc = fonts.soc * k,
+        underSoc = fonts.underSoc * k,
+        ringLabel = fonts.ringLabel * k,
+        main = fonts.main * k,
+        cell = fonts.cell * k,
+        small = fonts.small * k,
+      ),
+      empty = EmptySpec(
+        icon = empty.icon * k,
+        gap = empty.gap * k,
+        title = empty.title * k,
+        buttonHeight = empty.buttonHeight * k,
+        buttonPadding = empty.buttonPadding * k,
+        buttonFont = empty.buttonFont * k,
+        buttonTop = empty.buttonTop * k,
+      ),
+    )
+
   companion object {
+    /**
+     * The home-screen scale the widget uses for now (owner, 2026-11-16): the owner's HyperOS
+     * launcher draws widgets at about 78 %, so the layout really gets about 1.28 × the reported
+     * size. Spec 0007 replaces it with a stored Widget setting (default 100 %).
+     */
+    const val HOST_SCALE = 1.28f
+
     /** How far below a bucket Android still shows it (`RemoteViews.fitsIn`). */
     const val PLATFORM_ROUNDING_DP = 1f
 

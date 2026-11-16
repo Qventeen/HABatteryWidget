@@ -1,7 +1,9 @@
 package io.lumensync.habattery.widget
 
+import java.lang.reflect.Modifier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LayoutSpecTest {
@@ -100,4 +102,31 @@ class LayoutSpecTest {
     LayoutSpec.all.forEach { spec ->
       assertEquals(spec.boxes(spec.bucketWidth - 1f, spec.bucketHeight - 1f, 4), spec.fitBoxes(4))
     }
+
+  /** The home-screen scale: every dp size and font × k; the shape and the line-height ratios stay. */
+  @Test
+  fun scaled_multipliesEverySizeAndFont() =
+    LayoutSpec.all.forEach { spec ->
+      val k = LayoutSpec.HOST_SCALE
+      val scaled = spec.scaled(k)
+      assertTrue(sizes(spec).keys.containsAll(listOf("bucketWidth", "padding", "packRadius", "ring", "cellColumn", "gridPill")))
+      assertEquals(spec.name, sizes(spec).mapValues { it.value * k }, sizes(scaled))
+      assertEquals(spec.name, sizes(spec.fonts).mapValues { it.value * k }, sizes(scaled.fonts))
+      assertEquals(spec.name, sizes(spec.empty).mapValues { it.value * k }, sizes(scaled.empty))
+      assertEquals(spec.labelLineHeight, scaled.labelLineHeight)
+      assertEquals(spec.underLineHeight, scaled.underLineHeight)
+      assertEquals(listOf(spec.name, spec.ringFullHeight, spec.cellGrid), listOf(scaled.name, scaled.ringFullHeight, scaled.cellGrid))
+    }
+
+  @Test fun scaled_byOne_isTheSameSpec() = LayoutSpec.all.forEach { assertSame(it, it.scaled(1f)) }
+
+  /**
+   * Every non-static `Float` field (a dp or sp size) by name, so a new size cannot miss the scale.
+   * The line heights are `Float?` ratios and stay out.
+   */
+  private fun sizes(o: Any): Map<String, Float> =
+    o.javaClass.declaredFields
+      .filter { it.type == Float::class.javaPrimitiveType && !Modifier.isStatic(it.modifiers) }
+      .onEach { it.isAccessible = true }
+      .associate { it.name to it.getFloat(o) }
 }
