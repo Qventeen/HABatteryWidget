@@ -168,3 +168,20 @@ and the empty-state button choice in 5.2.
 Tapping a widget opens the app on that widget's size; one app instance
 (`singleTop`), a tap while the app is open switches the tab. First-tab order:
 configured widget, tapped widget, first placed widget, 4×2.
+
+### Review fixes
+
+- Every drawing composes with one fake widget id (-2) and the application
+  context, one at a time (a lock). A random id per drawing left Glance a
+  layout store per id for the life of the process, holding the activity.
+  The application context gives the activity's language, font scale,
+  density and night mode (the app overrides none per activity), and the
+  home-screen widget composes with it too.
+- A drawing that fails to compose or to apply shows the widget's error
+  layout and is logged by class name only; it no longer crashes the app.
+- TalkBack names the preview "Widget preview, 4×2" (per tab); without
+  actions the ↻ and auto circles have no description.
+- The narrow-screen test checks the views' scale and design width, not
+  only the box.
+- The full sync error also shows under an empty preview (no reading).
+- `preview_size` is a format only: not translated.
