@@ -162,3 +162,9 @@ and the empty-state button choice in 5.2.
   not another widget's size.
 - Removed with the card: the ViewModel's auto toggle (only the card used
   it). The ring's content description now comes through `DataTexts`.
+
+### Change by the owner (2026-11-16)
+
+Tapping a widget opens the app on that widget's size; one app instance
+(`singleTop`), a tap while the app is open switches the tab. First-tab order:
+configured widget, tapped widget, first placed widget, 4×2.
