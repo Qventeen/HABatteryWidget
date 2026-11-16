@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.RectF
+import android.os.Build
 import android.text.Layout
 import android.view.View
 import android.view.ViewGroup
@@ -155,6 +156,8 @@ class WidgetFitTest {
   /** Review finding 7: a glyph from a fallback font (Myanmar, a tall font) counts in the line. */
   @Test
   fun fallbackFonts_countInTheLineMetrics() {
+    // Below Android 13 the main font's metrics are intended (the per-text call is new in 13).
+    Assume.assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
     val m = PaintTextMeasurer(context("en", 1f))
     val latin = m.metrics("12", 20f, TextWeight.MEDIUM)
     val mixed = m.metrics("12 \u1000", 20f, TextWeight.MEDIUM)
