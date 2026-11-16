@@ -348,9 +348,9 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
    70, 4×3 80, 5×2 106 dp), and fitting to it made the ring text 3–6 %
    smaller than the PNGs at the owner's sizes (4×2 SOC 26.3 instead of
    28 sp). 5.1 lets the ring shrink between bucket and design size with
-   the fonts unchanged, so this follows 5.1. On cells smaller than the
-   owner's the text can come up to about 3 dp closer to the stroke;
-   nothing is cut.
+   the fonts unchanged, so this follows 5.1. At the bucket the ink can
+   overlap the stroke by up to about 3.5 dp; at the design size it stays
+   inside the inner circle (1 dp tolerance; `WidgetFitTest` checks it).
 2. **No design font went down by 0.5 sp** (5.1). At the buckets, only
    the long worst-case main values do not fit at 50 %: "↑ 3.98 kW" in
    4×2 shows at 15.9 instead of 17 sp, in 5×2 at 20.5 instead of 21, in
@@ -391,3 +391,51 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
   software, where rounded corners do not show; on the emulator's
   launcher the card and the pills are round, and light and dark follow
   the system.
+
+### Review and owner decisions (2026-11-16)
+
+- Deviations 1 and 2: **accepted** by the owner. `docs/design/README.md`
+  now says that long worst-case values shrink a little at the bucket
+  boxes ("↑ 3.98 kW" about 15.8 sp in 4×2).
+- Deviation 3, owner: **time left in Android's narrow format**, in the
+  widget and the app card. Seen on `Pixel_8_API_35` (API 35): English
+  "17h 16m", "45m", "2d 7h"; Ukrainian "17г і 16х", "45х", "2д і 7г".
+  Robolectric (SDK 34): English the same; Ukrainian "17 год. і 16х",
+  "45х", "2д і 7 год.". With it the 5×2 top row shows at its design
+  size ("17h 16m" + "07:13" at 10.5 sp).
+- Owner: **an update from an earlier day shows the date only**, in the
+  app's language (ICU skeleton "MMMd", "yMMMd" in another year): "Nov 13"
+  / "13 лист." on the emulator, "Jan 13" / "13 січ." in Robolectric. The
+  date came from `DateUtils` before, in the device's default language.
+- Review fixes:
+  - A sync error keeps the top-row text size: the update time is still
+    fitted when the icon takes its place.
+  - Texts are fitted to the boxes at the bucket − 1 dp (Android shows a
+    bucket from about 1 dp below it), with 0.5 dp width slack.
+  - Line metrics count fallback fonts (Android 10+,
+    `Paint.getFontMetricsInt` per text).
+  - The app card caps the system font scale at the v4 maximum again.
+  - A system font-scale change redraws the widget (`ConfigWatcher`, which
+    replaces 0008's `LocaleWatcher` and also watches the language).
+  - The picker preview card is the 4×2 bucket (261 × 126 dp) with text
+    sizes in dp.
+  - `WidgetFitTest` also runs just under each bucket and at font scale
+    1.3 in Ukrainian, and checks the ring ink at the design sizes.
+
+### Ring text fit (review finding 4, the reviewer's call)
+
+Each ring line's ink must stay inside the inner circle: its width within
+the circle's chord at that line's height (1 dp tolerance). The sizes are
+found in three steps:
+
+1. Raised groups (asking for more than 50 %) shrink first, at most down
+   to their 50 % size.
+2. A stack taller than the circle shrinks all lines by one factor.
+3. A line still too wide for its chord shrinks alone.
+
+So a long kWh / Ah line does not make the SOC number smaller, and a
+large SOC number never makes "SOC" or kWh smaller than at 50 %.
+Measured on the emulator, 4×2, Ukrainian, 50 %: SOC 23.2 sp before,
+28.0 sp after; "4,58 кВт·год" alone shrinks to 7.6 sp (8.3 before). At
+SOC 100 % in English the number grows to 29.7 sp while "SOC" and kWh
+stay at 8.5 and 10 sp (before: 40.9, 6.2 and 7.3 sp).
