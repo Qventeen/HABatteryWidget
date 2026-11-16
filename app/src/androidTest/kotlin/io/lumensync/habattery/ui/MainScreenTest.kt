@@ -202,7 +202,7 @@ class MainScreenTest {
     assertEquals(HomeScale.DEFAULT, storedSettings().homeScalePercent)
     slider.performTouchInput { up() }
     compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().homeScalePercent == HomeScale.MAX }
-    compose.onNodeWithText(text(R.string.widget_reset_defaults)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.widget_reset_sizes)).performScrollTo().performClick()
   }
 
   @Test
@@ -214,7 +214,7 @@ class MainScreenTest {
       }
     }
     compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
-    compose.onNodeWithText(text(R.string.widget_reset_defaults)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.widget_reset_sizes)).performScrollTo().performClick()
     compose.waitUntil(LOAD_TIMEOUT_MS) {
       val s = storedSettings()
       s.fontPercents == FontPercents() && s.homeScalePercent == HomeScale.DEFAULT
