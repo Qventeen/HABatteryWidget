@@ -18,8 +18,8 @@ class HomeScaleTest {
     assertEquals(80, HomeScale.clamp(79))
     assertEquals(80, HomeScale.clamp(80))
     assertEquals(100, HomeScale.clamp(100))
-    assertEquals(150, HomeScale.clamp(150))
-    assertEquals(150, HomeScale.clamp(151))
+    assertEquals(200, HomeScale.clamp(200))
+    assertEquals(200, HomeScale.clamp(201))
   }
 
   @Test
@@ -31,9 +31,9 @@ class HomeScaleTest {
 
   @Test
   fun settingsClamped_clampsBothParts() {
-    val c = Settings(fontPercents = FontPercents(soc = 5), homeScalePercent = 200).clamped()
+    val c = Settings(fontPercents = FontPercents(soc = 5), homeScalePercent = 250).clamped()
     assertEquals(25, c.fontPercents.soc)
-    assertEquals(150, c.homeScalePercent)
+    assertEquals(200, c.homeScalePercent)
   }
 
   @Test

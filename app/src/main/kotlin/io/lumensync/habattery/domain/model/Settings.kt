@@ -33,12 +33,12 @@ val Settings.textSizeChanged: Boolean
 /**
  * The home-screen scale in percent (spec 0007, §8): some launchers draw widgets smaller than their
  * reported size (HyperOS about 78 %), so the layout is made 100 / that much bigger. 100 = as
- * reported. The app preview never uses it. Stored values outside 80–150 are clamped when read.
+ * reported. The app preview never uses it. Stored values outside 80–200 are clamped when read.
  */
 object HomeScale {
   const val MIN = 80
   const val DEFAULT = 100
-  const val MAX = 150
+  const val MAX = 200
 
   fun clamp(percent: Int): Int = percent.coerceIn(MIN, MAX)
 

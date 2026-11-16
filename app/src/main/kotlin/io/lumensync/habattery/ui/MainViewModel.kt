@@ -180,7 +180,7 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(fontPercents = clamped) }
   }
 
-  /** The home-screen scale saves at once (clamped to 80–150); the widgets redraw with it. */
+  /** The home-screen scale saves at once (clamped to 80–200); the widgets redraw with it. */
   fun saveHomeScale(percent: Int) {
     val clamped = HomeScale.clamp(percent)
     save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = clamped) }

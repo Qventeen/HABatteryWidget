@@ -177,3 +177,8 @@ replaces the number fields of §3.1, §5.2 and §5.3.
 - `HomeScale.factor(percent)` holds the percent-to-multiplier conversion and is unit-tested.
 - The androidTest `scaleSlider_savesWhenReleased` starts the gesture inside the track, checks that
   nothing is stored before release, then releases (compile only; the owner runs it).
+
+### Change by the owner (2026-11-16, phone check)
+
+- The scale goes up to **200 %** (was 150 %): 150 % was not enough for the owner. Range 80–200 %,
+  step 1, default 100 %.

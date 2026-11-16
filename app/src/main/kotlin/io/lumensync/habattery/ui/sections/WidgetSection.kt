@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
 
 /**
  * What the widget shows, its font sizes as percents (app-wide; 50 % is the design) and the
- * home-screen scale (80–150 %, 100 = as reported). Every change saves at once and redraws the
+ * home-screen scale (80–200 %, 100 = as reported). Every change saves at once and redraws the
  * widgets; a slider saves when released. One button puts the font sizes and the scale back to the
  * defaults.
  */
@@ -67,7 +67,7 @@ fun WidgetSection(
   }
 }
 
-/** The home-screen scale: a slider from 80 to 150 % in steps of 1, and a line saying what it is for. */
+/** The home-screen scale: a slider from 80 to 200 % in steps of 1, and a line saying what it is for. */
 @Composable
 private fun HomeScaleSlider(stored: Int, onSave: (Int) -> Unit) {
   var dragValue by rememberSaveable { mutableStateOf<Int?>(null) }

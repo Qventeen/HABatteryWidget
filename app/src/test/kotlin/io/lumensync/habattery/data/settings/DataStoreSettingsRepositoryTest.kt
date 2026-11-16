@@ -83,7 +83,7 @@ class DataStoreSettingsRepositoryTest {
   @Test
   fun homeScale_aboveTheRange_isClampedWhenRead() = runTest {
     file.writeText("""{"schemaVersion":1,"settings":{"homeScalePercent":300}}""")
-    assertEquals(150, repo().settings.first().homeScalePercent)
+    assertEquals(200, repo().settings.first().homeScalePercent)
   }
 
   @Test
