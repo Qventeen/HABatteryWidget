@@ -45,7 +45,6 @@ class MainActivity : ComponentActivity() {
           tokens = c.tokenStore,
           cache = c.readingCache,
           sync = c.syncBattery,
-          toggleAuto = c.toggleAutoRefresh,
           scheduler = c.syncScheduler,
           widgets = c.widgetRefresher,
           source = c.batterySource,
@@ -120,7 +119,6 @@ class MainActivity : ComponentActivity() {
   private fun mainActions(appLanguage: AppLanguage) =
     MainActions(
       refreshNow = viewModel::refreshNow,
-      toggleAutoRefresh = viewModel::toggleAutoRefresh,
       saveConnection = viewModel::saveConnection,
       saveToken = viewModel::saveToken,
       saveEntities = viewModel::saveEntities,

@@ -146,7 +146,7 @@ internal fun Ring(d: DataLook, modifier: GlanceModifier) {
   val density = context.resources.displayMetrics.density
   val sizePx = (s.ring * density * RING_RENDER_SCALE).roundToInt().coerceAtLeast(1)
   val strokePx = s.ringStroke * density * RING_RENDER_SCALE
-  val description = context.resources.getQuantityString(R.plurals.widget_soc_description, d.model.socPercent, d.model.socPercent)
+  val description = d.texts.ringDescription
 
   Box(
     modifier.semantics { contentDescription = description },

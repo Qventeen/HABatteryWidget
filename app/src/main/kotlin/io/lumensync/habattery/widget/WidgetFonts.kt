@@ -27,6 +27,8 @@ internal data class DataTexts(
   val errorDescription: String?,
   val socLabel: String,
   val soc: String,
+  /** The ring's content description: "State of charge 55 percent". */
+  val ringDescription: String,
   val underSoc: String,
   val voltage: String,
   val main: String,
@@ -56,6 +58,7 @@ internal data class DataTexts(
         errorDescription = m.error?.let(texts::syncErrorDescription),
         socLabel = texts.socLabel,
         soc = texts.soc(m),
+        ringDescription = texts.ringDescription(m),
         underSoc = texts.underSoc(m),
         voltage = texts.voltage(m),
         main = texts.main(m),

@@ -32,6 +32,7 @@ class WidgetFontsTest {
       errorDescription = if (showError) "Sync error: Token rejected" else null,
       socLabel = "SOC",
       soc = "55",
+      ringDescription = "State of charge 55 percent",
       underSoc = "4.58 kWh",
       voltage = "26.50 V",
       main = main,

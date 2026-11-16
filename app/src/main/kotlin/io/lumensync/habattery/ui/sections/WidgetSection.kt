@@ -25,7 +25,7 @@ import io.lumensync.habattery.domain.model.UnderSoc
 import kotlin.math.roundToInt
 
 /**
- * What the widget and the overview card show, and their font sizes as percents (app-wide; 50 % is
+ * What the widget shows, and its font sizes as percents (app-wide; 50 % is
  * the design). Every change saves at once and redraws the widgets; a slider saves when released.
  */
 @Composable

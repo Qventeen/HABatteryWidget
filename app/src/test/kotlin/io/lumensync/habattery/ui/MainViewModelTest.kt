@@ -4,7 +4,6 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
-import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
@@ -14,7 +13,6 @@ import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
-import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
@@ -74,9 +72,8 @@ class MainViewModelTest {
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
-    val toggle = ToggleAutoRefresh(settings, scheduler, widgets)
     val vm = MainViewModel(
-        settings, tokens, cache, sync, toggle, scheduler, widgets, batterySource ?: source, clock = { 1_000L })
+        settings, tokens, cache, sync, scheduler, widgets, batterySource ?: source, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
     return vm
   }
@@ -99,15 +96,6 @@ class MainViewModelTest {
     val widget = state.widget
     assertTrue("$widget", widget is WidgetModel.Data)
     assertEquals(50, (widget as WidgetModel.Data).socPercent)
-  }
-
-  @Test fun toggleAutoRefresh_turnsOnWith15AndSyncs() = runTest(dispatcher) {
-    val vm = start()
-    vm.toggleAutoRefresh()
-    advanceUntilIdle()
-    assertEquals(RefreshSettings(true, 15), state.settings.refresh)
-    assertEquals(1, scheduler.syncNowCalls)
-    assertTrue((state.widget as WidgetModel.Data).autoRefresh)
   }
 
   @Test fun init_syncsOnce() = runTest(dispatcher) {

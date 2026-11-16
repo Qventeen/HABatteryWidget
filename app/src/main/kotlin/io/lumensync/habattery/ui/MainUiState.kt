@@ -10,7 +10,7 @@ data class MainUiState(
   val settings: Settings = Settings(),
   val hasToken: Boolean = false,
   val overview: BatteryOverview? = null,
-  /** What the overview card draws; built with [overview], null until the first state. */
+  /** What the widget preview draws; built with [overview], null until the first state. */
   val widget: WidgetModel? = null,
   val syncing: Boolean = false,
   val errors: List<FieldError> = emptyList(),

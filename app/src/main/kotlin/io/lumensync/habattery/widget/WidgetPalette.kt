@@ -5,7 +5,7 @@ import io.lumensync.habattery.domain.Level
 
 /**
  * The colours of widget design v4 (CSS tokens in `docs/design/widget-4x2.html`), one set per theme.
- * The widget (Glance) and the app's overview card (Compose) both draw with it.
+ * The widget draws with it through [WidgetColors].
  */
 data class WidgetPalette(
   val card: Color,

@@ -10,8 +10,8 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 /**
- * What the widget and the app card show (spec 0003, 5.2). Both only draw it. A missing value stays
- * null here; the drawing shows "—".
+ * What the widget shows, on the home screen and in the app's preview (spec 0006); the drawing only
+ * reads it. A missing value stays null here; the drawing shows "—".
  */
 sealed interface WidgetModel {
   enum class EmptyKind {

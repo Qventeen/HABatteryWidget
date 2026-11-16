@@ -43,7 +43,6 @@ import java.util.Locale
 /** What the screen can ask for: the ViewModel's functions plus the system actions. */
 data class MainActions(
   val refreshNow: () -> Unit,
-  val toggleAutoRefresh: () -> Unit,
   val saveConnection: (url: String) -> Unit,
   val saveToken: (token: String) -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
