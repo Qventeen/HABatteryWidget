@@ -116,7 +116,7 @@ class LayoutSpecTest {
   @Test
   fun scaled_multipliesEverySizeAndFont() =
     LayoutSpec.all.forEach { spec ->
-      val k = LayoutSpec.HOST_SCALE
+      val k = 1.28f
       val scaled = spec.scaled(k)
       assertTrue(sizes(spec).keys.containsAll(listOf("bucketWidth", "padding", "packRadius", "ring", "cellColumn", "gridPill")))
       assertEquals(spec.name, sizes(spec).mapValues { it.value * k }, sizes(scaled))

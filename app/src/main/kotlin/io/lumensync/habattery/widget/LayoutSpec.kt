@@ -151,7 +151,7 @@ data class LayoutSpec(
    * Every size × [k]: the bucket (so the fit boxes are the space the home screen really gives),
    * paddings, gaps, icons, ring and fonts; line-height ratios and the shape stay. A launcher that
    * draws widgets smaller (HyperOS about 0.78) gives the layout 1 / 0.78 of the reported size
-   * ([HOST_SCALE]).
+   * (the stored home-screen scale, `Settings.homeScalePercent`).
    */
   fun scaled(k: Float): LayoutSpec =
     if (k == 1f) this
@@ -209,13 +209,6 @@ data class LayoutSpec(
     )
 
   companion object {
-    /**
-     * The home-screen scale the widget uses for now (owner, 2026-11-16): the owner's HyperOS
-     * launcher draws widgets at about 78 %, so the layout really gets about 1.28 × the reported
-     * size. Spec 0007 replaces it with a stored Widget setting (default 100 %).
-     */
-    const val HOST_SCALE = 1.28f
-
     /** How much smaller than its design card a bucket is, each way (spec 0005, 5.1). */
     const val BUCKET_MARGIN_DP = 6f
 

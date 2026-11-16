@@ -4,7 +4,8 @@ import kotlinx.serialization.Serializable
 
 /**
  * Stored settings. Defaults are empty values (0001 §14), except the display choices and font
- * percents: they are not user data, so they default to the design values (specs 0003, 0005).
+ * percents and home-screen scale: they are not user data, so they default to the design values
+ * (specs 0003, 0005, 0007).
  */
 @Serializable
 data class Settings(
@@ -15,8 +16,32 @@ data class Settings(
   val capacityAh: Double? = null,
   val display: DisplaySettings = DisplaySettings(),
   val fontPercents: FontPercents = FontPercents(),
+  val homeScalePercent: Int = HomeScale.DEFAULT,
   val appearance: AppearanceSettings = AppearanceSettings(),
 )
+
+/** Both stored ranges applied (fonts and home-screen scale); readers get only valid values. */
+fun Settings.clamped(): Settings =
+  copy(fontPercents = fontPercents.clamped(), homeScalePercent = HomeScale.clamp(homeScalePercent))
+
+/** What the Widget section's text-size summary reports: any font off 50 % or the scale off 100 %. */
+val Settings.textSizeChanged: Boolean
+  get() =
+    FontGroup.entries.any { fontPercents[it] != FontPercents.DEFAULT } ||
+      homeScalePercent != HomeScale.DEFAULT
+
+/**
+ * The home-screen scale in percent (spec 0007, §8): some launchers draw widgets smaller than their
+ * reported size (HyperOS about 78 %), so the layout is made 100 / that much bigger. 100 = as
+ * reported. The app preview never uses it. Stored values outside 80–150 are clamped when read.
+ */
+object HomeScale {
+  const val MIN = 80
+  const val DEFAULT = 100
+  const val MAX = 150
+
+  fun clamp(percent: Int): Int = percent.coerceIn(MIN, MAX)
+}
 
 @Serializable
 data class ConnectionSettings(val url: String = "")

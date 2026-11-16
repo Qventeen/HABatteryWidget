@@ -44,6 +44,7 @@ import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.testing.configuredSettings
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -261,8 +262,29 @@ class WidgetContentTest {
   @Test
   fun hostScale_eachBucket_drawsItsLayout() =
     LayoutSpec.all.forEach { spec ->
-      assertEquals(spec.name, shape(spec, 1f), shape(spec, LayoutSpec.HOST_SCALE))
+      assertEquals(spec.name, shape(spec, 1f), shape(spec, 1.28f))
     }
+
+  /** The stored home-screen scale reaches the drawing: the SOC number is bigger at 1.28 than at 1.0. */
+  @Test
+  fun hostScale_makesTheSocNumberBigger() {
+    assertTrue(socSize(1.28f) > socSize(1f))
+    assertTrue(socSize(1f) > socSize(0.8f))
+  }
+
+  private fun socSize(hostScale: Float): Float {
+    var size = 0f
+    render(model(), hostScale = hostScale) {
+      onNode(
+          GlanceNodeMatcher<MappedNode>("SOC number") { node ->
+            val text = node.value.emittable as? EmittableText
+            (text?.text == "55").also { if (it) size = text!!.style?.fontSize?.value ?: 0f }
+          }
+        )
+        .assertExists()
+    }
+    return size
+  }
 
   @Test
   fun fiveByFour_stretchesFiveByThree() =

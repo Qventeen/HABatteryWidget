@@ -58,7 +58,7 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
               refresh = actionRunCallback<RefreshAction>(),
               toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
             ),
-          hostScale = LayoutSpec.HOST_SCALE,
+          hostScale = settings.homeScalePercent / 100f,
         )
       }
     }

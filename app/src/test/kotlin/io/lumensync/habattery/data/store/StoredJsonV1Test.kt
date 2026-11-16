@@ -61,6 +61,7 @@ class StoredJsonV1Test {
           "capacityAh": 314.5,
           "display": { "underSoc": "AH", "mainValue": "POWER" },
           "fontPercents": { "soc": 45, "underSoc": 30, "main": 75, "cell": 60, "small": 100 },
+          "homeScalePercent": 128,
           "appearance": { "theme": "DARK" }
         }
       }
@@ -93,6 +94,7 @@ class StoredJsonV1Test {
             capacityAh = 314.5,
             display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
             fontPercents = FontPercents(soc = 45, underSoc = 30, main = 75, cell = 60, small = 100),
+            homeScalePercent = 128,
             appearance = AppearanceSettings(ThemeChoice.DARK),
           ),
       )
@@ -124,6 +126,16 @@ class StoredJsonV1Test {
         """{"schemaVersion":1,"settings":{"fontSizes":{"soc":41.0,"main":20.0,"small":11.5}}}""",
       )
     assertEquals(FontPercents(), record.settings.fontPercents)
+  }
+
+  @Test
+  fun oldSettingsWithoutScale_loadWith100() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"fontPercents":{"soc":40}}}""",
+      )
+    assertEquals(100, record.settings.homeScalePercent)
   }
 
   @Test
