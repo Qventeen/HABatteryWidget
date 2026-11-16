@@ -6,8 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.glance.GlanceId
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
@@ -32,6 +35,7 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
     val initialCache = container.readingCache.state.first()
     val initialSettings = container.settingsRepository.settings.first()
     val initialHasToken = container.tokenStore.hasToken.first()
+    val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
 
     provideContent {
       val cache by container.readingCache.state.collectAsState(initialCache)
@@ -48,7 +52,9 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
           colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
           actions =
             WidgetActions(
-              openApp = actionStartActivity<MainActivity>(),
+              // Glance puts each parameter into the activity intent as an extra named by the key.
+              openApp =
+                actionStartActivity<MainActivity>(actionParametersOf(TappedWidgetKey to appWidgetId)),
               refresh = actionRunCallback<RefreshAction>(),
               toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
             ),
@@ -58,3 +64,11 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
     }
   }
 }
+
+/**
+ * Extra on the intent that opens the app from a tap: the id of the tapped widget, so the app opens
+ * on that widget's size. Not `EXTRA_APPWIDGET_ID`: that one means "configure this widget".
+ */
+const val EXTRA_TAPPED_WIDGET_ID = "io.lumensync.habattery.extra.TAPPED_WIDGET_ID"
+
+private val TappedWidgetKey = ActionParameters.Key<Int>(EXTRA_TAPPED_WIDGET_ID)
