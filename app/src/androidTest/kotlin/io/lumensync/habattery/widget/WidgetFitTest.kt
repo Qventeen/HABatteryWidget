@@ -43,6 +43,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -76,6 +77,14 @@ class WidgetFitTest {
     override suspend fun provideGlance(context: Context, id: GlanceId) = provideContent { content() }
   }
 
+  /**
+   * The sizes each layout is drawn at here: just under its bucket (Android still shows the bucket
+   * 1 dp below it), the bucket, and the owner's sizes.
+   */
+  private fun sizes(spec: LayoutSpec): List<Pair<Float, Float>> =
+    listOf(spec.bucketWidth - 0.9f to spec.bucketHeight - 0.9f, spec.bucketWidth to spec.bucketHeight) +
+      ownerSizes.getValue(spec)
+
   @Test
   fun everyText_fits_atEverySizeSettingAndLanguage() {
     val problems = mutableListOf<String>()
@@ -84,9 +93,15 @@ class WidgetFitTest {
         val percents = FontPercents(percent, percent, percent, percent, percent)
         for ((name, model) in models(context(lang, 1f))) {
           for (spec in LayoutSpec.all) {
-            for ((w, h) in listOf(spec.bucketWidth to spec.bucketHeight) + ownerSizes.getValue(spec)) {
+            for ((w, h) in sizes(spec)) {
               val view = render(context(lang, 1f), spec, w, h, model, percents, ThemeChoice.LIGHT)
-              clipped(view).forEach { problems += "$lang $percent% $name ${spec.name} at ${w}x$h: $it" }
+              val at = "$lang $percent% $name ${spec.name} at ${w}x$h"
+              clipped(view).forEach { problems += "$at: $it" }
+              val data = model as? WidgetModel.Data
+              if (data != null && (w to h) in ownerSizes.getValue(spec)) {
+                val description = context(lang, 1f).resources.getQuantityString(io.lumensync.habattery.R.plurals.widget_soc_description, data.socPercent, data.socPercent)
+                ringInkOutside(view, spec, description).forEach { problems += "$at: $it" }
+              }
             }
           }
         }
@@ -98,12 +113,14 @@ class WidgetFitTest {
   @Test
   fun largeSystemFont_everyTextFits() {
     val problems = mutableListOf<String>()
-    for (percent in listOf(50, 100)) {
-      val percents = FontPercents(percent, percent, percent, percent, percent)
-      for ((name, model) in models(context("en", 1.3f))) {
-        for (spec in LayoutSpec.all) {
-          val view = render(context("en", 1.3f), spec, spec.bucketWidth, spec.bucketHeight, model, percents, ThemeChoice.LIGHT)
-          clipped(view).forEach { problems += "1.3 $percent% $name ${spec.name}: $it" }
+    for (lang in listOf("en", "uk")) {
+      for (percent in listOf(50, 100)) {
+        val percents = FontPercents(percent, percent, percent, percent, percent)
+        for ((name, model) in models(context(lang, 1.3f))) {
+          for (spec in LayoutSpec.all) {
+            val view = render(context(lang, 1.3f), spec, spec.bucketWidth, spec.bucketHeight, model, percents, ThemeChoice.LIGHT)
+            clipped(view).forEach { problems += "1.3 $lang $percent% $name ${spec.name}: $it" }
+          }
         }
       }
     }
@@ -176,13 +193,13 @@ class WidgetFitTest {
   /** Saves the drawings next to the design PNGs: light and dark, normal and sync error, 50 %. */
   @Test
   fun shots() {
-    if (!saveShots) return
+    Assume.assumeTrue("run with -e fitShots true", saveShots)
     val dir = File(target.getExternalFilesDir(null), "fit").apply { mkdirs() }
     for (lang in listOf("en", "uk")) {
       val context = context(lang, 1f)
       val models = models(context)
       for (spec in LayoutSpec.all) {
-        for ((w, h) in listOf(spec.bucketWidth to spec.bucketHeight) + ownerSizes.getValue(spec)) {
+        for ((w, h) in sizes(spec)) {
           for (theme in listOf(ThemeChoice.LIGHT, ThemeChoice.DARK)) {
             for (name in listOf("typical", "error", "worst-current", "worst-power", "nodata", "setup")) {
               for (percent in listOf(50, 100)) {
@@ -321,6 +338,39 @@ class WidgetFitTest {
     }
     visit(root, emptyList())
     return found
+  }
+
+  /**
+   * At the design size the ring's text ink stays inside the ring's inner circle (1 dp tolerance,
+   * spec 0005, 5.5). The ring is the view with the ring's description; its track image is drawn
+   * fit-centre, so the circle is the image's largest centred square.
+   */
+  private fun ringInkOutside(root: View, spec: LayoutSpec, description: String): List<String> {
+    val ring = find(root) { it.contentDescription?.toString() == description } ?: return listOf("ring missing")
+    val image = find(ring) { it is android.widget.ImageView } ?: return listOf("ring image missing")
+    val box = rectIn(image, root)
+    val d = minOf(box.width(), box.height())
+    val inner = d / 2 - spec.ringStroke / spec.ring * d
+    val density = root.resources.displayMetrics.density
+    val found = mutableListOf<String>()
+    fun visit(v: View) {
+      if (v is TextView && v.text.isNotEmpty()) {
+        val ink = contentBox(v, root)
+        val corners = listOf(ink.left to ink.top, ink.right to ink.top, ink.left to ink.bottom, ink.right to ink.bottom)
+        val far = corners.maxOf { (x, y) -> kotlin.math.hypot(x - box.centerX(), y - box.centerY()) }
+        // Views are laid out in whole pixels: 1 px of rounding on top of the tolerance.
+        if (far > inner + TextFit.RING_TOLERANCE_DP * density + 1f) found += "'${v.text}' leaves the ring by ${(far - inner) / density} dp"
+      }
+      if (v is ViewGroup) for (i in 0 until v.childCount) visit(v.getChildAt(i))
+    }
+    visit(ring)
+    return found
+  }
+
+  private fun find(view: View, match: (View) -> Boolean): View? {
+    if (match(view)) return view
+    if (view is ViewGroup) for (i in 0 until view.childCount) find(view.getChildAt(i), match)?.let { return it }
+    return null
   }
 
   /**
