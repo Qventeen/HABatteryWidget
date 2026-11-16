@@ -40,6 +40,8 @@ import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.ui.sections.WidgetPreviewCard
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import io.lumensync.habattery.widget.WidgetPalette
+import kotlin.math.roundToInt
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -159,13 +161,37 @@ class WidgetPreviewTest {
     compose.onNodeWithText(context.getString(R.string.widget_sync_error, reason)).assertExists()
   }
 
-  /** At 300 dp the 340 dp wide 5×3 shrinks to the width and keeps its shape. */
+  /**
+   * At 300 dp the 340 dp wide 5×3 shrinks to the width and keeps its shape: its views keep their
+   * design size and are drawn scaled.
+   */
   @Test
   fun narrowWidth_fiveByThreeFits() {
     show(model(sample), firstTab = PreviewTab.TAB_5X3, width = 300.dp)
     val design = PreviewTab.TAB_5X3.layout.designSize
-    waitForSize(DpSize(300.dp, design.height * (300f / design.width.value)))
+    val scale = 300f / design.width.value
+    waitForSize(DpSize(300.dp, design.height * scale))
     waitForWidgetText("55")
+    compose.waitForIdle()
+    val host = previewHost(PreviewTab.TAB_5X3)
+    val (width, scaleX, scaleY) =
+      compose.runOnUiThread { host.getChildAt(0).let { Triple(it.width, it.scaleX, it.scaleY) } }
+    assertEquals((design.width.value * context.resources.displayMetrics.density).roundToInt(), width)
+    assertEquals(scale, scaleX, SCALE_TOLERANCE)
+    assertEquals(scale, scaleY, SCALE_TOLERANCE)
+  }
+
+  /** The view that holds the applied widget views, found by its TalkBack name. */
+  private fun previewHost(tab: PreviewTab): ViewGroup {
+    val name = context.getString(R.string.preview_description, label(tab))
+    var found: ViewGroup? = null
+    fun visit(view: View) {
+      if (view !is ViewGroup) return
+      if (view.contentDescription?.toString() == name) found = view
+      (0 until view.childCount).forEach { visit(view.getChildAt(it)) }
+    }
+    compose.runOnUiThread { visit(context.window.decorView) }
+    return checkNotNull(found) { name }
   }
 
   /** The app's theme wins over the device's mode: Dark and Light draw their own card. */
@@ -189,5 +215,8 @@ class WidgetPreviewTest {
 
   private companion object {
     const val TIMEOUT_MS = 10_000L
+
+    /** Both sizes are rounded to whole pixels before the scale is taken. */
+    const val SCALE_TOLERANCE = 0.005f
   }
 }
