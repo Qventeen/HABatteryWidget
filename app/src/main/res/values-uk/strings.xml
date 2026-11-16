@@ -110,7 +110,7 @@
     <string name="appearance_summary_theme_system">Системна тема</string>
     <string name="appearance_summary_theme_light">Світла тема</string>
     <string name="appearance_summary_theme_dark">Темна тема</string>
-    <string name="appearance_summary_language_system">Мова системи</string>
+    <string name="appearance_summary_language_system">Системна мова</string>
     <string name="appearance_summary">%1$s · %2$s</string>
 
     <string name="widget_settings_title">Віджет</string>
@@ -127,7 +127,7 @@
     <string name="widget_font_small">Дрібний текст</string>
     <string name="widget_font_value">%1$d %%</string>
     <string name="widget_scale_label">Масштаб на головному екрані</string>
-    <string name="widget_scale_hint">Лише якщо ваш екран малює віджети меншими. Більшість телефонів: 100 %.</string>
+    <string name="widget_scale_hint">Лише якщо ваш головний екран малює віджети меншими. Більшість телефонів: 100 %.</string>
     <string name="widget_reset_sizes">Скинути розміри</string>
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
