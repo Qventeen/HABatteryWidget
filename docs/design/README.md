@@ -66,7 +66,7 @@ row spans the full width and the ring sits below it.
   the colour show the direction. "↓ 125.5 A" and "↑ 3.98 kW" fit at the
   design card sizes; the widget fits its texts to the boxes at its bucket
   sizes (6 dp smaller, spec 0005), where these long values shrink a little
-  ("↑ 3.98 kW" about 15.8 sp in 4×2).
+  ("↑ 3.98 kW" about 16 sp in 4×2).
 - **Cell pills:** a small fixed gap, and the pills grow to fill the space,
   so the cell column starts and ends with the pack pills. Never spread the
   pills with big gaps.
@@ -83,7 +83,7 @@ Design sizes per size (sp) = 50 % of the font settings; 100 % = twice the
 design size, 25 % = half (spec 0005). Above 50 % each text grows only as far
 as its box allows. The design sizes fit the longest values at the design
 card sizes; at the bucket boxes long worst-case values like "↑ 3.98 kW"
-shrink a little (about 15.8 sp in 4×2).
+shrink a little (about 16 sp in 4×2).
 
 | Group | 4×2 | 5×2 | 4×3 | 5×3 |
 |---|---|---|---|---|
