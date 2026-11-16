@@ -12,6 +12,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
 import androidx.glance.appwidget.testing.unit.hasRunCallbackClickAction
+import androidx.glance.testing.unit.hasClickAction
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.testing.GlanceNodeMatcher
 import androidx.glance.testing.unit.MappedNode
@@ -208,6 +209,40 @@ class WidgetContentTest {
       onNode(hasTextEqualTo(text(R.string.widget_open_app))).assertExists()
     }
 
+  /** The app's preview (spec 0006): every layout draws, nothing takes taps. */
+  @Test
+  fun noActions_eachBucket_nothingTakesTaps() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
+        onNode(hasTestTag("layout_${spec.name}")).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+        onAllNodes(hasClickAction()).assertCountEquals(0)
+      }
+    }
+
+  /** We are already in the app: the preview's empty state has no "Open app". */
+  @Test
+  fun noActions_empty_noOpenApp() =
+    render(model(reading = null, error = SyncError.Unauthorized), withActions = false) {
+      onNode(hasTextEqualTo(text(R.string.widget_no_data))).assertExists()
+      onNode(hasTextEqualTo(text(R.string.error_unauthorized))).assertExists()
+      onAllNodes(hasTextEqualTo(text(R.string.widget_open_app))).assertCountEquals(0)
+      onAllNodes(hasClickAction()).assertCountEquals(0)
+    }
+
+  /** The preview's circles do nothing, so TalkBack skips them; the values stay described. */
+  @Test
+  fun noActions_eachBucket_buttonsAreNotDescribed() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
+        listOf(R.string.widget_refresh_action, R.string.widget_auto_off).forEach {
+          onAllNodes(hasContentDescriptionEqualTo(text(it))).assertCountEquals(0)
+        }
+        onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
+        onNode(hasTextEqualTo("55")).assertExists()
+      }
+    }
+
   @Test
   fun eachBucket_drawsItsLayout() =
     LayoutSpec.all.forEach { spec ->
@@ -311,16 +346,18 @@ class WidgetContentTest {
     fontPercents: FontPercents = FontPercents(),
     colors: WidgetColors = WidgetColors(ThemeChoice.SYSTEM),
     hostScale: Float = 1f,
+    withActions: Boolean = true,
     assertions: GlanceAppWidgetUnitTest.() -> Unit,
   ) = runGlanceAppWidgetUnitTest {
     setContext(context)
     setAppWidgetSize(DpSize(widthDp.dp, heightDp.dp))
     val actions =
       WidgetActions(
-        openApp = actionStartActivity(openAppComponent),
-        refresh = actionRunCallback<NoOpRefresh>(),
-        toggleAuto = actionRunCallback<NoOpToggle>(),
-      )
+          openApp = actionStartActivity(openAppComponent),
+          refresh = actionRunCallback<NoOpRefresh>(),
+          toggleAuto = actionRunCallback<NoOpToggle>(),
+        )
+        .takeIf { withActions }
     provideComposable { WidgetContent(model, fontPercents, colors, actions, hostScale, FakeMeasurer) }
     assertions()
   }

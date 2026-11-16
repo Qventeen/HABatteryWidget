@@ -58,7 +58,7 @@ data class RefreshSettings(val auto: Boolean = false, val intervalMinutes: Int? 
   }
 }
 
-/** What the widget and the app card show under the SOC number. */
+/** What the widget shows under the SOC number. */
 @Serializable
 enum class UnderSoc {
   KWH,
@@ -72,14 +72,14 @@ enum class MainValue {
   POWER,
 }
 
-/** App-wide display choices for the widget and the app card. */
+/** App-wide display choices for the widget. */
 @Serializable
 data class DisplaySettings(
   val underSoc: UnderSoc = UnderSoc.KWH,
   val mainValue: MainValue = MainValue.CURRENT,
 )
 
-/** The font-size groups of the widget and the app card (README "Font sizes"). */
+/** The font-size groups of the widget (README "Font sizes"). */
 enum class FontGroup {
   SOC,
   UNDER_SOC,
@@ -136,7 +136,7 @@ data class FontPercents(
   }
 }
 
-/** The colour theme of the app, the overview card and the widget. */
+/** The colour theme of the app and the widget. */
 @Serializable
 enum class ThemeChoice {
   SYSTEM,

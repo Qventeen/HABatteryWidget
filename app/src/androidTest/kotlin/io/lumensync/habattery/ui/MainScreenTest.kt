@@ -31,7 +31,7 @@ import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
-import io.lumensync.habattery.ui.sections.OVERVIEW_CARD_TAG
+import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.ui.sections.CONNECTION_SECTION_TAG
 import kotlinx.coroutines.runBlocking
@@ -165,9 +165,9 @@ class MainScreenTest {
     return pixels[2, pixels.height / 2]
   }
 
-  /** A pixel in the bottom padding of the overview card: the card's colour. */
+  /** A pixel in the bottom padding of the widget preview: the widget card's colour. */
   private fun cardPixel(): Color {
-    val pixels = compose.onNodeWithTag(OVERVIEW_CARD_TAG).captureToImage().toPixelMap()
+    val pixels = compose.onNodeWithTag(WIDGET_PREVIEW_TAG).captureToImage().toPixelMap()
     return pixels[pixels.width / 2, pixels.height - 6]
   }
 

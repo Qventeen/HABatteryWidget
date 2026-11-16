@@ -9,7 +9,7 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.format.Formatters
 
-/** The texts of a [WidgetModel.Data], shared by the widget and the app card; "—" when missing. */
+/** The widget's texts of a [WidgetModel]; "—" when missing. */
 class WidgetTexts(private val context: Context, val formatters: Formatters) {
   val missing: String
     get() = context.getString(R.string.value_missing)

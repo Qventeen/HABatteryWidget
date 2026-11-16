@@ -20,15 +20,15 @@ import androidx.glance.layout.width
 
 /** 4×2: the top row over the full width; ring, pack and cell column below it. */
 @Composable
-internal fun Layout4x2(d: DataLook, actions: WidgetActions) = TopRowOverColumns(d, actions)
+internal fun Layout4x2(d: DataLook, actions: WidgetActions?) = TopRowOverColumns(d, actions)
 
 /** 5×3: as 4×2 with the 5×3 sizes; the ring sits in the middle of its row. */
 @Composable
-internal fun Layout5x3(d: DataLook, actions: WidgetActions) = TopRowOverColumns(d, actions)
+internal fun Layout5x3(d: DataLook, actions: WidgetActions?) = TopRowOverColumns(d, actions)
 
 /** 5×2 (layout B): the ring over the full card height, the top row beside it. */
 @Composable
-internal fun Layout5x2(d: DataLook, actions: WidgetActions) {
+internal fun Layout5x2(d: DataLook, actions: WidgetActions?) {
   val s = d.spec
   Row(GlanceModifier.fillMaxSize()) {
     Ring(d, GlanceModifier.width(s.ring.dp).fillMaxHeight())
@@ -47,7 +47,7 @@ internal fun Layout5x2(d: DataLook, actions: WidgetActions) {
 
 /** 4×3: the top row, ring and pack below it, then the 2 × 2 cell grid. */
 @Composable
-internal fun Layout4x3(d: DataLook, actions: WidgetActions) {
+internal fun Layout4x3(d: DataLook, actions: WidgetActions?) {
   val s = d.spec
   Column(GlanceModifier.fillMaxSize()) {
     TopRow(d, actions)
@@ -63,7 +63,7 @@ internal fun Layout4x3(d: DataLook, actions: WidgetActions) {
 }
 
 @Composable
-private fun TopRowOverColumns(d: DataLook, actions: WidgetActions) {
+private fun TopRowOverColumns(d: DataLook, actions: WidgetActions?) {
   val s = d.spec
   Column(GlanceModifier.fillMaxSize()) {
     TopRow(d, actions)

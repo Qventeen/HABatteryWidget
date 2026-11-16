@@ -7,9 +7,10 @@ app calls `POST {baseUrl}/api/template` with a
 long-lived HA token. The widget draws from the local cache only.
 
 The widget follows design v4 (`docs/design/`): a SOC ring, two big pack values,
-cell and temperature pills, time left, and an auto-refresh toggle. The app's
-overview card shows the same layout. The "Widget" settings section picks kWh or
-Ah under SOC, current or power, and the font sizes.
+cell and temperature pills, time left, and an auto-refresh toggle. The app
+shows a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3). The
+"Widget" settings section picks kWh or Ah under SOC, current or power, and the
+font sizes.
 
 ## Requirements
 

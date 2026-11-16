@@ -12,7 +12,7 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   place), `MainActivity` (launcher and widget configure activity).
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `FullChargeRule`, `RefreshPolicy`,
-  `Validation`, `UrlPolicy`, `WidgetModel` (what widget and app card show),
+  `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
   `WidgetLevels`, `ToggleAutoRefresh`.
 - `data/`: `ha/` (HTTP source, template, response), `settings/`, `cache/`,
   `secure/` (Keystore crypto, `EncryptedTokenStore`), `store/` (JSON DataStore
@@ -27,12 +27,15 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `LayoutSpec` holds each layout's design numbers and bucket, `WidgetLayouts` /
   `WidgetParts` draw them, `WidgetFonts` fits every text to its box (`TextFit`,
   measured by `PaintTextMeasurer`), ring bitmaps, `BatteryWidgetReceiver`, ↻ and
-  auto-toggle actions, refresher, and `WidgetPalette` / `WidgetTexts`, which the
-  app's overview card reuses (the card keeps the v4 look and `CardScale` until
-  spec 0006).
+  auto-toggle actions, refresher, `WidgetPalette` / `WidgetTexts`, and
+  `PreviewWidget` (spec 0006): the app's preview composes the same `WidgetContent`
+  with `GlanceAppWidget.compose()` at the layout's bucket, without actions and at
+  home-screen scale 1, and applies the `RemoteViews` fresh for each drawing (never
+  `reapply`: 4×3 has its own root).
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
-- `ui/`: Compose screen, `MainViewModel`, `sections/`, `theme/`.
+- `ui/`: Compose screen, `MainViewModel`, `PreviewTab` (size tabs, first-tab rule),
+  `sections/` (`WidgetPreviewCard` hosts the preview), `theme/`.
 
 Dependency rule: `ui`, `widget`, `system`, `data` → `domain`. `domain` depends
 on nothing Android. Names of `MainActivity` and `BatteryWidgetReceiver` are

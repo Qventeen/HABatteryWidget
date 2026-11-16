@@ -43,19 +43,24 @@ import io.lumensync.habattery.format.Formatters
 /** What the widget's tap targets do. */
 data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAuto: Action)
 
+/** Taps run [action]; without one (the app's preview) this part takes no taps. */
+internal fun GlanceModifier.tapAction(action: Action?): GlanceModifier =
+  if (action == null) this else clickable(action)
+
 /**
  * The whole widget, drawn from [model] and [colors] only (design v5). The layout is the one made
  * for `LocalSize` (the `SizeMode.Responsive` bucket, spec 0005, A1); its texts are fitted before
- * drawing ([WidgetFonts]). Tapping the card opens the app. [hostScale] multiplies every size and
- * font of the layout, for a home screen that draws widgets smaller than their reported size
- * ([LayoutSpec.scaled]).
+ * drawing ([WidgetFonts]). Tapping the card opens the app. Without [actions] (the app's preview,
+ * spec 0006) nothing takes taps and the empty state has no "Open app" button. [hostScale]
+ * multiplies every size and font of the layout, for a home screen that draws widgets smaller than
+ * their reported size ([LayoutSpec.scaled]).
  */
 @Composable
 fun WidgetContent(
   model: WidgetModel,
   fontPercents: FontPercents,
   colors: WidgetColors,
-  actions: WidgetActions,
+  actions: WidgetActions?,
   hostScale: Float = 1f,
   measurer: TextMeasurer? = null,
 ) {
@@ -73,12 +78,12 @@ fun WidgetContent(
     GlanceModifier.fillMaxSize()
       .background(colors.card)
       .cornerRadius(spec.corner.dp) // Android 12+ only; square before (spec 0003, approach D1)
-      .clickable(actions.openApp)
+      .tapAction(actions?.openApp)
       .padding(spec.padding.dp)
       .semantics { testTag = "layout_${spec.name}" }
   val content: @Composable () -> Unit = {
     when (model) {
-      is WidgetModel.Empty -> EmptyContent(model, look, texts, fontPercents, m, actions.openApp)
+      is WidgetModel.Empty -> EmptyContent(model, look, texts, fontPercents, m, actions?.openApp)
       is WidgetModel.Data -> {
         val dataTexts = DataTexts.of(model, texts)
         val fonts = WidgetFonts.data(model, dataTexts, spec, fontPercents, fontScale, m)
@@ -143,7 +148,10 @@ internal class DataLook(
     get() = look.colors
 }
 
-/** Setup needed or no data: icon, title, the reason (no data only) and "Open app" (spec 0005, 5.3). */
+/**
+ * Setup needed or no data: icon, title, the reason (no data only) and "Open app" (spec 0005, 5.3);
+ * without [openApp] (the app's preview) no button.
+ */
 @Composable
 private fun EmptyContent(
   model: WidgetModel.Empty,
@@ -151,7 +159,7 @@ private fun EmptyContent(
   texts: WidgetTexts,
   percents: FontPercents,
   measurer: TextMeasurer,
-  openApp: Action,
+  openApp: Action?,
 ) {
   val context = LocalContext.current
   val e = look.spec.empty
@@ -188,20 +196,22 @@ private fun EmptyContent(
         maxLines = 1,
       )
     }
-    Spacer(GlanceModifier.height((e.gap + e.buttonTop).dp))
-    Box(
-      GlanceModifier.height(e.buttonHeight.dp)
-        .background(colors.okBg)
-        .cornerRadius((e.buttonHeight / 2).dp)
-        .clickable(openApp)
-        .padding(horizontal = e.buttonPadding.dp),
-      contentAlignment = Alignment.Center,
-    ) {
-      Text(
-        texts.openApp,
-        style = textStyle(look.sp(fonts.button), colors.accent, FontWeight.Medium),
-        maxLines = 1,
-      )
+    if (openApp != null) {
+      Spacer(GlanceModifier.height((e.gap + e.buttonTop).dp))
+      Box(
+        GlanceModifier.height(e.buttonHeight.dp)
+          .background(colors.okBg)
+          .cornerRadius((e.buttonHeight / 2).dp)
+          .clickable(openApp)
+          .padding(horizontal = e.buttonPadding.dp),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          texts.openApp,
+          style = textStyle(look.sp(fonts.button), colors.accent, FontWeight.Medium),
+          maxLines = 1,
+        )
+      }
     }
   }
 }

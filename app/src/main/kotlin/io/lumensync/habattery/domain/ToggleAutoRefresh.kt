@@ -8,7 +8,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Turns periodic sync on or off (the widget's toggle and the app card's). Turning on also syncs now.
+ * Turns periodic sync on or off (the widget's toggle). Turning on also syncs now.
  * Runs are serialized, so a double tap cannot leave the schedule out of step with the setting.
  */
 class ToggleAutoRefresh(

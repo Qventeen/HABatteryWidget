@@ -7,7 +7,6 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
-import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
@@ -41,7 +40,6 @@ class MainViewModel(
   private val tokens: TokenStore,
   cache: ReadingCache,
   private val sync: SyncBattery,
-  private val toggleAuto: ToggleAutoRefresh,
   private val scheduler: SyncScheduler,
   private val widgets: WidgetRefresher,
   private val source: BatterySource,
@@ -80,11 +78,6 @@ class MainViewModel(
         local.update { it.copy(running = it.running - 1) }
       }
     }
-  }
-
-  /** The overview card's auto toggle: the same action as the widget's. */
-  fun toggleAutoRefresh() {
-    viewModelScope.launch { guarded { toggleAuto() } }
   }
 
   fun saveConnection(url: String) {

@@ -47,6 +47,7 @@
     <string name="notification_full_text">Батарею повністю заряджено.</string>
 
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
+    <string name="preview_description">Попередній перегляд віджета, %1$s</string>
     <string name="action_refresh_now">Оновити зараз</string>
     <string name="action_add_widget">Додати віджет</string>
     <string name="action_save">Зберегти</string>
