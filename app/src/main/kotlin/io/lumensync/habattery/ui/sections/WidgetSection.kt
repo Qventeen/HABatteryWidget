@@ -27,8 +27,8 @@ import io.lumensync.habattery.domain.model.UnderSoc
 import kotlin.math.roundToInt
 
 /**
- * What the widget shows, its font sizes as percents (app-wide; 50 % is the design) and the
- * home-screen scale (80–200 %, 100 = as reported). Every change saves at once and redraws the
+ * What the widget shows, the home-screen scale (80–200 %, 100 = as reported) and the font sizes
+ * as percents (app-wide; 50 % is the design). Every change saves at once and redraws the
  * widgets; a slider saves when released. One button puts the font sizes and the scale back to the
  * defaults.
  */
@@ -59,10 +59,10 @@ fun WidgetSection(
     ChoiceRow(R.string.widget_second_value, MainValue.entries, display.mainValue, ::mainValueLabel) {
       onSaveDisplay(display.copy(mainValue = it))
     }
+    HomeScaleSlider(homeScalePercent, onSaveHomeScale)
     FontGroup.entries.forEach { group ->
       FontSlider(group, fontPercents[group]) { onSaveFontPercents(fontPercents.with(group, it)) }
     }
-    HomeScaleSlider(homeScalePercent, onSaveHomeScale)
     OutlinedButton(onClick = onReset) { Text(stringResource(R.string.widget_reset_sizes)) }
   }
 }
