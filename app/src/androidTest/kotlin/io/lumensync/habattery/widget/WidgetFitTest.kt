@@ -129,6 +129,43 @@ class WidgetFitTest {
   }
 
   /**
+   * Re-review finding 1, with the real fonts: in every layout, English and Ukrainian, a raised
+   * setting never shows a text smaller than at 50 %.
+   */
+  @Test
+  fun raisedSettings_noTextSmallerThanAtFifty() {
+    val raised =
+      listOf(
+        FontPercents(soc = 100),
+        FontPercents(underSoc = 100),
+        FontPercents(small = 100),
+        FontPercents(100, 100, 100, 100, 100),
+      )
+    val problems = mutableListOf<String>()
+    for (lang in listOf("en", "uk")) {
+      val context = context(lang, 1f)
+      val measurer = PaintTextMeasurer(context)
+      val texts = WidgetTexts(context, io.lumensync.habattery.format.Formatters(context))
+      for ((name, model) in models(context).filterValues { it is WidgetModel.Data }) {
+        val m = model as WidgetModel.Data
+        val t = DataTexts.of(m, texts)
+        for (spec in LayoutSpec.all) {
+          val at50 = sizesOf(WidgetFonts.data(m, t, spec, FontPercents(), 1f, measurer))
+          raised.forEach { p ->
+            val at = sizesOf(WidgetFonts.data(m, t, spec, p, 1f, measurer))
+            at50.indices.forEach { i ->
+              if (at[i] < at50[i] - 1e-3f) problems += "$lang $name ${spec.name} $p: text $i ${at[i]} < ${at50[i]}"
+            }
+          }
+        }
+      }
+    }
+    assertTrue(problems.joinToString("\n"), problems.isEmpty())
+  }
+
+  private fun sizesOf(f: DataFonts) = listOf(f.small, f.ringLabel, f.soc, f.underSoc, f.voltage, f.main) + f.cells
+
+  /**
    * The picker preview (a static layout at the 4×2 bucket size): its ring text stays inside the
    * ring's inner circle, in English and Ukrainian (1 dp tolerance, as the widget).
    */
