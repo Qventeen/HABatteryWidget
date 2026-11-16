@@ -25,10 +25,11 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.semantics.semantics
+import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -36,135 +37,165 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.WidgetModel
-import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.format.Formatters
 
 /** What the widget's tap targets do. */
 data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAuto: Action)
 
 /**
- * The whole widget, drawn from [model] and [colors] only (design v4). One layout: fixed sizes are scaled by
- * [WidgetScale]; the two buttons keep their touch size. Tapping the card opens the app.
+ * The whole widget, drawn from [model] and [colors] only (design v5). The layout is the one made
+ * for `LocalSize` (the `SizeMode.Responsive` bucket, spec 0005, A1); its texts are fitted before
+ * drawing ([WidgetFonts]). Tapping the card opens the app. [hostScale] multiplies every size and
+ * font of the layout, for a home screen that draws widgets smaller than their reported size
+ * ([LayoutSpec.scaled]).
  */
 @Composable
 fun WidgetContent(
   model: WidgetModel,
-  fontSizes: FontSizes,
+  fontPercents: FontPercents,
   colors: WidgetColors,
   actions: WidgetActions,
+  hostScale: Float = 1f,
+  measurer: TextMeasurer? = null,
 ) {
   val context = LocalContext.current
   val size = LocalSize.current
-  val s = WidgetScale.of(size.width.value, size.height.value)
+  // The layout is picked by the reported size; the scale changes its numbers only.
+  val layout = LayoutSpec.forSize(size.width.value, size.height.value)
+  val spec = layout.scaled(hostScale)
   val texts = remember(context) { WidgetTexts(context, Formatters(context)) }
-  val look =
-    WidgetLook(
-      s,
-      fontSizes,
-      context.resources.configuration.fontScale,
-      context.resources.displayMetrics,
-      texts,
-      colors,
-    )
+  val m = measurer ?: remember(context) { PaintTextMeasurer(context) }
+  val fontScale = context.resources.configuration.fontScale
+  val look = WidgetLook(spec, colors, context.resources.displayMetrics, fontScale)
 
   Box(
     GlanceModifier.fillMaxSize()
-      .background(look.colors.card)
-      .cornerRadius(look.dp(24f)) // Android 12+ only; square before (spec 0003, approach D1)
+      .background(colors.card)
+      .cornerRadius(spec.corner.dp) // Android 12+ only; square before (spec 0003, approach D1)
       .clickable(actions.openApp)
-      .padding(look.dp(12f))
+      .padding(spec.padding.dp)
+      .semantics { testTag = "layout_${spec.name}" }
   ) {
     when (model) {
-      is WidgetModel.Empty -> EmptyContent(model, look, actions.openApp)
-      is WidgetModel.Data ->
-        Column(GlanceModifier.fillMaxSize()) {
-          WidgetTopRow(model, look, actions)
-          WidgetBody(
-            model,
-            look,
-            GlanceModifier.defaultWeight().fillMaxWidth().padding(top = look.dp(4f)),
-          )
+      is WidgetModel.Empty -> EmptyContent(model, look, texts, fontPercents, m, actions.openApp)
+      is WidgetModel.Data -> {
+        val dataTexts = DataTexts.of(model, texts)
+        val fonts = WidgetFonts.data(model, dataTexts, spec, fontPercents, fontScale, m)
+        val d = DataLook(model, look, dataTexts, fonts)
+        when (layout) {
+          LayoutSpec.L5x2 -> Layout5x2(d, actions)
+          LayoutSpec.L4x3 -> Layout4x3(d, actions)
+          LayoutSpec.L5x3 -> Layout5x3(d, actions)
+          else -> Layout4x2(d, actions)
         }
+      }
     }
   }
 }
 
-/** Sizes for one drawing: [s] scales every fixed size; fonts follow spec 0003, approach E1. */
+/** The layout and the colours of one drawing, and the font size Glance needs. */
 internal class WidgetLook(
-  val s: Float,
-  private val fontSizes: FontSizes,
-  private val fontScale: Float,
-  private val metrics: DisplayMetrics,
-  val texts: WidgetTexts,
+  val spec: LayoutSpec,
   val colors: WidgetColors,
+  private val metrics: DisplayMetrics,
+  private val fontScale: Float,
 ) {
-  fun dp(value: Float): Dp = (value * s).dp
-
   /**
-   * Glance takes sp only, and the system scales sp by its font scale again. So hand over the sp that
-   * shows at the capped effective size: on Android 14+ sp scales non-linearly, so use the
-   * converter's exact inverse; before that, divide the font scale back out.
+   * Glance takes sp only, and the system scales sp by its font scale again. So hand over the sp
+   * that shows at [dp] (the shown size already holds the font scale): on Android 14+ sp scales
+   * non-linearly, so use the converter's inverse; before that, divide the font scale back out.
+   *
+   * The system's float math can bring the sp back a hair larger than [dp]. A fitted size often sits
+   * just under a whole pixel, where the text gets a pixel or more wider, so step the sp down until
+   * it never shows larger than [dp].
    */
-  fun font(group: FontGroup): TextUnit = spFor(shownSize(group)).sp
-
-  private fun spFor(dp: Float): Float =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-      TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, dp * metrics.density, metrics)
-    } else {
-      dp / fontScale
+  fun sp(dp: Float): TextUnit {
+    val px = dp * metrics.density
+    var sp =
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, px, metrics)
+      } else {
+        dp / fontScale
+      }
+    while (sp > 0f && TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, metrics) > px) {
+      sp = Math.nextDown(sp)
     }
-
-  /** The size the text is shown at, in dp (setting × font scale, capped, × [s]). */
-  fun shownSize(group: FontGroup): Float = fontSizes.effective(group, fontScale) * s
-
-  /** A text outside the font groups (the empty state): scaled, and the system scale applies. */
-  fun fixedFont(sp: Float): TextUnit = (sp * s).sp
+    return sp.sp
+  }
 }
 
+/** Everything the parts of a widget with data draw from. */
+internal class DataLook(
+  val model: WidgetModel.Data,
+  val look: WidgetLook,
+  val texts: DataTexts,
+  val fonts: DataFonts,
+) {
+  val spec: LayoutSpec
+    get() = look.spec
+
+  val colors: WidgetColors
+    get() = look.colors
+}
+
+/** Setup needed or no data: icon, title, the reason (no data only) and "Open app" (spec 0005, 5.3). */
 @Composable
-private fun EmptyContent(model: WidgetModel.Empty, look: WidgetLook, openApp: Action) {
+private fun EmptyContent(
+  model: WidgetModel.Empty,
+  look: WidgetLook,
+  texts: WidgetTexts,
+  percents: FontPercents,
+  measurer: TextMeasurer,
+  openApp: Action,
+) {
   val context = LocalContext.current
-  val title =
-    when (model.kind) {
-      WidgetModel.EmptyKind.SETUP -> R.string.error_not_configured
-      WidgetModel.EmptyKind.NO_DATA -> R.string.widget_no_data
-    }
+  val e = look.spec.empty
+  val colors = look.colors
+  val title = texts.emptyTitle(model.kind)
+  val reason = model.error?.takeIf { model.kind == WidgetModel.EmptyKind.NO_DATA }?.let(texts.formatters::error)
+  val fonts =
+    WidgetFonts.empty(
+      title,
+      reason,
+      texts.openApp,
+      look.spec,
+      percents,
+      context.resources.configuration.fontScale,
+      measurer,
+    )
   Column(
     GlanceModifier.fillMaxSize(),
     verticalAlignment = Alignment.CenterVertically,
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-    WidgetIcon(R.drawable.ic_battery, look.dp(28f), look.colors.sub, null)
+    WidgetIcon(R.drawable.ic_battery, e.icon.dp, colors.sub, null)
+    Spacer(GlanceModifier.height(e.gap.dp))
     Text(
-      context.getString(title),
-      GlanceModifier.padding(top = look.dp(8f)),
-      style = textStyle(look.fixedFont(15f), look.colors.text, FontWeight.Medium, TextAlign.Center),
-      maxLines = 2,
+      title,
+      style = textStyle(look.sp(fonts.title), colors.text, FontWeight.Medium, TextAlign.Center),
+      maxLines = 1,
     )
-    if (model.kind == WidgetModel.EmptyKind.NO_DATA) {
-      model.error?.let { error ->
-        Text(
-          look.texts.formatters.error(error),
-          GlanceModifier.padding(top = look.dp(8f)),
-          style =
-            textStyle(look.font(FontGroup.SMALL), look.colors.bad, FontWeight.Medium, TextAlign.Center),
-          maxLines = 2,
-        )
-      }
+    if (reason != null) {
+      Spacer(GlanceModifier.height(e.gap.dp))
+      Text(
+        reason,
+        style = textStyle(look.sp(fonts.reason), colors.bad, FontWeight.Medium, TextAlign.Center),
+        maxLines = 1,
+      )
     }
-    Spacer(GlanceModifier.height(look.dp(10f)))
+    Spacer(GlanceModifier.height((e.gap + e.buttonTop).dp))
     Box(
-      GlanceModifier.height(look.dp(40f))
-        .background(look.colors.okBg)
-        .cornerRadius(look.dp(20f))
+      GlanceModifier.height(e.buttonHeight.dp)
+        .background(colors.okBg)
+        .cornerRadius((e.buttonHeight / 2).dp)
         .clickable(openApp)
-        .padding(horizontal = look.dp(20f)),
+        .padding(horizontal = e.buttonPadding.dp),
       contentAlignment = Alignment.Center,
     ) {
       Text(
-        context.getString(R.string.widget_open_app),
-        style = textStyle(look.fixedFont(14f), look.colors.accent, FontWeight.Medium),
+        texts.openApp,
+        style = textStyle(look.sp(fonts.button), colors.accent, FontWeight.Medium),
         maxLines = 1,
       )
     }

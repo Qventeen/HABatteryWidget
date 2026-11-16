@@ -284,3 +284,233 @@ languages).
 
 File layout inside `widget/`, the `LayoutSpec` shape, the exact Glance
 structure, the 0.5 sp adjustments from the fit check, and the wording.
+
+## 8. Build notes (2026-11-15)
+
+### 5.0 device test: passed
+
+- Phone: model 2602DPT53G, Android 16 (API 36), 390 dp wide, density
+  520. The launcher is `com.miui.home` (Xiaomi **HyperOS**), not ColorOS
+  as written above.
+- A throwaway APK with the four buckets of 5.1 in `SizeMode.Responsive`:
+  each size showed its own bucket. 4×2: real size 267 × 132 dp (options
+  267.3 × 131.6); 5×2: about 339 × 131 dp (from the screenshot); 4×3 and
+  5×3 their own; 5×4 the stretched 5×3.
+- The widget was drawn once and never redrawn while it was resized (its
+  size texts stayed stale), and the shown layout always followed the real
+  size: the launcher picks the bucket. Approach A1 holds on HyperOS.
+- On the `Pixel_8_API_35` emulator the same APK picked the right bucket
+  too, also after a rotation without a redraw.
+
+### Builder calls (§7)
+
+- Files in `widget/`: `LayoutSpec` (the README numbers of each layout,
+  its bucket, `forSize` with the platform's best-fit rule), `TextFit`
+  (pure fit rules), `PaintTextMeasurer`, `WidgetFonts` (texts and shown
+  sizes of one drawing), `WidgetLayouts` (`Layout4x2` … `Layout5x3`),
+  `WidgetParts` (top row, ring, pack pills, cell column and grid),
+  `WidgetContent` (root, empty state). `WidgetTopRow`, `WidgetBody`,
+  `ring_track.xml` are gone; `WidgetScale` moved to the card
+  (`ui/sections/CardScale`).
+- Measuring uses Glance's own text appearance styles
+  (`TextAppearanceSpan.updateMeasureState`), so the fit uses the font and
+  weight the home screen draws.
+- The top row's time left and update time share the space between the
+  balancing icon and the buttons and get one size, so they never
+  overlap.
+- A text's height check is the font's top (above the baseline) plus the
+  ink below the baseline, not the line height. Android draws a one-line
+  text view from the font's top; in a pill lower than the whole line the
+  view is cut to the pill and keeps its top, so the glyphs move down. With
+  the line height, large values and the Ukrainian decimal comma
+  ("3,312 В") were cut at the bottom. In such a pill the text sits a bit
+  low (100 %, 2-row layouts).
+- Ring: track and arc are tinted alpha bitmaps at the layout's size and
+  stroke, in a box as wide as the ring and as high as its row
+  (`ContentScale.Fit`). The three lines are placed like the canvas CSS
+  stack (gap, line heights), with the font padding taken out. Their fit
+  checks the ink corners against the inner circle, 1 dp tolerance.
+- 2-row layouts: the canvas has 6 dp between the 32 dp buttons; each
+  touch area grows 3 dp toward the other, so they touch and the circles
+  stay where the PNG has them.
+- The empty state's reason shrinks when the column would be taller than
+  the card (large system font at 100 %).
+- Wording: "Sync error: %1$s" / "Помилка синхронізації: %1$s"; the font
+  sliders show "%1$d %".
+- Glance keeps at most 10 children in a Row or Column and drops the rest
+  without an error (the first build lost ↻). The fit test checks that
+  every part reaches the RemoteViews.
+
+### Deviations (owner's call where marked)
+
+1. **The ring text fits the ring at its design size**, not at the bucket
+   (5.5 says bucket boxes). At the bucket the ring is 6 dp smaller (4×2
+   70, 4×3 80, 5×2 106 dp), and fitting to it made the ring text 3–6 %
+   smaller than the PNGs at the owner's sizes (4×2 SOC 26.3 instead of
+   28 sp). 5.1 lets the ring shrink between bucket and design size with
+   the fonts unchanged, so this follows 5.1. At the bucket − 1 dp the ink
+   can overlap the stroke by up to about 3.9 dp; at the design size it
+   stays inside the inner circle (1 dp tolerance; `WidgetFitTest` checks
+   it).
+2. **No design font went down by 0.5 sp** (5.1). At the buckets, only
+   the long worst-case main values do not fit at 50 %: at the bucket
+   − 1 dp boxes "↑ 3.98 kW" in 4×2 shows at 16.0 instead of 17 sp, in 5×2
+   at 20.2 instead of 21, in 5×3 at 21.0 instead of 22. The fit rule shrinks just these values;
+   the PNG values show at the design size. Lowering the design fonts
+   would make every value smaller than the PNGs and change
+   `docs/design/README.md`. So the §6 test "at 50 % with the worst-case
+   values nothing shrinks" is replaced by one for the PNG values
+   (`fiftyPercent_designValues_showTheDesignSizes`). Owner's call.
+3. **The top-row time texts are longer than the design's**, so they
+   shrink at 50 % where the row is narrow: "17 hr, 16 min" (the
+   formatter of spec 0003; the design shows "17 h 16 min"), "11:15 PM"
+   with a 12-hour clock, a date when the last update was not today. In
+   5×2 at its bucket, "17 hr, 16 min" + "23:15" show at about 9 sp
+   (design 10.5), with a date about 6 sp. A shorter time-left format
+   would fix most of it. Owner's call; not changed here.
+4. The app card keeps its v4 error text next to the icon (5.7): it is
+   where the app shows the full reason (decision 4). The icon's content
+   description is the new "Sync error: <reason>".
+5. The canvas draws "SOC" with 1 px letter spacing; Glance has none.
+6. The picker preview card keeps the 4×2 design size, centred, because a
+   launcher may give the preview a taller box (the Pixel launcher gives
+   3 × 2 cells, about 266 × 224 dp). Its ring text positions are fixed
+   numbers.
+
+### Checks
+
+- Fit check (`WidgetFitTest`, `Pixel_8_API_35`): every layout at its
+  bucket and at the owner's sizes (267 × 132, 340 × 132, 267 × 205,
+  340 × 205, 340 × 278), typical and worst-case values (also 3 cell
+  pills, sync error, no data, setup), every group at 25, 50 and 100 %,
+  English and Ukrainian, and at font scale 1.3: every text shows whole
+  (one line, wide enough, ink not cut). At 50 % in English the PNG
+  values show at the design sizes. Both buttons, every icon and pill
+  reach the RemoteViews.
+- The drawings were compared with the v5 PNGs side by side (light, dark,
+  sync error). They are made by `GlanceAppWidget.compose()` and drawn in
+  software, where rounded corners do not show; on the emulator's
+  launcher the card and the pills are round, and light and dark follow
+  the system.
+
+### Review and owner decisions (2026-11-16)
+
+- Deviations 1 and 2: **accepted** by the owner. `docs/design/README.md`
+  now says that long worst-case values shrink a little at the bucket
+  boxes ("↑ 3.98 kW" about 16 sp in 4×2).
+- Deviation 3, owner: **time left in Android's narrow format**, in the
+  widget and the app card. Seen on `Pixel_8_API_35` (API 35): English
+  "17h 16m", "45m", "2d 7h"; Ukrainian "17г і 16х", "45х", "2д і 7г".
+  Robolectric (SDK 34): English the same; Ukrainian "17 год. і 16х",
+  "45х", "2д і 7 год.". With it the 5×2 top row shows at its design
+  size ("17h 16m" + "07:13" at 10.5 sp).
+- Owner: **an update from an earlier day shows the date only**, in the
+  app's language (ICU skeleton "MMMd", "yMMMd" in another year): "Nov 13"
+  / "13 лист." on the emulator, "Jan 13" / "13 січ." in Robolectric. The
+  date came from `DateUtils` before, in the device's default language.
+- Review fixes:
+  - A sync error keeps the top-row text size: the update time is still
+    fitted when the icon takes its place.
+  - Texts are fitted to the boxes at the bucket − 1 dp (Android shows a
+    bucket from about 1 dp below it), with 0.5 dp width slack.
+  - Line metrics count fallback fonts (`Paint.getFontMetricsInt` per
+    text; the call exists from Android 13, so before 13 the main font's
+    metrics are used).
+  - The app card caps the system font scale at the v4 maximum again.
+  - A system font-scale change redraws the widget (`ConfigWatcher`, which
+    replaces 0008's `LocaleWatcher` and also watches the language).
+  - The picker preview card is the 4×2 bucket (261 × 126 dp) with text
+    sizes in dp. Its ring is 70 dp there, so the kWh line is 8.5 dp
+    (English) and 6.5 dp (Ukrainian) to stay inside the ring (the design's
+    10 dp would leave it by 2.7 dp); `WidgetFitTest` checks both.
+  - `WidgetFitTest` also runs just under each bucket and at font scale
+    1.3 in Ukrainian, and checks the ring ink at the design sizes.
+  - The sp handed to Glance never shows above the fitted size (font scale
+    1.3: 34.999996 px came back as 35.0 px, where the text is 7 px wider).
+
+### Ring text fit (review finding 4 and re-review finding 1, the reviewer's calls)
+
+Each ring line's ink must stay inside the inner circle: its width within
+the circle's chord at that line's height (1 dp tolerance). The sizes are
+found in two steps:
+
+1. The 50 % result: every line at the smaller of its request and its
+   50 % size. A stack taller than the circle shrinks all lines by one
+   factor; a line still too wide for its chord then shrinks alone.
+2. Raised lines (asking for more than 50 %) grow from their 50 % result
+   toward their request, in steps of 1 % of their 50 % size; a line stops
+   at the last step where every line still fits. The other lines keep
+   their 50 % result.
+
+So no line is ever smaller than at 50 % (checked in every layout, English
+and Ukrainian, on the emulator), and a long kWh / Ah line does not make
+the SOC number smaller. A raised SOC number grows only while every line
+still fits: the stack is centred, so a larger number moves the kWh line
+down to a narrower chord. Where the kWh line is already at its chord at
+50 % (Ukrainian "4,58 кВт·год"), the number grows only a little.
+
+The first version (review round 1) shrank raised lines to their 50 % size
+while any line was too wide, so a raised SOC number in Ukrainian stayed
+at its 50 % size; the re-review replaced it with the rule above. The fit
+of a single text now searches the largest size that fits, so a larger
+request never shows smaller.
+
+Measured on the emulator (4×2 / 4×3 / 5×2 / 5×3), SOC at 100 %, the
+others at 50 %: English 29.7 / 37.8 / 62.0 / 52.9 sp, Ukrainian
+28.8 / 32.6 / 44.8 / 42.8 sp. 4×2 Ukrainian at 50 %: SOC 28.0 sp (23.2
+before finding 4); "4,58 кВт·год" 7.6 sp at 50 % and at all 100 %.
+
+### Owner decisions, 2026-11-16 (phone tuning)
+
+- **HyperOS draws widgets smaller.** On the owner's phone (density 3.25,
+  API 36, `com.miui.home`) a uiautomator dump showed every widget element
+  at about 0.78 of its dp × 3.25 px: the 4×3 top row (44 dp) was 112 px,
+  not 143 px; the 267 × 205 dp card was 869 × 666 px. So the layout really
+  gets about 1 / 0.78 ≈ 1.28 × the reported size (about 342 × 262 dp for
+  4×3), and the design looked small.
+- **Home-screen scale 1.28.** `LayoutSpec.scaled(k)` multiplies every dp
+  size, the bucket (so the fit boxes are the real space) and every design
+  font by k; line-height ratios stay. `WidgetContent` takes `hostScale`
+  (default 1; the tests use 1); `BatteryWidget` passes
+  `LayoutSpec.HOST_SCALE` = 1.28 for now. Spec 0007 replaces the constant
+  with a stored Widget setting: default 100 %, the owner sets 128 %. The
+  layout is still picked at the reported size; only its numbers change.
+- **The ring is the base.** In 4×2, 4×3 and 5×3 the ring and the pack
+  column share the width the cell column leaves (equal weights), and the
+  ring fills its column up to the row height. Target about 40 : 35 : 25
+  (ring : pack : cells); at the 4×2 design size the columns are 87.5 :
+  87.5 : 56 dp. 5×2 keeps its full-height ring at 112 dp. The ring bitmaps
+  are drawn 1.25 × larger, so a grown ring stays sharp; the ring text still
+  fits the design ring.
+- **Narrower cell column:** 4×2 56 dp (was 66), 5×2 and 5×3 74 dp (was
+  84).
+- **Radii:** pack pills 16 dp corners (were fully round); cell pills keep
+  fully round ends.
+- **App card** (until spec 0006): pack pills 16 dp corners; cell pills
+  fully round, filling the column by weight with 4 dp gaps instead of
+  `SpaceBetween`.
+- **Build fix:** the first version chose the layout with `when (spec)` on
+  the scaled copy, which never equals `L5x2` or `L4x3`, so 5×2 and 4×3
+  drew the 4×2 layout (4×3 with a 0 dp cell column: ring and pack filled
+  the body, no cell grid). The choice now uses the unscaled layout;
+  `hostScale_eachBucket_drawsItsLayout` checks it.
+
+### Known risks (docs only)
+
+- A system font-scale change while the app's process is not running is
+  not seen by `ConfigWatcher`; the widget is redrawn only at its next
+  update. Glance stores text sizes in sp, so until then the home screen
+  applies the new scale to the old sizes and a text can be cut. It is the
+  same gap as 0008's language change.
+- "Today" is decided when the widget is drawn. After midnight, with auto
+  refresh off, the widget keeps showing the last update as a time only
+  until it is drawn again.
+- 4×3 on the owner's HyperOS launcher: after a resize from another size,
+  the body can stay empty until the next update (↻). A probe reproduced it:
+  the launcher reapplies the 4×3 views onto the tree of the previous size,
+  and Glance's index-based view ids collide. The owner accepts a manual ↻
+  (2026-11-16) and asked not to change the 4×3; a separate root type for
+  4×3 is the likely fix if it is ever needed.
+- 5×2 keeps the design's layout B (ring over the full card height); the
+  owner compared it on the phone with the top-row-across variant and chose
+  B (2026-11-16).

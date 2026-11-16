@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- "4,58 кВт·год" is longer: this size stays inside the preview's 70 dp ring. -->
+    <dimen name="preview_kwh_size">6.5dp</dimen>
+</resources>

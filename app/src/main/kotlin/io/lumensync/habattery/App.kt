@@ -3,6 +3,7 @@ package io.lumensync.habattery
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
+import io.lumensync.habattery.system.TextConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -10,10 +11,13 @@ class App : Application() {
   /** Built on first use: WorkManager may start a worker before [onCreate] runs. */
   val container: AppContainer by lazy { AppContainer(this) }
 
-  /** A new app language redraws every widget (a live Glance session would keep the old texts). */
+  /**
+   * A new app language or system font scale redraws every widget (a live Glance session would keep
+   * the old texts and sizes).
+   */
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
-    if (container.localeWatcher.changed(newConfig.locales.toLanguageTags())) {
+    if (container.configWatcher.changed(TextConfig(newConfig.locales.toLanguageTags(), newConfig.fontScale))) {
       container.appScope.launch { container.widgetRefresher.refreshAll() }
     }
   }

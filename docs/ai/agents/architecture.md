@@ -21,10 +21,15 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   notification.
 - `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`,
   `AppLanguage` (per-app language through `LocaleManager`, Android 13+ only; the system
-  stores it) and `LocaleWatcher` (`App` reports locale changes; a real change redraws widgets).
-- `widget/`: Glance widget (one layout scaled by `WidgetScale`, ring bitmap),
-  `BatteryWidgetReceiver`, ↻ and auto-toggle actions, refresher, and
-  `WidgetPalette` / `WidgetTexts`, which the app's overview card reuses.
+  stores it) and `ConfigWatcher` (`App` reports language and font-scale changes; a real change
+  redraws widgets).
+- `widget/`: Glance widget with four layouts in `SizeMode.Responsive` (spec 0005):
+  `LayoutSpec` holds each layout's design numbers and bucket, `WidgetLayouts` /
+  `WidgetParts` draw them, `WidgetFonts` fits every text to its box (`TextFit`,
+  measured by `PaintTextMeasurer`), ring bitmaps, `BatteryWidgetReceiver`, ↻ and
+  auto-toggle actions, refresher, and `WidgetPalette` / `WidgetTexts`, which the
+  app's overview card reuses (the card keeps the v4 look and `CardScale` until
+  spec 0006).
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
 - `ui/`: Compose screen, `MainViewModel`, `sections/`, `theme/`.

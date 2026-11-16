@@ -63,11 +63,12 @@ class DataStoreSettingsRepositoryTest {
   }
 
   @Test
-  fun fontSizes_areClampedWhenRead() = runTest {
-    file.writeText("""{"schemaVersion":1,"settings":{"fontSizes":{"soc":99.0,"small":1.0}}}""")
-    val sizes = repo().settings.first().fontSizes
-    assertEquals(42f, sizes.soc)
-    assertEquals(9f, sizes.small)
+  fun fontPercents_areClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"fontPercents":{"soc":5,"small":150}}}""")
+    val percents = repo().settings.first().fontPercents
+    assertEquals(25, percents.soc)
+    assertEquals(100, percents.small)
+    assertEquals(50, percents.main)
   }
 
   @Test

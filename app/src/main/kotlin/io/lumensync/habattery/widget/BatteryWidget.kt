@@ -20,7 +20,11 @@ import kotlinx.coroutines.flow.first
 
 /** Renders from local data only (cache, settings, token presence). No network here. */
 class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
-  override val sizeMode: SizeMode = SizeMode.Exact
+  /**
+   * One drawing per v5 layout; the home screen shows the one made for the widget's real size
+   * (spec 0005, A1; checked on the owner's phone, 5.0).
+   */
+  override val sizeMode: SizeMode = SizeMode.Responsive(LayoutSpec.all.map { it.bucket }.toSet())
 
   override suspend fun provideGlance(context: Context, id: GlanceId) {
     val container = context.container
@@ -33,13 +37,14 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       val cache by container.readingCache.state.collectAsState(initialCache)
       val settings by container.settingsRepository.settings.collectAsState(initialSettings)
       val hasToken by container.tokenStore.hasToken.collectAsState(initialHasToken)
-      val locale by container.localeWatcher.tags.collectAsState()
+      val config by container.configWatcher.config.collectAsState()
       val overview = BatteryOverview.build(cache, settings, hasToken, System.currentTimeMillis())
-      // A new key makes a new composition, also in a live session (the texts come from resources).
-      key(locale) {
+      // A new key makes a new composition, also in a live session: the texts come from resources,
+      // and their fitted sizes and the sp handed to Glance from the font scale.
+      key(config) {
         WidgetContent(
           model = WidgetModel.build(overview, settings),
-          fontSizes = settings.fontSizes,
+          fontPercents = settings.fontPercents,
           colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
           actions =
             WidgetActions(
@@ -47,6 +52,7 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
               refresh = actionRunCallback<RefreshAction>(),
               toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
             ),
+          hostScale = LayoutSpec.HOST_SCALE,
         )
       }
     }

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,11 +35,26 @@ import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.Flow
 import io.lumensync.habattery.domain.WidgetModel.Temperatures
 import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.widget.RingLayout
 import io.lumensync.habattery.widget.WidgetTexts
 
 /** At 0 % a dot stays, as on the widget. */
 private const val MIN_SWEEP = 0.01f
+
+/** Roboto's normal line height, per unit of font size. */
+private const val LINE_HEIGHT = 1.17f
+
+/** Offsets (dp) of the label's and the under-SOC line's centres from the ring centre. */
+private data class RingTextOffsets(val label: Float, val under: Float)
+
+/**
+ * The v4 ring text (CSS: SOC number with line-height 1, 2 dp gaps): each line is placed by its
+ * offset from the number, because Android text boxes are taller than the CSS lines.
+ */
+private fun cardRingOffsets(socDp: Float, labelDp: Float, underDp: Float, gapDp: Float) =
+  RingTextOffsets(
+    label = socDp / 2 + gapDp + labelDp * LINE_HEIGHT / 2,
+    under = socDp / 2 + gapDp + underDp * LINE_HEIGHT / 2,
+  )
 
 /** Ring, pack column and cell column, as on the widget. */
 @Composable
@@ -59,10 +73,12 @@ internal fun CardBody(model: WidgetModel.Data, look: CardLook, modifier: Modifie
     Spacer(Modifier.width(look.dp(6f)))
     Column(
       Modifier.width(look.dp(90f)).fillMaxHeight(),
-      verticalArrangement = Arrangement.SpaceBetween,
+      verticalArrangement = Arrangement.spacedBy(look.dp(4f)),
     ) {
-      TextPill(texts.averageCell(model), Level.PLAIN, look)
-      TextPill(texts.delta(model), model.deltaLevel, look)
+      // The pills fill the column with small gaps, as on the widget (owner, 2026-11-16).
+      val fill = Modifier.weight(1f)
+      TextPill(texts.averageCell(model), Level.PLAIN, look, fill)
+      TextPill(texts.delta(model), model.deltaLevel, look, fill)
       when (val t = model.temperatures) {
         Temperatures.None -> Unit
         is Temperatures.Battery ->
@@ -73,9 +89,10 @@ internal fun CardBody(model: WidgetModel.Data, look: CardLook, modifier: Modifie
             t.celsius,
             t.level,
             look,
+            fill,
           )
       }
-      IconPill(R.drawable.ic_chip, R.string.widget_mosfet_temperature, model.mosfet, model.mosfetLevel, look)
+      IconPill(R.drawable.ic_chip, R.string.widget_mosfet_temperature, model.mosfet, model.mosfetLevel, look, fill)
     }
   }
 }
@@ -86,7 +103,7 @@ private fun Ring(model: WidgetModel.Data, look: CardLook) {
   val texts = look.texts
   val description = texts.ringDescription(model)
   val offsets =
-    RingLayout.offsets(
+    cardRingOffsets(
       socDp = look.shownSize(FontGroup.SOC),
       labelDp = look.shownSize(FontGroup.SMALL),
       underDp = look.shownSize(FontGroup.UNDER_SOC),
@@ -146,7 +163,7 @@ private fun BigPill(text: String, level: Level, flow: Flow, look: CardLook, modi
   Row(
     modifier
       .fillMaxWidth()
-      .background(palette.pillBackground(level), RoundedCornerShape(look.dp(25f)))
+      .background(palette.pillBackground(level), RoundedCornerShape(look.dp(16f)))
       .padding(horizontal = look.dp(6f)),
     horizontalArrangement = Arrangement.Center,
     verticalAlignment = Alignment.CenterVertically,
@@ -172,8 +189,8 @@ private fun BigPill(text: String, level: Level, flow: Flow, look: CardLook, modi
 }
 
 @Composable
-private fun TextPill(text: String, level: Level, look: CardLook) {
-  SmallPill(level, look) {
+private fun TextPill(text: String, level: Level, look: CardLook, modifier: Modifier) {
+  SmallPill(level, look, modifier) {
     Text(
       text,
       color = look.palette.pillText(level),
@@ -193,9 +210,10 @@ private fun IconPill(
   celsius: Double?,
   level: Level,
   look: CardLook,
+  modifier: Modifier,
 ) {
   val color = look.palette.pillText(level)
-  SmallPill(level, look) {
+  SmallPill(level, look, modifier) {
     CardIcon(icon, look.dp(13f), color, stringResource(iconDescription))
     Spacer(Modifier.width(look.dp(3f)))
     Text(
@@ -210,11 +228,10 @@ private fun IconPill(
 }
 
 @Composable
-private fun SmallPill(level: Level, look: CardLook, content: @Composable () -> Unit) {
+private fun SmallPill(level: Level, look: CardLook, modifier: Modifier, content: @Composable () -> Unit) {
   Row(
-    Modifier.fillMaxWidth()
-      .height(look.dp(19f))
-      .background(look.palette.pillBackground(level), RoundedCornerShape(look.dp(9.5f)))
+    modifier.fillMaxWidth()
+      .background(look.palette.pillBackground(level), RoundedCornerShape(percent = 50))
       .padding(horizontal = look.dp(8f)),
     horizontalArrangement = Arrangement.Center,
     verticalAlignment = Alignment.CenterVertically,

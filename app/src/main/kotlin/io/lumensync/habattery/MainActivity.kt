@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
       setNotifyOnFull = viewModel::setNotifyOnFull,
       saveCapacity = viewModel::saveCapacity,
       saveDisplay = viewModel::saveDisplay,
-      saveFontSizes = viewModel::saveFontSizes,
+      saveFontPercents = viewModel::saveFontPercents,
       saveAppearance = viewModel::saveAppearance,
       setLanguage = {
         language = it

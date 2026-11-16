@@ -44,12 +44,12 @@ import androidx.compose.ui.unit.sp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.widget.WidgetPalette
-import io.lumensync.habattery.widget.WidgetScale
 import io.lumensync.habattery.widget.WidgetTexts
+import kotlin.math.min
 
 /**
  * The widget's layout drawn in Compose, from the same [WidgetModel] (spec 0003, 5.9). It scales by
@@ -61,7 +61,7 @@ const val OVERVIEW_CARD_TAG = "overview-card"
 @Composable
 fun OverviewCard(
   model: WidgetModel,
-  fontSizes: FontSizes,
+  fontPercents: FontPercents,
   theme: ThemeChoice,
   syncing: Boolean,
   onRefresh: () -> Unit,
@@ -75,7 +75,7 @@ fun OverviewCard(
   val density = LocalDensity.current
 
   BoxWithConstraints(modifier.fillMaxWidth()) {
-    val look = CardLook(WidgetScale.of(maxWidth.value), fontSizes, density.fontScale, palette, texts)
+    val look = CardLook(CardScale.of(maxWidth.value), fontPercents, density.fontScale, palette, texts)
     val shape = RoundedCornerShape(look.dp(24f))
     when (model) {
       // A plain message: it follows the system text size like the rest of the screen.
@@ -86,7 +86,7 @@ fun OverviewCard(
         CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
           Column(
             Modifier.fillMaxWidth()
-              .height(WidgetScale.heightDp(look.s).dp)
+              .height(CardScale.heightDp(look.s).dp)
               .background(palette.card, shape)
               .padding(look.dp(12f))
           ) {
@@ -98,10 +98,14 @@ fun OverviewCard(
   }
 }
 
-/** Sizes for one drawing, as the widget's: [s] scales fixed sizes; fonts are capped (approach E1). */
+/**
+ * Sizes for one drawing: [s] scales fixed sizes. The fonts are the v4 sizes × the system font
+ * scale, capped at the v4 maximum, × percent / 50, without fitting (spec 0005, 5.7; spec 0006
+ * replaces the card).
+ */
 internal class CardLook(
   val s: Float,
-  private val fontSizes: FontSizes,
+  private val fontPercents: FontPercents,
   private val fontScale: Float,
   val palette: WidgetPalette,
   val texts: WidgetTexts,
@@ -109,7 +113,10 @@ internal class CardLook(
   fun dp(value: Float): Dp = (value * s).dp
 
   /** The shown size in dp; the card runs with font scale 1, so sp equals it. */
-  fun shownSize(group: FontGroup): Float = fontSizes.effective(group, fontScale) * s
+  fun shownSize(group: FontGroup): Float {
+    val capped = min(V4_SIZES.getValue(group) * fontScale, V4_MAX.getValue(group))
+    return fontPercents.requestedDp(group, capped, 1f) * s
+  }
 
   fun font(group: FontGroup): TextUnit = shownSize(group).sp
 }
@@ -182,7 +189,7 @@ private fun TopRow(
             R.drawable.ic_alert,
             look.dp(12f),
             palette.bad,
-            stringResource(R.string.widget_sync_error),
+            texts.syncErrorDescription(error),
           )
           Spacer(Modifier.width(look.dp(3f)))
           Text(
@@ -214,6 +221,26 @@ private fun TopRow(
     )
   }
 }
+
+/** The v4 design sizes (sp) of the card's five font groups. */
+private val V4_SIZES =
+  mapOf(
+    FontGroup.SOC to 40f,
+    FontGroup.UNDER_SOC to 12f,
+    FontGroup.MAIN to 22f,
+    FontGroup.CELL to 14f,
+    FontGroup.SMALL to 10.5f,
+  )
+
+/** The v4 maximum sizes (sp): the system font scale grows the card's text up to these. */
+private val V4_MAX =
+  mapOf(
+    FontGroup.SOC to 42f,
+    FontGroup.UNDER_SOC to 12f,
+    FontGroup.MAIN to 24f,
+    FontGroup.CELL to 15f,
+    FontGroup.SMALL to 12f,
+  )
 
 private val TOUCH = 44.dp
 private val FACE = 36.dp

@@ -26,7 +26,7 @@ import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
@@ -71,7 +71,7 @@ class OverviewCardTest {
     var refreshes = 0
     compose.setContent {
       HaBatteryTheme {
-        OverviewCard(model(sample), FontSizes(), ThemeChoice.SYSTEM, false, { refreshes++ }, { toggles++ })
+        OverviewCard(model(sample), FontPercents(), ThemeChoice.SYSTEM, false, { refreshes++ }, { toggles++ })
       }
     }
     compose.onNodeWithText("55").assertExists()
@@ -90,7 +90,7 @@ class OverviewCardTest {
   fun darkTheme_drawsTheDarkCard() {
     compose.setContent {
       HaBatteryTheme(darkTheme = true) {
-        OverviewCard(model(sample), FontSizes(), ThemeChoice.DARK, false, {}, {}, Modifier.testTag("card"))
+        OverviewCard(model(sample), FontPercents(), ThemeChoice.DARK, false, {}, {}, Modifier.testTag("card"))
       }
     }
     compose.waitForIdle()
@@ -109,7 +109,7 @@ class OverviewCardTest {
         Column {
           listOf(1f to "normal", 2f to "large").forEach { (scale, tag) ->
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale)) {
-              OverviewCard(model(null, hasToken = false), FontSizes(), ThemeChoice.SYSTEM, false, {}, {}, Modifier.testTag(tag))
+              OverviewCard(model(null, hasToken = false), FontPercents(), ThemeChoice.SYSTEM, false, {}, {}, Modifier.testTag(tag))
             }
           }
         }
@@ -126,7 +126,7 @@ class OverviewCardTest {
   @Test
   fun setup_showsTheSetupText() {
     compose.setContent {
-      HaBatteryTheme { OverviewCard(model(null, hasToken = false), FontSizes(), ThemeChoice.SYSTEM, false, {}, {}) }
+      HaBatteryTheme { OverviewCard(model(null, hasToken = false), FontPercents(), ThemeChoice.SYSTEM, false, {}, {}) }
     }
     compose.onNodeWithText(context.getString(R.string.overview_setup)).assertExists()
   }

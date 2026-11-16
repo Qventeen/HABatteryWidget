@@ -9,33 +9,31 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontGroup
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
-import io.lumensync.habattery.format.formatDecimal
 import kotlin.math.roundToInt
 
 /**
- * What the widget and the overview card show, and their font sizes (app-wide). Every change saves
- * at once and redraws the widgets; a slider saves when it is released.
+ * What the widget and the overview card show, and their font sizes as percents (app-wide; 50 % is
+ * the design). Every change saves at once and redraws the widgets; a slider saves when released.
  */
 @Composable
 fun WidgetSection(
   display: DisplaySettings,
-  fontSizes: FontSizes,
+  fontPercents: FontPercents,
   onSaveDisplay: (DisplaySettings) -> Unit,
-  onSaveFontSizes: (FontSizes) -> Unit,
+  onSaveFontPercents: (FontPercents) -> Unit,
   modifier: Modifier = Modifier,
   initiallyExpanded: Boolean = false,
 ) {
@@ -54,30 +52,29 @@ fun WidgetSection(
       onSaveDisplay(display.copy(mainValue = it))
     }
     FontGroup.entries.forEach { group ->
-      FontSlider(group, fontSizes[group]) { onSaveFontSizes(fontSizes.with(group, it)) }
+      FontSlider(group, fontPercents[group]) { onSaveFontPercents(fontPercents.with(group, it)) }
     }
-    OutlinedButton(onClick = { onSaveFontSizes(FontSizes()) }) {
+    OutlinedButton(onClick = { onSaveFontPercents(FontPercents()) }) {
       Text(stringResource(R.string.widget_reset_sizes))
     }
   }
 }
 
-/** One font group: its name, the value in sp, and a slider over the group's range and step. */
+/** One font group: its name, the percent, and a slider from 25 to 100 % in steps of 5. */
 @Composable
-private fun FontSlider(group: FontGroup, stored: Float, onSave: (Float) -> Unit) {
-  val locale = LocalConfiguration.current.locales[0]
-  var value by rememberSaveable(stored) { mutableFloatStateOf(stored) }
+private fun FontSlider(group: FontGroup, stored: Int, onSave: (Int) -> Unit) {
+  var value by rememberSaveable(stored) { mutableIntStateOf(stored) }
   val name = stringResource(fontLabel(group))
   Row(Modifier.fillMaxWidth()) {
     Text(name, Modifier.weight(1f))
-    Text(stringResource(R.string.widget_font_value, formatDecimal(value.toDouble(), locale)))
+    Text(stringResource(R.string.widget_font_value, value))
   }
   Slider(
-    value = value,
-    onValueChange = { value = it },
+    value = value.toFloat(),
+    onValueChange = { value = it.roundToInt() },
     onValueChangeFinished = { onSave(value) },
-    valueRange = group.min..group.max,
-    steps = ((group.max - group.min) / group.step).roundToInt() - 1,
+    valueRange = FontPercents.MIN.toFloat()..FontPercents.MAX.toFloat(),
+    steps = (FontPercents.MAX - FontPercents.MIN) / FontPercents.STEP - 1,
     modifier = Modifier.semantics { contentDescription = name },
   )
 }

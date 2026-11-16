@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Picker preview: the kWh line in the ring. The preview card is the 4x2 bucket, so its ring is
+         70 dp, not 76: the design's 10 dp would leave the inner circle; this size stays inside. -->
+    <dimen name="preview_kwh_size">8.5dp</dimen>
+</resources>

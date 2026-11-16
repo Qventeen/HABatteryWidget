@@ -33,7 +33,7 @@
     <string name="widget_balancing_on">Балансування увімкнено</string>
     <string name="widget_balancing_off">Балансування вимкнено</string>
     <string name="widget_balancing_unknown">Балансування невідоме</string>
-    <string name="widget_sync_error">Помилка синхронізації</string>
+    <string name="widget_sync_error">Помилка синхронізації: %1$s</string>
     <string name="widget_battery_temperature">Температура батареї</string>
     <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
@@ -123,7 +123,7 @@
     <string name="widget_font_main">Основні значення</string>
     <string name="widget_font_cell">Значення комірок</string>
     <string name="widget_font_small">Дрібний текст</string>
-    <string name="widget_font_value">%1$s sp</string>
+    <string name="widget_font_value">%1$d %%</string>
     <string name="widget_reset_sizes">Скинути розміри</string>
     <string name="widget_summary">%1$s · %2$s</string>
 
@@ -153,7 +153,7 @@
     <string name="field_capacity_invalid">Введіть число</string>
     <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
 
-    <string name="preview_time_left">17 год 16 хв</string>
+    <string name="preview_time_left">17г і 16х</string>
     <string name="preview_kwh">4,58 кВт·год</string>
     <string name="preview_voltage">26,50 В</string>
     <string name="preview_current">10,0 А</string>

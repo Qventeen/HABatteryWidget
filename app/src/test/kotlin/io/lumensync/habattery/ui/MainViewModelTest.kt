@@ -11,7 +11,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
-import io.lumensync.habattery.domain.model.FontSizes
+import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -289,11 +289,11 @@ class MainViewModelTest {
     assertEquals(1, source.calls)
   }
 
-  @Test fun saveFontSizes_clamps() = runTest(dispatcher) {
+  @Test fun saveFontPercents_clamps() = runTest(dispatcher) {
     val vm = start()
-    vm.saveFontSizes(FontSizes(soc = 50f, small = 11.5f))
+    vm.saveFontPercents(FontPercents(soc = 120, small = 75))
     advanceUntilIdle()
-    assertEquals(FontSizes(soc = 42f, small = 11.5f), state.settings.fontSizes)
+    assertEquals(FontPercents(soc = 100, small = 75), state.settings.fontPercents)
   }
 
   @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {

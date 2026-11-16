@@ -1,20 +1,18 @@
 package io.lumensync.habattery.widget
 
-/** Offsets (dp) of the label's and the under-SOC line's centres from the ring centre. */
-internal data class RingTextOffsets(val label: Float, val under: Float)
-
 /**
- * Places the three lines inside the ring as the design does (CSS: SOC number with line-height 1,
- * 2 dp gaps). Android text boxes are taller than that, so a plain column would push the under-SOC
- * line into the ring; the drawings place each line by these offsets instead.
+ * Places the ring's three lines as the canvas does (spec 0005, D): each baseline where the CSS stack
+ * puts it ([RingStack]). An Android text view is taller than its glyphs (font padding: from the
+ * font's top to its bottom, baseline at −top), so each view's centre is moved to put its baseline
+ * there.
  */
 internal object RingLayout {
-  /** Roboto's normal line height, per unit of font size. */
-  private const val LINE_HEIGHT = 1.17f
-
-  fun offsets(socDp: Float, labelDp: Float, underDp: Float, gapDp: Float): RingTextOffsets =
-    RingTextOffsets(
-      label = socDp / 2 + gapDp + labelDp * LINE_HEIGHT / 2,
-      under = socDp / 2 + gapDp + underDp * LINE_HEIGHT / 2,
-    )
+  /** The centre of each line's text view, in dp from the ring centre (down is positive). */
+  fun centers(lines: List<RingLine>, gap: Float, measurer: TextMeasurer): List<Float> {
+    val baselines = RingStack.baselines(lines, lines.map { it.requested }, gap, measurer)
+    return lines.mapIndexed { i, line ->
+      val m = measurer.metrics(line.text, line.requested, line.weight)
+      baselines[i] + (m.top + m.bottom) / 2
+    }
+  }
 }

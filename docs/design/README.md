@@ -28,6 +28,11 @@ The PNGs are rendered at 2× scale; 1 px of the design = 1 dp.
 Card sizes are the owner's home screen grid (font scale 1.0, measured
 2026-11-15). Each size has its own layout; it is not one layout scaled.
 
+Home-screen scale: the owner's HyperOS launcher draws widgets at about
+78 % of their size, so the widget multiplies every size and font below by
+1.28 to look like the design there (spec 0005 §8). For now this is a fixed
+number in code; spec 0007 makes it a Widget setting (default 100 %).
+
 Main rule (as in v4): the most important data sits on the left, and
 importance drops to the right, then down: SOC, then pack voltage and
 current, then cell details.
@@ -39,13 +44,15 @@ current, then cell details.
 | Top row | 32 high, full width | 32 high, beside the ring | 44 high, full width | 48 high, full width |
 | Buttons (touch / circle / icon) | 32 / 30 / 16 | 32 / 30 / 16 | 44 / 36 / 18 | 48 / 40 / 20 |
 | Ring (size, stroke) | 76, 7 | 112, 8 — full card height, left | 86, 7 | 108, 8 |
-| Pack pills (voltage, current) | 2 stacked, 6 gap, 89 wide | 2 stacked, 6 gap, 108 wide | 2 stacked, 6 gap, fill the width | 2 stacked, 7 gap, fill the width |
-| Cell pills | column 66 wide, 4 gap | column 84 wide, 4 gap | 2 × 2 grid under ring and pack, 20 high, 5 / 4 gap | column 84 wide, 6 gap |
+| Pack pills (voltage, current) | 2 stacked, 6 gap, 87.5 wide | 2 stacked, 6 gap, 118 wide | 2 stacked, 6 gap, 119.5 wide | 2 stacked, 7 gap, 115 wide |
+| Cell pills | column 56 wide, 4 gap | column 74 wide, 4 gap | 2 × 2 grid under ring and pack, 20 high, 5 / 4 gap | column 74 wide, 6 gap |
 
 All sizes in dp. Gaps: 8 between ring, pack and cells; 4 under the top row
-(4×3: 7 between the upper part and the cell grid). 4×2 is too narrow for
-the 5×2 layout (the top row needs about 200 dp beside the ring), so its top
-row spans the full width and the ring sits below it.
+(4×3: 7 between the upper part and the cell grid). Except in 5×2, ring and
+pack share the width the cells leave equally, and the ring fills its column
+up to the row height (owner, 2026-11-16; the PNGs show the older widths).
+4×2 is too narrow for the 5×2 layout (the top row needs about 200 dp beside
+the ring), so its top row spans the full width and the ring sits below it.
 
 ```
 5×2                                 4×3                     5×3
@@ -63,11 +70,13 @@ row spans the full width and the ring sits below it.
   32 dp: below Android's 48 dp advice; the owner chose a 32 dp top row at
   2 rows.
 - **Pack pills** fill their column. Neither value has a sign: the arrow and
-  the colour show the direction. Checked: "↓ 125.5 A" and "↑ 3.98 kW" fit
-  at every size.
+  the colour show the direction. "↓ 125.5 A" and "↑ 3.98 kW" fit at the
+  design card sizes; the widget fits its texts to the boxes at its bucket
+  sizes (6 dp smaller, spec 0005), where these long values shrink a little
+  ("↑ 3.98 kW" about 16 sp in 4×2). Corner 16 (owner, 2026-11-16).
 - **Cell pills:** a small fixed gap, and the pills grow to fill the space,
   so the cell column starts and ends with the pack pills. Never spread the
-  pills with big gaps.
+  pills with big gaps. Round ends.
 - **4 cell pills:** average cell voltage, cell delta, battery
   temperature, MOSFET temperature (always last); 3 when no battery sensor
   is set.
@@ -79,7 +88,9 @@ row spans the full width and the ring sits below it.
 
 Design sizes per size (sp) = 50 % of the font settings; 100 % = twice the
 design size, 25 % = half (spec 0005). Above 50 % each text grows only as far
-as its box allows: the design sizes already fit the longest values.
+as its box allows. The design sizes fit the longest values at the design
+card sizes; at the bucket boxes long worst-case values like "↑ 3.98 kW"
+shrink a little (about 16 sp in 4×2).
 
 | Group | 4×2 | 5×2 | 4×3 | 5×3 |
 |---|---|---|---|---|
@@ -101,8 +112,12 @@ as its box allows: the design sizes already fit the longest values.
 | Full | SOC ≥ 100 % and not discharging: no time left ("—") |
 | No data yet / setup needed | One centered message ("No data from Home Assistant" plus the reason, or "Set up in the app") and an "Open app" button |
 
-**Time left** shows from 0.5 A: "45 min", "17 h 16 min", and from 24 h
-"2 d 7 h" (days and hours). Otherwise "—".
+**Time left** shows from 0.5 A in Android's narrow format: "45m",
+"17h 16m", and from 24 h "2d 7h" (days and hours); Ukrainian as Android
+writes it. Otherwise "—".
+
+**Update time:** the time when the last sync was today, else only the
+date in the app's language ("Nov 14", "14 лист.").
 
 ## Data
 
@@ -125,7 +140,7 @@ every id can also be typed by hand.
 | Average cell | `sensor.<p>_average_cell_voltage` | |
 | Cell delta | `sensor.<p>_delta_cell_voltage` | Reported in V, shown in mV |
 | Balancing | `sensor.<p>_balancing` | Read-only; `on`/`off`, `true`/`false` or `1`/`0` |
-| Update time | app | Time of the last successful sync |
+| Update time | app | Time of the last successful sync; only the date when it was on an earlier day |
 | Auto refresh | app setting | The widget toggle turns periodic sync on or off; with no interval set, it uses 15 min |
 
 ## Colours and levels

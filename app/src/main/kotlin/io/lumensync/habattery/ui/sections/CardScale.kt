@@ -1,14 +1,15 @@
-package io.lumensync.habattery.widget
+package io.lumensync.habattery.ui.sections
 
 import kotlin.math.min
 
 /**
- * One layout for every size (spec 0003, approach C1): fixed sizes are multiplied by `s`. The top row
- * keeps its 44 dp (the buttons' touch area), so the height scale uses the 136 dp below it:
+ * The app card's v4 scaling (spec 0003, approach C1; kept for the card by spec 0005, 5.7 until spec
+ * 0006 replaces the card): fixed sizes are multiplied by `s`. The top row keeps its 44 dp (the
+ * buttons' touch area), so the height scale uses the 136 dp below it:
  * `s = min(1, width / 360, (height − 44) / 136)`. Then the 104 dp ring always fits the body.
  * Bigger than the design, sizes stay at 1×.
  */
-object WidgetScale {
+internal object CardScale {
   const val WIDTH_DP = 360f
   const val HEIGHT_DP = 180f
   const val TOP_ROW_DP = 44f
