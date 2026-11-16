@@ -24,11 +24,12 @@ class WidgetFontsTest {
       configuredSettings(),
     ) as WidgetModel.Data
 
-  private fun texts(main: String = "10.0 A", updatedAt: String? = "11:29") =
+  private fun texts(main: String = "10.0 A", showError: Boolean = false) =
     DataTexts(
       timeLeft = "17 h",
-      updatedAt = updatedAt,
-      errorDescription = null,
+      updatedAt = "11:29",
+      showError = showError,
+      errorDescription = if (showError) "Sync error: Token rejected" else null,
       socLabel = "SOC",
       soc = "55",
       underSoc = "4.58 kWh",
@@ -69,12 +70,14 @@ class WidgetFontsTest {
     assertEquals(factor, f.ringLabel / 17f, 1e-4f)
   }
 
+  /** Review finding 1: the error icon takes the update time's place, the text size stays. */
   @Test
-  fun syncError_givesTheTimeLeftTheUpdateTimesPlace() {
-    // 5×2 at its bucket: 73 dp for both texts; "17 h" + "11:29" at 10.5 = 47 dp fits either way.
-    val withTime = fonts(LayoutSpec.L5x2, percents = FontPercents(small = 100))
-    val withError = fonts(LayoutSpec.L5x2, texts(updatedAt = null), FontPercents(small = 100))
-    assertTrue("${withError.small} > ${withTime.small}", withError.small > withTime.small)
+  fun syncError_keepsTheTopRowSize() {
+    LayoutSpec.all.forEach { spec ->
+      val normal = fonts(spec, percents = FontPercents(small = 100))
+      val error = fonts(spec, texts(showError = true), FontPercents(small = 100))
+      assertEquals(spec.name, normal.small, error.small, 0f)
+    }
   }
 
   /** 4×2 at its bucket: 106 dp − icon 22 − gaps 15 − button 34 − the title's view leave the reason. */

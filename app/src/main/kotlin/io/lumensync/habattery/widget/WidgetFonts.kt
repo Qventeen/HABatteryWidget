@@ -21,8 +21,9 @@ internal data class CellPill(
 /** Every text of a widget with data, resolved once per drawing. */
 internal data class DataTexts(
   val timeLeft: String,
-  /** Null with a sync error: the error icon takes its place. */
-  val updatedAt: String?,
+  val updatedAt: String,
+  /** With a sync error the red icon takes the update time's place ([errorDescription] says why). */
+  val showError: Boolean,
   val errorDescription: String?,
   val socLabel: String,
   val soc: String,
@@ -50,7 +51,8 @@ internal data class DataTexts(
         }
       return DataTexts(
         timeLeft = texts.timeLeft(m),
-        updatedAt = if (m.error == null) texts.updatedAt(m) else null,
+        updatedAt = texts.updatedAt(m),
+        showError = m.error != null,
         errorDescription = m.error?.let(texts::syncErrorDescription),
         socLabel = texts.socLabel,
         soc = texts.soc(m),
@@ -73,7 +75,7 @@ internal data class DataTexts(
 
 /** The shown size (dp) of every text of a widget with data, and where the ring lines sit. */
 internal data class DataFonts(
-  /** Time left and update time share one size, so they never overlap. */
+  /** Time left and update time share one size, so they never overlap; the same with an error. */
   val small: Float,
   val ringLabel: Float,
   val soc: Float,
@@ -110,9 +112,9 @@ internal object WidgetFonts {
     fun fit(text: String, size: Float, weight: TextWeight, box: Box) =
       TextFit.fit(listOf(text), size, weight, box, measurer)
 
-    val topTexts = listOfNotNull(texts.timeLeft, texts.updatedAt)
-    val topBox = boxes.topTexts.let { if (texts.updatedAt == null) it.copy(width = it.width - spec.statusIcon) else it }
-    val small = TextFit.fit(topTexts, requested(FontGroup.SMALL, design.small), TextWeight.NORMAL, topBox, measurer)
+    // Fitted with the update time also when the error icon shows, so the error moves nothing.
+    val topTexts = listOf(texts.timeLeft, texts.updatedAt)
+    val small = TextFit.fit(topTexts, requested(FontGroup.SMALL, design.small), TextWeight.NORMAL, boxes.topTexts, measurer)
 
     val requestedRing =
       listOf(

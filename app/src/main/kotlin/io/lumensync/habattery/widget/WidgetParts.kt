@@ -69,11 +69,10 @@ internal fun TopRow(d: DataLook, actions: WidgetActions) {
       GlanceModifier.defaultWeight().padding(start = s.topGap.dp, end = s.toButtons.dp),
       contentAlignment = Alignment.CenterEnd,
     ) {
-      val updatedAt = d.texts.updatedAt
-      if (updatedAt != null) {
-        Text(updatedAt, style = textStyle(small, c.sub), maxLines = 1)
-      } else {
+      if (d.texts.showError) {
         WidgetIcon(R.drawable.ic_alert, s.statusIcon.dp, c.bad, d.texts.errorDescription)
+      } else {
+        Text(d.texts.updatedAt, style = textStyle(small, c.sub), maxLines = 1)
       }
     }
     CircleButton(
