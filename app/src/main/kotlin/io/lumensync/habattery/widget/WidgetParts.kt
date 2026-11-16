@@ -10,7 +10,6 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.action.Action
-import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -47,7 +46,7 @@ private const val RING_RENDER_SCALE = 1.25f
  * toggle and ↻ (spec 0005, 5.3). The error takes the update time's place, so nothing else moves.
  */
 @Composable
-internal fun TopRow(d: DataLook, actions: WidgetActions) {
+internal fun TopRow(d: DataLook, actions: WidgetActions?) {
   val context = LocalContext.current
   val s = d.spec
   val c = d.colors
@@ -84,7 +83,7 @@ internal fun TopRow(d: DataLook, actions: WidgetActions) {
       iconColor = if (model.autoRefresh) c.accent else c.dim,
       face = if (model.autoRefresh) c.okBg else c.tile,
       description = context.getString(WidgetTexts.autoDescription(model.autoRefresh)),
-      action = actions.toggleAuto,
+      action = actions?.toggleAuto,
       growEnd = s.buttonGap / 2,
     )
     // While a sync runs, ↻ stays in place and only dims.
@@ -94,7 +93,7 @@ internal fun TopRow(d: DataLook, actions: WidgetActions) {
       iconColor = if (model.refreshing) c.dim else c.sub,
       face = c.tile,
       description = context.getString(WidgetTexts.refreshDescription(model.refreshing)),
-      action = actions.refresh,
+      action = actions?.refresh,
       growStart = s.buttonGap / 2,
     )
   }
@@ -111,7 +110,7 @@ private fun CircleButton(
   iconColor: ColorProvider,
   face: ColorProvider,
   description: String,
-  action: Action,
+  action: Action?,
   growStart: Float = 0f,
   growEnd: Float = 0f,
 ) {
@@ -119,7 +118,7 @@ private fun CircleButton(
   Box(
     GlanceModifier.width((s.buttonTouch + growStart + growEnd).dp)
       .height(s.buttonTouch.dp)
-      .clickable(action)
+      .tapAction(action)
       .semantics { contentDescription = description }
       .padding(start = growStart.dp, end = growEnd.dp),
     contentAlignment = Alignment.Center,

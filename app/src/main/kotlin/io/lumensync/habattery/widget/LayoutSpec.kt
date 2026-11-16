@@ -98,6 +98,10 @@ data class LayoutSpec(
   val bucket: DpSize
     get() = DpSize(bucketWidth.dp, bucketHeight.dp)
 
+  /** The design card (canvas boards v5): the bucket + [BUCKET_MARGIN_DP] each way. */
+  val designSize: DpSize
+    get() = DpSize((bucketWidth + BUCKET_MARGIN_DP).dp, (bucketHeight + BUCKET_MARGIN_DP).dp)
+
   /** Height of the 2 × 2 cell grid (4×3). */
   val gridHeight: Float
     get() = 2 * gridPill + cellGap
@@ -211,6 +215,9 @@ data class LayoutSpec(
      * size. Spec 0007 replaces it with a stored Widget setting (default 100 %).
      */
     const val HOST_SCALE = 1.28f
+
+    /** How much smaller than its design card a bucket is, each way (spec 0005, 5.1). */
+    const val BUCKET_MARGIN_DP = 6f
 
     /** How far below a bucket Android still shows it (`RemoteViews.fitsIn`). */
     const val PLATFORM_ROUNDING_DP = 1f

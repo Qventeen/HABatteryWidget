@@ -12,6 +12,15 @@ class LayoutSpecTest {
     assertEquals(listOf(261f to 126f, 334f to 126f, 261f to 199f, 334f to 199f), LayoutSpec.all.map { it.bucketWidth to it.bucketHeight })
   }
 
+  /** README "Card": the design card of each layout, where the app's preview lays it out. */
+  @Test
+  fun designSizes_areTheReadmeCards() {
+    assertEquals(
+      listOf(267f to 132f, 340f to 132f, 267f to 205f, 340f to 205f),
+      LayoutSpec.all.map { it.designSize.width.value to it.designSize.height.value },
+    )
+  }
+
   @Test
   fun forSize_eachBucketAndOwnerSize_picksItsLayout() {
     LayoutSpec.all.forEach { spec ->
