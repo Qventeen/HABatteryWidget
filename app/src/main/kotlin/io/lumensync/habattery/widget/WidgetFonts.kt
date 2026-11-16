@@ -116,7 +116,8 @@ internal object WidgetFonts {
     val topTexts = listOf(texts.timeLeft, texts.updatedAt)
     val small = TextFit.fit(topTexts, requested(FontGroup.SMALL, design.small), TextWeight.NORMAL, boxes.topTexts, measurer)
 
-    fun fifty(sp: Float) = FontPercents().requestedDp(FontGroup.SOC, sp, fontScale)
+    // A ring line's size at 50 %: its design size × the system font scale.
+    fun fifty(sp: Float) = sp * fontScale
     val requestedRing =
       listOf(
         RingLine(texts.socLabel, requested(FontGroup.SMALL, design.ringLabel), TextWeight.NORMAL, spec.labelLineHeight, fifty(design.ringLabel)),
