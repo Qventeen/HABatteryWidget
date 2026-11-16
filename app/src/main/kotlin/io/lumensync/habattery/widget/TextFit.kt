@@ -68,8 +68,7 @@ object RingStack {
 
 /**
  * Spec 0005, approach C1: a text is shown at its requested size, or smaller when it does not fit its
- * box. Text width is not exactly linear in the size (hinting), so the proportional guess is checked
- * and stepped down until it fits.
+ * box.
  */
 object TextFit {
   /** Below 1 dp of ink outside the ring's inner circle is accepted (spec 0005, 5.5). */
@@ -80,6 +79,7 @@ object TextFit {
   const val WIDTH_SLACK_DP = 0.5f
 
   private const val STEP_DP = 0.25f
+  private const val SEARCH_STEPS = 24
   private const val FACTOR_STEP = 0.01f
   private const val EPSILON = 0.01f
 
@@ -95,11 +95,15 @@ object TextFit {
     fun fits(size: Float) = width(size) <= roomW + EPSILON && height(size) <= roomH + EPSILON
 
     if (requested <= 0f || fits(requested)) return requested.coerceAtLeast(0f)
-    val w = width(requested)
-    val h = height(requested)
-    var size = requested * minOf(if (w > 0f) roomW / w else 1f, if (h > 0f) roomH / h else 1f)
-    while (size > STEP_DP && !fits(size)) size -= STEP_DP
-    return size.coerceAtLeast(0f)
+    // The largest size that fits, found the same way whatever was asked for, so a larger request
+    // never shows smaller (text width is not exactly linear in the size).
+    var fitting = 0f
+    var tooBig = requested
+    repeat(SEARCH_STEPS) {
+      val mid = (fitting + tooBig) / 2
+      if (fits(mid)) fitting = mid else tooBig = mid
+    }
+    return fitting
   }
 
   /**

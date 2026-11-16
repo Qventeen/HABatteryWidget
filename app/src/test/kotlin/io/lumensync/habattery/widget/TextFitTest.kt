@@ -43,7 +43,15 @@ class TextFitTest {
   fun sharedBox_fitsTheSumOfWidths() {
     // 4 + 5 characters share 45 dp (and the width slack): 4.5 × size ≤ 45.
     val size = fit(20f, Box(45f + TextFit.WIDTH_SLACK_DP, 40f), "17 h", "11:29")
-    assertTrue("$size", size <= 10f && size > 9.7f)
+    assertTrue("$size", 4.5f * size <= 45.01f && size > 9.7f)
+  }
+
+  /** Re-review: a larger request never shows smaller (the fit does not depend on the request). */
+  @Test
+  fun largerRequest_neverShowsSmaller() {
+    val box = Box(80f, 40f)
+    val at50 = fit(17f, box, "↓ 125.5 A")
+    listOf(20f, 25.5f, 34f, 51f).forEach { assertTrue("$it", fit(it, box, "↓ 125.5 A") >= at50) }
   }
 
   @Test fun fit_neverReturnsMoreThanRequested() = assertEquals(12f, fit(12f, Box(1000f, 1000f), "x"), 0f)
