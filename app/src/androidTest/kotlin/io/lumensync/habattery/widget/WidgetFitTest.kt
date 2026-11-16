@@ -31,6 +31,7 @@ import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -226,12 +227,14 @@ class WidgetFitTest {
       if (view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
 
   /**
-   * At 50 % the design PNGs' values show at the design sizes, so the drawing matches the PNGs. The
-   * top row's two time texts are left out: their length depends on the clock format and on the
-   * time-left format, and they shrink to fit (spec 0005 build notes).
+   * At 50 % the design PNGs' values show at their 50 % size: the design size × the group's base.
+   * The pills match the PNGs; the small texts are 1.5 × theirs. The ring lines may give up to
+   * [RING_SHRINK] of it: with the larger "SOC" label and the 6 dp gap, the owner accepts a kWh line
+   * a little under its size in the small 4×2 ring. The top row's two time texts are left out: their
+   * length depends on the clock format and on the time-left format, and they shrink to fit.
    */
   @Test
-  fun fiftyPercent_designValues_showTheDesignSizes() {
+  fun fiftyPercent_designValues_showTheirFiftyPercentSizes() {
     val context = context("en", 1f)
     val measurer = PaintTextMeasurer(context)
     val texts = WidgetTexts(context, io.lumensync.habattery.format.Formatters(context))
@@ -240,17 +243,25 @@ class WidgetFitTest {
     for (spec in LayoutSpec.all) {
       val f = WidgetFonts.data(m, DataTexts.of(m, texts), spec, FontPercents(), 1f, measurer)
       val d = spec.fonts
-      val shown =
+      fun fifty(group: FontGroup, design: Float) = FontPercents().requestedDp(group, design, 1f)
+      val ring =
         mapOf(
-          "ringLabel" to (f.ringLabel to d.ringLabel),
-          "soc" to (f.soc to d.soc),
-          "underSoc" to (f.underSoc to d.underSoc),
-          "voltage" to (f.voltage to d.main),
-          "main" to (f.main to d.main),
-        ) + f.cells.mapIndexed { i, s -> "cell$i" to (s to d.cell) }
-      shown.forEach { (role, pair) ->
-        if (pair.first < pair.second - 0.01f) problems += "${spec.name} $role ${pair.first} < ${pair.second}"
-      }
+          "ringLabel" to (f.ringLabel to fifty(FontGroup.SMALL, d.ringLabel)),
+          "soc" to (f.soc to fifty(FontGroup.SOC, d.soc)),
+          "underSoc" to (f.underSoc to fifty(FontGroup.UNDER_SOC, d.underSoc)),
+        )
+      val outside =
+        mapOf(
+          "voltage" to (f.voltage to fifty(FontGroup.MAIN, d.main)),
+          "main" to (f.main to fifty(FontGroup.MAIN, d.main)),
+        ) + f.cells.mapIndexed { i, s -> "cell$i" to (s to fifty(FontGroup.CELL, d.cell)) }
+      fun check(shown: Map<String, Pair<Float, Float>>, share: Float) =
+        shown.forEach { (role, pair) ->
+          val least = pair.second * share
+          if (pair.first < least - 0.01f) problems += "${spec.name} $role ${pair.first} < $least"
+        }
+      check(ring, 1f - RING_SHRINK)
+      check(outside, 1f)
     }
     assertTrue(problems.joinToString("\n"), problems.isEmpty())
   }
@@ -483,4 +494,8 @@ class WidgetFitTest {
     assertEquals(true, file.exists())
   }
 
+  private companion object {
+    /** The share of its 50 % size a ring line may give up to fit the ring (owner decision). */
+    const val RING_SHRINK = 0.05f
+  }
 }
