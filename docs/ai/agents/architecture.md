@@ -70,4 +70,5 @@ when it has a second implementation or a test fake.
 - Units live inside the string (`"%1$s V"`). No user text in Kotlin
   (`NoHardcodedTextTest`); no logic on translated text.
 - Stored fields default only to `""`, empty list, `null` or `false`. Exception:
-  display choices and font sizes default to the design values (spec 0003).
+  display choices, font sizes and the home-screen scale default to the design
+  values (specs 0003, 0007).
