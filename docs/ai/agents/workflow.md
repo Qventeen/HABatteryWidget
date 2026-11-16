@@ -13,3 +13,5 @@
 - Library docs: use Context7 when it is connected; otherwise
   developer.android.com.
 - Code, comments and docs are in English.
+- License: Apache-2.0 (`LICENSE`). Add only code or assets whose license allows
+  it (Apache-2.0, MIT, BSD); never copy GPL code, also not from `references/`.

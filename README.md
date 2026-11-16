@@ -103,3 +103,14 @@ owner's BMS, 2026-11-15); another BMS integration may use the opposite sign.
 English (default) and Ukrainian. On Android 13+ you can set the app language
 in the app ("Appearance") or in the system settings. The widget follows it,
 also when the app is closed.
+
+## License
+
+Copyright 2026 the HA Battery Widget authors.
+
+Licensed under the [Apache License, Version 2.0](LICENSE), the same license as
+Home Assistant Core and the Home Assistant Android app. You may use, change and
+share this code under its terms.
+
+This is an independent project. It is not affiliated with or endorsed by Home
+Assistant or the Open Home Foundation. "Home Assistant" is their trademark.
