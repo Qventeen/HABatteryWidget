@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
     super.onNewIntent(intent)
     setIntent(intent)
     confirmWidgetPlacement()
-    namedPreviewTab()?.let { previewRequest = PreviewRequest(it, previewRequest.count + 1) }
+    previewRequest = previewRequest.next(namedPreviewTab())
   }
 
   /**
