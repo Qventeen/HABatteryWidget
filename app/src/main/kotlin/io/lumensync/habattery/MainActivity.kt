@@ -159,6 +159,8 @@ class MainActivity : ComponentActivity() {
       saveCapacity = viewModel::saveCapacity,
       saveDisplay = viewModel::saveDisplay,
       saveFontPercents = viewModel::saveFontPercents,
+      saveHomeScale = viewModel::saveHomeScale,
+      resetWidgetSettings = viewModel::resetWidgetSettings,
       saveAppearance = viewModel::saveAppearance,
       setLanguage = {
         language = it

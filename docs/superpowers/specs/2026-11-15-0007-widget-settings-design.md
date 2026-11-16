@@ -140,10 +140,50 @@ replaces the number fields of §3.1, §5.2 and §5.3.
   78 %); the owner sets 128 %. The app preview (0006) always draws at
   100 %, because nothing shrinks it in the app.
 - Reset (Claude's call, to keep §3.4 "Reset returns to the default"): one
-  "Reset to defaults" button sets the fonts to 50 % and the scale to
+  "Reset sizes" button (renamed in the review fixes below) sets the fonts to 50 % and the scale to
   100 %, saved at once.
 - Unchanged: the Widget section first (§5.1), then Appearance (0008), then
   Connection and the rest; the summary (§5.2) also shows "· text size
   changed" when the scale is not 100 %; strings in both languages.
 - Tests: the order, slider save, the scale reaching the widget, Reset;
   the validation tests of §6 go.
+
+### Build notes
+
+- The scale is `Settings.homeScalePercent` (an `Int`, default 100), stored in the settings JSON
+  beside `fontPercents`; `HomeScale` holds 80 / 100 / 150 and `clamp`. The repository clamps it on
+  read (`Settings.clamped()`), the ViewModel on save. Old files without it load with 100.
+- `BatteryWidget` already collects settings as state, so a saved scale recomposes live Glance
+  sessions the same way a font change does; `HOST_SCALE` is gone. The preview keeps scale 1.
+- "Reset sizes" is one ViewModel call (`resetWidgetSettings`): fonts 50, scale 100, one write.
+- Summary rule is `Settings.textSizeChanged` (any font off 50 or scale off 100), tested in the
+  domain; its text is a separate string `widget_summary_changed`.
+- Ukrainian: "Масштаб на головному екрані", "Скинути розміри", "розмір тексту змінено".
+- Screen order: preview, actions, Widget, Appearance, Connection, Token, Entities, Refresh,
+  Notification, Capacity.
+- Not run: instrumented tests (compile only); the owner checks 150 % on the phone. A launcher
+  that does not shrink widgets shows the layout 1.5 times bigger than the cell, so it may clip;
+  the fit rule keeps texts inside their boxes, not the box inside the cell.
+
+### Review fixes
+
+- Reset label: "Reset sizes" (Claude's call; display choices are not reset). The old string
+  `widget_reset_sizes` is back, `widget_reset_defaults` is gone.
+- Scale hint: "Only if your home screen draws widgets smaller. Most phones: 100 %." Above 100 % on a
+  normal launcher the widget is clipped.
+- TalkBack reads "N %" (`stateDescription`) for the scale and the five font sliders, not a raw float.
+- Slider draft: the shown value is `dragValue ?: stored`; `dragValue` is cleared after the release
+  saves, so a Reset or a failed write cannot leave an unsaved value on screen.
+- `HomeScale.factor(percent)` holds the percent-to-multiplier conversion and is unit-tested.
+- The androidTest `scaleSlider_savesWhenReleased` starts the gesture inside the track, checks that
+  nothing is stored before release, then releases (compile only; the owner runs it).
+
+### Change by the owner (2026-11-16, phone check)
+
+- The scale goes up to **200 %** (was 150 %): 150 % was not enough for the owner. Range 80–200 %,
+  step 1, default 100 %.
+- Small text is bigger: the "Small text" group's 50 % is 1.5 × the design size (the old 75 %),
+  100 % is 3 × (the old 150 %). It covers the top row, the ring's "SOC" label and the empty
+  state's reason. The fit rule still shrinks a text that does not fit its box.
+- The font sliders go from **10 %** (was 25 %) to 100 %, steps of 5; stored values below 10 are
+  clamped to 10.

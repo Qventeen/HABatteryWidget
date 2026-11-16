@@ -32,6 +32,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   with `GlanceAppWidget.compose()` at the layout's bucket, without actions and at
   home-screen scale 1, and applies the `RemoteViews` fresh for each drawing (never
   `reapply`: 4×3 has its own root).
+  The home-screen scale (`Settings.homeScalePercent`, 80–200 %, default 100; spec 0007) goes
+  from `BatteryWidget` into `WidgetContent(hostScale)`; the preview never takes it.
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
 - `ui/`: Compose screen, `MainViewModel`, `PreviewTab` (size tabs, first-tab rule),
@@ -68,4 +70,5 @@ when it has a second implementation or a test fake.
 - Units live inside the string (`"%1$s V"`). No user text in Kotlin
   (`NoHardcodedTextTest`); no logic on translated text.
 - Stored fields default only to `""`, empty list, `null` or `false`. Exception:
-  display choices and font sizes default to the design values (spec 0003).
+  display choices, font sizes and the home-screen scale default to the design
+  values (specs 0003, 0007).

@@ -5,6 +5,7 @@ import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.testing.configuredSettings
 import org.junit.Assert.assertEquals
@@ -48,7 +49,7 @@ class WidgetFontsTest {
     assertEquals(22f, f.voltage, 0f)
     assertEquals(22f, f.main, 0f)
     assertEquals(listOf(13.5f, 13.5f, 13.5f), f.cells)
-    assertEquals(10.5f, f.small, 0f)
+    assertEquals(10.5f * FontGroup.SMALL.base, f.small, 0f) // small texts start at 1.5 × the design
   }
 
   @Test

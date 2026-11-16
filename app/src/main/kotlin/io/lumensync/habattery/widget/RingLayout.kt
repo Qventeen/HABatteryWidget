@@ -1,8 +1,8 @@
 package io.lumensync.habattery.widget
 
 /**
- * Places the ring's three lines as the canvas does (spec 0005, D): each baseline where the CSS stack
- * puts it ([RingStack]). An Android text view is taller than its glyphs (font padding: from the
+ * Places the ring's three lines by their visible ink (spec 0005, D; owner 2026-11-16): each baseline
+ * where [RingStack] puts it, with a fixed visible gap between the lines. An Android text view is taller than its glyphs (font padding: from the
  * font's top to its bottom, baseline at −top), so each view's centre is moved to put its baseline
  * there.
  */

@@ -19,6 +19,7 @@ import io.lumensync.habattery.R
 import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.HomeScale
 import kotlinx.coroutines.flow.first
 
 /** Renders from local data only (cache, settings, token presence). No network here. */
@@ -58,7 +59,7 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
               refresh = actionRunCallback<RefreshAction>(),
               toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
             ),
-          hostScale = LayoutSpec.HOST_SCALE,
+          hostScale = HomeScale.factor(settings.homeScalePercent),
         )
       }
     }

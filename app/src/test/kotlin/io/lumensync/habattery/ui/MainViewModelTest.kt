@@ -284,6 +284,35 @@ class MainViewModelTest {
     assertEquals(FontPercents(soc = 100, small = 75), state.settings.fontPercents)
   }
 
+  @Test fun saveHomeScale_clampsAndRedraws() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveHomeScale(128)
+    advanceUntilIdle()
+    assertEquals(128, state.settings.homeScalePercent)
+    assertTrue(widgets.refreshes > before)
+    vm.saveHomeScale(201)
+    advanceUntilIdle()
+    assertEquals(200, state.settings.homeScalePercent)
+    vm.saveHomeScale(79)
+    advanceUntilIdle()
+    assertEquals(80, state.settings.homeScalePercent)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun resetWidgetSettings_setsFontsTo50AndScaleTo100() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveFontPercents(FontPercents(soc = 90, small = 30))
+    vm.saveHomeScale(128)
+    advanceUntilIdle()
+    val before = widgets.refreshes
+    vm.resetWidgetSettings()
+    advanceUntilIdle()
+    assertEquals(FontPercents(), state.settings.fontPercents)
+    assertEquals(100, state.settings.homeScalePercent)
+    assertTrue(widgets.refreshes > before)
+  }
+
   @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {
     val vm = start()
     vm.setNotifyOnFull(true)

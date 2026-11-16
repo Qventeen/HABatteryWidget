@@ -66,9 +66,30 @@ class DataStoreSettingsRepositoryTest {
   fun fontPercents_areClampedWhenRead() = runTest {
     file.writeText("""{"schemaVersion":1,"settings":{"fontPercents":{"soc":5,"small":150}}}""")
     val percents = repo().settings.first().fontPercents
-    assertEquals(25, percents.soc)
+    assertEquals(10, percents.soc)
     assertEquals(100, percents.small)
     assertEquals(50, percents.main)
+  }
+
+  @Test
+  fun homeScale_defaultsTo100_andRoundTrips() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"notifyOnFull":true}}""")
+    val r = repo()
+    assertEquals(100, r.settings.first().homeScalePercent)
+    r.update { it.copy(homeScalePercent = 128) }
+    assertEquals(128, r.settings.first().homeScalePercent)
+  }
+
+  @Test
+  fun homeScale_aboveTheRange_isClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"homeScalePercent":300}}""")
+    assertEquals(200, repo().settings.first().homeScalePercent)
+  }
+
+  @Test
+  fun homeScale_belowTheRange_isClampedWhenRead() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"homeScalePercent":10}}""")
+    assertEquals(80, repo().settings.first().homeScalePercent)
   }
 
   @Test

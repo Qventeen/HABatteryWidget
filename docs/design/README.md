@@ -30,8 +30,9 @@ Card sizes are the owner's home screen grid (font scale 1.0, measured
 
 Home-screen scale: the owner's HyperOS launcher draws widgets at about
 78 % of their size, so the widget multiplies every size and font below by
-1.28 to look like the design there (spec 0005 §8). For now this is a fixed
-number in code; spec 0007 makes it a Widget setting (default 100 %).
+1.28 to look like the design there (spec 0005 §8). This is the Widget
+setting "Home-screen scale" (spec 0007): default 100 %, the owner uses
+128 % on HyperOS.
 
 Main rule (as in v4): the most important data sits on the left, and
 importance drops to the right, then down: SOC, then pack voltage and
@@ -87,7 +88,9 @@ the ring), so its top row spans the full width and the ring sits below it.
 ## Font sizes
 
 Design sizes per size (sp) = 50 % of the font settings; 100 % = twice the
-design size, 25 % = half (spec 0005). Above 50 % each text grows only as far
+design size, 10 % = a fifth (spec 0005). The small texts (top row, the ring's
+"SOC" label, the empty state's reason) start bigger: their 50 % is 1.5 × the
+design size (owner, 2026-11-16). Above 50 % each text grows only as far
 as its box allows. The design sizes fit the longest values at the design
 card sizes; at the bucket boxes long worst-case values like "↑ 3.98 kW"
 shrink a little (about 16 sp in 4×2).

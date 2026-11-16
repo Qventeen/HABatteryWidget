@@ -14,7 +14,10 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -28,6 +31,8 @@ import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
 import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
@@ -35,7 +40,9 @@ import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.ui.sections.CONNECTION_SECTION_TAG
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
@@ -157,6 +164,61 @@ class MainScreenTest {
     compose.onNodeWithText(summary).assertExists()
     // Leave the stored choice as a fresh install has it.
     compose.onNodeWithText(text(R.string.widget_choice_kwh)).performScrollTo().performClick()
+  }
+
+  private fun top(node: SemanticsNodeInteraction) =
+    node.fetchSemanticsNode().positionInRoot.y
+
+  /** After the preview and the actions come Widget, then Appearance, then Connection. */
+  @Test
+  fun widgetSection_isFirstAfterPreviewAndActions() {
+    waitForContent()
+    val widget = top(compose.onNodeWithText(text(R.string.widget_settings_title)))
+    val appearance = top(compose.onNodeWithText(text(R.string.appearance_title)))
+    val connection = top(compose.onNodeWithTag(CONNECTION_SECTION_TAG))
+    val preview = top(compose.onNodeWithTag(WIDGET_PREVIEW_TAG))
+    val refresh = top(compose.onNodeWithText(text(R.string.action_refresh_now)))
+    assertTrue(preview < widget && refresh < widget)
+    assertTrue(widget < appearance && appearance < connection)
+  }
+
+  private fun storedSettings() =
+    runBlocking {
+      ApplicationProvider.getApplicationContext<App>().container.settingsRepository.settings.first()
+    }
+
+  @Test
+  fun scaleSlider_savesWhenReleased() {
+    waitForContent()
+    compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
+    val slider = compose.onNodeWithContentDescription(text(R.string.widget_scale_label))
+    slider.performScrollTo()
+    // Inside the track: the semantics bounds are wider than the draggable area.
+    slider.performTouchInput {
+      down(center)
+      moveTo(centerRight)
+    }
+    compose.waitForIdle()
+    assertEquals(HomeScale.DEFAULT, storedSettings().homeScalePercent)
+    slider.performTouchInput { up() }
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().homeScalePercent == HomeScale.MAX }
+    compose.onNodeWithText(text(R.string.widget_reset_sizes)).performScrollTo().performClick()
+  }
+
+  @Test
+  fun reset_setsFontsTo50AndScaleTo100() {
+    waitForContent()
+    runBlocking {
+      ApplicationProvider.getApplicationContext<App>().container.settingsRepository.update {
+        it.copy(fontPercents = FontPercents(soc = 90, small = 30), homeScalePercent = 128)
+      }
+    }
+    compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.widget_reset_sizes)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      val s = storedSettings()
+      s.fontPercents == FontPercents() && s.homeScalePercent == HomeScale.DEFAULT
+    }
   }
 
   /** A pixel at the left edge, half way down: the screen's background. */

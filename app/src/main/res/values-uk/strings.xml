@@ -125,8 +125,11 @@
     <string name="widget_font_cell">Значення комірок</string>
     <string name="widget_font_small">Дрібний текст</string>
     <string name="widget_font_value">%1$d %%</string>
+    <string name="widget_scale_label">Масштаб на головному екрані</string>
+    <string name="widget_scale_hint">Лише якщо ваш екран малює віджети меншими. Більшість телефонів: 100 %.</string>
     <string name="widget_reset_sizes">Скинути розміри</string>
     <string name="widget_summary">%1$s · %2$s</string>
+    <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
 
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>

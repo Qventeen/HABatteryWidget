@@ -11,9 +11,9 @@ class FontPercentsTest {
     FontGroup.entries.forEach { assertEquals(it.name, 50, FontPercents()[it]) }
 
   @Test
-  fun `clamped keeps 25 to 100`() {
-    val c = FontPercents(soc = 24, underSoc = 25, main = 50, cell = 100, small = 101).clamped()
-    assertEquals(FontPercents(soc = 25, underSoc = 25, main = 50, cell = 100, small = 100), c)
+  fun `clamped keeps 10 to 100`() {
+    val c = FontPercents(soc = 9, underSoc = 10, main = 50, cell = 100, small = 101).clamped()
+    assertEquals(FontPercents(soc = 10, underSoc = 10, main = 50, cell = 100, small = 100), c)
   }
 
   @Test fun `with sets one group`() = assertEquals(75, FontPercents().with(FontGroup.MAIN, 75).main)
@@ -31,5 +31,12 @@ class FontPercentsTest {
 
   @Test
   fun `requested size reads its own group`() =
-    assertEquals(21f, FontPercents(small = 100).requestedDp(FontGroup.SMALL, 10.5f, 1f), 1e-4f)
+    assertEquals(28f, FontPercents(cell = 100).requestedDp(FontGroup.CELL, 14f, 1f), 1e-4f)
+
+  @Test
+  fun `small texts start at one and a half times the design`() {
+    assertEquals(15.75f, FontPercents().requestedDp(FontGroup.SMALL, 10.5f, 1f), 1e-4f)
+    assertEquals(31.5f, FontPercents(small = 100).requestedDp(FontGroup.SMALL, 10.5f, 1f), 1e-4f)
+    assertEquals(7.875f, FontPercents(small = 25).requestedDp(FontGroup.SMALL, 10.5f, 1f), 1e-4f)
+  }
 }

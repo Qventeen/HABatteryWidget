@@ -6,15 +6,15 @@ import org.junit.Test
 class RingLayoutTest {
   private val lines =
     listOf(
-      RingLine("SOC", 8.5f, TextWeight.NORMAL, lineHeight = 1.1f),
-      RingLine("55", 28f, TextWeight.BOLD, lineHeight = 1f),
-      RingLine("4.58 kWh", 10f, TextWeight.MEDIUM, lineHeight = 1.2f),
+      RingLine("SOC", 8.5f, TextWeight.NORMAL),
+      RingLine("55", 28f, TextWeight.BOLD),
+      RingLine("4.58 kWh", 10f, TextWeight.MEDIUM),
     )
 
   @Test
   fun eachView_putsItsBaselineOnTheCanvasBaseline() {
-    val baselines = RingStack.baselines(lines, lines.map { it.requested }, gap = 1f, measurer = FakeMeasurer)
-    val centers = RingLayout.centers(lines, gap = 1f, measurer = FakeMeasurer)
+    val baselines = RingStack.baselines(lines, lines.map { it.requested }, gap = 6f, measurer = FakeMeasurer)
+    val centers = RingLayout.centers(lines, gap = 6f, measurer = FakeMeasurer)
     lines.indices.forEach { i ->
       val size = lines[i].requested
       // A view of height bottom − top, centred on its centre, has its baseline at −top below its top.
@@ -25,7 +25,7 @@ class RingLayoutTest {
 
   @Test
   fun lines_keepTheirOrder() {
-    val c = RingLayout.centers(lines, gap = 1f, measurer = FakeMeasurer)
+    val c = RingLayout.centers(lines, gap = 6f, measurer = FakeMeasurer)
     assert(c[0] < c[1] && c[1] < c[2]) { c.toString() }
   }
 }
