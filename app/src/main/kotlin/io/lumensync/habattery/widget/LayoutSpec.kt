@@ -48,6 +48,8 @@ data class LayoutSpec(
   val name: String,
   val bucketWidth: Float,
   val bucketHeight: Float,
+  /** How far below its bucket the layout still shows, in this spec's dp ([scaled] multiplies it). */
+  val bucketRounding: Float = PLATFORM_ROUNDING_DP,
   val ringFullHeight: Boolean = false,
   val cellGrid: Boolean = false,
   val padding: Float = 10f,
@@ -105,11 +107,12 @@ data class LayoutSpec(
     get() = 2 * gridPill + cellGap
 
   /**
-   * The boxes the texts are fitted to: the bucket less [PLATFORM_ROUNDING_DP] each way, because
-   * Android shows a bucket from about 1 dp below it (`ceil(size) + 1 > bucket`).
+   * The boxes the texts are fitted to: the bucket less [bucketRounding] each way, because Android
+   * shows a bucket from about 1 dp below it (`ceil(size) + 1 > bucket`). At home-screen scale k the
+   * smallest space is (bucket − 1) × k, so the rounding scales too.
    */
   fun fitBoxes(cellPills: Int): LayoutBoxes =
-    boxes(bucketWidth - PLATFORM_ROUNDING_DP, bucketHeight - PLATFORM_ROUNDING_DP, cellPills)
+    boxes(bucketWidth - bucketRounding, bucketHeight - bucketRounding, cellPills)
 
   /** The boxes at a widget of [width] × [height] dp with [cellPills] (3 or 4) cell pills. */
   fun boxes(width: Float, height: Float, cellPills: Int): LayoutBoxes {
@@ -146,16 +149,17 @@ data class LayoutSpec(
   }
 
   /**
-   * Every size × [k]: the bucket (so the fit boxes are the space the home screen really gives),
-   * paddings, gaps, icons, ring and fonts; line-height ratios and the shape stay. A launcher that
-   * draws widgets smaller (HyperOS about 0.78) gives the layout 1 / 0.78 of the reported size
-   * (the stored home-screen scale, `Settings.homeScalePercent`).
+   * Every size × [k]: the bucket and its rounding (so the fit boxes are the space the home screen
+   * really gives), paddings, gaps, icons, ring and fonts; line-height ratios and the shape stay. A
+   * launcher that draws widgets smaller (HyperOS about 0.78) gives the layout 1 / 0.78 of the
+   * reported size (the stored home-screen scale, `Settings.homeScalePercent`).
    */
   fun scaled(k: Float): LayoutSpec =
     if (k == 1f) this
     else copy(
       bucketWidth = bucketWidth * k,
       bucketHeight = bucketHeight * k,
+      bucketRounding = bucketRounding * k,
       padding = padding * k,
       corner = corner * k,
       packRadius = packRadius * k,

@@ -112,13 +112,22 @@ class LayoutSpecTest {
       assertEquals(spec.boxes(spec.bucketWidth - 1f, spec.bucketHeight - 1f, 4), spec.fitBoxes(4))
     }
 
+  /** At home-screen scale 2 the smallest space is (bucket − 1) × 2: the 1 dp scales too. */
+  @Test
+  fun fitBoxes_scaledByTwo_areTheScaledSmallestSpace() =
+    LayoutSpec.all.forEach { spec ->
+      val scaled = spec.scaled(2f)
+      val smallest = scaled.boxes((spec.bucketWidth - 1f) * 2f, (spec.bucketHeight - 1f) * 2f, 4)
+      assertEquals(spec.name, smallest, scaled.fitBoxes(4))
+    }
+
   /** The home-screen scale: every dp size and font × k; the shape and the line-height ratios stay. */
   @Test
   fun scaled_multipliesEverySizeAndFont() =
     LayoutSpec.all.forEach { spec ->
       val k = 1.28f
       val scaled = spec.scaled(k)
-      assertTrue(sizes(spec).keys.containsAll(listOf("bucketWidth", "padding", "packRadius", "ring", "cellColumn", "gridPill")))
+      assertTrue(sizes(spec).keys.containsAll(listOf("bucketWidth", "bucketRounding", "padding", "packRadius", "ring", "cellColumn", "gridPill")))
       assertEquals(spec.name, sizes(spec).mapValues { it.value * k }, sizes(scaled))
       assertEquals(spec.name, sizes(spec.fonts).mapValues { it.value * k }, sizes(scaled.fonts))
       assertEquals(spec.name, sizes(spec.empty).mapValues { it.value * k }, sizes(scaled.empty))
