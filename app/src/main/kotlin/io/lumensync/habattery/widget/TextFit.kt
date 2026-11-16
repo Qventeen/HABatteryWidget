@@ -24,7 +24,8 @@ interface TextMeasurer {
   /** The advance width of [text]. */
   fun width(text: String, sizeDp: Float, weight: TextWeight): Float
 
-  fun metrics(sizeDp: Float, weight: TextWeight): LineMetrics
+  /** The line's metrics with [text]: fonts that draw some of its glyphs (fallback) count too. */
+  fun metrics(text: String, sizeDp: Float, weight: TextWeight): LineMetrics
 
   fun ink(text: String, sizeDp: Float, weight: TextWeight): Ink
 }
@@ -45,7 +46,7 @@ data class RingLine(val text: String, val requested: Float, val weight: TextWeig
 object RingStack {
   /** Baselines in dp from the ring centre (down is positive), with every size × [factor]. */
   fun baselines(lines: List<RingLine>, factor: Float, gap: Float, measurer: TextMeasurer): List<Float> {
-    val metrics = lines.map { measurer.metrics(it.requested * factor, it.weight) }
+    val metrics = lines.map { measurer.metrics(it.text, it.requested * factor, it.weight) }
     val heights = lines.mapIndexed { i, line -> lineBox(line, factor, metrics[i]) }
     var top = -(heights.sum() + gap * (lines.size - 1)) / 2
     return lines.indices.map { i ->
@@ -103,7 +104,7 @@ object TextFit {
    * comma reaches below it); in a higher box the view is centred and fits anyway.
    */
   private fun inkHeight(text: String, size: Float, weight: TextWeight, measurer: TextMeasurer): Float =
-    -measurer.metrics(size, weight).top + maxOf(measurer.ink(text, size, weight).bottom, 0f)
+    -measurer.metrics(text, size, weight).top + maxOf(measurer.ink(text, size, weight).bottom, 0f)
 
   /**
    * One factor ≤ 1 for all three ring lines (spec 0005, 5.5): with every size × factor, the ink of

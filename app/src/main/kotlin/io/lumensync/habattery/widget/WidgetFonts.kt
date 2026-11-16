@@ -166,14 +166,12 @@ internal object WidgetFonts {
     val title = TextFit.fit(listOf(titleText), e.title * fontScale, TextWeight.MEDIUM, box, measurer)
     // The column (icon, title, reason, button) must not be taller than the card: what is left
     // for the reason's text view (font padding included) limits its size.
-    val left = box.height - e.icon - 3 * e.gap - e.buttonTop - e.buttonHeight - viewHeight(title, measurer)
+    val left = box.height - e.icon - 3 * e.gap - e.buttonTop - e.buttonHeight - viewHeight(titleText, title, measurer)
     val reasonSize =
       reasonText?.let {
         val wanted = percents.requestedDp(FontGroup.SMALL, spec.fonts.small, fontScale)
-        minOf(
-          TextFit.fit(listOf(it), wanted, TextWeight.MEDIUM, box, measurer),
-          (left / viewHeight(1f, measurer)).coerceAtLeast(0f),
-        )
+        val perDp = viewHeight(it, wanted, measurer) / wanted
+        minOf(TextFit.fit(listOf(it), wanted, TextWeight.MEDIUM, box, measurer), (left / perDp).coerceAtLeast(0f))
       } ?: 0f
     return EmptyFonts(
       title = title,
@@ -190,6 +188,6 @@ internal object WidgetFonts {
   }
 
   /** A one-line text view's height at [size]: from the font's top to its bottom. */
-  private fun viewHeight(size: Float, measurer: TextMeasurer): Float =
-    measurer.metrics(size, TextWeight.MEDIUM).let { it.bottom - it.top }
+  private fun viewHeight(text: String, size: Float, measurer: TextMeasurer): Float =
+    measurer.metrics(text, size, TextWeight.MEDIUM).let { it.bottom - it.top }
 }

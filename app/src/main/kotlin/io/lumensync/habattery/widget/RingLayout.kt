@@ -11,7 +11,7 @@ internal object RingLayout {
   fun centers(lines: List<RingLine>, gap: Float, measurer: TextMeasurer): List<Float> {
     val baselines = RingStack.baselines(lines, 1f, gap, measurer)
     return lines.mapIndexed { i, line ->
-      val m = measurer.metrics(line.requested, line.weight)
+      val m = measurer.metrics(line.text, line.requested, line.weight)
       baselines[i] + (m.top + m.bottom) / 2
     }
   }

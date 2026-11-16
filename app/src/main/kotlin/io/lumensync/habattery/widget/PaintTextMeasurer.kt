@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Rect
+import android.os.Build
 import android.text.TextPaint
 import android.text.style.TextAppearanceSpan
 
@@ -20,14 +21,30 @@ class PaintTextMeasurer(context: Context) : TextMeasurer {
       TextPaint(Paint.ANTI_ALIAS_FLAG).also { TextAppearanceSpan(context, style(weight)).updateMeasureState(it) }
     }
   private val bounds = Rect()
+  private val metricsInt = Paint.FontMetricsInt()
 
   @Synchronized
   override fun width(text: String, sizeDp: Float, weight: TextWeight): Float =
     paint(sizeDp, weight).measureText(text) / pxPerDp
 
+  /**
+   * On Android 13+ the metrics of every font that draws [text] (a fallback font for Δ, ·, ° or
+   * Cyrillic can be taller), as the text view uses them; before that (the call is new in 13), the
+   * main font's.
+   */
   @Synchronized
-  override fun metrics(sizeDp: Float, weight: TextWeight): LineMetrics {
-    val m = paint(sizeDp, weight).fontMetrics
+  override fun metrics(text: String, sizeDp: Float, weight: TextWeight): LineMetrics {
+    val paint = paint(sizeDp, weight)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && text.isNotEmpty()) {
+      paint.getFontMetricsInt(text, 0, text.length, 0, text.length, false, metricsInt)
+      return LineMetrics(
+        metricsInt.ascent / pxPerDp,
+        metricsInt.descent / pxPerDp,
+        metricsInt.top / pxPerDp,
+        metricsInt.bottom / pxPerDp,
+      )
+    }
+    val m = paint.fontMetrics
     return LineMetrics(m.ascent / pxPerDp, m.descent / pxPerDp, m.top / pxPerDp, m.bottom / pxPerDp)
   }
 

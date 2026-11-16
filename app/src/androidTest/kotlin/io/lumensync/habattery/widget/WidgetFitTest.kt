@@ -110,6 +110,15 @@ class WidgetFitTest {
     assertTrue(problems.joinToString("\n"), problems.isEmpty())
   }
 
+  /** Review finding 7: a glyph from a fallback font (Myanmar, a tall font) counts in the line. */
+  @Test
+  fun fallbackFonts_countInTheLineMetrics() {
+    val m = PaintTextMeasurer(context("en", 1f))
+    val latin = m.metrics("12", 20f, TextWeight.MEDIUM)
+    val mixed = m.metrics("12 \u1000", 20f, TextWeight.MEDIUM)
+    assertTrue("$latin vs $mixed", mixed.bottom - mixed.top > latin.bottom - latin.top)
+  }
+
   /** Glance drops the 11th child of a Row; both buttons and every pill must reach the RemoteViews. */
   @Test
   fun everyPart_reachesTheHomeScreen() {
