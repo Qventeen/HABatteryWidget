@@ -3,6 +3,7 @@ package io.lumensync.habattery.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
@@ -13,6 +14,7 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.state.GlanceStateDefinition
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.FontPercents
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -40,11 +42,11 @@ class PreviewWidget(
    * widget is: the per-app language is process-wide and the app overrides no font scale, density
    * or night mode per activity, so the texts and sizes match the activity's. Before Android 12 this
    * context also fixes day or night; from 12 on, the context that applies the views does.
-   * Drawings run one at a time.
+   * Drawings run one at a time. Null when Glance fails to draw them.
    */
-  suspend fun views(context: Context, layout: LayoutSpec): RemoteViews {
+  suspend fun views(context: Context, layout: LayoutSpec): RemoteViews? {
     val app = context.applicationContext
-    return drawing.withLock { compose(app, previewId(app), size = layout.bucket) }
+    return previewOrNull("compose") { drawing.withLock { compose(app, previewId(app), size = layout.bucket) } }
   }
 
   private companion object {
@@ -67,3 +69,20 @@ class PreviewWidget(
       )
   }
 }
+
+private const val TAG = "WidgetPreview"
+
+/**
+ * Runs one [step] of a preview drawing. A failure gives null, so a broken drawing cannot crash the
+ * app at every start; it is logged by class name only, since a message could carry reading values.
+ * Cancellation is rethrown.
+ */
+internal inline fun <T : Any> previewOrNull(step: String, block: () -> T): T? =
+  try {
+    block()
+  } catch (e: CancellationException) {
+    throw e
+  } catch (e: Exception) {
+    Log.w(TAG, "$step failed: ${e.javaClass.name}")
+    null
+  }

@@ -1,7 +1,9 @@
 package io.lumensync.habattery.ui.sections
 
 import android.content.Context
+import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.RemoteViews
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +44,7 @@ import io.lumensync.habattery.ui.PreviewTab
 import io.lumensync.habattery.widget.LayoutSpec
 import io.lumensync.habattery.widget.PreviewWidget
 import io.lumensync.habattery.widget.WidgetColors
+import io.lumensync.habattery.widget.previewOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -126,15 +129,15 @@ private fun WidgetPreview(
     update = { host ->
       drawn?.let {
         with(density) {
-          host.show(it.views, design.width.roundToPx(), design.height.roundToPx())
+          host.show(it, design.width.roundToPx(), design.height.roundToPx())
         }
       }
     },
   )
 }
 
-/** The views of one layout, as composed for it. */
-private class Drawn(val layout: LayoutSpec, val views: RemoteViews)
+/** The views of one layout, as composed for it; null when Glance failed to draw them. */
+private class Drawn(val layout: LayoutSpec, val views: RemoteViews?)
 
 /** What the widget cannot say: the full sync error of a reading, or what to set up. */
 @Composable
@@ -162,20 +165,22 @@ private fun PreviewNote(model: WidgetModel) {
 
 /**
  * Holds the applied widget views at their design size (px) and shows them scaled to its own width,
- * from the top-left corner. It takes every touch, so none reaches the widget's views.
+ * from the top-left corner. Views that fail to draw or to apply show as the home screen shows a
+ * broken widget. It takes every touch, so none reaches the widget's views.
  */
 private class PreviewHost(context: Context) : FrameLayout(context) {
-  private var shown: RemoteViews? = null
+  private var shown: Drawn? = null
   private var designWidth = 0
   private var designHeight = 0
 
-  fun show(views: RemoteViews, widthPx: Int, heightPx: Int) {
-    if (views !== shown) {
-      shown = views
+  fun show(drawn: Drawn, widthPx: Int, heightPx: Int) {
+    if (drawn !== shown) {
+      shown = drawn
       // Fresh views every time: the layouts' roots differ (4×3 is a Column), so another layout's
       // tree must never be reused (no reapply).
       removeAllViews()
-      addView(views.apply(context, this))
+      val applied = drawn.views?.let { views -> previewOrNull("apply") { views.apply(context, this) } }
+      addView(applied ?: errorView())
     }
     if (widthPx != designWidth || heightPx != designHeight) {
       designWidth = widthPx
@@ -200,6 +205,8 @@ private class PreviewHost(context: Context) : FrameLayout(context) {
     child.scaleX = scale
     child.scaleY = scale
   }
+
+  private fun errorView(): View = LayoutInflater.from(context).inflate(R.layout.widget_error, this, false)
 
   private fun exactly(px: Int) = MeasureSpec.makeMeasureSpec(px, MeasureSpec.EXACTLY)
 }
