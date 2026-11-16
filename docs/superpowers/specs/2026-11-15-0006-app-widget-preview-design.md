@@ -1,7 +1,7 @@
 # Widget preview in the app — design
 
 - **Date:** 2026-11-15
-- **Status:** approved by the owner (2026-11-15).
+- **Status:** approved by the owner (2026-11-15); built on branch `0006-app-preview`, merged into `epic-widget-v5`.
 - **Set:** `0006`. Code on branch `0006-app-preview`, from `develop` after
   branch `0004-widget-design` (design v5 and these specs) is merged into
   it (the owner approves that merge).
@@ -185,3 +185,13 @@ configured widget, tapped widget, first placed widget, 4×2.
   only the box.
 - The full sync error also shows under an empty preview (no reading).
 - `preview_size` is a format only: not translated.
+
+### Final review fixes (2026-11-16)
+
+- The tab rules are pure functions, `PreviewRequest.next` and `tabFor`, with
+  unit tests.
+- Owner decision: "Add widget" cannot choose a size. Android's pin request
+  has no size, so the home screen places the default 4×2. The app says so
+  under the buttons: "The home screen adds it as 4×2. Resize it there."
+  One entry per size (four widget providers) was considered and is left for
+  a later spec.
