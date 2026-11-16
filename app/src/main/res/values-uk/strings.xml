@@ -50,6 +50,7 @@
     <string name="preview_description">Попередній перегляд віджета, %1$s</string>
     <string name="action_refresh_now">Оновити зараз</string>
     <string name="action_add_widget">Додати віджет</string>
+    <string name="action_add_widget_hint">Головний екран додає віджет розміром 4×2. Змініть розмір там.</string>
     <string name="action_save">Зберегти</string>
 
     <string name="connection_title">Підключення</string>
