@@ -348,13 +348,14 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
    70, 4×3 80, 5×2 106 dp), and fitting to it made the ring text 3–6 %
    smaller than the PNGs at the owner's sizes (4×2 SOC 26.3 instead of
    28 sp). 5.1 lets the ring shrink between bucket and design size with
-   the fonts unchanged, so this follows 5.1. At the bucket the ink can
-   overlap the stroke by up to about 3.5 dp; at the design size it stays
-   inside the inner circle (1 dp tolerance; `WidgetFitTest` checks it).
+   the fonts unchanged, so this follows 5.1. At the bucket − 1 dp the ink
+   can overlap the stroke by up to about 3.9 dp; at the design size it
+   stays inside the inner circle (1 dp tolerance; `WidgetFitTest` checks
+   it).
 2. **No design font went down by 0.5 sp** (5.1). At the buckets, only
-   the long worst-case main values do not fit at 50 %: "↑ 3.98 kW" in
-   4×2 shows at 15.9 instead of 17 sp, in 5×2 at 20.5 instead of 21, in
-   5×3 at 21.1 instead of 22. The fit rule shrinks just these values;
+   the long worst-case main values do not fit at 50 %: at the bucket
+   − 1 dp boxes "↑ 3.98 kW" in 4×2 shows at 16.0 instead of 17 sp, in 5×2
+   at 20.2 instead of 21, in 5×3 at 21.0 instead of 22. The fit rule shrinks just these values;
    the PNG values show at the design size. Lowering the design fonts
    would make every value smaller than the PNGs and change
    `docs/design/README.md`. So the §6 test "at 50 % with the worst-case
@@ -396,7 +397,7 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
 
 - Deviations 1 and 2: **accepted** by the owner. `docs/design/README.md`
   now says that long worst-case values shrink a little at the bucket
-  boxes ("↑ 3.98 kW" about 15.8 sp in 4×2).
+  boxes ("↑ 3.98 kW" about 16 sp in 4×2).
 - Deviation 3, owner: **time left in Android's narrow format**, in the
   widget and the app card. Seen on `Pixel_8_API_35` (API 35): English
   "17h 16m", "45m", "2d 7h"; Ukrainian "17г і 16х", "45х", "2д і 7г".
@@ -419,24 +420,51 @@ structure, the 0.5 sp adjustments from the fit check, and the wording.
   - A system font-scale change redraws the widget (`ConfigWatcher`, which
     replaces 0008's `LocaleWatcher` and also watches the language).
   - The picker preview card is the 4×2 bucket (261 × 126 dp) with text
-    sizes in dp.
+    sizes in dp. Its ring is 70 dp there, so the kWh line is 8.5 dp
+    (English) and 6.5 dp (Ukrainian) to stay inside the ring (the design's
+    10 dp would leave it by 2.7 dp); `WidgetFitTest` checks both.
   - `WidgetFitTest` also runs just under each bucket and at font scale
     1.3 in Ukrainian, and checks the ring ink at the design sizes.
 
-### Ring text fit (review finding 4, the reviewer's call)
+### Ring text fit (review finding 4 and re-review finding 1, the reviewer's calls)
 
 Each ring line's ink must stay inside the inner circle: its width within
 the circle's chord at that line's height (1 dp tolerance). The sizes are
-found in three steps:
+found in two steps:
 
-1. Raised groups (asking for more than 50 %) shrink first, at most down
-   to their 50 % size.
-2. A stack taller than the circle shrinks all lines by one factor.
-3. A line still too wide for its chord shrinks alone.
+1. The 50 % result: every line at the smaller of its request and its
+   50 % size. A stack taller than the circle shrinks all lines by one
+   factor; a line still too wide for its chord then shrinks alone.
+2. Raised lines (asking for more than 50 %) grow from their 50 % result
+   toward their request, in steps of 1 % of their 50 % size; a line stops
+   at the last step where every line still fits. The other lines keep
+   their 50 % result.
 
-So a long kWh / Ah line does not make the SOC number smaller, and a
-large SOC number never makes "SOC" or kWh smaller than at 50 %.
-Measured on the emulator, 4×2, Ukrainian, 50 %: SOC 23.2 sp before,
-28.0 sp after; "4,58 кВт·год" alone shrinks to 7.6 sp (8.3 before). At
-SOC 100 % in English the number grows to 29.7 sp while "SOC" and kWh
-stay at 8.5 and 10 sp (before: 40.9, 6.2 and 7.3 sp).
+So no line is ever smaller than at 50 % (checked in every layout, English
+and Ukrainian, on the emulator), and a long kWh / Ah line does not make
+the SOC number smaller. A raised SOC number grows only while every line
+still fits: the stack is centred, so a larger number moves the kWh line
+down to a narrower chord. Where the kWh line is already at its chord at
+50 % (Ukrainian "4,58 кВт·год"), the number grows only a little.
+
+The first version (review round 1) shrank raised lines to their 50 % size
+while any line was too wide, so a raised SOC number in Ukrainian stayed
+at its 50 % size; the re-review replaced it with the rule above. The fit
+of a single text now searches the largest size that fits, so a larger
+request never shows smaller.
+
+Measured on the emulator (4×2 / 4×3 / 5×2 / 5×3), SOC at 100 %, the
+others at 50 %: English 29.7 / 37.8 / 62.0 / 52.9 sp, Ukrainian
+28.8 / 32.6 / 44.8 / 42.8 sp. 4×2 Ukrainian at 50 %: SOC 28.0 sp (23.2
+before finding 4); "4,58 кВт·год" 7.6 sp at 50 % and at all 100 %.
+
+### Known risks (docs only)
+
+- A system font-scale change while the app's process is not running is
+  not seen by `ConfigWatcher`; the widget is redrawn only at its next
+  update. Glance stores text sizes in sp, so until then the home screen
+  applies the new scale to the old sizes and a text can be cut. It is the
+  same gap as 0008's language change.
+- "Today" is decided when the widget is drawn. After midnight, with auto
+  refresh off, the widget keeps showing the last update as a time only
+  until it is drawn again.
