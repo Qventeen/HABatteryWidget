@@ -6,11 +6,15 @@ voltage, cell delta, MOSFET temperature, battery temperatures, balancing. The
 app calls `POST {baseUrl}/api/template` with a
 long-lived HA token. The widget draws from the local cache only.
 
-The widget follows design v4 (`docs/design/`): a SOC ring, two big pack values,
+The widget follows design v5 (`docs/design/`): a SOC ring, two big pack values,
 cell and temperature pills, time left, and an auto-refresh toggle. The app
 shows a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3). The
 "Widget" settings section picks kWh or Ah under SOC, current or power, and the
 font sizes.
+The "Home-screen scale" setting grows the widget for launchers that draw it
+smaller.
+The "Appearance" section sets the theme (system, light, dark) and, on
+Android 13+, the app language.
 
 ## Requirements
 
