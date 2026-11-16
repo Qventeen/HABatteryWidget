@@ -13,7 +13,7 @@ class RingLayoutTest {
 
   @Test
   fun eachView_putsItsBaselineOnTheCanvasBaseline() {
-    val baselines = RingStack.baselines(lines, 1f, gap = 1f, measurer = FakeMeasurer)
+    val baselines = RingStack.baselines(lines, lines.map { it.requested }, gap = 1f, measurer = FakeMeasurer)
     val centers = RingLayout.centers(lines, gap = 1f, measurer = FakeMeasurer)
     lines.indices.forEach { i ->
       val size = lines[i].requested

@@ -9,7 +9,7 @@ package io.lumensync.habattery.widget
 internal object RingLayout {
   /** The centre of each line's text view, in dp from the ring centre (down is positive). */
   fun centers(lines: List<RingLine>, gap: Float, measurer: TextMeasurer): List<Float> {
-    val baselines = RingStack.baselines(lines, 1f, gap, measurer)
+    val baselines = RingStack.baselines(lines, lines.map { it.requested }, gap, measurer)
     return lines.mapIndexed { i, line ->
       val m = measurer.metrics(line.text, line.requested, line.weight)
       baselines[i] + (m.top + m.bottom) / 2

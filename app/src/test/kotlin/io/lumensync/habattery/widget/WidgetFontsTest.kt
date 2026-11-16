@@ -61,13 +61,14 @@ class WidgetFontsTest {
   fun systemFontScale_raisesTheRequest() =
     assertEquals(22f * 1.3f, fonts(LayoutSpec.L4x3, fontScale = 1.3f).voltage.coerceAtMost(28.6f), 0.3f)
 
+  /** All ring groups raised: they shrink together toward their 50 % sizes. */
   @Test
-  fun ringLines_shrinkByOneFactor() {
+  fun ringLines_raisedTogether_shrinkTogether() {
     val f = fonts(LayoutSpec.L4x2, percents = FontPercents(soc = 100, underSoc = 100, small = 100))
     val factor = f.soc / 56f
-    assertTrue("$factor", factor < 1f)
-    assertEquals(factor, f.underSoc / 20f, 1e-4f)
-    assertEquals(factor, f.ringLabel / 17f, 1e-4f)
+    assertTrue("$factor", factor < 1f && factor >= 0.5f)
+    assertEquals(factor, f.underSoc / 20f, 0.02f)
+    assertEquals(factor, f.ringLabel / 17f, 0.02f)
   }
 
   /** Review finding 1: the error icon takes the update time's place, the text size stays. */

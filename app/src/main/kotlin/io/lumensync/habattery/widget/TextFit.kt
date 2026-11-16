@@ -1,5 +1,6 @@
 package io.lumensync.habattery.widget
 
+import kotlin.math.abs
 import kotlin.math.hypot
 
 /** The font weights the widget draws with. */
@@ -35,19 +36,26 @@ data class Box(val width: Float, val height: Float)
 
 /**
  * One line of the ring's text stack. [lineHeight] is the canvas CSS line height as a factor of the
- * size; null is CSS "normal" (the font's content height).
+ * size; null is CSS "normal" (the font's content height). [floor] is the line's size at 50 %: a
+ * line asking for more is raised, and shrinks first when the ring is too small (review, 0005).
  */
-data class RingLine(val text: String, val requested: Float, val weight: TextWeight, val lineHeight: Float?)
+data class RingLine(
+  val text: String,
+  val requested: Float,
+  val weight: TextWeight,
+  val lineHeight: Float?,
+  val floor: Float = requested,
+)
 
 /**
  * The ring's three lines as the canvas stacks them: line boxes with [gap] between them, the whole
  * stack centred on the ring, each baseline where CSS puts it (half-leading above the content area).
  */
 object RingStack {
-  /** Baselines in dp from the ring centre (down is positive), with every size × [factor]. */
-  fun baselines(lines: List<RingLine>, factor: Float, gap: Float, measurer: TextMeasurer): List<Float> {
-    val metrics = lines.map { measurer.metrics(it.text, it.requested * factor, it.weight) }
-    val heights = lines.mapIndexed { i, line -> lineBox(line, factor, metrics[i]) }
+  /** Baselines in dp from the ring centre (down is positive), with the lines at [sizes]. */
+  fun baselines(lines: List<RingLine>, sizes: List<Float>, gap: Float, measurer: TextMeasurer): List<Float> {
+    val metrics = lines.mapIndexed { i, line -> measurer.metrics(line.text, sizes[i], line.weight) }
+    val heights = lines.mapIndexed { i, line -> line.lineHeight?.let { it * sizes[i] } ?: metrics[i].height }
     var top = -(heights.sum() + gap * (lines.size - 1)) / 2
     return lines.indices.map { i ->
       val m = metrics[i]
@@ -56,9 +64,6 @@ object RingStack {
       baseline
     }
   }
-
-  private fun lineBox(line: RingLine, factor: Float, m: LineMetrics): Float =
-    line.lineHeight?.let { it * line.requested * factor } ?: m.height
 }
 
 /**
@@ -107,23 +112,48 @@ object TextFit {
     -measurer.metrics(text, size, weight).top + maxOf(measurer.ink(text, size, weight).bottom, 0f)
 
   /**
-   * One factor ≤ 1 for all three ring lines (spec 0005, 5.5): with every size × factor, the ink of
-   * each line stays inside the ring's inner circle of [innerRadius], give or take
-   * [RING_TOLERANCE_DP].
+   * The shown sizes of the ring lines (review of spec 0005, finding 4). Each line's ink must stay
+   * inside the inner circle of [innerRadius] (its width within the chord at its height), give or
+   * take [RING_TOLERANCE_DP]:
+   * 1. Raised lines (asking for more than 50 %) shrink first, at most down to their 50 % size.
+   * 2. A stack taller than the circle shrinks all lines by one factor.
+   * 3. A line still too wide for its chord shrinks alone.
+   * So a long kWh / Ah line does not make the SOC number smaller, and a large SOC number never makes
+   * the other lines smaller than they are at 50 %.
    */
-  fun fitRing(lines: List<RingLine>, gap: Float, innerRadius: Float, measurer: TextMeasurer): Float {
-    fun fits(factor: Float): Boolean {
-      val baselines = RingStack.baselines(lines, factor, gap, measurer)
-      return lines.indices.all { i ->
-        val line = lines[i]
-        val ink = measurer.ink(line.text, line.requested * factor, line.weight)
-        val far = maxOf(hypot(ink.width / 2, baselines[i] + ink.top), hypot(ink.width / 2, baselines[i] + ink.bottom))
-        far <= innerRadius + RING_TOLERANCE_DP
-      }
+  fun fitRing(lines: List<RingLine>, gap: Float, innerRadius: Float, measurer: TextMeasurer): List<Float> {
+    val sizes = lines.map { it.requested }.toMutableList()
+    val limit = innerRadius + RING_TOLERANCE_DP
+
+    fun ink(i: Int, baseline: Float): Pair<Float, Float> {
+      val ink = measurer.ink(lines[i].text, sizes[i], lines[i].weight)
+      return ink.width / 2 to maxOf(abs(baseline + ink.top), abs(baseline + ink.bottom))
+    }
+    fun tooWide(): List<Int> {
+      val baselines = RingStack.baselines(lines, sizes, gap, measurer)
+      return lines.indices.filter { i -> ink(i, baselines[i]).let { (half, y) -> hypot(half, y) > limit } }
+    }
+    fun tooTall(): Boolean {
+      val baselines = RingStack.baselines(lines, sizes, gap, measurer)
+      return lines.indices.any { i -> ink(i, baselines[i]).second > limit }
     }
 
-    var factor = 1f
-    while (factor > FACTOR_STEP && !fits(factor)) factor -= FACTOR_STEP
-    return factor
+    var steps = 0
+    while (steps++ < MAX_STEPS && tooWide().isNotEmpty()) {
+      val raised = lines.indices.filter { sizes[it] > lines[it].floor + EPSILON }
+      if (raised.isEmpty()) break
+      raised.forEach { sizes[it] = maxOf(lines[it].floor, sizes[it] - lines[it].requested * FACTOR_STEP) }
+    }
+    while (steps++ < MAX_STEPS && tooTall()) {
+      for (i in sizes.indices) sizes[i] *= 1 - FACTOR_STEP
+    }
+    while (steps++ < MAX_STEPS) {
+      val wide = tooWide()
+      if (wide.isEmpty()) break
+      wide.forEach { sizes[it] = maxOf(STEP_DP, sizes[it] - lines[it].requested * FACTOR_STEP) }
+    }
+    return sizes
   }
+
+  private const val MAX_STEPS = 1000
 }

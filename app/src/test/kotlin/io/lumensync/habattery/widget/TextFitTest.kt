@@ -48,42 +48,72 @@ class TextFitTest {
 
   @Test fun fit_neverReturnsMoreThanRequested() = assertEquals(12f, fit(12f, Box(1000f, 1000f), "x"), 0f)
 
-  private fun ringLines(soc: Float = 28f) =
+  /** The 4×2 ring lines; [soc] and [under] are the requested sizes, floors at the 50 % sizes. */
+  private fun ringLines(soc: Float = 28f, under: String = "4.58 kWh", label: Float = 8.5f, underSize: Float = 10f) =
     listOf(
-      RingLine("SOC", 8.5f, TextWeight.NORMAL, lineHeight = 1.1f),
-      RingLine("55", soc, TextWeight.BOLD, lineHeight = 1f),
-      RingLine("4.58 kWh", 10f, TextWeight.MEDIUM, lineHeight = 1.2f),
+      RingLine("SOC", label, TextWeight.NORMAL, lineHeight = 1.1f, floor = 8.5f),
+      RingLine("55", soc, TextWeight.BOLD, lineHeight = 1f, floor = 28f),
+      RingLine(under, underSize, TextWeight.MEDIUM, lineHeight = 1.2f, floor = 10f),
     )
 
-  /** The farthest ink corner of the three lines from the ring centre, at [factor]. */
-  private fun farthest(lines: List<RingLine>, factor: Float): Float {
-    val baselines = RingStack.baselines(lines, factor, gap = 1f, measurer = FakeMeasurer)
+  /** The farthest ink corner of [lines] at [sizes] from the ring centre. */
+  private fun farthest(lines: List<RingLine>, sizes: List<Float>): Float {
+    val baselines = RingStack.baselines(lines, sizes, gap = 1f, measurer = FakeMeasurer)
     return lines.indices.maxOf { i ->
-      val size = lines[i].requested * factor
-      val ink = FakeMeasurer.ink(lines[i].text, size, lines[i].weight)
+      val ink = FakeMeasurer.ink(lines[i].text, sizes[i], lines[i].weight)
       maxOf(hypot(ink.width / 2, baselines[i] + ink.top), hypot(ink.width / 2, baselines[i] + ink.bottom))
     }
   }
 
-  @Test
-  fun ring_roomy_keepsFactorOne() =
-    assertEquals(1f, TextFit.fitRing(ringLines(), gap = 1f, innerRadius = 60f, measurer = FakeMeasurer), 0f)
+  private fun fitRing(lines: List<RingLine>, radius: Float) =
+    TextFit.fitRing(lines, gap = 1f, innerRadius = radius, measurer = FakeMeasurer)
 
   @Test
-  fun ringLines_shrinkTogether() {
-    val lines = ringLines()
-    val factor = TextFit.fitRing(lines, gap = 1f, innerRadius = 20f, measurer = FakeMeasurer)
-    assertTrue("$factor", factor < 1f)
-    assertTrue(farthest(lines, factor) <= 20f + TextFit.RING_TOLERANCE_DP)
-    assertTrue(farthest(lines, factor + 0.02f) > 20f + TextFit.RING_TOLERANCE_DP)
-  }
+  fun ring_roomy_keepsTheRequestedSizes() =
+    assertEquals(listOf(8.5f, 28f, 10f), fitRing(ringLines(), radius = 60f))
 
   @Test
   fun ring_toleratesOneDpTouch() {
     val lines = ringLines()
-    val atOne = farthest(lines, 1f)
-    assertEquals(1f, TextFit.fitRing(lines, gap = 1f, innerRadius = atOne - 0.9f, measurer = FakeMeasurer), 0f)
-    assertTrue(TextFit.fitRing(lines, gap = 1f, innerRadius = atOne - 1.5f, measurer = FakeMeasurer) < 1f)
+    val atOne = farthest(lines, listOf(8.5f, 28f, 10f))
+    assertEquals(listOf(8.5f, 28f, 10f), fitRing(lines, radius = atOne - 0.9f))
+    assertTrue(fitRing(lines, radius = atOne - 1.5f) != listOf(8.5f, 28f, 10f))
+  }
+
+  /** Review finding 4: a long kWh / Ah line at 50 % shrinks alone; the SOC number keeps its size. */
+  @Test
+  fun wideUnderLine_shrinksAlone() {
+    val lines = ringLines(under = "4,58 кВт·год")
+    val sizes = fitRing(lines, radius = 31f)
+    assertEquals(28f, sizes[1], 0f)
+    assertEquals(8.5f, sizes[0], 0f)
+    assertTrue("${sizes[2]}", sizes[2] < 10f)
+    assertTrue(farthest(lines, sizes) <= 31f + TextFit.RING_TOLERANCE_DP)
+  }
+
+  /** Review finding 4: a raised SOC shrinks first, never making "SOC" or kWh smaller than at 50 %. */
+  @Test
+  fun raisedSoc_neverShrinksTheOtherLinesBelowFifty() {
+    val at50 = fitRing(ringLines(), radius = 31f)
+    val at100 = fitRing(ringLines(soc = 56f), radius = 31f)
+    assertTrue("$at100 vs $at50", at100[0] >= at50[0] && at100[2] >= at50[2])
+    assertTrue("$at100 vs $at50", at100[1] >= at50[1] && at100[1] <= 56f)
+    assertTrue(farthest(ringLines(soc = 56f), at100) <= 31f + TextFit.RING_TOLERANCE_DP)
+  }
+
+  /** A stack taller than the circle shrinks all lines by one factor (no width: only the height). */
+  @Test
+  fun tallStack_shrinksByOneFactor() {
+    val lines =
+      listOf(
+        RingLine("", 20f, TextWeight.NORMAL, lineHeight = 1f),
+        RingLine("b", 40f, TextWeight.BOLD, lineHeight = 1f),
+        RingLine("", 20f, TextWeight.NORMAL, lineHeight = 1f),
+      )
+    val sizes = fitRing(lines, radius = 30f)
+    assertTrue("$sizes", sizes[1] < 40f)
+    assertEquals(sizes[0] / 20f, sizes[1] / 40f, 1e-3f)
+    assertEquals(sizes[2] / 20f, sizes[1] / 40f, 1e-3f)
   }
 
   @Test
@@ -95,7 +125,7 @@ class TextFitTest {
         RingLine("b", 20f, TextWeight.NORMAL, lineHeight = 1f),
         RingLine("c", 10f, TextWeight.NORMAL, lineHeight = 1f),
       )
-    val baseline = RingStack.baselines(lines, 1f, gap = 2f, measurer = FakeMeasurer)[1]
+    val baseline = RingStack.baselines(lines, listOf(10f, 20f, 10f), gap = 2f, measurer = FakeMeasurer)[1]
     // Content area 1.17 × 20 centred in a 20 dp box: the baseline is 0.93 × 20 below its top.
     val contentTop = -(1.17f * 20f) / 2
     assertEquals(contentTop + 0.93f * 20f, baseline, 1e-3f)
