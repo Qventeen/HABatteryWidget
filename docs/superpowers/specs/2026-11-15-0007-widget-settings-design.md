@@ -123,3 +123,27 @@ range text, the field error, Reset, the summary. Removed: the slider texts.
 
 Spacing, the exact field component, where the field errors sit, and the
 Ukrainian wording.
+
+## 8. Change by the owner (2026-11-16)
+
+After the phone tuning in spec 0005 the owner reviewed the Widget section
+and decided: **keep the font sliders** ("now this seems good"). This
+replaces the number fields of §3.1, §5.2 and §5.3.
+
+- Fonts: the five sliders as built in 0005 (25–100 %, steps of 5, 50 % =
+  design size), saved at once when a slider is released. No number
+  fields, no field errors, no single Save for the section.
+- New: **Home-screen scale**, a slider 80–150 %, step 1, default 100 %,
+  saved at once. It replaces the constant `LayoutSpec.HOST_SCALE` (1.28)
+  and reaches the widget through `WidgetContent(hostScale)`. Some home
+  screens draw widgets smaller (the owner's HyperOS launcher at about
+  78 %); the owner sets 128 %. The app preview (0006) always draws at
+  100 %, because nothing shrinks it in the app.
+- Reset (Claude's call, to keep §3.4 "Reset returns to the default"): one
+  "Reset to defaults" button sets the fonts to 50 % and the scale to
+  100 %, saved at once.
+- Unchanged: the Widget section first (§5.1), then Appearance (0008), then
+  Connection and the rest; the summary (§5.2) also shows "· text size
+  changed" when the scale is not 100 %; strings in both languages.
+- Tests: the order, slider save, the scale reaching the widget, Reset;
+  the validation tests of §6 go.
