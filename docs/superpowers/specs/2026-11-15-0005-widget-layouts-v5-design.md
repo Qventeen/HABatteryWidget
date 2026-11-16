@@ -505,3 +505,12 @@ before finding 4); "4,58 кВт·год" 7.6 sp at 50 % and at all 100 %.
 - "Today" is decided when the widget is drawn. After midnight, with auto
   refresh off, the widget keeps showing the last update as a time only
   until it is drawn again.
+- 4×3 on the owner's HyperOS launcher: after a resize from another size,
+  the body can stay empty until the next update (↻). A probe reproduced it:
+  the launcher reapplies the 4×3 views onto the tree of the previous size,
+  and Glance's index-based view ids collide. The owner accepts a manual ↻
+  (2026-11-16) and asked not to change the 4×3; a separate root type for
+  4×3 is the likely fix if it is ever needed.
+- 5×2 keeps the design's layout B (ring over the full card height); the
+  owner compared it on the phone with the top-row-across variant and chose
+  B (2026-11-16).
