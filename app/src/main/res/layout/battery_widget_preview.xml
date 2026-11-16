@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Widget picker preview: design v5, 4x2, normal state (light theme, sample values; spec 0005, 5.6).
-     Sizes from docs/design/README.md. The card keeps the 4x2 design size, centred: a launcher may
-     give the preview another box. RemoteViews-safe views only. -->
+     Sizes from docs/design/README.md. The card has the 4x2 bucket size (261 x 126 dp), centred: a
+     launcher may give the preview another box, and a smaller one would cut a bigger card. Text
+     sizes are dp, so a large system font cannot overflow the fixed card. RemoteViews-safe views only. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:ignore="UselessParent">
+    tools:ignore="UselessParent,SpUsage">
 
     <LinearLayout
-        android:layout_width="267dp"
-        android:layout_height="132dp"
+        android:layout_width="261dp"
+        android:layout_height="126dp"
         android:layout_gravity="center"
         android:background="@drawable/preview_card_bg"
         android:orientation="vertical"
@@ -35,7 +36,7 @@
                 android:maxLines="1"
                 android:text="@string/preview_time_left"
                 android:textColor="#5C625E"
-                android:textSize="10.5sp" />
+                android:textSize="10.5dp" />
             <ImageView
                 android:layout_width="15dp"
                 android:layout_height="15dp"
@@ -52,7 +53,7 @@
                 android:maxLines="1"
                 android:text="@string/preview_updated"
                 android:textColor="#5C625E"
-                android:textSize="10.5sp" />
+                android:textSize="10.5dp" />
             <FrameLayout
                 android:layout_width="32dp"
                 android:layout_height="32dp"
@@ -98,10 +99,10 @@
                 android:layout_height="match_parent">
 
                 <ImageView
-                    android:layout_width="76dp"
-                    android:layout_height="76dp"
-                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:importantForAccessibility="no"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/preview_ring" />
 
                 <!-- Each line is centred, then moved by padding on one side (twice the shift). -->
@@ -113,7 +114,7 @@
                     android:maxLines="1"
                     android:text="@string/widget_soc_label"
                     android:textColor="#5C625E"
-                    android:textSize="8.5sp" />
+                    android:textSize="8.5dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -123,18 +124,18 @@
                     android:maxLines="1"
                     android:text="@string/preview_soc"
                     android:textColor="#1B1D1C"
-                    android:textSize="28sp"
+                    android:textSize="28dp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:paddingTop="38dp"
+                    android:paddingTop="36dp"
                     android:maxLines="1"
                     android:text="@string/preview_kwh"
                     android:textColor="#1B1D1C"
-                    android:textSize="10sp"
+                    android:textSize="10dp"
                     android:fontFamily="sans-serif-medium" />
             </FrameLayout>
 
@@ -158,7 +159,7 @@
                         android:maxLines="1"
                         android:text="@string/preview_voltage"
                         android:textColor="#1B1D1C"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
 
@@ -184,7 +185,7 @@
                         android:maxLines="1"
                         android:text="@string/preview_current"
                         android:textColor="#A05A00"
-                        android:textSize="17sp"
+                        android:textSize="17dp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
             </LinearLayout>
@@ -208,7 +209,7 @@
                         android:maxLines="1"
                         android:text="@string/preview_cell"
                         android:textColor="#1B1D1C"
-                        android:textSize="11sp"
+                        android:textSize="11dp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
 
@@ -227,7 +228,7 @@
                         android:maxLines="1"
                         android:text="@string/preview_delta"
                         android:textColor="#1B1D1C"
-                        android:textSize="11sp"
+                        android:textSize="11dp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
 
@@ -253,7 +254,7 @@
                         android:maxLines="1"
                         android:text="@string/preview_battery_temperature"
                         android:textColor="#1B1D1C"
-                        android:textSize="11sp"
+                        android:textSize="11dp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
 
@@ -279,7 +280,7 @@
                         android:maxLines="1"
                         android:text="@string/preview_mosfet_temperature"
                         android:textColor="#1B1D1C"
-                        android:textSize="11sp"
+                        android:textSize="11dp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
             </LinearLayout>

@@ -160,7 +160,7 @@
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
 
     <!-- Sample values for the widget picker preview. -->
-    <string name="preview_time_left">17 hr, 16 min</string>
+    <string name="preview_time_left">17h 16m</string>
     <string name="preview_updated" translatable="false">11:29</string>
     <string name="preview_soc" translatable="false">55</string>
     <string name="preview_kwh">4.58 kWh</string>
