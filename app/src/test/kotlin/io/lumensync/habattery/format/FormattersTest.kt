@@ -91,14 +91,25 @@ class FormattersTest {
         assertFalse(text, text.contains("Jan"))
     }
 
+    /** Owner, 2026-11-16: an earlier day shows the date only. */
     @Test
-    fun updatedAt_olderDay_showsDateAndTime() {
+    fun updatedAt_olderDay_showsTheDateOnly() {
         val f = Formatters(context)
-        val twoDaysAgo = f.updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING)
-        assertTrue(twoDaysAgo, twoDaysAgo.contains("Jan 13") && twoDaysAgo.contains("8:00"))
+        assertEquals("Jan 13", f.updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING))
         // One minute before midnight is already "yesterday".
-        val lateYesterday = f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING)
-        assertTrue(lateYesterday, lateYesterday.contains("Jan 14") && lateYesterday.contains("11:59"))
+        assertEquals("Jan 14", f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING))
+    }
+
+    @Test
+    fun updatedAt_otherYear_showsTheYear() =
+        assertEquals("Dec 31, 2026", Formatters(context).updatedAt(MORNING - 15.days.inWholeMilliseconds, nowMillis = MORNING))
+
+    /** The month is in the app's language, not the device's default. */
+    @Test
+    @Config(qualifiers = "uk")
+    fun updatedAt_olderDay_uk_showsAUkrainianMonth() {
+        val text = Formatters(context).updatedAt(MORNING - 2.days.inWholeMilliseconds, nowMillis = MORNING)
+        assertTrue(text, text.contains("13") && text.contains("січ"))
     }
 
     @Test
