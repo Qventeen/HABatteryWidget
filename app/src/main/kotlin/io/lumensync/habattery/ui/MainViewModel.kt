@@ -14,6 +14,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
@@ -177,6 +178,19 @@ class MainViewModel(
   fun saveFontPercents(percents: FontPercents) {
     val clamped = percents.clamped()
     save(emptyList(), syncAfter = false) { it.copy(fontPercents = clamped) }
+  }
+
+  /** The home-screen scale saves at once (clamped to 80–150); the widgets redraw with it. */
+  fun saveHomeScale(percent: Int) {
+    val clamped = HomeScale.clamp(percent)
+    save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = clamped) }
+  }
+
+  /** "Reset to defaults": fonts 50 %, scale 100 %, saved together. */
+  fun resetWidgetSettings() {
+    save(emptyList(), syncAfter = false) {
+      it.copy(fontPercents = FontPercents(), homeScalePercent = HomeScale.DEFAULT)
+    }
   }
 
   fun saveCapacity(text: String, locale: Locale) {
