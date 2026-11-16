@@ -1,6 +1,7 @@
 package io.lumensync.habattery.widget
 
 import android.content.Context
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -19,7 +20,9 @@ import io.lumensync.habattery.R
 import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.HomeScale
+import io.lumensync.habattery.domain.model.Settings
 import kotlinx.coroutines.flow.first
 
 /** Renders from local data only (cache, settings, token presence). No network here. */
@@ -43,27 +46,43 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
       val settings by container.settingsRepository.settings.collectAsState(initialSettings)
       val hasToken by container.tokenStore.hasToken.collectAsState(initialHasToken)
       val config by container.configWatcher.config.collectAsState()
-      val overview = BatteryOverview.build(cache, settings, hasToken, System.currentTimeMillis())
       // A new key makes a new composition, also in a live session: the texts come from resources,
       // and their fitted sizes and the sp handed to Glance from the font scale.
       key(config) {
-        WidgetContent(
-          model = WidgetModel.build(overview, settings),
-          fontPercents = settings.fontPercents,
-          colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
-          actions =
-            WidgetActions(
-              // Glance puts each parameter into the activity intent as an extra named by the key.
-              openApp =
-                actionStartActivity<MainActivity>(actionParametersOf(TappedWidgetKey to appWidgetId)),
-              refresh = actionRunCallback<RefreshAction>(),
-              toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
-            ),
-          hostScale = HomeScale.factor(settings.homeScalePercent),
-        )
+        BatteryWidgetContent(cache, settings, hasToken, System.currentTimeMillis(), appWidgetId)
       }
     }
   }
+}
+
+/**
+ * Widget [appWidgetId] drawn from local data: the model, and the font percents, the theme and the
+ * home-screen scale of [settings]. Tapping the card opens the app on this widget's size.
+ */
+@Composable
+internal fun BatteryWidgetContent(
+  cache: CacheState,
+  settings: Settings,
+  hasToken: Boolean,
+  now: Long,
+  appWidgetId: Int,
+  measurer: TextMeasurer? = null,
+) {
+  val overview = BatteryOverview.build(cache, settings, hasToken, now)
+  WidgetContent(
+    model = WidgetModel.build(overview, settings),
+    fontPercents = settings.fontPercents,
+    colors = remember(settings.appearance.theme) { WidgetColors(settings.appearance.theme) },
+    actions =
+      WidgetActions(
+        // Glance puts each parameter into the activity intent as an extra named by the key.
+        openApp = actionStartActivity<MainActivity>(actionParametersOf(TappedWidgetKey to appWidgetId)),
+        refresh = actionRunCallback<RefreshAction>(),
+        toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
+      ),
+    hostScale = HomeScale.factor(settings.homeScalePercent),
+    measurer = measurer,
+  )
 }
 
 /**
