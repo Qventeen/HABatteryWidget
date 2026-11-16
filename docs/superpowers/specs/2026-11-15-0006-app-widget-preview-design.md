@@ -127,3 +127,38 @@ four Compose layouts instead.
 
 The tab control style, spacing, how `RemoteViews` are applied and reused,
 and the empty-state button choice in 5.2.
+
+## 8. Build notes (2026-11-16)
+
+### 5.1 test: A1 holds
+
+- Built in place on `0006-app-preview` (owner: "if compose() works, the
+  Compose copy goes"; `WidgetFitTest` already proved `compose()`).
+- `Pixel_8_API_35`: each tab draws its own layout (4×3 with its Column
+  root too), ring bitmaps and round corners show, light and dark follow
+  the system with the System theme, and the app's Light / Dark wins over
+  the system's mode. `Pixel_6` (API 31) was not run; the instrumented
+  suite runs once at the end of the epic.
+
+### Builder calls (§7)
+
+- No tap targets: `WidgetContent(actions = null)` draws no `clickable` and
+  no "Open app" button, so the preview's views carry no click handler. The
+  host view also takes every touch.
+- Size: composed at the layout's bucket (as `LocalSize` is on the home
+  screen), laid out at the design card (bucket + 6 dp, the owner's sizes).
+  A narrow screen scales the views (scale only, no new layout).
+- Theme: the app's `ThemeChoice` goes to `WidgetColors`, as for the widget;
+  with System, day / night comes from the activity when the views are
+  applied.
+- Each drawing applies new views into an emptied host (never `reapply`);
+  the box takes the size of the layout shown, so it changes with its views.
+- Under the preview, what the widget cannot say: the full sync error of a
+  reading ("Sync error: <reason>"; the widget shows only the icon) and the
+  setup hint (`overview_setup` stays). "Refresh now" stays below; the auto
+  switch is in the Refresh section (saved with its Save).
+- First tab: the widget options of the current orientation (portrait: min
+  width × max height). A configured widget without a size yet opens 4×2,
+  not another widget's size.
+- Removed with the card: the ViewModel's auto toggle (only the card used
+  it). The ring's content description now comes through `DataTexts`.
