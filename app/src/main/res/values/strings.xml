@@ -1,8 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">HA Батарея</string>
-    <string name="widget_name">Акумулятор EVE 8S (HA)</string>
-    <string name="widget_description">Заряд %, потужність W/kW, залишок часу, загальна напруга, комірки та дельта</string>
-    <string name="notification_channel_name">Заряд батареї 100%</string>
-    <string name="notification_channel_description">Сповіщення про досягнення 100% заряду акумулятора</string>
-    <string name="notification_full_title">Батарея заряджена до 100%</string>
+    <string name="app_name" translatable="false">HA Battery Widget</string>
+
+    <!-- Units live inside the string so each language can place them. -->
+    <string name="unit_watts">%1$s W</string>
+    <string name="unit_kilowatts">%1$s kW</string>
+    <string name="unit_volts">%1$s V</string>
+    <string name="unit_amps">%1$s A</string>
+    <string name="unit_millivolts">%1$s mV</string>
+    <string name="unit_celsius">%1$s °C</string>
+    <string name="unit_amp_hours">%1$s Ah</string>
+    <string name="unit_kilowatt_hours">%1$s kWh</string>
+    <string name="charge_percent">%1$d%%</string>
+    <string name="value_missing" translatable="false">—</string>
+
+    <string name="error_not_configured">Set up in the app</string>
+    <string name="error_unauthorized">Token rejected</string>
+    <string name="error_unreachable">Home Assistant is unreachable</string>
+    <string name="error_http">Home Assistant error %1$d</string>
+    <string name="error_bad_response">Unexpected answer from Home Assistant</string>
+
+    <string name="widget_name">HA battery</string>
+    <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
+    <string name="widget_refreshing">Refreshing…</string>
+    <string name="widget_no_data">No data from Home Assistant</string>
+    <string name="widget_error">Widget error. Open the app.</string>
+    <string name="widget_refresh_action">Refresh</string>
+    <string name="delta_label">Δ %1$s</string>
+    <string name="widget_soc_label" translatable="false">SOC</string>
+    <plurals name="widget_soc_description">
+        <item quantity="one">State of charge %1$d percent</item>
+        <item quantity="other">State of charge %1$d percent</item>
+    </plurals>
+    <string name="widget_charging">Charging</string>
+    <string name="widget_discharging">Discharging</string>
+    <string name="widget_balancing_on">Balancing on</string>
+    <string name="widget_balancing_off">Balancing off</string>
+    <string name="widget_balancing_unknown">Balancing unknown</string>
+    <string name="widget_sync_error">Sync error: %1$s</string>
+    <string name="widget_battery_temperature">Battery temperature</string>
+    <string name="widget_average_temperature">Average battery temperature</string>
+    <string name="widget_mosfet_temperature">MOSFET temperature</string>
+    <string name="widget_auto_on">Auto refresh on</string>
+    <string name="widget_auto_off">Auto refresh off</string>
+    <string name="widget_open_app">Open app</string>
+
+    <string name="notification_channel_full">Full charge</string>
+    <string name="notification_full_title">Battery full</string>
+    <string name="notification_full_text">The battery is fully charged.</string>
+
+    <!-- Main screen. -->
+    <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
+    <!-- A size tab of the widget preview: columns × rows of home-screen cells. -->
+    <string name="preview_size" translatable="false">%1$d×%2$d</string>
+    <!-- TalkBack's name for the drawn widget; %1$s is the size tab, such as 4×2. -->
+    <string name="preview_description">Widget preview, %1$s</string>
+    <string name="action_refresh_now">Refresh now</string>
+    <string name="action_add_widget">Add widget</string>
+    <string name="action_add_widget_hint">The home screen adds it as 4×2. Resize it there.</string>
+    <string name="action_save">Save</string>
+
+    <string name="connection_title">Connection</string>
+    <string name="connection_url">Home Assistant URL</string>
+    <string name="connection_http_warning">Plain http:// to an internet address sends your token unencrypted. Use https:// if you can.</string>
+
+    <string name="token_title">Access token</string>
+    <string name="token_label">Long-lived access token</string>
+    <string name="token_saved">Token saved</string>
+    <string name="token_show">Show token</string>
+    <string name="token_hide">Hide token</string>
+
+    <string name="entities_title">Entities</string>
+    <string name="entity_charge">State of charge (%) — required</string>
+    <string name="entity_power">Power (W)</string>
+    <string name="entity_current">Current (A)</string>
+    <string name="entity_current_hint">Sets charging or discharging and the time left</string>
+    <string name="entity_total_voltage">Total voltage (V)</string>
+    <string name="entities_prefix">Prefix, like bps_bms</string>
+    <string name="entities_fill">Fill</string>
+    <string name="entities_fill_hint">Fills every field below. Check them, then Save.</string>
+    <string name="entities_sensors_none">No temperature sensors found for this prefix</string>
+    <string name="entities_sensors_failed">Could not read the sensor list: %1$s</string>
+    <string name="entity_capacity_remaining">Ah left (Ah)</string>
+    <string name="entity_total_capacity">Total capacity (Ah)</string>
+    <string name="entity_average_cell_voltage">Average cell voltage (V)</string>
+    <string name="entity_delta_cell_voltage">Cell delta (V)</string>
+    <string name="entity_mosfet_temperature">MOSFET temperature (°C)</string>
+    <string name="entity_temperatures">Battery temperature sensors</string>
+    <string name="entity_temperature">Temperature sensor %1$d (°C)</string>
+    <string name="entity_temperature_add">Add sensor</string>
+    <string name="entity_temperature_remove">Remove sensor %1$d</string>
+    <string name="entity_balancing">Balancing (on/off)</string>
+    <string name="field_prefix_invalid">Use lower-case letters, digits and _</string>
+    <string name="field_temperatures_too_many">Maximum number of sensors: %1$d</string>
+
+    <string name="refresh_title">Auto-refresh</string>
+    <string name="refresh_auto">Refresh in the background</string>
+    <string name="refresh_interval">Refresh interval (min)</string>
+    <string name="refresh_interval_range">From %1$d to %2$d min</string>
+
+    <string name="notify_title">Notifications</string>
+    <string name="notify_on_full">Notify when the battery is full</string>
+    <string name="notify_blocked">Notifications are turned off for this app.</string>
+    <string name="notify_open_settings">Open settings</string>
+
+    <string name="capacity_title">Battery capacity</string>
+    <string name="capacity_label">Battery capacity (Ah)</string>
+    <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
+
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_theme">Theme</string>
+    <string name="appearance_language">Language</string>
+    <string name="appearance_system">System</string>
+    <string name="appearance_theme_light">Light</string>
+    <string name="appearance_theme_dark">Dark</string>
+    <string name="appearance_language_english" translatable="false">English</string>
+    <string name="appearance_language_ukrainian" translatable="false">Українська</string>
+    <string name="appearance_summary_theme_system">System theme</string>
+    <string name="appearance_summary_theme_light">Light theme</string>
+    <string name="appearance_summary_theme_dark">Dark theme</string>
+    <string name="appearance_summary_language_system">System language</string>
+    <string name="appearance_summary">%1$s · %2$s</string>
+
+    <string name="widget_settings_title">Widget</string>
+    <string name="widget_under_soc">Under SOC</string>
+    <string name="widget_choice_kwh">kWh</string>
+    <string name="widget_choice_ah">Ah</string>
+    <string name="widget_second_value">Second value</string>
+    <string name="widget_choice_current">Current</string>
+    <string name="widget_choice_power">Power</string>
+    <string name="widget_font_soc">SOC number</string>
+    <string name="widget_font_under_soc">kWh / Ah under SOC</string>
+    <string name="widget_font_main">Main values</string>
+    <string name="widget_font_cell">Cell values</string>
+    <string name="widget_font_small">Small text</string>
+    <string name="widget_font_value">%1$d %%</string>
+    <string name="widget_scale_label">Home-screen scale</string>
+    <string name="widget_scale_hint">Only if your home screen draws widgets smaller. Most phones: 100 %.</string>
+    <string name="widget_reset_sizes">Reset sizes</string>
+    <string name="widget_summary">%1$s · %2$s</string>
+    <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
+
+    <!-- Folded section summaries and chevron descriptions. -->
+    <string name="summary_not_set">Not set</string>
+    <string name="token_summary_saved">Saved</string>
+    <string name="entities_summary_manual">Set by hand</string>
+    <string name="refresh_summary_off">Off</string>
+    <plurals name="refresh_summary_every">
+        <item quantity="one">Every %d min</item>
+        <item quantity="other">Every %d min</item>
+    </plurals>
+    <string name="notify_summary_on">On</string>
+    <string name="notify_summary_off">Off</string>
+    <string name="capacity_summary">%1$s Ah</string>
+    <string name="section_show">Show %1$s</string>
+    <string name="section_expanded">Expanded</string>
+    <string name="section_collapsed">Collapsed</string>
+    <string name="section_hide">Hide %1$s</string>
+
+    <!-- Field errors under the inputs. -->
+    <string name="field_required">Required</string>
+    <string name="field_url_invalid">Enter a full URL, like https://ha.example.com</string>
+    <string name="field_token_not_saved">Could not save the token. Try again.</string>
+    <string name="field_entity_invalid">Enter an entity ID, like sensor.battery_soc</string>
+    <string name="field_interval_invalid">Enter a whole number of minutes</string>
+    <string name="field_capacity_invalid">Enter a number</string>
+    <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
+
+    <!-- Sample values for the widget picker preview. -->
+    <string name="preview_time_left">17h 16m</string>
+    <string name="preview_updated" translatable="false">11:29</string>
+    <string name="preview_soc" translatable="false">55</string>
+    <string name="preview_kwh">4.58 kWh</string>
+    <string name="preview_voltage">26.50 V</string>
+    <string name="preview_current">10.0 A</string>
+    <string name="preview_cell">3.312 V</string>
+    <string name="preview_delta">Δ 12 mV</string>
+    <string name="preview_battery_temperature" translatable="false">25 °C</string>
+    <string name="preview_mosfet_temperature" translatable="false">27 °C</string>
 </resources>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="unit_watts">%1$s Вт</string>
+    <string name="unit_kilowatts">%1$s кВт</string>
+    <string name="unit_volts">%1$s В</string>
+    <string name="unit_amps">%1$s А</string>
+    <string name="unit_millivolts">%1$s мВ</string>
+    <string name="unit_celsius">%1$s °C</string>
+    <string name="unit_amp_hours">%1$s А·год</string>
+    <string name="unit_kilowatt_hours">%1$s кВт·год</string>
+    <string name="charge_percent">%1$d%%</string>
+
+    <string name="error_not_configured">Налаштуйте в застосунку</string>
+    <string name="error_unauthorized">Токен відхилено</string>
+    <string name="error_unreachable">Home Assistant недоступний</string>
+    <string name="error_http">Помилка Home Assistant %1$d</string>
+    <string name="error_bad_response">Несподівана відповідь від Home Assistant</string>
+
+    <string name="widget_name">Батарея HA</string>
+    <string name="widget_description">Заряд, потужність, струм, напруга та залишок часу з Home Assistant</string>
+    <string name="widget_refreshing">Оновлення…</string>
+    <string name="widget_no_data">Немає даних від Home Assistant</string>
+    <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
+    <string name="widget_refresh_action">Оновити</string>
+    <plurals name="widget_soc_description">
+        <item quantity="one">Рівень заряду %1$d відсоток</item>
+        <item quantity="few">Рівень заряду %1$d відсотки</item>
+        <item quantity="many">Рівень заряду %1$d відсотків</item>
+        <item quantity="other">Рівень заряду %1$d відсотка</item>
+    </plurals>
+    <string name="widget_charging">Заряджається</string>
+    <string name="widget_discharging">Розряджається</string>
+    <string name="widget_balancing_on">Балансування увімкнено</string>
+    <string name="widget_balancing_off">Балансування вимкнено</string>
+    <string name="widget_balancing_unknown">Балансування невідоме</string>
+    <string name="widget_sync_error">Помилка синхронізації: %1$s</string>
+    <string name="widget_battery_temperature">Температура батареї</string>
+    <string name="widget_average_temperature">Середня температура батареї</string>
+    <string name="widget_mosfet_temperature">Температура MOSFET</string>
+    <string name="widget_auto_on">Автооновлення увімкнено</string>
+    <string name="widget_auto_off">Автооновлення вимкнено</string>
+    <string name="widget_open_app">Відкрити застосунок</string>
+    <string name="delta_label">Δ %1$s</string>
+
+    <string name="notification_channel_full">Повний заряд</string>
+    <string name="notification_full_title">Батарея заряджена</string>
+    <string name="notification_full_text">Батарею повністю заряджено.</string>
+
+    <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
+    <string name="preview_description">Попередній перегляд віджета, %1$s</string>
+    <string name="action_refresh_now">Оновити зараз</string>
+    <string name="action_add_widget">Додати віджет</string>
+    <string name="action_add_widget_hint">Головний екран додає віджет розміром 4×2. Змініть розмір там.</string>
+    <string name="action_save">Зберегти</string>
+
+    <string name="connection_title">Підключення</string>
+    <string name="connection_url">URL Home Assistant</string>
+    <string name="connection_http_warning">Звичайний http:// до інтернет-адреси передає ваш токен без шифрування. Якщо можете, використовуйте https://.</string>
+
+    <string name="token_title">Токен доступу</string>
+    <string name="token_label">Довгостроковий токен доступу</string>
+    <string name="token_saved">Токен збережено</string>
+    <string name="token_show">Показати токен</string>
+    <string name="token_hide">Сховати токен</string>
+
+    <string name="entities_title">Сутності</string>
+    <string name="entity_charge">Рівень заряду (%) — обов’язково</string>
+    <string name="entity_power">Потужність (Вт)</string>
+    <string name="entity_current">Струм (А)</string>
+    <string name="entity_current_hint">Визначає заряд чи розряд і час, що залишився</string>
+    <string name="entity_total_voltage">Загальна напруга (В)</string>
+    <string name="entities_prefix">Префікс, наприклад bps_bms</string>
+    <string name="entities_fill">Заповнити</string>
+    <string name="entities_fill_hint">Заповнює всі поля нижче. Перевірте їх і натисніть «Зберегти».</string>
+    <string name="entities_sensors_none">Для цього префікса датчиків температури не знайдено</string>
+    <string name="entities_sensors_failed">Не вдалося прочитати список датчиків: %1$s</string>
+    <string name="entity_capacity_remaining">Залишок А·год (А·год)</string>
+    <string name="entity_total_capacity">Повна ємність (А·год)</string>
+    <string name="entity_average_cell_voltage">Середня напруга комірки (В)</string>
+    <string name="entity_delta_cell_voltage">Різниця комірок (В)</string>
+    <string name="entity_mosfet_temperature">Температура MOSFET (°C)</string>
+    <string name="entity_temperatures">Датчики температури батареї</string>
+    <string name="entity_temperature">Датчик температури %1$d (°C)</string>
+    <string name="entity_temperature_add">Додати датчик</string>
+    <string name="entity_temperature_remove">Видалити датчик %1$d</string>
+    <string name="entity_balancing">Балансування (увімк./вимк.)</string>
+    <string name="field_prefix_invalid">Використовуйте малі літери, цифри та _</string>
+    <string name="field_temperatures_too_many">Максимум датчиків: %1$d</string>
+
+    <string name="refresh_title">Автооновлення</string>
+    <string name="refresh_auto">Оновлювати у фоновому режимі</string>
+    <string name="refresh_interval">Інтервал оновлення (хв)</string>
+    <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
+
+    <string name="notify_title">Сповіщення</string>
+    <string name="notify_on_full">Сповіщати, коли батарея заряджена</string>
+    <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
+    <string name="notify_open_settings">Відкрити налаштування</string>
+
+    <string name="capacity_title">Ємність батареї</string>
+    <string name="capacity_label">Ємність батареї (А·год)</string>
+    <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
+
+    <string name="appearance_title">Вигляд</string>
+    <string name="appearance_theme">Тема</string>
+    <string name="appearance_language">Мова</string>
+    <string name="appearance_system">Системна</string>
+    <string name="appearance_theme_light">Світла</string>
+    <string name="appearance_theme_dark">Темна</string>
+    <string name="appearance_summary_theme_system">Системна тема</string>
+    <string name="appearance_summary_theme_light">Світла тема</string>
+    <string name="appearance_summary_theme_dark">Темна тема</string>
+    <string name="appearance_summary_language_system">Системна мова</string>
+    <string name="appearance_summary">%1$s · %2$s</string>
+
+    <string name="widget_settings_title">Віджет</string>
+    <string name="widget_under_soc">Під SOC</string>
+    <string name="widget_choice_kwh">кВт·год</string>
+    <string name="widget_choice_ah">А·год</string>
+    <string name="widget_second_value">Друге значення</string>
+    <string name="widget_choice_current">Струм</string>
+    <string name="widget_choice_power">Потужність</string>
+    <string name="widget_font_soc">Число SOC</string>
+    <string name="widget_font_under_soc">кВт·год / А·год під SOC</string>
+    <string name="widget_font_main">Основні значення</string>
+    <string name="widget_font_cell">Значення комірок</string>
+    <string name="widget_font_small">Дрібний текст</string>
+    <string name="widget_font_value">%1$d %%</string>
+    <string name="widget_scale_label">Масштаб на головному екрані</string>
+    <string name="widget_scale_hint">Лише якщо ваш головний екран малює віджети меншими. Більшість телефонів: 100 %.</string>
+    <string name="widget_reset_sizes">Скинути розміри</string>
+    <string name="widget_summary">%1$s · %2$s</string>
+    <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
+
+    <string name="summary_not_set">Не задано</string>
+    <string name="token_summary_saved">Збережено</string>
+    <string name="entities_summary_manual">Задано вручну</string>
+    <string name="refresh_summary_off">Вимкнено</string>
+    <plurals name="refresh_summary_every">
+        <item quantity="one">Кожну %d хв</item>
+        <item quantity="few">Кожні %d хв</item>
+        <item quantity="many">Кожні %d хв</item>
+        <item quantity="other">Кожні %d хв</item>
+    </plurals>
+    <string name="notify_summary_on">Увімкнено</string>
+    <string name="notify_summary_off">Вимкнено</string>
+    <string name="capacity_summary">%1$s А·год</string>
+    <string name="section_show">Показати: %1$s</string>
+    <string name="section_expanded">Розгорнуто</string>
+    <string name="section_collapsed">Згорнуто</string>
+    <string name="section_hide">Сховати: %1$s</string>
+
+    <string name="field_required">Обов’язкове поле</string>
+    <string name="field_url_invalid">Введіть повний URL, наприклад https://ha.example.com</string>
+    <string name="field_token_not_saved">Не вдалося зберегти токен. Спробуйте ще раз.</string>
+    <string name="field_entity_invalid">Введіть ID сутності, наприклад sensor.battery_soc</string>
+    <string name="field_interval_invalid">Введіть ціле число хвилин</string>
+    <string name="field_capacity_invalid">Введіть число</string>
+    <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
+
+    <string name="preview_time_left">17г і 16х</string>
+    <string name="preview_kwh">4,58 кВт·год</string>
+    <string name="preview_voltage">26,50 В</string>
+    <string name="preview_current">10,0 А</string>
+    <string name="preview_cell">3,312 В</string>
+    <string name="preview_delta">Δ 12 мВ</string>
+</resources>

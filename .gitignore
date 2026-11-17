@@ -15,3 +15,15 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Signing keys (never commit)
+*.keystore
+*.jks
+
+# Third-party reference clones, read-only (see references/README.md).
+# Our own notes (references/*.md) stay tracked.
+/references/*/
+
+# Build outputs
+*.apk
+*.aab

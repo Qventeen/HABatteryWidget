@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Picker preview, ring text. The card is the 4x2 bucket, so its ring is 70 dp, not 76. The
+         label and the SOC number keep the widget's 50 % sizes and the 6 dp gap; the kWh line is
+         made small enough to stay inside the ring. Each line is centred, then moved by padding on
+         one side: twice its centre's distance from the ring centre. -->
+    <dimen name="preview_kwh_size">7.5dp</dimen>
+    <dimen name="preview_label_shift">38.5dp</dimen>
+    <dimen name="preview_soc_shift">2.25dp</dimen>
+    <dimen name="preview_kwh_shift">41.25dp</dimen>
+</resources>

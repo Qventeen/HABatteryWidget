@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Minimum = the 4x2 bucket (spec 0005, 5.1): the owner's 4x2 card (267 x 132 dp) minus 6 dp each way.
+     No target cells: the launcher picks the cells (spec 0003, 5.1). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:configure="com.homeassistant.batterywidget.MainActivity"
+    android:configure="io.lumensync.habattery.MainActivity"
     android:description="@string/widget_description"
     android:initialLayout="@layout/glance_default_loading_layout"
     android:maxResizeHeight="460dp"
     android:maxResizeWidth="460dp"
-    android:minHeight="140dp"
-    android:minResizeHeight="90dp"
-    android:minResizeWidth="180dp"
-    android:minWidth="240dp"
+    android:minHeight="126dp"
+    android:minResizeHeight="126dp"
+    android:minResizeWidth="261dp"
+    android:minWidth="261dp"
     android:previewLayout="@layout/battery_widget_preview"
     android:resizeMode="horizontal|vertical"
-    android:targetCellHeight="3"
-    android:targetCellWidth="4"
-    android:updatePeriodMillis="1800000"
+    android:updatePeriodMillis="0"
     android:widgetCategory="home_screen"
     android:widgetFeatures="reconfigurable|configuration_optional" />
