@@ -114,7 +114,7 @@ One level system for all values, in two layers. A level is a band of values
   | SOC ring | SOC levels; the SOC number stays plain |
   | Voltage pill | voltage levels (default: plain), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
   | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery has different limits each way: idle grey, low green, higher amber, highest red; the arrow stays. A high level can notify (0011), for example a very high discharge current |
-  | Average cell pill | levels (default: plain) |
+  | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list |
   | Cell delta, battery temperature, MOSFET pills | levels, as today (the worst battery sensor wins) |
   | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
   | Inverter values | later (0012) |
@@ -210,9 +210,20 @@ One level system for all values, in two layers. A level is a band of values
   - Cell delta: today's limits and colours (§2) are the starting proposal;
     the owner sets its default levels in the detailing session (owner,
     2026-11-18).
-  - Total voltage and average cell (owner, 2026-11-18): one level,
-    "Normal", plain (no colour), as today. The pack voltage depends on the
-    cell count, which the app does not know; SOC already shows the charge.
+  - Total voltage (owner, 2026-11-18): one level, "Normal", plain (no
+    colour), as today. The pack voltage depends on the cell count; SOC
+    already shows the charge.
+  - Average cell (owner, 2026-11-18): uses the voltage levels (default or
+    custom) with each edge divided by the cell count, so it gets the same
+    names and colours; it has no own list, switch or reset. Example, 16
+    cells: a voltage edge of 52.0 V is 3.25 V per cell.
+    - The cell count is worked out per reading: total voltage ÷ average cell
+      voltage, rounded to a whole number (my call; the app has no cell-count
+      setting or entity). An error of half a cell (about 1.6 V) would be
+      needed to round wrong, so the count is exact in practice.
+    - If either value is missing, the average cell pill is plain.
+    - The average cell does not notify on its own; the voltage levels do
+      (0011), so one crossing does not send two notifications (my call).
   - Current/power (owner, 2026-11-18): edges as C-rate (current ÷ full
     capacity), so the defaults fit any battery. The capacity is
     `BatteryMath.fullCapacityAh` (the BMS capacity entity, else the Capacity
@@ -260,9 +271,11 @@ One level system for all values, in two layers. A level is a band of values
   do today.
 - **App (owner, 2026-11-18):** a new collapsible "Colours" section below
   Appearance, collapsed by default, the same pattern as the other sections
-  (the app is one scrolling screen with no navigation library). It lists 8
-  values: SOC, voltage, charge current, discharge current, average cell,
-  cell delta, battery temperature, MOSFET. A tap opens that value's level
+  (the app is one scrolling screen with no navigation library). It lists 7
+  values: SOC, voltage, charge current, discharge current, cell delta,
+  battery temperature, MOSFET. The voltage row also shows each edge per
+  cell (for example "from 52.0 V · 3.25 V per cell") when the cell count is
+  known (my call). A tap opens that value's level
   list, one value open at a time; there the owner adds, removes and edits
   levels (edge, name, type, colour chip, icon; sketch in §3.1). The app
   preview (0006) at the top shows the result live; it scrolls out of view
