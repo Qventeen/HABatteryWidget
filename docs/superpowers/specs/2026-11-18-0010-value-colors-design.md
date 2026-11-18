@@ -207,9 +207,23 @@ One level system for all values, in two layers. A level is a band of values
     This changes today's look (today: red below 15 %, amber below 25 %,
     no blue).
   - Battery and MOSFET temperature: §3.3.
-  - Cell delta: today's limits and colours (§2) are the starting proposal;
-    the owner sets its default levels in the detailing session (owner,
-    2026-11-18).
+  - Cell delta (owner, 2026-11-18; checked against community rules of
+    thumb for 16S LiFePO4, there is no standard number):
+
+    | Range | Name | Type (colour) |
+    |---|---|---|
+    | below 10 mV | Balanced | Info (blue) |
+    | from 10 mV | Normal | Normal (green) |
+    | from 20 mV | High | Warning (amber) |
+    | from 50 mV | Very high | Critical (red) |
+
+    10 mV is the JK-BMS factory balance trigger (and the owner's setting):
+    below it the balancer has nothing to do. Top-balanced packs show about
+    6–25 mV near the top knee; 50 mV and more is past a healthy pack (check
+    cells and connections). The delta is read under load every sync, not at
+    rest, so the edges are looser than rest values. The name "Balanced" is
+    my call. Look change: today the delta is plain below 16 mV, amber from
+    16 mV and red from 41 mV.
   - Total voltage (owner, 2026-11-18): one level, "Normal", plain (no
     colour), as today. The pack voltage depends on the cell count; SOC
     already shows the charge.
