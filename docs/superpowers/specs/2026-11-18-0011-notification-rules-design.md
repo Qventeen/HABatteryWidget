@@ -1,8 +1,8 @@
 # Notification rules — design
 
 - **Date:** 2026-11-18
-- **Status:** detailed (2026-11-18). All questions in §5 are decided. Waiting
-  for the builder check and the owner's approval; no plan yet.
+- **Status:** approved by the owner (2026-11-19), after the builder check.
+  Plan: `docs/superpowers/plans/2026-11-19-0011-notification-rules.md`.
 - **Set:** `0011`, epic `epic-widget-improvements`. Code later on branch
   `0011-notification-rules`, from the epic.
 - **Builds on:** 0010 (value colours; required, build it first) and spec 0001
