@@ -72,6 +72,21 @@ Additions (owner, 2026-11-18, after reading this concept):
   | Cell delta, battery temperature, MOSFET pills | levels, as today (the worst battery sensor wins) |
   | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
   | Inverter values | later (0012) |
+
+- **Level marks on temperature pills (owner, 2026-11-18).** Besides the
+  text colour, a temperature pill gets a small extra icon by level, next to
+  the icon it has today (thermometer for the battery, chip for the MOSFET).
+  Only temperatures for now. Proposal: the icon shows the side, the colour
+  shows how bad it is.
+  - High levels: a flame. Low levels: a snowflake. Middle (normal) levels:
+    no extra icon (proposal; §5, question 15).
+  - Each temperature band has a mark from a fixed set (none, flame,
+    snowflake); custom levels can change it.
+  - Defaults. Battery: below 0 °C red ❄, 0–5 °C amber ❄, 5–45 °C none,
+    45–55 °C amber 🔥, above 55 °C red 🔥. MOSFET: 65–80 °C amber 🔥, above
+    80 °C red 🔥.
+  - Icons from Material Symbols (`local_fire_department`, `ac_unit`;
+    Apache-2.0, allowed by the repo licence rule).
 - **Colours from a fixed palette**, not a free colour picker: about 8 named
   colours (for example red, orange, amber, green, teal, blue, violet, grey).
   Each has a light-theme and a dark-theme shade, checked for contrast on the
@@ -120,6 +135,12 @@ Additions (owner, 2026-11-18, after reading this concept):
   narrower room for the number, so the text fit must count the arrow, as it
   does for the main pill. The pill already supports the arrow (`PackPill`
   takes a `Flow`; the voltage pill passes `Flow.NONE` today).
+- A level mark is a second icon in a small temperature pill: in narrow
+  layouts (the 4×2 cell column) the number may get smaller. The text fit
+  must count the mark.
+- Together these change the approved v5 look (blue SOC at 100 %, green low
+  discharge, voltage arrow, temperature marks). Proposal: draw them as new
+  v6 rows on the design canvas before this spec is final.
 - A missing value (sensor not set or unavailable) draws in the plain colour.
 - More settings make the app screen longer; a sub-screen may be needed.
 
@@ -152,10 +173,13 @@ Additions (owner, 2026-11-18, after reading this concept):
     discharge green to 0.5 C, amber to 0.8 C, red above), or fixed amps
     from the owner's BMS limits?
 14. Idle colour: grey (proposal; blue already means Info / full) or blue?
+15. Temperature marks for middle (normal) levels: none (proposal), or an
+    icon? Which other marks, if any, besides flame and snowflake?
 
 ## 6. Non-goals
 
 - No new widget parts and no layout changes (owner: text colour only),
-  except the direction arrow on the voltage pill (owner, 2026-11-18).
+  except the direction arrow on the voltage pill and the level marks on the
+  temperature pills (owner, 2026-11-18).
 - No free colour picker in the first version (proposal).
 - One colour set for the whole app, not one per placed widget (proposal).
