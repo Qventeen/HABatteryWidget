@@ -60,9 +60,18 @@ Additions (owner, 2026-11-18, after reading this concept):
 - **A level list per value:** ordered bands "from X → colour". The first band
   has no lower limit. Any number of bands, with a cap (for example 6) to keep
   the screen usable.
-- **Values:** SOC, total voltage, main value (current or power), average
-  cell, cell delta, battery temperature, MOSFET temperature; later the
-  inverter values (0012).
+- **What gets coloured (owner, 2026-11-18, round 1).** A level colours the
+  text and a soft background of the same colour, as today.
+
+  | Widget part | Levels |
+  |---|---|
+  | SOC ring | SOC levels; the SOC number stays plain |
+  | Voltage pill | voltage levels (default: plain), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
+  | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery has different limits each way: idle grey, low green, higher amber, highest red; the arrow stays. A high level can notify (0011), for example a very high discharge current |
+  | Average cell pill | levels (default: plain) |
+  | Cell delta, battery temperature, MOSFET pills | levels, as today (the worst battery sensor wins) |
+  | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
+  | Inverter values | later (0012) |
 - **Colours from a fixed palette**, not a free colour picker: about 8 named
   colours (for example red, orange, amber, green, teal, blue, violet, grey).
   Each has a light-theme and a dark-theme shade, checked for contrast on the
@@ -75,9 +84,10 @@ Additions (owner, 2026-11-18, after reading this concept):
   - The other values: today's limits and colours (§2) are the starting
     proposal; the owner sets their default levels in the detailing session
     (owner, 2026-11-18).
-  - A value with no levels today (total voltage, average cell, the value
-    under SOC) defaults to one plain band (no colour), and the main value
-    keeps its colour by direction (proposal).
+  - Total voltage and average cell have no levels today; they default to
+    one plain band (no colour).
+  - Current/power: defaults are open (§5, question 13). Note: with levels
+    by intensity, a low discharge turns green; today any discharge is amber.
 - **"Custom colours" switch per value**, off by default:
   - Off: the value uses the built-in default bands.
   - First time on: the value's own bands are created as a copy of the
@@ -101,21 +111,26 @@ Additions (owner, 2026-11-18, after reading this concept):
 
 - A colour must read well on the light and the dark card. A free picker
   would allow unreadable colours, so the proposal is a fixed palette.
-- Today a level also colours the pill background (okBg, warnBg, badBg), not
-  only the text. The owner asked for text colour; decide what happens to the
-  backgrounds.
-- A value with a unit choice (current A or power W; kWh or Ah) needs one band
-  list per unit.
+- Text plus soft background (decided) means each palette colour needs four
+  shades: text and background, for the light and the dark theme.
+- The main pill shows current (A) or power (W). Proposal: its levels are in
+  amps (BMS limits are in amps) and also colour the pill when it shows watts
+  (§5, question 12).
+- The voltage arrow changes the approved v5 look a little: the pill gets
+  narrower room for the number, so the text fit must count the arrow, as it
+  does for the main pill. The pill already supports the arrow (`PackPill`
+  takes a `Flow`; the voltage pill passes `Flow.NONE` today).
 - A missing value (sensor not set or unavailable) draws in the plain colour.
 - More settings make the app screen longer; a sub-screen may be needed.
 
 ## 5. Open questions (for the detailing session)
 
-1. Text colour only, or also the pill background as today?
-2. SOC: colour the ring, the number, or both?
-3. Main value: keep the colour by direction (charge or discharge), or bands
-   by value (signed current)?
-4. Which values get bands in the first version?
+1. ~~Text colour only, or also the pill background?~~ Decided (owner,
+   2026-11-18): text plus soft background, as today.
+2. ~~SOC: ring, number, or both?~~ Decided: the ring; the number stays plain.
+3. ~~Main value: colour by direction, or bands by value?~~ Decided (owner,
+   2026-11-18): bands by intensity, one list per direction; the arrow stays.
+4. ~~Which values get bands?~~ Decided: the table in §3.
 5. The palette: which colours and how many?
 6. Band edges: is "from X" inclusive? Steps for decimals (0.1 V for the pack,
    0.001 V for a cell)? Owner example (2026-11-18): falling from 21 % to
@@ -130,9 +145,17 @@ Additions (owner, 2026-11-18, after reading this concept):
 10. Does "Reset to default" also turn the switch off, or only refill the
     bands? Does it ask for confirmation?
 11. One switch per value only, or also one switch for all values at once?
+12. Current/power levels in amps for both displays (proposal), or separate
+    lists in watts when the pill shows power?
+13. Default current levels: from the capacity as C-rate (proposal, a guess
+    for LiFePO4: charge green to 0.2 C, amber to 0.5 C, red above;
+    discharge green to 0.5 C, amber to 0.8 C, red above), or fixed amps
+    from the owner's BMS limits?
+14. Idle colour: grey (proposal; blue already means Info / full) or blue?
 
 ## 6. Non-goals
 
-- No new widget parts and no layout changes (owner: text colour only).
+- No new widget parts and no layout changes (owner: text colour only),
+  except the direction arrow on the voltage pill (owner, 2026-11-18).
 - No free colour picker in the first version (proposal).
 - One colour set for the whole app, not one per placed widget (proposal).
