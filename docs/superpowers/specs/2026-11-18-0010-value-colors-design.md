@@ -9,8 +9,8 @@
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
   preview), 0008 (theme). On one topic the newest spec wins.
-- **Used by:** 0011 (notification rules, if they share the levels) and 0012
-  (colours of the inverter values).
+- **Used by:** 0011 (notifications: each level gets a notify switch; owner
+  decision, 2026-11-18) and 0012 (colours of the inverter values).
 
 ## 1. Intent (owner, 2026-11-18)
 
@@ -31,6 +31,9 @@ Additions (owner, 2026-11-18, after reading this concept):
   defaults**, ready to edit.
 - A value's customisation can be **reset to the start settings**, as
   elsewhere in the app.
+- **Notifications ride on these levels** (owner decision, 2026-11-18): 0011
+  adds a notify switch to each level. This spec is built first; it only has
+  to keep the level model open for that switch.
 
 ## 2. Today
 
@@ -113,7 +116,8 @@ Additions (owner, 2026-11-18, after reading this concept):
    0.001 V for a cell)?
 7. Where in the app: a new section, inside the Widget section, or a separate
    screen?
-8. Should a band also carry a notification? See 0011, question 1.
+8. ~~Should a band also carry a notification?~~ Decided (owner,
+   2026-11-18): yes, added by 0011.
 9. Turning the switch off: keep the own bands for the next "on" (proposal),
    or drop them?
 10. Does "Reset to default" also turn the switch off, or only refill the
