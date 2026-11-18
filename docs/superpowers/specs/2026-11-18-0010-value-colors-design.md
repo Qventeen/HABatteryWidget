@@ -100,9 +100,11 @@ One level system for all values, in two layers. A level is a band of values
     other app fields do.
   - **Delete** merges the range into the level below (the first level
     merges into the one above). The last level cannot be deleted.
-  - Default names are copied as text in the app language active at that
-    moment; a later language switch does not rename them, and "Reset to
-    default" gives names in the current language (my call).
+  - A copied level keeps a link to its default name (translated by the
+    app) until the owner types an own name; a language switch translates the
+    untouched names (my call, changed while planning: the code that copies
+    the levels has no access to translated strings, and this way names stay
+    in the app language).
   - The default list of each value is in code and is not stored. "Custom
     colours" on gives the value its own **copy** of the defaults (§3.5), not
     a live link: a later app version may change a default, and the owner's
@@ -172,10 +174,10 @@ One level system for all values, in two layers. A level is a band of values
   | Battery | 0–5 °C | Cool | Info (blue) | snowflake |
   | Battery | 5–45 °C | Normal | Normal (green) | leaf |
   | Battery | 45–55 °C | Warm | Warning (amber) | flame |
-  | Battery | above 55 °C | Hot | Critical (red) | flame with alert |
+  | Battery | from 55 °C | Hot | Critical (red) | flame with alert |
   | MOSFET | below 65 °C | Normal | Normal (green) | leaf |
   | MOSFET | 65–80 °C | Warm | Warning (amber) | flame |
-  | MOSFET | above 80 °C | Hot | Critical (red) | flame with alert |
+  | MOSFET | from 80 °C | Hot | Critical (red) | flame with alert |
 
   The MOSFET rows follow the battery picks (my call). Default names come
   from the app strings, so they are translated (proposal; 0011, question 9).
