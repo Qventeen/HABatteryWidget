@@ -88,10 +88,21 @@ One level system for all values, in two layers. A level is a band of values
     notification title), a type, a colour (default: the colour of its type;
     the owner can pick another palette colour), an icon (temperature values
     only) and a notify switch (added by 0011).
-  - 1 to 6 levels per value. The levels always stay sorted by "from".
-  - **Add level** splits a level's range in two. **Delete** merges the
-    range into the level below (the first level merges into the one above).
-    The last level cannot be deleted.
+  - Each level also has a stable id (my call, after the builder check), so
+    0011 can attach its notify state to a level that later moves or is
+    renamed.
+  - 1 to 6 levels per value. The levels always stay sorted by "from"; two
+    levels may not share an edge.
+  - **Add level** adds a level with an empty edge field. When the owner
+    types a valid edge, the level takes its place in the sorted list, so it
+    splits the range it falls in (my call: no guessed edge). An edge that is
+    empty, not a number or equal to another edge shows a field error, as
+    other app fields do.
+  - **Delete** merges the range into the level below (the first level
+    merges into the one above). The last level cannot be deleted.
+  - Default names are copied as text in the app language active at that
+    moment; a later language switch does not rename them, and "Reset to
+    default" gives names in the current language (my call).
   - The default list of each value is in code and is not stored. "Custom
     colours" on gives the value its own **copy** of the defaults (§3.5), not
     a live link: a later app version may change a default, and the owner's
