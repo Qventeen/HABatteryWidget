@@ -125,6 +125,17 @@ The check runs inside `SyncBattery` after each successful reading, where
   switch on does not post the current level (my call).
 - **Once per entry** (owner, 2026-11-18): no repeat while the value stays in
   a level.
+- **"Full" is plain level logic** (my call, after the builder check):
+  entering the 100 % level posts even if the battery discharges at that
+  moment. Today's rule also asked for "not discharging"; in practice the
+  charge reaches 100 % only while charging, so nothing changes for the
+  owner.
+- **Missing permission** (Android 13+, denied) counts like the main switch
+  off: the state is tracked, nothing is posted (my call).
+- **Ties:** two battery sensors with the same worst type give the number of
+  the first one in the settings order, as the widget does (my call).
+- A value with one level (for example the current with no capacity known,
+  0010 §3.5) never changes level, so it never posts.
 
 ### 3.3 Re-arm margin
 
@@ -147,6 +158,10 @@ The check runs inside `SyncBattery` after each successful reading, where
 - With a bell on both sides of an edge, a value jumping across the edge can
   post once on each side, then both levels are disarmed until the value
   moves away by the margin.
+- **Level ids** (0010 §3.1): the custom copy keeps the ids of the default
+  levels, so turning "Custom colours" on or off keeps the stored state; a
+  new level gets the highest id plus one. Disarmed ids of levels that no
+  longer exist are dropped at each check (my call).
 
 ### 3.4 What a notification shows
 
@@ -165,7 +180,8 @@ The check runs inside `SyncBattery` after each successful reading, where
 - **Tap:** opens the app, as today.
 - **One notification per value** (my call): a new level of the same value
   replaces the older notification of that value, so they do not stack.
-  Different values stack.
+  Different values stack. Entering a level without a bell leaves the older
+  notification in place, as it may not be read yet (my call).
 
 ### 3.5 Android channels
 
