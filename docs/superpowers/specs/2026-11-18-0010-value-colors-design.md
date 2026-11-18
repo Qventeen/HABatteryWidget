@@ -1,8 +1,10 @@
 # Value colours — concept
 
 - **Date:** 2026-11-18
-- **Status:** concept. Not approved. It needs a detailing session before a
-  plan is written.
+- **Status:** concept. The owner accepted the shape in §3 with the additions
+  of 2026-11-18 (default set, a switch per value, reset). Not approved as a
+  spec yet: the open questions in §5 need a detailing session before a plan
+  is written.
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -18,6 +20,17 @@ and which colour it has. The widget then draws the value in the colour of
 its level. Only the text colour changes; the widget parts stay as they are.
 The SOC indicator may follow the levels too. The same settings must work for
 the inverter values of 0012 (for example, levels by voltage).
+
+Additions (owner, 2026-11-18, after reading this concept):
+
+- The app has a **minimal default set** of levels and colours (the levels
+  that exist today). They work by default.
+- **A switch per value** turns customisation on or off. With customisation
+  on, the owner can add more levels.
+- When customisation is turned on, the levels are **already filled with the
+  defaults**, ready to edit.
+- A value's customisation can be **reset to the start settings**, as
+  elsewhere in the app.
 
 ## 2. Today
 
@@ -39,7 +52,7 @@ the inverter values of 0012 (for example, levels by voltage).
 - Total voltage, average cell voltage and the value under SOC have no
   levels.
 
-## 3. Proposed shape (a proposal, not decided)
+## 3. Proposed shape (the owner accepted it as the base, 2026-11-18)
 
 - **A level list per value:** ordered bands "from X → colour". The first band
   has no lower limit. Any number of bands, with a cap (for example 6) to keep
@@ -51,10 +64,22 @@ the inverter values of 0012 (for example, levels by voltage).
   colours (for example red, orange, amber, green, teal, blue, violet, grey).
   Each has a light-theme and a dark-theme shade, checked for contrast on the
   card in both themes.
-- **Defaults = today's limits and colours**, so the widget looks the same
-  until the owner changes something. Like the display choices, this is an
-  exception to "defaults are empty" (0001 §14). A "reset to default" per
-  value.
+- **Built-in default set:** each value has default bands in code: today's
+  limits and colours (§2). A value with no levels today (total voltage,
+  average cell, the value under SOC) defaults to one plain band (no colour),
+  and the main value keeps its colour by direction (proposal). The defaults
+  are not stored, so the widget looks the same until the owner changes
+  something.
+- **"Custom colours" switch per value**, off by default:
+  - Off: the value uses the built-in default bands.
+  - First time on: the value's own bands are created as a copy of the
+    defaults, ready to edit; the owner adds, removes and edits bands.
+  - Off again: the defaults apply; the own bands stay stored, so the next
+    "on" brings them back (proposal; see §5, question 9).
+- **"Reset to default" per value:** replaces the own bands with a fresh copy
+  of the defaults, like "Reset sizes" in the Widget section.
+- Stored values (the switch, the own bands) default to `false` and an empty
+  list, so the "defaults are empty" rule (0001 §14) holds.
 - **Domain:** a pure function picks the band for a value; `WidgetModel` takes
   the bands from settings instead of `WidgetLevels`. The colour follows the
   shown (rounded) number, as temperatures do today.
@@ -89,6 +114,11 @@ the inverter values of 0012 (for example, levels by voltage).
 7. Where in the app: a new section, inside the Widget section, or a separate
    screen?
 8. Should a band also carry a notification? See 0011, question 1.
+9. Turning the switch off: keep the own bands for the next "on" (proposal),
+   or drop them?
+10. Does "Reset to default" also turn the switch off, or only refill the
+    bands? Does it ask for confirmation?
+11. One switch per value only, or also one switch for all values at once?
 
 ## 6. Non-goals
 
