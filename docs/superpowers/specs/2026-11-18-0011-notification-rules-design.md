@@ -21,8 +21,9 @@ parts.
 
 - **Type (severity):** how serious it is. A fixed set of four: **Critical**
   (red), **Warning** (amber), **Normal** (green), **Info** (blue). It sets
-  the Android channel and the accent colour. "Error" stays reserved for real
-  faults (HA not reachable, token rejected), and a state is not a "success".
+  the Android channel, the sound, the icon and the accent colour. "Error"
+  stays reserved for real faults (HA not reachable, token rejected), and a
+  state is not a "success".
 - **Level name:** what happened, per level, for example "Low", "Getting
   low", "Normal", "Full" (0010 §3.1: a default name, translated, or the
   owner's own text). It goes into the title.
@@ -189,17 +190,28 @@ The check runs inside `SyncBattery` after each successful reading, where
   the owner can set the sound, vibration and pop-up per type in the Android
   settings. Importance (my call): Critical and Warning high (pop-up), Normal
   and Info default (no pop-up).
-- One small icon for all (today's battery icon); the accent colour is the
-  level's type colour from the 0010 palette.
+- **An icon per type** (owner decision on types, §1), from Material Symbols
+  Rounded (Apache-2.0), as monochrome small icons: Critical `report`,
+  Warning `warning`, Normal `check_circle`, Info `info` (icon picks are my
+  call). The accent colour is the type's colour from the 0010 palette.
+- **Channel names** follow the app language: each channel is created again
+  before each post (0001 §12). Names: Critical, Warning, Normal, Info
+  (Ukrainian: Критичні, Попередження, Звичайні, Інформація).
 - The old `full_charge` channel is deleted, so it does not stay as an empty
   entry in the Android settings (my call).
 
 ### 3.6 Stored data and migration
 
-- **Settings:** `ColorLevel.notify: Boolean = false` (0010 model). The main
-  switch keeps the stored key `notifyOnFull`, so no data changes and no
-  migration is needed: on stays on, off stays off; the Full level notifies by
-  default, so today's behaviour is kept (my call; a rename in code only).
+- **Settings:** `ColorLevel.notify: Boolean = false` (0010 model; a new
+  field, no migration).
+- **The main switch is a meaning change after a release** (v0.2.0 shipped
+  `notifyOnFull`): it now covers every bell, not only "full". So, as 0001
+  §14 requires, the field is renamed to `notificationsOn`, the settings
+  record's `schemaVersion` goes from 1 to 2, and a `DataMigration` copies
+  `notifyOnFull` into `notificationsOn` (on stays on, off stays off), with a
+  test that loads a saved v1 JSON sample. The store helper (`jsonDataStore`)
+  gets a `migrations` parameter for it. The Full level notifies by default,
+  so today's behaviour is kept.
 - **Cache:** per value, the last level and the disarmed levels (by level id,
   0010 §3.1). It replaces `CacheState.fullChargeNotified`, which is no
   longer read (unknown keys are ignored on read). No cache migration: the
@@ -213,7 +225,8 @@ The check runs inside `SyncBattery` after each successful reading, where
 
 - **Notifications section:** the main switch ("Notifications"), a hint
   "Choose the levels with the bells in Colours", and, when auto refresh is
-  off, a note that no notification can come without it (§4, Delay).
+  off, a note that no notification can come without it (§4, Delay). Its
+  summary stays "On" or "Off" (0002).
 - **Colours section (0010):** a bell toggle on each level row in the editor;
   the read-only default list shows the bells.
 - **Sync condition:** the periodic sync runs when auto refresh is on and (a
