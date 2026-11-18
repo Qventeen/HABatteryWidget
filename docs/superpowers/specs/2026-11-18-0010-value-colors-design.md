@@ -1,10 +1,8 @@
-# Value colours — concept
+# Value colours — design
 
 - **Date:** 2026-11-18
-- **Status:** concept. The owner accepted the shape in §3 with the additions
-  of 2026-11-18 (default set, a switch per value, reset), the level model
-  (§3.1) and the temperature icons (§3.3). Not approved as a spec yet: the
-  open questions in §5 need a detailing session before a plan is written.
+- **Status:** detailed (2026-11-18). All questions in §5 are decided. Waiting
+  for the builder check and the owner's approval; no plan yet.
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -18,13 +16,16 @@ The colour of a widget value should depend on the value itself. In the app
 settings the owner sets how many levels a value has, where each level starts
 and which colour it has. The widget then draws the value in the colour of
 its level. Only the text colour changes; the widget parts stay as they are.
-The SOC indicator may follow the levels too. The same settings must work for
-the inverter values of 0012 (for example, levels by voltage).
+The SOC indicator may follow the levels too. (Refined in §3: text plus soft
+background, the SOC ring, a voltage arrow and temperature icons.) The same
+settings must work for the inverter values of 0012 (for example, levels by
+voltage).
 
 Additions (owner, 2026-11-18, after reading this concept):
 
 - The app has a **minimal default set** of levels and colours (the levels
-  that exist today). They work by default.
+  that exist today). They work by default. (The defaults were then set
+  value by value, §3.3 and §3.5.)
 - **A switch per value** turns customisation on or off. With customisation
   on, the owner can add more levels.
 - When customisation is turned on, the levels are **already filled with the
@@ -55,7 +56,19 @@ Additions (owner, 2026-11-18, after reading this concept):
 - Total voltage, average cell voltage and the value under SOC have no
   levels.
 
-## 3. Proposed shape (the owner accepted it as the base, 2026-11-18)
+## 3. Design
+
+### 3.0 Approaches considered
+
+- **Fixed levels in code, only colours editable.** Least work, but the owner
+  wants to add and remove levels. Rejected.
+- **A fixed number of levels per value** (for example always 4). Simple
+  storage, but the values need different counts (SOC 4, temperature 5,
+  MOSFET 3, voltage 1). Rejected.
+- **A dynamic level list per value on a shared base of types** (picked,
+  owner, 2026-11-18): one model for colours, icons and, with 0011,
+  notifications. A separate rule list for notifications was also rejected:
+  colour and notification come from the same level, so they always agree.
 
 ### 3.1 Level model (owner, 2026-11-18)
 
@@ -66,7 +79,7 @@ One level system for all values, in two layers. A level is a band of values
   - **Four types** (severity): Critical, Warning, Normal, Info. Each type
     has a default colour (red, amber, green, blue) and, with 0011, its own
     Android notification channel.
-  - **The palette:** about 8 named colours (§3.4).
+  - **The palette:** 8 named colours plus "plain" (§3.4).
   - **The icon set** (temperatures only for now, §3.3): none, snowflake,
     leaf, flame, flame with alert.
 - **Value layer: a level list per value, dynamic.**
@@ -113,9 +126,9 @@ One level system for all values, in two layers. A level is a band of values
   |---|---|
   | SOC ring | SOC levels; the SOC number stays plain |
   | Voltage pill | voltage levels (default: plain), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
-  | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery has different limits each way: idle grey, low green, higher amber, highest red; the arrow stays. A high level can notify (0011), for example a very high discharge current |
+  | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery can have different limits each way; idle is grey; defaults in §3.5; the arrow stays. A high level can notify (0011), for example a very high discharge current |
   | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list |
-  | Cell delta, battery temperature, MOSFET pills | levels, as today (the worst battery sensor wins) |
+  | Cell delta, battery temperature, MOSFET pills | levels (defaults §3.3 and §3.5; the worst battery sensor wins) |
   | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
   | Inverter values | later (0012) |
 
@@ -168,8 +181,8 @@ One level system for all values, in two layers. A level is a band of values
 - Red, amber, green and grey are today's colours (`WidgetPalette`), kept
   unchanged so the approved v5 look stays. Grey is today's idle text on the
   plain pill background; its ring shade is new.
-- Orange is the step between amber and red (current intensity). Teal and
-  violet are free choices for custom levels.
+- Orange, teal and violet are free choices for custom levels (for example
+  orange as a step between amber and red); no default uses them.
 
   | Colour | Default for | Light text / bg / ring | Dark text / bg / ring |
   |---|---|---|---|
@@ -261,11 +274,14 @@ One level system for all values, in two layers. A level is a band of values
     - No capacity known: the pill keeps today's direction colours
       (charging green, discharging amber).
     - "Custom colours" on copies the defaults as plain amps, worked out
-      from the capacity at that moment; the owner then edits amps (my call).
+      from the capacity at that moment and rounded to whole amps; the owner
+      then edits amps (my call). With no capacity known at that moment, the
+      copy is one level per direction in today's direction colours (charge
+      green, discharge amber), and the owner adds levels (my call).
     - Orange is not in the defaults; the owner can add it as a custom step.
     - No current level notifies by default (0011).
-    - Look change: a low discharge turns green; today any discharge is
-      amber.
+    - Look change: today any charge is green and any discharge amber; now
+      both are blue below 0.2 C, green from 0.2 C, and so on.
 - **"Custom colours" switch per value**, off by default:
   - Off: the value uses the built-in default bands.
   - First time on: the value's own bands are created as a copy of the
@@ -283,19 +299,21 @@ One level system for all values, in two layers. A level is a band of values
 
 - Stored values (the switch, the own bands) default to `false` and an empty
   list, so the "defaults are empty" rule (0001 §14) holds.
-- **Domain:** a pure function picks the band for a value; `WidgetModel` takes
-  the bands from settings instead of `WidgetLevels`. The four types replace
-  today's `Level` values OK, WARN and BAD; PLAIN (no colour) and IDLE stay
-  (my call). The colour follows the shown (rounded) number, as temperatures
-  do today.
+- **Domain:** a pure function picks the level for a value; `WidgetModel`
+  takes the levels from settings (or the defaults) instead of
+  `WidgetLevels`, and carries each value's level colour (a palette colour
+  or plain) and icon instead of today's `Level` OK, WARN and BAD. Idle
+  current stays a fixed grey case (my call). `WidgetPalette` grows to the 8
+  colours with 3 shades each per theme (§3.4). The colour follows the shown
+  (rounded) number, as temperatures do today.
 - **App (owner, 2026-11-18):** a new collapsible "Colours" section below
   Appearance, collapsed by default, the same pattern as the other sections
   (the app is one scrolling screen with no navigation library). It lists 7
   values: SOC, voltage, charge current, discharge current, cell delta,
   battery temperature, MOSFET. The voltage row also shows each edge per
   cell (for example "from 52.0 V · 3.25 V per cell") when the cell count is
-  known (my call). A tap opens that value's level
-  list, one value open at a time; there the owner adds, removes and edits
+  known (my call). A tap opens that value's level list, one value open at a
+  time; there the owner adds, removes and edits
   levels (edge, name, type, colour chip, icon; sketch in §3.1). The app
   preview (0006) at the top shows the result live; it scrolls out of view
   while editing lower down (accepted: levels are set once and rarely
@@ -322,18 +340,18 @@ One level system for all values, in two layers. A level is a band of values
   only at a bad level. In narrow layouts (the 4×2 cell column) the number
   gets less room all the time and may get smaller. The text fit must count
   the icon.
-- Together these change the approved v5 look (blue SOC at 100 %, green low
-  discharge, voltage arrow, temperature icons, green normal temperatures,
-  blue cool battery). No design-canvas drawing (owner, 2026-11-18): a
-  drawing cannot prove the real fit, because launchers draw widgets at other
-  sizes. The fit is checked in the app preview and on the owner's phone
-  during the build, in experiment mode; the plan has an early fit-check
-  task. The palette is fixed in §3.4.
+- Together these change the approved v5 look (blue SOC at 100 %, blue or green
+  low current, coloured delta, voltage arrow, temperature icons, green normal
+  temperatures, blue cool battery). No design-canvas drawing (owner,
+  2026-11-18): a drawing cannot prove the real fit, because launchers draw
+  widgets at other sizes. The fit is checked in the app preview and on the
+  owner's phone during the build, in experiment mode; the plan has an early
+  fit-check task. The palette is fixed in §3.4.
 - A missing value (sensor not set or unavailable) draws in the plain colour.
 - More settings make the app screen longer; the Colours section stays
   collapsed and opens one value at a time (§3.6).
 
-## 5. Open questions (for the detailing session)
+## 5. Questions (all decided, 2026-11-18)
 
 1. ~~Text colour only, or also the pill background?~~ Decided (owner,
    2026-11-18): text plus soft background, as today.
@@ -374,5 +392,6 @@ One level system for all values, in two layers. A level is a band of values
 - No new widget parts and no layout changes (owner: text colour only),
   except the direction arrow on the voltage pill and the level icons on the
   temperature pills (owner, 2026-11-18).
-- No free colour picker in the first version (proposal).
-- One colour set for the whole app, not one per placed widget (proposal).
+- No free colour picker in the first version (owner, 2026-11-18: the fixed
+  palette of §3.4).
+- One colour set for the whole app, not one per placed widget (my call).
