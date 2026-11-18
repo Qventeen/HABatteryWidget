@@ -159,12 +159,37 @@ One level system for all values, in two layers. A level is a band of values
   green with a leaf; 0–5 °C turns from amber to blue. Every temperature pill
   now always shows two icons (§4).
 
-### 3.4 Palette
+### 3.4 Palette (owner, 2026-11-18)
 
-- **Colours from a fixed palette**, not a free colour picker: about 8 named
-  colours (for example red, orange, amber, green, teal, blue, violet, grey).
-  Each has four shades (text and background, for the light and the dark
-  theme), checked for contrast on the card in both themes.
+- **A fixed palette of 8 colours**, not a free colour picker. Each colour has
+  six shades: pill text, pill background and SOC ring, for the light and the
+  dark theme. Besides the 8 colours, a level can be "plain" (no colour, as
+  today's PLAIN).
+- Red, amber, green and grey are today's colours (`WidgetPalette`), kept
+  unchanged so the approved v5 look stays. Grey is today's idle text on the
+  plain pill background; its ring shade is new.
+- Orange is the step between amber and red (current intensity). Teal and
+  violet are free choices for custom levels.
+
+  | Colour | Default for | Light text / bg / ring | Dark text / bg / ring |
+  |---|---|---|---|
+  | Red | Critical | `D32F2F` / `FDE7E7` / `D32F2F` | `EF7070` / `3D1E1E` / `EF7070` |
+  | Orange | – | `C2410C` / `FFE9DD` / `E8590C` | `FF9A66` / `3D2215` / `FB8C4A` |
+  | Amber | Warning | `A05A00` / `FFF1E0` / `F59E0B` | `FFB869` / `3A2A12` / `FFB74D` |
+  | Green | Normal | `2E7D32` / `E5F3E6` / `43A047` | `7BC67E` / `1E3320` / `66BB6A` |
+  | Teal | – | `00796B` / `E0F2F1` / `26A69A` | `5FC4B8` / `15302D` / `4DB6AC` |
+  | Blue | Info | `1565C0` / `E3EEFB` / `1E88E5` | `8AB4F8` / `1B2A3E` / `64B5F6` |
+  | Violet | – | `6B3FB8` / `EFE7FB` / `8E5CD9` | `B99CF2` / `2B2240` / `A788EC` |
+  | Grey | – | `5C625E` / `F1F4F1` / `858C87` | `A3ABA5` / `242926` / `6B736D` |
+
+- **Contrast** (WCAG, checked 2026-11-18; text on its background, ring on
+  the card). Dark theme: all text ≥ 5.1, all rings ≥ 3.5. Light theme: text
+  4.2–5.8, rings 3.0–5.0, except today's amber ring (2.1). Below the usual
+  minimum on the light card are only today's red text (4.2; pill text is
+  bold, so likely fine) and today's amber ring (2.1, looks pale). The owner
+  kept both as they are (2026-11-18).
+- Red and orange look close on the light card; they read apart best side
+  by side.
 
 ### 3.5 Defaults, custom switch and reset
 
@@ -210,8 +235,8 @@ One level system for all values, in two layers. A level is a band of values
 
 - A colour must read well on the light and the dark card. A free picker
   would allow unreadable colours, so the proposal is a fixed palette.
-- Text plus soft background (decided) means each palette colour needs four
-  shades: text and background, for the light and the dark theme.
+- Text plus soft background plus the ring (decided) means each palette
+  colour needs six shades (§3.4).
 - The main pill shows current (A) or power (W). Proposal: its levels are in
   amps (BMS limits are in amps) and also colour the pill when it shows watts
   (§5, question 12).
@@ -239,7 +264,8 @@ One level system for all values, in two layers. A level is a band of values
 3. ~~Main value: colour by direction, or bands by value?~~ Decided (owner,
    2026-11-18): bands by intensity, one list per direction; the arrow stays.
 4. ~~Which values get bands?~~ Decided: the table in §3.2.
-5. The palette: which colours and how many?
+5. ~~The palette: which colours and how many?~~ Decided (owner,
+   2026-11-18): the 8 colours in §3.4; today's red and amber unchanged.
 6. ~~Band edges: is "from X" inclusive; does it depend on the direction?~~
    Decided (owner, 2026-11-18): "from X" includes X, the same in both
    directions. 20 % is amber; red is below 20 %, so falling to 19 % enters
