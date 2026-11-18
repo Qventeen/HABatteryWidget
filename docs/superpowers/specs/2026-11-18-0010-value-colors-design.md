@@ -70,11 +70,11 @@ One level system for all values, in two layers. A level is a band of values
   - **The icon set** (temperatures only for now, §3.3): none, snowflake,
     leaf, flame, flame with alert.
 - **Value layer: a level list per value, dynamic.**
-  - Each level has: a lower edge "from X" (the first level has none), a
-    name (for example "Cool"; 0011 puts it into the notification title), a
-    type, a colour (default: the colour of its type; the owner can pick
-    another palette colour), an icon (temperature values only) and a notify
-    switch (added by 0011).
+  - Each level has: a lower edge "from X" (it includes X; the first level
+    has none), a name (for example "Cool"; 0011 puts it into the
+    notification title), a type, a colour (default: the colour of its type;
+    the owner can pick another palette colour), an icon (temperature values
+    only) and a notify switch (added by 0011).
   - 1 to 6 levels per value. The levels always stay sorted by "from".
   - **Add level** splits a level's range in two. **Delete** merges the
     range into the level below (the first level merges into the one above).
@@ -240,10 +240,12 @@ One level system for all values, in two layers. A level is a band of values
    2026-11-18): bands by intensity, one list per direction; the arrow stays.
 4. ~~Which values get bands?~~ Decided: the table in §3.2.
 5. The palette: which colours and how many?
-6. Band edges: is "from X" inclusive? Steps for decimals (0.1 V for the pack,
-   0.001 V for a cell)? Owner example (2026-11-18): falling from 21 % to
-   20 % should already be red, rising from 19 % to 20 % amber. So is 20 %
-   red or amber, or does it depend on the direction?
+6. ~~Band edges: is "from X" inclusive; does it depend on the direction?~~
+   Decided (owner, 2026-11-18): "from X" includes X, the same in both
+   directions. 20 % is amber; red is below 20 %, so falling to 19 % enters
+   red. The re-arm margin of 0011 stops repeat alerts near an edge. Decimal
+   edges have the precision the value is shown with, because the colour
+   follows the shown number (my call).
 7. Where in the app: a new section, inside the Widget section, or a separate
    screen?
 8. ~~Should a band also carry a notification?~~ Decided (owner,
