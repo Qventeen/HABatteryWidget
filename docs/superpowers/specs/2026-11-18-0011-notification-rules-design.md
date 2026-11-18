@@ -86,7 +86,9 @@ up. No direction setting for now; it may come later if this is too noisy.
   - MOSFET: Hot (from 80 °C);
 
   and off for every other level. These are rare and important; the
-  temperature ones are about safety.
+  temperature ones are about safety. "Getting low" stays silent by default
+  (owner, 2026-11-18): a full cycle sends only "Low ↓" and "Full ↑"; the
+  "↑ 20 %" example of §1 comes once its bell is on.
 - **Bells are edited with "Custom colours" on** (owner, 2026-11-18). Turning
   custom on alone changes nothing visible (the copy equals the defaults);
   then the owner sets the bells. All level settings stay in one place. With
