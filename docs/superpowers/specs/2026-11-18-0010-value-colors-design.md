@@ -1,8 +1,8 @@
 # Value colours — design
 
 - **Date:** 2026-11-18
-- **Status:** detailed (2026-11-18). All questions in §5 are decided. Waiting
-  for the builder check and the owner's approval; no plan yet.
+- **Status:** approved by the owner (2026-11-18), after the builder check.
+  Plan: `docs/superpowers/plans/2026-11-18-0010-value-colors.md`.
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
