@@ -195,15 +195,24 @@ One level system for all values, in two layers. A level is a band of values
 
 - **Built-in default set:** each value has default bands in code; they are
   not stored in settings.
-  - SOC (owner, 2026-11-18): red below 20 %, amber 20–30 %, green 30–99 %,
-    blue at 100 %. This changes today's look a little (today: red below
-    15 %, amber below 25 %, no blue).
+  - SOC (owner, 2026-11-18; amber widened to 40 % in round 2):
+
+    | Range | Name | Type (colour) |
+    |---|---|---|
+    | below 20 % | Low | Critical (red) |
+    | from 20 % | Getting low | Warning (amber) |
+    | from 40 % | Normal | Normal (green) |
+    | from 100 % | Full | Info (blue) |
+
+    This changes today's look (today: red below 15 %, amber below 25 %,
+    no blue).
   - Battery and MOSFET temperature: §3.3.
   - Cell delta: today's limits and colours (§2) are the starting proposal;
     the owner sets its default levels in the detailing session (owner,
     2026-11-18).
-  - Total voltage and average cell have no levels today; they default to
-    one plain band (no colour).
+  - Total voltage and average cell (owner, 2026-11-18): one level,
+    "Normal", plain (no colour), as today. The pack voltage depends on the
+    cell count, which the app does not know; SOC already shows the charge.
   - Current/power (owner, 2026-11-18): edges as C-rate (current ÷ full
     capacity), so the defaults fit any battery. The capacity is
     `BatteryMath.fullCapacityAh` (the BMS capacity entity, else the Capacity
