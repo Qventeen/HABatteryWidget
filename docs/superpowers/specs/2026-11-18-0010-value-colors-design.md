@@ -67,12 +67,15 @@ Additions (owner, 2026-11-18, after reading this concept):
   colours (for example red, orange, amber, green, teal, blue, violet, grey).
   Each has a light-theme and a dark-theme shade, checked for contrast on the
   card in both themes.
-- **Built-in default set:** each value has default bands in code: today's
-  limits and colours (§2). A value with no levels today (total voltage,
-  average cell, the value under SOC) defaults to one plain band (no colour),
-  and the main value keeps its colour by direction (proposal). The defaults
-  are not stored, so the widget looks the same until the owner changes
-  something.
+- **Built-in default set:** each value has default bands in code; they are
+  not stored in settings.
+  - SOC (owner, 2026-11-18): red below 20 %, amber 20–30 %, green 30–99 %,
+    blue at 100 %. This changes today's look a little (today: red below
+    15 %, amber below 25 %, no blue).
+  - The other values keep today's limits and colours (§2).
+  - A value with no levels today (total voltage, average cell, the value
+    under SOC) defaults to one plain band (no colour), and the main value
+    keeps its colour by direction (proposal).
 - **"Custom colours" switch per value**, off by default:
   - Off: the value uses the built-in default bands.
   - First time on: the value's own bands are created as a copy of the
@@ -113,7 +116,9 @@ Additions (owner, 2026-11-18, after reading this concept):
 4. Which values get bands in the first version?
 5. The palette: which colours and how many?
 6. Band edges: is "from X" inclusive? Steps for decimals (0.1 V for the pack,
-   0.001 V for a cell)?
+   0.001 V for a cell)? Owner example (2026-11-18): falling from 21 % to
+   20 % should already be red, rising from 19 % to 20 % amber. So is 20 %
+   red or amber, or does it depend on the direction?
 7. Where in the app: a new section, inside the Widget section, or a separate
    screen?
 8. ~~Should a band also carry a notification?~~ Decided (owner,

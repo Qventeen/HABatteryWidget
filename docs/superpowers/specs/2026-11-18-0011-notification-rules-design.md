@@ -31,6 +31,12 @@ switches are off; some chosen ones are on. Examples:
 Order: first the colours (0010, spec and build), then this spec extends
 today's notification code to work on the levels.
 
+Owner decision on direction (2026-11-18): a crossing sends the notification
+of the level the value **enters**, in both directions. Falling from 21 % to
+19 % enters red → a red (Error) notification. Rising from 19 % to 20 %
+enters amber → a yellow (Warning) notification that says the charge went
+up. No direction setting for now; it may come later if this is too noisy.
+
 ## 2. Today
 
 - `FullChargeRule` fires when the battery state is FULL and re-arms (gets
@@ -51,15 +57,15 @@ today's notification code to work on the levels.
   value enters a level whose switch is on, the app posts a notification of
   that type. Colour and notification come from the same level, so they
   always agree.
-- **Direction.** A middle level can be entered from above (the value falls)
-  or from below (it rises). The switch has a direction: "when falling into
-  it", "when rising into it", or both. The first level (no lower limit) can
-  only be entered falling, the last one only rising. Example: without
-  direction, charging from 10 % to 16 % would send "Warning" on entering
-  15–25 %.
+- **Direction (owner decision, §1).** Entering a level from either side
+  sends that level's notification, if its switch is on. The text shows the
+  direction, for example "↓ 19 %" or "↑ 20 %". The first level (no lower
+  limit) can only be entered falling, the last one only rising. There is no
+  direction setting in the first version.
 - **Defaults.** The built-in default set (0010) also says which levels
-  notify. Proposal: charge < 15 % (falling, Error) and 100 % (rising, Full)
-  on; all others off.
+  notify. Proposal: SOC red (below 20 %, Error) and blue (100 %, Full) on;
+  all others off. With these defaults a full cycle gives two notifications:
+  "↓ 19 %" and "↑ 100 %".
 - **Main switch.** The Notifications section keeps one main switch (today's
   switch, which asks for the permission on Android 13+), off by default as
   today. Off: nothing is posted, whatever the levels say.
@@ -97,15 +103,17 @@ today's notification code to work on the levels.
 - **Faster path.** For urgent alarms, a Home Assistant automation that sends
   through the HA Companion app arrives in seconds. This spec does not
   replace it.
-- **Noise.** Levels close together can spam; the direction and the re-arm
+- **Noise.** Levels close together can spam; the per-level switches and the re-arm
   margin limit this.
 
 ## 5. Open questions (for the detailing session)
 
 1. ~~Shared levels with 0010, or a separate rule list?~~ Decided (owner,
    2026-11-18): shared, notifications ride on the levels.
-2. Direction per level (falling, rising, both): is the proposal right?
-3. Which levels notify by default (proposal: charge < 15 % and 100 %)?
+2. ~~Direction per level?~~ Decided (owner, 2026-11-18): the level entered
+   sets the notification, both directions, no setting for now.
+3. Which levels notify by default (proposal: SOC red below 20 % and blue at
+   100 %)?
 4. Keep one main switch (today's, it asks for the permission)?
 5. With "Custom colours" off for a value: can the owner still change its
    notify switches, or only after turning custom colours on?
