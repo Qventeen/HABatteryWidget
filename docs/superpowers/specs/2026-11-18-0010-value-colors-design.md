@@ -204,8 +204,29 @@ One level system for all values, in two layers. A level is a band of values
     2026-11-18).
   - Total voltage and average cell have no levels today; they default to
     one plain band (no colour).
-  - Current/power: defaults are open (§5, question 13). Note: with levels
-    by intensity, a low discharge turns green; today any discharge is amber.
+  - Current/power (owner, 2026-11-18): edges as C-rate (current ÷ full
+    capacity), so the defaults fit any battery. The capacity is
+    `BatteryMath.fullCapacityAh` (the BMS capacity entity, else the Capacity
+    setting). A guess from common LiFePO4 practice:
+
+    | Charge | Discharge | Name | Type (colour) |
+    |---|---|---|---|
+    | below 0.3 C | below 0.5 C | Normal | Normal (green) |
+    | from 0.3 C | from 0.5 C | High | Warning (amber) |
+    | from 0.5 C | from 0.8 C | Very high | Critical (red) |
+
+    Example, 280 Ah: charge amber from 84 A, red from 140 A; discharge
+    amber from 140 A, red from 224 A.
+    - Idle (|I| ≤ 0.1 A, `BatteryMath.IDLE_CURRENT_A`) is not a level: it
+      is always grey, as today.
+    - No capacity known: the pill keeps today's direction colours
+      (charging green, discharging amber).
+    - "Custom colours" on copies the defaults as plain amps, worked out
+      from the capacity at that moment; the owner then edits amps (my call).
+    - Orange is not in the defaults; the owner can add it as a custom step.
+    - No current level notifies by default (0011).
+    - Look change: a low discharge turns green; today any discharge is
+      amber.
 - **"Custom colours" switch per value**, off by default:
   - Off: the value uses the built-in default bands.
   - First time on: the value's own bands are created as a copy of the
@@ -247,9 +268,10 @@ One level system for all values, in two layers. A level is a band of values
   would allow unreadable colours, so the proposal is a fixed palette.
 - Text plus soft background plus the ring (decided) means each palette
   colour needs six shades (§3.4).
-- The main pill shows current (A) or power (W). Proposal: its levels are in
-  amps (BMS limits are in amps) and also colour the pill when it shows watts
-  (§5, question 12).
+- The main pill shows current (A) or power (W). Its levels are in amps and
+  also colour the pill when it shows watts (owner, 2026-11-18): BMS limits
+  are in amps, and the voltage changes little, so watts follow amps
+  closely. The settings show the edges in "A".
 - The voltage arrow changes the approved v5 look a little: the pill gets
   narrower room for the number, so the text fit must count the arrow, as it
   does for the main pill. The pill already supports the arrow (`PackPill`
@@ -296,12 +318,10 @@ One level system for all values, in two layers. A level is a band of values
     2026-11-18): it only refills the bands, and it asks for confirmation.
 11. ~~Also one switch for all values?~~ Decided (owner, 2026-11-18): no,
     one switch per value only.
-12. Current/power levels in amps for both displays (proposal), or separate
-    lists in watts when the pill shows power?
-13. Default current levels: from the capacity as C-rate (proposal, a guess
-    for LiFePO4: charge green to 0.2 C, amber to 0.5 C, red above;
-    discharge green to 0.5 C, amber to 0.8 C, red above), or fixed amps
-    from the owner's BMS limits?
+12. ~~Current/power levels in amps or watts?~~ Decided (owner,
+    2026-11-18): amps for both displays.
+13. ~~Default current levels?~~ Decided (owner, 2026-11-18): C-rate edges
+    from the known capacity (§3.5).
 14. ~~Idle colour: grey or blue?~~ Decided (owner, 2026-11-18): grey, as
     today; blue means Info, 100 % and Cool.
 15. ~~Temperature marks for normal levels; which other marks?~~ Decided
