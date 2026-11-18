@@ -211,9 +211,13 @@ One level system for all values, in two layers. A level is a band of values
   - First time on: the value's own bands are created as a copy of the
     defaults, ready to edit; the owner adds, removes and edits bands.
   - Off again: the defaults apply; the own bands stay stored, so the next
-    "on" brings them back (proposal; see §5, question 9).
+    "on" brings them back (owner, 2026-11-18).
 - **"Reset to default" per value:** replaces the own bands with a fresh copy
-  of the defaults, like "Reset sizes" in the Widget section.
+  of the defaults; the switch stays on. It asks for confirmation first,
+  because own names and edges are lost (owner, 2026-11-18). Today's "Reset
+  sizes" does not ask; this is the one reset in the app that asks.
+- No switch for all values at once in the first version (owner,
+  2026-11-18): the defaults work without any setup.
 
 ### 3.6 Code and storage
 
@@ -251,8 +255,11 @@ One level system for all values, in two layers. A level is a band of values
   the icon.
 - Together these change the approved v5 look (blue SOC at 100 %, green low
   discharge, voltage arrow, temperature icons, green normal temperatures,
-  blue cool battery). Proposal: draw them as new v6 rows on the design
-  canvas before this spec is final.
+  blue cool battery). No design-canvas drawing (owner, 2026-11-18): a
+  drawing cannot prove the real fit, because launchers draw widgets at other
+  sizes. The fit is checked in the app preview and on the owner's phone
+  during the build, in experiment mode; the plan has an early fit-check
+  task. The palette is fixed in §3.4.
 - A missing value (sensor not set or unavailable) draws in the plain colour.
 - More settings make the app screen longer; a sub-screen may be needed.
 
@@ -276,18 +283,20 @@ One level system for all values, in two layers. A level is a band of values
    screen?
 8. ~~Should a band also carry a notification?~~ Decided (owner,
    2026-11-18): yes, added by 0011.
-9. Turning the switch off: keep the own bands for the next "on" (proposal),
-   or drop them?
-10. Does "Reset to default" also turn the switch off, or only refill the
-    bands? Does it ask for confirmation?
-11. One switch per value only, or also one switch for all values at once?
+9. ~~Turning the switch off: keep or drop the own bands?~~ Decided (owner,
+   2026-11-18): keep them for the next "on".
+10. ~~Does reset turn the switch off; does it confirm?~~ Decided (owner,
+    2026-11-18): it only refills the bands, and it asks for confirmation.
+11. ~~Also one switch for all values?~~ Decided (owner, 2026-11-18): no,
+    one switch per value only.
 12. Current/power levels in amps for both displays (proposal), or separate
     lists in watts when the pill shows power?
 13. Default current levels: from the capacity as C-rate (proposal, a guess
     for LiFePO4: charge green to 0.2 C, amber to 0.5 C, red above;
     discharge green to 0.5 C, amber to 0.8 C, red above), or fixed amps
     from the owner's BMS limits?
-14. Idle colour: grey (proposal; blue already means Info / full) or blue?
+14. ~~Idle colour: grey or blue?~~ Decided (owner, 2026-11-18): grey, as
+    today; blue means Info, 100 % and Cool.
 15. ~~Temperature marks for normal levels; which other marks?~~ Decided
     (owner, 2026-11-18): normal levels get a green leaf; the icon set and
     defaults are in §3.3.
