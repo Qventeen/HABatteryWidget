@@ -241,16 +241,21 @@ One level system for all values, in two layers. A level is a band of values
   - Current/power (owner, 2026-11-18): edges as C-rate (current ÷ full
     capacity), so the defaults fit any battery. The capacity is
     `BatteryMath.fullCapacityAh` (the BMS capacity entity, else the Capacity
-    setting). A guess from common LiFePO4 practice:
+    setting). Checked against EVE LF105 and LF100LA datasheets: standard
+    charge and discharge 0.5 C, maximum continuous 1 C both ways. The
+    charge and discharge lists have the same defaults (the datasheets are
+    symmetric); the owner can make them differ.
 
-    | Charge | Discharge | Name | Type (colour) |
-    |---|---|---|---|
-    | below 0.3 C | below 0.5 C | Normal | Normal (green) |
-    | from 0.3 C | from 0.5 C | High | Warning (amber) |
-    | from 0.5 C | from 0.8 C | Very high | Critical (red) |
+    | Range (charge and discharge) | Name | Type (colour) |
+    |---|---|---|
+    | below 0.2 C | Light | Info (blue) |
+    | from 0.2 C | Normal | Normal (green) |
+    | from 0.5 C | High | Warning (amber) |
+    | from 0.8 C | Very high | Critical (red) |
 
-    Example, 280 Ah: charge amber from 84 A, red from 140 A; discharge
-    amber from 140 A, red from 224 A.
+    Example, the owner's 100 Ah: blue below 20 A, green from 20 A, amber
+    from 50 A (above the standard rate), red from 80 A (near the 1 C
+    maximum, before a BMS cut-off). The name "Light" is my call.
     - Idle (|I| ≤ 0.1 A, `BatteryMath.IDLE_CURRENT_A`) is not a level: it
       is always grey, as today.
     - No capacity known: the pill keeps today's direction colours
