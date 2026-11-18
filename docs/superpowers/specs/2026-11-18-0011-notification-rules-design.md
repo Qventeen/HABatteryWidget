@@ -14,9 +14,20 @@
 
 Today the app sends a notification only when the battery is full. The owner
 wants to turn notifications on and off and to have more of them. The first
-kind is battery charge levels. Each notification has a type: **Error**
-(danger, red), **Warning** (yellow), **Success** (green) or **Full** (full
-charge, blue).
+kind is battery charge levels. Each notification has a type with a colour:
+red (danger), yellow (warning), green, and blue (full charge).
+
+Owner decision on names (2026-11-18): a notification has two separate
+parts.
+
+- **Type (severity):** how serious it is. A fixed set of four: **Critical**
+  (red), **Warning** (amber), **Normal** (green), **Info** (blue). It sets
+  the Android channel, the sound, the icon and the accent colour. "Error"
+  stays reserved for real faults (HA not reachable, token rejected), and a
+  state is not a "success".
+- **Level name:** what happened, free text per level, for example "Low",
+  "Getting low", "Normal", "Full". It goes into the title: "Battery low
+  ↓ 19 %".
 
 Owner decision, after reading the first concept: **merge notifications with
 the colour levels of 0010.** Each level of a value gets a notify switch.
@@ -25,7 +36,8 @@ notification, at the same time as the colour changes. By default most
 switches are off; some chosen ones are on. Examples:
 
 - full charge (100 %) → notification;
-- charge reaches 15 % → notification, and the colour changes;
+- charge reaches the low level (first named 15 %; the default is now below
+  20 %) → notification, and the colour changes;
 - battery temperature falls below a level → notification.
 
 Order: first the colours (0010, spec and build), then this spec extends
@@ -33,7 +45,7 @@ today's notification code to work on the levels.
 
 Owner decision on direction (2026-11-18): a crossing sends the notification
 of the level the value **enters**, in both directions. Falling from 21 % to
-19 % enters red → a red (Error) notification. Rising from 19 % to 20 %
+19 % enters red → a red (Critical) notification. Rising from 19 % to 20 %
 enters amber → a yellow (Warning) notification that says the charge went
 up. No direction setting for now; it may come later if this is too noisy.
 
@@ -52,10 +64,11 @@ up. No direction setting for now; it may come later if this is too noisy.
 
 ## 3. Proposed shape (a proposal, not decided)
 
-- **A notify switch and a type per level.** Each level of a value (0010)
-  gets a notify switch and a type (Error, Warning, Success, Full). When the
-  value enters a level whose switch is on, the app posts a notification of
-  that type. Colour and notification come from the same level, so they
+- **A notify switch, a type and a name per level.** Each level of a value
+  (0010) gets a notify switch, a type (Critical, Warning, Normal, Info) and
+  a name. When the value enters a level whose switch is on, the app posts a
+  notification of that type, titled with the level name, the direction and
+  the value. Colour and notification come from the same level, so they
   always agree.
 - **Direction (owner decision, §1).** Entering a level from either side
   sends that level's notification, if its switch is on. The text shows the
@@ -63,9 +76,9 @@ up. No direction setting for now; it may come later if this is too noisy.
   limit) can only be entered falling, the last one only rising. There is no
   direction setting in the first version.
 - **Defaults.** The built-in default set (0010) also says which levels
-  notify. Proposal: SOC red (below 20 %, Error) and blue (100 %, Full) on;
-  all others off. With these defaults a full cycle gives two notifications:
-  "↓ 19 %" and "↑ 100 %".
+  notify. Proposal: SOC red ("Low", below 20 %, Critical) and blue
+  ("Full", 100 %, Info) on; all others off. With these defaults a full cycle
+  gives two notifications: "Battery low ↓ 19 %" and "Battery full ↑ 100 %".
 - **Main switch.** The Notifications section keeps one main switch (today's
   switch, which asks for the permission on Android 13+), off by default as
   today. Off: nothing is posted, whatever the levels say.
@@ -74,9 +87,9 @@ up. No direction setting for now; it may come later if this is too noisy.
   again and again; today it is 2 % for full). The margin depends on the
   value (for example 2 % for charge, 1 °C for temperatures). The cache keeps
   the last level per value and replaces `fullChargeNotified`.
-- **One Android channel per type** (4 channels), so the owner can set sound,
-  vibration and pop-up per type in the Android settings. The type also sets
-  the icon, the accent colour and the default title.
+- **One Android channel per type** (4 channels: Critical, Warning, Normal,
+  Info), so the owner can set sound, vibration and pop-up per type in the
+  Android settings. The type also sets the icon and the accent colour.
 - **Migration.** `notifyOnFull` becomes the main switch; the 100 % default
   level notifies, so today's behaviour stays. A meaning change after a
   release bumps `schemaVersion` and adds a `DataMigration` with a test (0001
@@ -118,12 +131,14 @@ up. No direction setting for now; it may come later if this is too noisy.
 5. With "Custom colours" off for a value: can the owner still change its
    notify switches, or only after turning custom colours on?
 6. The type of a level: picked freely, or proposed from its colour (red →
-   Error, amber → Warning, green → Success, blue → Full)?
+   Critical, amber → Warning, green → Normal, blue → Info)? (The names are
+   decided, §1.)
 7. Re-arm margin per value: fixed, or editable?
 8. Which values can notify: all values that have levels, also the inverter
    values of 0012 (for example a grid loss)?
-9. The text: own text per level, or a fixed text per type plus the value
-   ("Battery temperature 3 °C")?
+9. The title is the level name, the direction and the value ("Battery low
+   ↓ 19 %"). Is the level name typed by the owner, with a translated
+   default name? Is a longer body text needed?
 10. Once per entry, or repeat every N minutes while the value stays there?
 11. Quiet hours?
 12. Should a long sync error (HA not reachable for N minutes) notify too?
