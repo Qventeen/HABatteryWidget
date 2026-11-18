@@ -72,7 +72,9 @@ Additions (owner, 2026-11-18, after reading this concept):
   - SOC (owner, 2026-11-18): red below 20 %, amber 20–30 %, green 30–99 %,
     blue at 100 %. This changes today's look a little (today: red below
     15 %, amber below 25 %, no blue).
-  - The other values keep today's limits and colours (§2).
+  - The other values: today's limits and colours (§2) are the starting
+    proposal; the owner sets their default levels in the detailing session
+    (owner, 2026-11-18).
   - A value with no levels today (total voltage, average cell, the value
     under SOC) defaults to one plain band (no colour), and the main value
     keeps its colour by direction (proposal).
