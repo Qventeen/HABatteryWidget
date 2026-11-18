@@ -2,9 +2,9 @@
 
 - **Date:** 2026-11-18
 - **Status:** concept. The owner accepted the shape in §3 with the additions
-  of 2026-11-18 (default set, a switch per value, reset). Not approved as a
-  spec yet: the open questions in §5 need a detailing session before a plan
-  is written.
+  of 2026-11-18 (default set, a switch per value, reset), the level model
+  (§3.1) and the temperature icons (§3.3). Not approved as a spec yet: the
+  open questions in §5 need a detailing session before a plan is written.
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -57,11 +57,57 @@ Additions (owner, 2026-11-18, after reading this concept):
 
 ## 3. Proposed shape (the owner accepted it as the base, 2026-11-18)
 
-- **A level list per value:** ordered bands "from X → colour". The first band
-  has no lower limit. Any number of bands, with a cap (for example 6) to keep
-  the screen usable.
-- **What gets coloured (owner, 2026-11-18, round 1).** A level colours the
-  text and a soft background of the same colour, as today.
+### 3.1 Level model (owner, 2026-11-18)
+
+One level system for all values, in two layers. A level is a band of values
+("from X"); this spec uses "level" and "band" for the same thing.
+
+- **Base layer: fixed in code, the same for every value.**
+  - **Four types** (severity): Critical, Warning, Normal, Info. Each type
+    has a default colour (red, amber, green, blue) and, with 0011, its own
+    Android notification channel.
+  - **The palette:** about 8 named colours (§3.4).
+  - **The icon set** (temperatures only for now, §3.3): none, snowflake,
+    leaf, flame, flame with alert.
+- **Value layer: a level list per value, dynamic.**
+  - Each level has: a lower edge "from X" (the first level has none), a
+    name (for example "Cool"; 0011 puts it into the notification title), a
+    type, a colour (default: the colour of its type; the owner can pick
+    another palette colour), an icon (temperature values only) and a notify
+    switch (added by 0011).
+  - 1 to 6 levels per value. The levels always stay sorted by "from".
+  - **Add level** splits a level's range in two. **Delete** merges the
+    range into the level below (the first level merges into the one above).
+    The last level cannot be deleted.
+  - The default list of each value is in code and is not stored. "Custom
+    colours" on gives the value its own **copy** of the defaults (§3.5), not
+    a live link: a later app version may change a default, and the owner's
+    own list stays as set.
+- **Why dynamic, not a fixed count:** the values need different counts
+  (SOC 4, battery temperature 5, MOSFET 3, voltage 1). Prior art: the
+  Grafana threshold editor (a base colour plus steps you add and remove).
+- **The worst sensor** (battery temperature, today's rule kept): the pill
+  shows the colour and icon of the sensor whose type ranks highest, in the
+  order Critical, Warning, Info, Normal (my call: Info ranks above Normal so
+  a cold sensor is not hidden).
+- **One value in the app, with custom colours on (sketch):**
+
+  ```
+  Battery temperature                 Custom colours [on]
+    below 0 °C   Freezing   Critical ▾   ❄    🔔
+    from 0 °C    Cool       Info     ▾   ❄    🔔
+    from 5 °C    Normal     Normal   ▾   🍃
+    from 45 °C   Warm       Warning  ▾   🔥   🔔
+    from 55 °C   Hot        Critical ▾   🔥!  🔔
+    [+ Add level]                    [Reset to default]
+  ```
+
+  The 🔔 column comes with 0011.
+
+### 3.2 What gets coloured (owner, 2026-11-18, round 1)
+
+- A level colours the text and a soft background of the same colour, as
+  today.
 
   | Widget part | Levels |
   |---|---|
@@ -73,32 +119,64 @@ Additions (owner, 2026-11-18, after reading this concept):
   | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
   | Inverter values | later (0012) |
 
-- **Level marks on temperature pills (owner, 2026-11-18).** Besides the
-  text colour, a temperature pill gets a small extra icon by level, next to
-  the icon it has today (thermometer for the battery, chip for the MOSFET).
-  Only temperatures for now. Proposal: the icon shows the side, the colour
-  shows how bad it is.
-  - High levels: a flame. Low levels: a snowflake. Middle (normal) levels:
-    no extra icon (proposal; §5, question 15).
-  - Each temperature band has a mark from a fixed set (none, flame,
-    snowflake); custom levels can change it.
-  - Defaults. Battery: below 0 °C red ❄, 0–5 °C amber ❄, 5–45 °C none,
-    45–55 °C amber 🔥, above 55 °C red 🔥. MOSFET: 65–80 °C amber 🔥, above
-    80 °C red 🔥.
-  - Icons from Material Symbols (`local_fire_department`, `ac_unit`;
-    Apache-2.0, allowed by the repo licence rule).
+### 3.3 Level icons on temperature pills (owner, 2026-11-18)
+
+- Besides the colour, a temperature pill gets a small extra icon by level,
+  next to the icon it has today (thermometer for the battery, chip for the
+  MOSFET). Only temperatures for now.
+- The icon shows the side (cold, normal, hot); the colour shows how bad it
+  is.
+- **The icon set** (owner picks from the candidate sheet, 2026-11-18), from
+  Material Symbols Rounded (Apache-2.0, allowed by the repo licence rule):
+
+  | Icon | Material Symbols name | Used for |
+  |---|---|---|
+  | none | – | custom levels only |
+  | snowflake | `ac_unit` | cold levels |
+  | leaf | `eco` | normal levels |
+  | flame | `local_fire_department` | warm levels |
+  | flame with alert | `emergency_heat` | hot levels |
+
+  The custom-level icon picker offers exactly this set. More icons can join
+  the set later.
+- **Defaults** (edges as today's limits; names, types and icons from the
+  owner's picks):
+
+  | Value | Range | Name | Type (colour) | Icon |
+  |---|---|---|---|---|
+  | Battery | below 0 °C | Freezing | Critical (red) | snowflake |
+  | Battery | 0–5 °C | Cool | Info (blue) | snowflake |
+  | Battery | 5–45 °C | Normal | Normal (green) | leaf |
+  | Battery | 45–55 °C | Warm | Warning (amber) | flame |
+  | Battery | above 55 °C | Hot | Critical (red) | flame with alert |
+  | MOSFET | below 65 °C | Normal | Normal (green) | leaf |
+  | MOSFET | 65–80 °C | Warm | Warning (amber) | flame |
+  | MOSFET | above 80 °C | Hot | Critical (red) | flame with alert |
+
+  The MOSFET rows follow the battery picks (my call). Default names come
+  from the app strings, so they are translated (proposal; 0011, question 9).
+- **Look changes from today:** a normal temperature turns from plain to
+  green with a leaf; 0–5 °C turns from amber to blue. Every temperature pill
+  now always shows two icons (§4).
+
+### 3.4 Palette
+
 - **Colours from a fixed palette**, not a free colour picker: about 8 named
   colours (for example red, orange, amber, green, teal, blue, violet, grey).
-  Each has a light-theme and a dark-theme shade, checked for contrast on the
-  card in both themes.
+  Each has four shades (text and background, for the light and the dark
+  theme), checked for contrast on the card in both themes.
+
+### 3.5 Defaults, custom switch and reset
+
 - **Built-in default set:** each value has default bands in code; they are
   not stored in settings.
   - SOC (owner, 2026-11-18): red below 20 %, amber 20–30 %, green 30–99 %,
     blue at 100 %. This changes today's look a little (today: red below
     15 %, amber below 25 %, no blue).
-  - The other values: today's limits and colours (§2) are the starting
-    proposal; the owner sets their default levels in the detailing session
-    (owner, 2026-11-18).
+  - Battery and MOSFET temperature: §3.3.
+  - Cell delta: today's limits and colours (§2) are the starting proposal;
+    the owner sets its default levels in the detailing session (owner,
+    2026-11-18).
   - Total voltage and average cell have no levels today; they default to
     one plain band (no colour).
   - Current/power: defaults are open (§5, question 13). Note: with levels
@@ -111,14 +189,20 @@ Additions (owner, 2026-11-18, after reading this concept):
     "on" brings them back (proposal; see §5, question 9).
 - **"Reset to default" per value:** replaces the own bands with a fresh copy
   of the defaults, like "Reset sizes" in the Widget section.
+
+### 3.6 Code and storage
+
 - Stored values (the switch, the own bands) default to `false` and an empty
   list, so the "defaults are empty" rule (0001 §14) holds.
 - **Domain:** a pure function picks the band for a value; `WidgetModel` takes
-  the bands from settings instead of `WidgetLevels`. The colour follows the
-  shown (rounded) number, as temperatures do today.
+  the bands from settings instead of `WidgetLevels`. The four types replace
+  today's `Level` values OK, WARN and BAD; PLAIN (no colour) and IDLE stay
+  (my call). The colour follows the shown (rounded) number, as temperatures
+  do today.
 - **App:** a "Colours" place (a section or a sub-screen) lists the values;
-  a tap opens that value's bands; add, remove and edit a band (number and
-  colour chip). The app preview (0006) shows the result live.
+  a tap opens that value's bands; add, remove and edit a band (edge, name,
+  type, colour chip, icon; sketch in §3.1). The app preview (0006) shows
+  the result live.
 - **Stored** in `Settings` as a new field with a default; no migration is
   needed for a new field (0001 §14).
 
@@ -135,12 +219,15 @@ Additions (owner, 2026-11-18, after reading this concept):
   narrower room for the number, so the text fit must count the arrow, as it
   does for the main pill. The pill already supports the arrow (`PackPill`
   takes a `Flow`; the voltage pill passes `Flow.NONE` today).
-- A level mark is a second icon in a small temperature pill: in narrow
-  layouts (the 4×2 cell column) the number may get smaller. The text fit
-  must count the mark.
+- A level icon is a second icon in a small temperature pill. Normal levels
+  have the leaf (§3.3), so a temperature pill **always** shows two icons, not
+  only at a bad level. In narrow layouts (the 4×2 cell column) the number
+  gets less room all the time and may get smaller. The text fit must count
+  the icon.
 - Together these change the approved v5 look (blue SOC at 100 %, green low
-  discharge, voltage arrow, temperature marks). Proposal: draw them as new
-  v6 rows on the design canvas before this spec is final.
+  discharge, voltage arrow, temperature icons, green normal temperatures,
+  blue cool battery). Proposal: draw them as new v6 rows on the design
+  canvas before this spec is final.
 - A missing value (sensor not set or unavailable) draws in the plain colour.
 - More settings make the app screen longer; a sub-screen may be needed.
 
@@ -151,7 +238,7 @@ Additions (owner, 2026-11-18, after reading this concept):
 2. ~~SOC: ring, number, or both?~~ Decided: the ring; the number stays plain.
 3. ~~Main value: colour by direction, or bands by value?~~ Decided (owner,
    2026-11-18): bands by intensity, one list per direction; the arrow stays.
-4. ~~Which values get bands?~~ Decided: the table in §3.
+4. ~~Which values get bands?~~ Decided: the table in §3.2.
 5. The palette: which colours and how many?
 6. Band edges: is "from X" inclusive? Steps for decimals (0.1 V for the pack,
    0.001 V for a cell)? Owner example (2026-11-18): falling from 21 % to
@@ -173,13 +260,14 @@ Additions (owner, 2026-11-18, after reading this concept):
     discharge green to 0.5 C, amber to 0.8 C, red above), or fixed amps
     from the owner's BMS limits?
 14. Idle colour: grey (proposal; blue already means Info / full) or blue?
-15. Temperature marks for middle (normal) levels: none (proposal), or an
-    icon? Which other marks, if any, besides flame and snowflake?
+15. ~~Temperature marks for normal levels; which other marks?~~ Decided
+    (owner, 2026-11-18): normal levels get a green leaf; the icon set and
+    defaults are in §3.3.
 
 ## 6. Non-goals
 
 - No new widget parts and no layout changes (owner: text colour only),
-  except the direction arrow on the voltage pill and the level marks on the
+  except the direction arrow on the voltage pill and the level icons on the
   temperature pills (owner, 2026-11-18).
 - No free colour picker in the first version (proposal).
 - One colour set for the whole app, not one per placed widget (proposal).

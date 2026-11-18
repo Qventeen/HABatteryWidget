@@ -130,9 +130,10 @@ up. No direction setting for now; it may come later if this is too noisy.
 4. Keep one main switch (today's, it asks for the permission)?
 5. With "Custom colours" off for a value: can the owner still change its
    notify switches, or only after turning custom colours on?
-6. The type of a level: picked freely, or proposed from its colour (red →
-   Critical, amber → Warning, green → Normal, blue → Info)? (The names are
-   decided, §1.)
+6. ~~The type of a level: picked freely, or proposed from its colour?~~
+   Decided by the 0010 level model (owner, 2026-11-18, 0010 §3.1): the owner
+   picks the type; the colour follows the type and can be changed. Name and
+   type are fields of the 0010 level.
 7. Re-arm margin per value: fixed, or editable?
 8. Which values can notify: all values that have levels, also the inverter
    values of 0012 (for example a grid loss)?
