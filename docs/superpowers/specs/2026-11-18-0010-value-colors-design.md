@@ -228,10 +228,16 @@ One level system for all values, in two layers. A level is a band of values
   today's `Level` values OK, WARN and BAD; PLAIN (no colour) and IDLE stay
   (my call). The colour follows the shown (rounded) number, as temperatures
   do today.
-- **App:** a "Colours" place (a section or a sub-screen) lists the values;
-  a tap opens that value's bands; add, remove and edit a band (edge, name,
-  type, colour chip, icon; sketch in §3.1). The app preview (0006) shows
-  the result live.
+- **App (owner, 2026-11-18):** a new collapsible "Colours" section below
+  Appearance, collapsed by default, the same pattern as the other sections
+  (the app is one scrolling screen with no navigation library). It lists 8
+  values: SOC, voltage, charge current, discharge current, average cell,
+  cell delta, battery temperature, MOSFET. A tap opens that value's level
+  list, one value open at a time; there the owner adds, removes and edits
+  levels (edge, name, type, colour chip, icon; sketch in §3.1). The app
+  preview (0006) at the top shows the result live; it scrolls out of view
+  while editing lower down (accepted: levels are set once and rarely
+  changed).
 - **Stored** in `Settings` as a new field with a default; no migration is
   needed for a new field (0001 §14).
 
@@ -261,7 +267,8 @@ One level system for all values, in two layers. A level is a band of values
   during the build, in experiment mode; the plan has an early fit-check
   task. The palette is fixed in §3.4.
 - A missing value (sensor not set or unavailable) draws in the plain colour.
-- More settings make the app screen longer; a sub-screen may be needed.
+- More settings make the app screen longer; the Colours section stays
+  collapsed and opens one value at a time (§3.6).
 
 ## 5. Open questions (for the detailing session)
 
@@ -279,8 +286,8 @@ One level system for all values, in two layers. A level is a band of values
    red. The re-arm margin of 0011 stops repeat alerts near an edge. Decimal
    edges have the precision the value is shown with, because the colour
    follows the shown number (my call).
-7. Where in the app: a new section, inside the Widget section, or a separate
-   screen?
+7. ~~Where in the app?~~ Decided (owner, 2026-11-18): a new "Colours"
+   section below Appearance (§3.6).
 8. ~~Should a band also carry a notification?~~ Decided (owner,
    2026-11-18): yes, added by 0011.
 9. ~~Turning the switch off: keep or drop the own bands?~~ Decided (owner,
