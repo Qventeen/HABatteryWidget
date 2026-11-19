@@ -44,6 +44,9 @@ Owner, 2026-11-19:
   the grid input should notify. New: a notification when the mode
   changes; it tells that power at home was lost or came back.
 - **Output voltage** is shown, although it is almost always 230 V.
+- **Mode style is the user's choice** (owner, after design v6): "icon +
+  word" or "big icon", picked in the app like the battery display choices
+  and shown at once in the preview.
 - **More values later:** more inverter parameters may join this widget in
   the future. Keep `InverterReading`, the settings block and the strip
   layout open for more values; no generic "any entity" engine now.
@@ -126,6 +129,10 @@ to how one widget looks is per widget.
 - **Strip content:** mode, grid input voltage, output voltage; small icons
   instead of labels (exact icons picked later). Voltages in whole volts
   ("230 V").
+- **Mode style (display choice):** one setting for all sizes, default
+  "icon + word" (the word says what the mode means). At 3×1 the word goes
+  under the icon. Stored like the battery display choices (0007: defaults
+  to the design value). Design: canvas v6, lines 1–4.
 - **Mode table (in code):** HA text → word, icon, colour, matched ignoring
   case. `On-Grid` → "main", grid icon, blue; `Off-Grid` → "battery",
   battery icon, green. More rows when the full mode list is known. Any
@@ -187,8 +194,8 @@ is red: the house has no power.
 ## 5. Open questions
 
 1. ~~One more notification case?~~ Decided (owner): undervoltage (§3.5).
-2. Mode on the strip: a bigger icon only, or icon + word? Decided on the
-   design canvas; it also settles the 3×1 content.
+2. ~~Mode on the strip: big icon or icon + word?~~ Decided (owner): the
+   user picks it in the app (§3.3).
 3. ~~Design?~~ Decided (owner): new rows on the existing canvas.
 4. The mode-change notification: title, text and channel type.
 5. The full mode list: the inverter model was not found online, so it
