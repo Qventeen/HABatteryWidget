@@ -110,20 +110,24 @@ fun ColorsSection(
     val formatters = remember(context) { Formatters(context) }
     val palette = appPalette()
     LevelValue.entries.forEach { value ->
-      val isOpen = open == value
-      ValueHeader(value, isOpen) { open = if (isOpen) null else value }
-      if (isOpen) {
-        val ranges = RangeText(value, cellCount, formatters)
-        Column(Modifier.padding(start = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          val on = settings.customLevels(value).on
-          val levels = LevelPicker.effective(value, settings, capacityAh)
-          SwitchRow(stringResource(R.string.colors_custom), on) { onSetCustom(value, it) }
-          if (on) {
-            LevelEditor(value, levels, ranges, palette, errors, onSaveLevels, onReset)
-          } else {
-            val upper = levels.drop(1).mapNotNull { it.from }.minOrNull()
-            levels.forEachIndexed { index, level ->
-              LevelLine(value, level, ranges.of(index, level.from, upper), palette)
+      // Keyed by value: by call order, a value opened in the same tap that closes another would
+      // take over the closed value's draft and errors.
+      key(value) {
+        val isOpen = open == value
+        ValueHeader(value, isOpen) { open = if (isOpen) null else value }
+        if (isOpen) {
+          val ranges = RangeText(value, cellCount, formatters)
+          Column(Modifier.padding(start = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val on = settings.customLevels(value).on
+            val levels = LevelPicker.effective(value, settings, capacityAh)
+            SwitchRow(stringResource(R.string.colors_custom), on) { onSetCustom(value, it) }
+            if (on) {
+              LevelEditor(value, levels, ranges, palette, errors, onSaveLevels, onReset)
+            } else {
+              val upper = levels.drop(1).mapNotNull { it.from }.minOrNull()
+              levels.forEachIndexed { index, level ->
+                LevelLine(value, level, ranges.of(index, level.from, upper), palette)
+              }
             }
           }
         }
@@ -254,10 +258,10 @@ private fun LevelEditor(
   var resets by remember { mutableIntStateOf(0) }
   // Plain remember: losing an unsaved draft on rotation is accepted.
   var drafts by
-    remember(stored, resets) { mutableStateOf(stored.map { it.toDraft(value, locale) }) }
+    remember(value, stored, resets) { mutableStateOf(stored.map { it.toDraft(value, locale) }) }
   // The screen has one error list. Only this editor's own save gives its edge errors, and their
   // indexes no longer match once a row is removed.
-  var ownErrors by remember { mutableStateOf(false) }
+  var ownErrors by remember(value) { mutableStateOf(false) }
   var confirmReset by rememberSaveable { mutableStateOf(false) }
 
   val edges = drafts.map { it.edgeOrNull(value, locale) }
@@ -362,7 +366,7 @@ private fun LevelRow(
         supportingText = error?.let { { Text(fieldErrorText(it)) } },
         isError = error != null,
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
       )
     }
     // No label: with one, Material shows the placeholder only while the field has focus, and the
@@ -499,6 +503,18 @@ private fun appPalette(): WidgetPalette =
 @Composable
 private fun defaultNameText(name: LevelName?): String =
   name?.let { stringResource(nameLabel(it)) }.orEmpty()
+
+// Temperature edges can be negative; some keyboards (Samsung) give a decimal pad no minus key.
+private fun edgeKeyboard(value: LevelValue): KeyboardType =
+  when (value) {
+    LevelValue.BATTERY_TEMPERATURE,
+    LevelValue.MOSFET_TEMPERATURE -> KeyboardType.Text
+    LevelValue.SOC,
+    LevelValue.VOLTAGE,
+    LevelValue.CHARGE_CURRENT,
+    LevelValue.DISCHARGE_CURRENT,
+    LevelValue.DELTA -> KeyboardType.Decimal
+  }
 
 @StringRes
 private fun valueLabel(value: LevelValue): Int =
