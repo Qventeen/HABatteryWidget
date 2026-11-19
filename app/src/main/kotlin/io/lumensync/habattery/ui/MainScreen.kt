@@ -28,6 +28,7 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.ActionsRow
 import io.lumensync.habattery.ui.sections.AppearanceSection
@@ -46,6 +47,8 @@ data class MainActions(
   val refreshNow: () -> Unit,
   val saveConnection: (url: String) -> Unit,
   val saveToken: (token: String) -> Unit,
+  val saveTokenType: (TokenType) -> Unit,
+  val removeToken: () -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
   val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
@@ -124,9 +127,13 @@ private fun MainContent(
       initiallyExpanded = overview.setupNeeded,
     )
     TokenSection(
+      settings.connection.tokenType,
       state.hasToken,
+      state.showTokenTypeHint,
       state.errors,
       actions.saveToken,
+      actions.saveTokenType,
+      actions.removeToken,
       initiallyExpanded = overview.setupNeeded,
     )
     EntitiesSection(

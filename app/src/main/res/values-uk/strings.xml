@@ -52,6 +52,7 @@
     <string name="action_add_widget">Додати віджет</string>
     <string name="action_add_widget_hint">Головний екран додає віджет розміром 4×2. Змініть розмір там.</string>
     <string name="action_save">Зберегти</string>
+    <string name="dialog_cancel">Скасувати</string>
 
     <string name="connection_title">Підключення</string>
     <string name="connection_url">URL Home Assistant</string>
@@ -62,6 +63,14 @@
     <string name="token_saved">Токен збережено</string>
     <string name="token_show">Показати токен</string>
     <string name="token_hide">Сховати токен</string>
+    <string name="token_type_label">Тип токена</string>
+    <string name="token_type_admin">Адмін</string>
+    <string name="token_type_user">Користувач</string>
+    <string name="token_type_hint">Токен користувача без прав адміністратора потребує типу «Користувач».</string>
+    <string name="token_remove">Видалити токен</string>
+    <string name="token_remove_title_admin">Видалити токен адміна з цього телефона?</string>
+    <string name="token_remove_title_user">Видалити токен користувача з цього телефона?</string>
+    <string name="token_remove_confirm">Видалити</string>
 
     <string name="entities_title">Сутності</string>
     <string name="entity_charge">Рівень заряду (%) — обов’язково</string>
@@ -134,6 +143,7 @@
 
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>
+    <string name="token_summary_with_type">%1$s · %2$s</string>
     <string name="entities_summary_manual">Задано вручну</string>
     <string name="refresh_summary_off">Вимкнено</string>
     <plurals name="refresh_summary_every">

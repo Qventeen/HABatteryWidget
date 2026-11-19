@@ -152,6 +152,8 @@ class MainActivity : ComponentActivity() {
       refreshNow = viewModel::refreshNow,
       saveConnection = viewModel::saveConnection,
       saveToken = viewModel::saveToken,
+      saveTokenType = viewModel::saveTokenType,
+      removeToken = viewModel::removeToken,
       saveEntities = viewModel::saveEntities,
       findTemperatureSensors = viewModel::findTemperatureSensors,
       saveRefresh = viewModel::saveRefresh,

@@ -188,6 +188,36 @@ class MainScreenTest {
       ApplicationProvider.getApplicationContext<App>().container.settingsRepository.settings.first()
     }
 
+  private val tokenStore get() = ApplicationProvider.getApplicationContext<App>().container.tokenStore
+
+  private fun tokenSummary(@StringRes state: Int) =
+    compose.activity.getString(R.string.token_summary_with_type, text(state), text(R.string.token_type_user))
+
+  /** A fresh install needs setup, so the token section starts unfolded. */
+  @Test
+  fun tokenType_switchAndRemove() {
+    waitForContent()
+    compose.onNodeWithText(text(R.string.token_type_user)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().connection.tokenType == TokenType.USER }
+
+    runBlocking {
+      tokenStore.set(TokenType.ADMIN, "admin-token")
+      tokenStore.set(TokenType.USER, "user-token")
+    }
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      compose.onAllNodesWithText(tokenSummary(R.string.token_summary_saved)).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText(text(R.string.token_remove)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.token_remove_title_user)).assertIsDisplayed()
+    compose.onNodeWithText(text(R.string.token_remove_confirm)).performClick()
+
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      compose.onAllNodesWithText(tokenSummary(R.string.summary_not_set)).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText(text(R.string.token_remove)).assertDoesNotExist()
+    assertEquals(setOf(TokenType.ADMIN), runBlocking { tokenStore.savedTypes.first() })
+  }
+
   @Test
   fun scaleSlider_savesWhenReleased() {
     waitForContent()
