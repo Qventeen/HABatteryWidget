@@ -638,4 +638,29 @@ class MainViewModelTest {
     assertTrue(saved.on)
     assertEquals(listOf(null, 20.0, 40.0, 100.0), saved.levels.map { it.from })
   }
+
+  @Test fun saveLevels_error_returnsFalse() = runTest(dispatcher) {
+    val vm = start()
+    val saved = vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "  ")), Locale.US)
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertTrue(state.settings.colorLevels.isEmpty())
+  }
+
+  @Test fun saveLevels_valid_returnsTrue() = runTest(dispatcher) {
+    val vm = start()
+    val saved = vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "30")), Locale.US)
+    advanceUntilIdle()
+    assertTrue(saved)
+    assertEquals(listOf<Double?>(null, 30.0), froms(LevelValue.SOC))
+  }
+
+  @Test fun useDefaults_dropsOwnLevels() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "30")), Locale.US)
+    advanceUntilIdle()
+    vm.useDefaults(LevelValue.SOC)
+    advanceUntilIdle()
+    assertEquals(CustomLevels(), state.settings.customLevels(LevelValue.SOC))
+  }
 }

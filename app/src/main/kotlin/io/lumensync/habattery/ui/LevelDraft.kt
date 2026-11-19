@@ -1,6 +1,8 @@
 package io.lumensync.habattery.ui
 
+import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -59,3 +61,20 @@ fun List<LevelDraft>.withoutLevel(index: Int, edgeOf: (LevelDraft) -> Double?): 
   val lowest = rest.indices.minBy { edgeOf(rest[it]) ?: Double.POSITIVE_INFINITY }
   return listOf(rest[lowest]) + rest.filterIndexed { i, _ -> i != lowest }
 }
+
+/** The built-in levels of [value] as drafts, with current edges scaled to [capacityAh]. */
+fun defaultDrafts(value: LevelValue, capacityAh: Double?, locale: Locale): List<LevelDraft> =
+  DefaultLevels.copyForCustom(value, capacityAh).map { it.toDraft(value, locale) }
+
+/**
+ * The drafts the editor opens with: the own levels, or the built-in ones. A list left over from
+ * a build with a switch is ignored while [CustomLevels.on] is false.
+ */
+fun editorDrafts(
+  value: LevelValue,
+  custom: CustomLevels,
+  capacityAh: Double?,
+  locale: Locale,
+): List<LevelDraft> =
+  if (custom.on && custom.levels.isNotEmpty()) custom.levels.map { it.toDraft(value, locale) }
+  else defaultDrafts(value, capacityAh, locale)

@@ -171,6 +171,7 @@ class MainActivity : ComponentActivity() {
       },
       setCustomLevels = viewModel::setCustomLevels,
       saveLevels = viewModel::saveLevels,
+      useDefaults = viewModel::useDefaults,
       resetLevels = viewModel::resetLevels,
       requestPinWidget = {
         lifecycleScope.launch {

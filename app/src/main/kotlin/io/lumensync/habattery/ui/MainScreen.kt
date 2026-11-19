@@ -64,7 +64,8 @@ data class MainActions(
   val saveAppearance: (AppearanceSettings) -> Unit,
   val setLanguage: (LanguageChoice) -> Unit,
   val setCustomLevels: (LevelValue, Boolean) -> Unit,
-  val saveLevels: (LevelValue, List<LevelDraft>, Locale) -> Unit,
+  val saveLevels: (LevelValue, List<LevelDraft>, Locale) -> Boolean,
+  val useDefaults: (LevelValue) -> Unit,
   val resetLevels: (LevelValue) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
@@ -134,7 +135,7 @@ private fun MainContent(
       cellCount = reading?.let(BatteryMath::cellCount),
       state.errors,
       actions.setCustomLevels,
-      actions.saveLevels,
+      { value, drafts, locale -> actions.saveLevels(value, drafts, locale) },
       actions.resetLevels,
     )
     ConnectionSection(

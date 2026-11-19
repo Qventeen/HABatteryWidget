@@ -256,8 +256,10 @@ class MainViewModel(
    * Saves [drafts] as the owner's levels of [value]. Edges are typed in [locale] and rounded to
    * the precision the widget shows. Any error is reported at the draft's position in [drafts] and
    * nothing is stored. The first draft stays first; the rest are sorted by edge.
+   *
+   * @return `false` when an error was found, `true` when the save was started.
    */
-  fun saveLevels(value: LevelValue, drafts: List<LevelDraft>, locale: Locale) {
+  fun saveLevels(value: LevelValue, drafts: List<LevelDraft>, locale: Locale): Boolean {
     val edges = mutableListOf<Double?>(null)
     val errors = mutableListOf<FieldError>()
     val unparsed = mutableSetOf<Int>()
@@ -273,7 +275,10 @@ class MainViewModel(
     }
     // A missing edge is already reported above, with the more precise problem.
     errors += Validation.levels(edges).filterNot { it.index in unparsed }
-    if (errors.isNotEmpty()) return fail(*errors.toTypedArray())
+    if (errors.isNotEmpty()) {
+      fail(*errors.toTypedArray())
+      return false
+    }
     val levels =
       drafts.mapIndexed { i, d ->
         ColorLevel(d.id, edges[i], d.type, d.color, d.icon, d.name.trim(), d.defaultName)
@@ -282,6 +287,12 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) {
       it.withCustomLevels(value, CustomLevels(on = true, sorted))
     }
+    return true
+  }
+
+  /** Drops the owner's levels of [value]; the built-in ones apply again. */
+  fun useDefaults(value: LevelValue) {
+    save(emptyList(), syncAfter = false) { it.withCustomLevels(value, CustomLevels()) }
   }
 
   /** Refills the levels of [value] with the built-in ones; the switch is turned on. */
