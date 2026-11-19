@@ -276,7 +276,7 @@ class StatesSourceTest {
     val s = server(dispatcher)
     assertTrue(fetch(s.base()) is SyncResult.Success)
     assertEquals(18, s.requestCount)
-    assertTrue("max open: ${dispatcher.maxOpen}", dispatcher.maxOpen.get() <= 4)
+    assertTrue("max open: ${dispatcher.maxOpen}", dispatcher.maxOpen.get() in 2..4)
   }
 
   @Test

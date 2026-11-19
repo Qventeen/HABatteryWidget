@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
@@ -216,6 +217,37 @@ class MainScreenTest {
     }
     compose.onNodeWithText(text(R.string.token_remove)).assertDoesNotExist()
     assertEquals(setOf(TokenType.ADMIN), runBlocking { tokenStore.savedTypes.first() })
+  }
+
+  private fun tokenFieldText(): String =
+    compose
+      .onNodeWithText(text(R.string.token_label))
+      .fetchSemanticsNode()
+      .config[SemanticsProperties.EditableText]
+      .text
+
+  private fun tapTokenType(type: TokenType, @StringRes label: Int) {
+    compose.onNodeWithText(text(label)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().connection.tokenType == type }
+    compose.waitForIdle()
+  }
+
+  /** A draft typed for one type must never reach the other type's slot. */
+  @Test
+  fun tokenType_tapDropsUnsavedDraft() {
+    waitForContent()
+    compose
+      .onNodeWithText(text(R.string.token_label))
+      .performScrollTo()
+      .performTextReplacement("draft-token")
+    assertTrue(tokenFieldText().isNotEmpty())
+
+    tapTokenType(TokenType.USER, R.string.token_type_user)
+    assertEquals("", tokenFieldText())
+
+    tapTokenType(TokenType.ADMIN, R.string.token_type_admin)
+    assertEquals("", tokenFieldText())
+    assertEquals(emptySet<TokenType>(), runBlocking { tokenStore.savedTypes.first() })
   }
 
   @Test

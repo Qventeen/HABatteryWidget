@@ -181,6 +181,7 @@ class MainViewModelTest {
     advanceUntilIdle()
     assertEquals(TokenType.USER, state.settings.connection.tokenType)
     assertEquals(before + 1, source.calls)
+    assertEquals("user-t", source.lastToken)
   }
 
   @Test fun removeToken_clearsOnlyActiveSlot() = runTest(dispatcher) {

@@ -10,6 +10,7 @@ import io.lumensync.habattery.domain.model.TokenType
 /** Everything the main screen shows. It never holds the token. */
 data class MainUiState(
   val settings: Settings = Settings(),
+  /** The selected token type's slot holds a token; the other slot does not count. */
   val hasToken: Boolean = false,
   val overview: BatteryOverview? = null,
   /** What the widget preview draws; built with [overview], null until the first state. */
