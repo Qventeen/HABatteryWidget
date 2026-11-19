@@ -226,7 +226,8 @@ to how one widget looks is per widget.
   and the icon choices are display choices, so they default to the design
   values (as in 0003, 0007, 0008; my call).
 - **Font sizes** (my call, 0007 model): two sliders on the Inverter tab,
-  mode word and values, 25–100 %, step 5, 50 % = the design size, with
+  mode word and values, the same range and step as the battery fonts
+  (`FontPercents`), 50 % = the design size, with
   "Reset sizes". The home-screen scale is shared (Common): both widgets
   sit on the same launcher.
 - **Levels** (0010 model): two new level values, grid input voltage and
