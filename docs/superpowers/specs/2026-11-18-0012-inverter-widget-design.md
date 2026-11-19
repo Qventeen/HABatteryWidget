@@ -31,13 +31,12 @@ Owner, 2026-11-19:
   tools as the battery widget: a preview, its own text sizes, its own
   colour levels by value, and bells.
 - **Sizes:** 3×1, 4×1 and 5×1.
-- **Mode:** today the ESP32 sends only `On-Grid` and `Off-Grid`. The strip
-  shows own short lowercase words, "battery" (Off-Grid) and "main"
-  (On-Grid), or a bigger, nice icon instead; the design compares both.
-  Colours follow the inverter's own light: Off-Grid (on battery) green,
-  On-Grid (from the grid) blue. The inverter has more modes; the strip
-  should show them as icons too. (This replaces "show the HA text as it
-  is", said earlier the same day.)
+- **Mode:** the strip shows own short lowercase words, "battery"
+  (`Off-Grid`) and "main" (grid; the ESP32 text is `Mains`, see §2.1), or a
+  bigger, nice icon instead; the design compares both. Colours follow the
+  inverter's own light: on battery green, from the grid blue. The inverter
+  has more modes; the strip should show them as icons too. (This replaces
+  "show the HA text as it is", said earlier the same day.)
 - **Voltages:** grid input and output voltage get colour levels (0010
   model), which also show present / absent (0 V).
 - **Notifications:** the voltages get bells (0011 model); undervoltage of
@@ -87,6 +86,11 @@ Owner, 2026-11-19:
 
 The owner's prefix is `bps_inverter`. With no grid the input reads exactly
 `0.0 V`.
+
+Mode texts the ESP32 can send (owner's ESPHome YAML, work-mode code →
+text): 0 `Power On`, 1 `Standby`, 2 `Mains`, 3 `Off-Grid`, 4 `Bypass`,
+5 `Charging`, 6 `Fault`. The owner said "On-Grid" in talk; the real grid
+text is `Mains`.
 
 ## 3. Shape
 
@@ -144,7 +148,7 @@ to how one widget looks is per widget.
 
   | Slot | Default |
   |---|---|
-  | Mode "main" (On-Grid) | tower (`mdi` `transmission-tower`) |
+  | Mode "main" (`Mains`) | tower (`mdi` `transmission-tower`) |
   | Mode "battery" (Off-Grid) | `battery_charging_full` |
   | Other mode | `help` |
   | Grid input voltage | tower |
@@ -172,10 +176,10 @@ to how one widget looks is per widget.
   model (ANJ-11KW-48V-WIFI-P manual) gives: inverter (battery) mode green,
   AC (grid) mode blue, standby cyan, fault red, bypass purple, charging
   yellow. Mapped to the 0010 palette: green, blue, teal, red, violet,
-  amber. Rows for the modes beyond On-Grid / Off-Grid are added once the
+  amber. Rows for the modes beyond Mains / Off-Grid are added once the
   exact ESP32 texts are known (owner's ESPHome YAML).
 - **Mode table (in code):** HA text → word, icon, colour, matched ignoring
-  case. `On-Grid` → "main", the "main" icon slot, blue; `Off-Grid` →
+  case. `Mains` → "main", the "main" icon slot, blue; `Off-Grid` →
   "battery", the "battery" icon slot, green. More rows when the full mode
   list is known. Any other text → the "other mode" icon slot, grey, and the
   HA text as it is, so a new mode from the ESP32 still shows. `unavailable`
