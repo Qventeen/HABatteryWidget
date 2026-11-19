@@ -47,6 +47,12 @@ Owner, 2026-11-19:
 - **Mode style is the user's choice** (owner, after design v6): "icon +
   word" or "big icon", picked in the app like the battery display choices
   and shown at once in the preview.
+- **Icons are the user's choice too** (owner picked option B): the icon
+  of each part is picked from a fixed list in the app; the defaults are
+  the owner's picks. Layout choices (order, hiding parts, other
+  arrangements) are not part of 0012: they come back as their own spec
+  only if the fixed layout still bothers the owner after some weeks of
+  use.
 - **More values later:** more inverter parameters may join this widget in
   the future. Keep `InverterReading`, the settings block and the strip
   layout open for more values; no generic "any entity" engine now.
@@ -133,12 +139,40 @@ to how one widget looks is per widget.
   "icon + word" (the word says what the mode means). At 3×1 the word goes
   under the icon. Stored like the battery display choices (0007: defaults
   to the design value). Design: canvas v6, lines 1–4.
+- **Icon choice:** five slots, each with a default (owner's picks from the
+  candidate sheet, 2026-11-19):
+
+  | Slot | Default |
+  |---|---|
+  | Mode "main" (On-Grid) | tower (`mdi` `transmission-tower`) |
+  | Mode "battery" (Off-Grid) | `battery_charging_full` |
+  | Other mode | `help` |
+  | Grid input voltage | tower |
+  | Output voltage | `home` |
+
+  One shared inverter icon set (my call: one simple rule, any slot can use
+  any icon), the candidates from the sheet: tower, `location_city`,
+  `electrical_services`, `power_input`, `electric_meter`, `factory`,
+  `apartment`, `offline_bolt`, `bolt`, `electric_bolt`,
+  `battery_charging_full`, `battery_full`, `battery_5_bar`,
+  `battery_android_full`, `battery_horiz_075`, `energy_savings_leaf`,
+  `nest_eco_leaf`, `energy_program_saving`, `solar_power`, `help`,
+  `question_mark`, `device_unknown`, `pending`, `info`, `power`, `home`,
+  `house`, `cottage`, `home_work`, `home-lightning-bolt` (`mdi`), `outlet`.
+  Material Symbols Rounded and Material Design Icons are both Apache-2.0
+  (repo licence rule); each drawable names its source and licence, as in
+  0010. Choices are stored by stable names (an enum, like 0010's
+  `LevelIcon`); an unknown stored name falls back to the slot's default.
+  Each icon has an EN and UK name for screen readers. The picker is a grid
+  of the set, the same component as the 0010 level icon picker; the
+  preview changes at once. The battery widget gets no icon choice now; it
+  can reuse the picker later.
 - **Mode table (in code):** HA text → word, icon, colour, matched ignoring
-  case. `On-Grid` → "main", grid icon, blue; `Off-Grid` → "battery",
-  battery icon, green. More rows when the full mode list is known. Any
-  other text → a neutral grey icon and the HA text as it is, so a new mode
-  from the ESP32 still shows. `unavailable` / `unknown` → "no value".
-  Words are translated (EN + UK, 0001 §12).
+  case. `On-Grid` → "main", the "main" icon slot, blue; `Off-Grid` →
+  "battery", the "battery" icon slot, green. More rows when the full mode
+  list is known. Any other text → the "other mode" icon slot, grey, and
+  the HA text as it is, so a new mode from the ESP32 still shows. `unavailable` / `unknown` →
+  "no value". Words are translated (EN + UK, 0001 §12).
 - **Tap:** opens the app on the Inverter tab. No ↻ and no auto-refresh
   switch on the strip; the battery widget and the app have them.
 - **One sync for both:** the same run fetches battery and inverter values.
