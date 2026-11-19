@@ -13,6 +13,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import okhttp3.OkHttpClient
@@ -63,7 +64,26 @@ class StatesSource(
     connection: ConnectionSettings,
     prefix: String,
     token: String,
-  ): SensorList = throw NotImplementedError()
+  ): SensorList {
+    val p = prefix.trim().trimEnd('_')
+    if (!TemplateBuilder.isObjectIdPrefix(p)) return SensorList.Found(emptyList())
+    // HA answers with every entity it has, so this one call gets more time than a state read.
+    val search = http.withCallTimeout(SEARCH_TIMEOUT_SECONDS)
+    return when (val reply = search.get(connection, listOf("api", "states"), token)) {
+      is HaReply.Failure -> SensorList.Failed(reply.error)
+      is HaReply.Body -> {
+        val ids =
+          try {
+            StoreJson.decodeFromString<List<StateId>>(reply.text).mapNotNull { it.entityId }
+          } catch (_: SerializationException) {
+            return SensorList.Failed(SyncError.BadResponse)
+          } catch (_: IllegalArgumentException) {
+            return SensorList.Failed(SyncError.BadResponse)
+          }
+        SensorList.Found(TemperatureSensors.select(ids, p))
+      }
+    }
+  }
 
   /**
    * Blank and malformed ids get no request and so no value, as on the template path. The check also
@@ -127,8 +147,12 @@ class StatesSource(
 
   private companion object {
     const val MAX_PARALLEL = 4
+    const val SEARCH_TIMEOUT_SECONDS = 30L
   }
 }
 
 /** The part of HA's state object the reading needs; the rest is ignored. */
 @Serializable internal data class StateReply(val state: String? = null)
+
+/** The part of one item of HA's state list the sensor search needs. */
+@Serializable internal data class StateId(@SerialName("entity_id") val entityId: String? = null)

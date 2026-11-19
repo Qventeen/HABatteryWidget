@@ -3,6 +3,7 @@ package io.lumensync.habattery.data.ha
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import java.util.concurrent.CountDownLatch
@@ -296,6 +297,71 @@ class StatesSourceTest {
       assertEquals("Bearer t0ken", request.headers["Authorization"])
       assertFalse(request.url.toString().contains("t0ken"))
     }
+  }
+
+  private suspend fun search(url: String, prefix: String = "bms"): SensorList =
+    source.listTemperatureSensors(ConnectionSettings(url), prefix, "t0ken")
+
+  private fun list(vararg ids: String, bodyOf: (String) -> String = { """{"entity_id":"$it"}""" }) =
+    ids.joinToString(",", "[", "]", transform = bodyOf)
+
+  @Test
+  fun sensorSearch_listsMatchingIds() = runTest {
+    val body =
+      list(
+        "sensor.bms_temperature_sensor_2",
+        "sensor.bms_temperature_sensor_1",
+        "sensor.other",
+        "sensor.otherbms_temperature_sensor_3",
+      )
+    val s = server(mapOf("/api/states" to reply(200, body)))
+    val result = search(s.base())
+    assertEquals(
+      SensorList.Found(listOf("sensor.bms_temperature_sensor_1", "sensor.bms_temperature_sensor_2")),
+      result,
+    )
+    assertEquals(1, s.requestCount)
+    val request = s.takeRequest()
+    assertEquals("GET", request.method)
+    assertEquals("/api/states", request.url.encodedPath)
+    assertEquals("Bearer t0ken", request.headers["Authorization"])
+  }
+
+  @Test
+  fun sensorSearch_largeList() = runTest {
+    val ids =
+      (1..1995).map { "sensor.noise_$it" } + (5 downTo 1).map { "sensor.bms_temperature_sensor_$it" }
+    val s = server(mapOf("/api/states" to reply(200, list(*ids.toTypedArray()))))
+    assertEquals(
+      SensorList.Found((1..5).map { "sensor.bms_temperature_sensor_$it" }),
+      search(s.base()),
+    )
+  }
+
+  @Test
+  fun sensorSearch_itemWithoutEntityId_isSkipped() = runTest {
+    val body = """[{"state":"1"},{"entity_id":"sensor.bms_temperature_sensor_1"}]"""
+    val s = server(mapOf("/api/states" to reply(200, body)))
+    assertEquals(SensorList.Found(listOf("sensor.bms_temperature_sensor_1")), search(s.base()))
+  }
+
+  @Test
+  fun sensorSearch_badJson_isBadResponse() = runTest {
+    val s = server(mapOf("/api/states" to reply(200, "not json")))
+    assertEquals(SensorList.Failed(SyncError.BadResponse), search(s.base()))
+  }
+
+  @Test
+  fun sensorSearch_invalidPrefix_noRequest() = runTest {
+    val s = server(mapOf("/api/states" to reply(200, "[]")))
+    assertEquals(SensorList.Found(emptyList<String>()), search(s.base(), "bad prefix!"))
+    assertEquals(0, s.requestCount)
+  }
+
+  @Test
+  fun sensorSearch_httpError_isFailed() = runTest {
+    val s = server(mapOf("/api/states" to reply(401)))
+    assertEquals(SensorList.Failed(SyncError.Unauthorized), search(s.base()))
   }
 
   private companion object {
