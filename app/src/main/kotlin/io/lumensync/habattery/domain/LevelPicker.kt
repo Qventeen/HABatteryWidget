@@ -31,9 +31,12 @@ object LevelPicker {
     }
   }
 
-  /** Pack-voltage levels as per-cell levels: every edge divided by [cells]. */
+  /**
+   * Pack-voltage levels as per-cell levels: every edge divided by [cells] and rounded to the three
+   * decimals the average cell voltage is shown with, so the colour follows the shown number.
+   */
   fun perCell(voltageLevels: List<ColorLevel>, cells: Int): List<ColorLevel> =
-    voltageLevels.map { level -> level.copy(from = level.from?.let { it / cells }) }
+    voltageLevels.map { level -> level.copy(from = level.from?.let { (it / cells).roundTo(3) }) }
 
   /** The most serious level by `type.rank`; the first one wins a tie. */
   fun worst(levels: List<ColorLevel>): ColorLevel? = levels.maxByOrNull { it.type.rank }

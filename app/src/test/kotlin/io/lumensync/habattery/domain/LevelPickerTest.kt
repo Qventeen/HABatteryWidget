@@ -62,6 +62,14 @@ class LevelPickerTest {
   }
 
   @Test
+  fun `perCell rounds every edge to the shown three decimals`() {
+    fun edge(volts: Double, cells: Int) =
+      LevelPicker.perCell(listOf(ColorLevel(id = 1), ColorLevel(id = 2, from = volts)), cells)[1].from
+    assertEquals(2.55, edge(35.7, 14)!!, 0.0)
+    assertEquals(3.306, edge(52.9, 16)!!, 0.0)
+  }
+
+  @Test
   fun `worst picks the highest rank`() {
     val normal = ColorLevel(id = 1, type = LevelType.NORMAL)
     val info = ColorLevel(id = 2, type = LevelType.INFO)
