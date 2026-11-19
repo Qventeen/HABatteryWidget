@@ -133,12 +133,12 @@ to how one widget looks is per widget.
   `inverter_widget_info.xml` (minimum 3×1, horizontal resize) and its own
   preview. Class names are fixed once shipped (home screens store them).
 - **Strip content:** mode, grid input voltage, output voltage; small icons
-  instead of labels (exact icons picked later). Voltages in whole volts
-  ("230 V").
-- **Mode style (display choice):** one setting for all sizes, default
-  "big icon" (owner, 2026-11-19: looks better as the default). At 3×1 the word goes
-  under the icon. Stored like the battery display choices (0007: defaults
-  to the design value). Design: canvas v6, lines 1–4.
+  instead of labels (see icon choice below). Voltages in whole volts ("230
+  V").
+- **Mode style (display choice):** one setting for all sizes, default "big
+  icon" (owner, 2026-11-19: looks better as the default). At 3×1 the word
+  goes under the icon. Stored like the battery display choices (0007:
+  defaults to the design value). Design: canvas v6, lines 1–4.
 - **Icon choice:** five slots, each with a default (owner's picks from the
   candidate sheet, 2026-11-19):
 
@@ -177,9 +177,9 @@ to how one widget looks is per widget.
 - **Mode table (in code):** HA text → word, icon, colour, matched ignoring
   case. `On-Grid` → "main", the "main" icon slot, blue; `Off-Grid` →
   "battery", the "battery" icon slot, green. More rows when the full mode
-  list is known. Any other text → the "other mode" icon slot, grey, and
-  the HA text as it is, so a new mode from the ESP32 still shows. `unavailable` / `unknown` →
-  "no value". Words are translated (EN + UK, 0001 §12).
+  list is known. Any other text → the "other mode" icon slot, grey, and the
+  HA text as it is, so a new mode from the ESP32 still shows. `unavailable`
+  / `unknown` → "no value". Words are translated (EN + UK, 0001 §12).
 - **Tap:** opens the app on the Inverter tab. No ↻ and no auto-refresh
   switch on the strip; the battery widget and the app have them.
 - **One sync for both:** the same run fetches battery and inverter values.
