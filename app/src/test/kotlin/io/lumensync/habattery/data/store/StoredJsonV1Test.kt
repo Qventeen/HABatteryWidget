@@ -13,6 +13,7 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
+import io.lumensync.habattery.domain.model.TokenType
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -40,7 +41,8 @@ class StoredJsonV1Test {
         "schemaVersion": 1,
         "settings": {
           "connection": {
-            "url": "http://ha.local:8123"
+            "url": "http://ha.local:8123",
+            "tokenType": "USER"
           },
           "entities": {
             "prefix": "bps_bms",
@@ -73,7 +75,7 @@ class StoredJsonV1Test {
         settings =
           Settings(
             connection =
-              ConnectionSettings(url = "http://ha.local:8123"),
+              ConnectionSettings(url = "http://ha.local:8123", tokenType = TokenType.USER),
             entities =
               EntitySettings(
                 prefix = "bps_bms",
@@ -99,6 +101,16 @@ class StoredJsonV1Test {
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun settingsWithoutTokenType_loadAsAdmin() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"connection":{"url":"http://ha.local:8123"}}}""",
+      )
+    assertEquals(TokenType.ADMIN, record.settings.connection.tokenType)
   }
 
   @Test
@@ -243,8 +255,22 @@ class StoredJsonV1Test {
 
   @Test
   fun tokenRecord_v1() {
-    val json = """{ "schemaVersion": 1, "encrypted": "AAECAwQF" }"""
+    val json = """{ "schemaVersion": 1, "encrypted": "AAECAwQF", "userEncrypted": "BgcICQoL" }"""
 
-    assertV1(json, TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF"), TokenRecord.serializer())
+    assertV1(
+      json,
+      TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF", userEncrypted = "BgcICQoL"),
+      TokenRecord.serializer(),
+    )
+  }
+
+  @Test
+  fun tokenRecordWithoutUserSlot_loadsAsAdminSlot() {
+    val record =
+      StoreJson.decodeFromString(
+        TokenRecord.serializer(),
+        """{ "schemaVersion": 1, "encrypted": "AAECAwQF" }""",
+      )
+    assertEquals(TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF"), record)
   }
 }

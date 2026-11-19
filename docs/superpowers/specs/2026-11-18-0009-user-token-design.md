@@ -267,3 +267,30 @@ templates. The app only reads, whichever token it gets.
 Class and helper names; whether the reading mapping is shared through
 `TemplateResponse` or a new function; the Ukrainian wording; the exact hint
 placement inside the section.
+
+## 8. Build notes (2026-11-19)
+
+What the build changed or learned after approval. §1–§7 keep their
+approved text.
+
+- **Entity-id check.** It is `Validation.isEntityId`, a function over
+  `Validation`'s existing pattern. The pattern is not copied.
+- **Calls run with `enqueue` and stop on cancel.** `HaHttp` runs each call
+  with OkHttp `enqueue`. When the coroutine is cancelled, it cancels the
+  OkHttp call. So the running calls stop on the first failure (§5.4
+  step 3) and when WorkManager stops the worker.
+  - This also changes the admin path's plumbing: its calls run on
+    OkHttp's threads and share OkHttp's per-host limit of 5. Its results
+    do not change. So "no behaviour change" in §4 A2 holds for results
+    only.
+  - The reason for the semaphore in §5.4 step 2 is now: at most 4
+    requests per sync. OkHttp's per-host limit is client-wide (5), and
+    Fill shares it.
+- **Failures that are not an `IOException`.** OkHttp throws such an
+  exception again on its own thread, and on Android that kills the app.
+  `HaHttp` turns it into an `IOException`, so it maps to `Unreachable`
+  on both paths instead of crashing the app.
+- **Upper-case ids (§5.4, last bullet).** HA's state machine also tries
+  the lower-case id. So an upper-case id is likely read on both paths, not
+  answered with 404. Either way, both paths behave the same. This is not
+  tested.

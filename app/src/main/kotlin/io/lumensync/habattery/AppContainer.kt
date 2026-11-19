@@ -6,6 +6,8 @@ import androidx.datastore.dataStoreFile
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import io.lumensync.habattery.data.cache.DataStoreReadingCache
 import io.lumensync.habattery.data.ha.HomeAssistantSource
+import io.lumensync.habattery.data.ha.StatesSource
+import io.lumensync.habattery.data.ha.TokenTypeSource
 import io.lumensync.habattery.data.ha.defaultHttpClient
 import io.lumensync.habattery.data.secure.EncryptedTokenStore
 import io.lumensync.habattery.data.secure.KeystoreCrypto
@@ -83,7 +85,7 @@ class AppContainer(context: Context) {
       GlanceAppWidgetManager(appContext).getGlanceIds(BatteryWidget::class.java).isNotEmpty()
     }
 
-  val batterySource: BatterySource = HomeAssistantSource(defaultHttpClient())
+  val batterySource: BatterySource = defaultHttpClient().let { TokenTypeSource(HomeAssistantSource(it), StatesSource(it)) }
 
   val appLanguage = AppLanguage(appContext)
 

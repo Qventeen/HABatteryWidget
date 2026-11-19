@@ -38,17 +38,18 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
     // First values are read up front, so the first frame shows real data, not empty defaults.
     val initialCache = container.readingCache.state.first()
     val initialSettings = container.settingsRepository.settings.first()
-    val initialHasToken = container.tokenStore.hasToken.first()
+    val initialSavedTypes = container.tokenStore.savedTypes.first()
     val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
 
     provideContent {
       val cache by container.readingCache.state.collectAsState(initialCache)
       val settings by container.settingsRepository.settings.collectAsState(initialSettings)
-      val hasToken by container.tokenStore.hasToken.collectAsState(initialHasToken)
+      val savedTypes by container.tokenStore.savedTypes.collectAsState(initialSavedTypes)
       val config by container.configWatcher.config.collectAsState()
       // A new key makes a new composition, also in a live session: the texts come from resources,
       // and their fitted sizes and the sp handed to Glance from the font scale.
       key(config) {
+        val hasToken = settings.connection.tokenType in savedTypes
         BatteryWidgetContent(cache, settings, hasToken, System.currentTimeMillis(), appWidgetId)
       }
     }

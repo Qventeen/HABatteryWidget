@@ -124,6 +124,14 @@ class ValidationTest {
     )
 
   @Test
+  fun `entity id rules`() {
+    assertTrue(Validation.isEntityId("sensor.bms_soc"))
+    listOf("", "sensor", "sensor.", ".soc", "sensor.a b", "sensor.a/../b", "..").forEach {
+      assertFalse(it, Validation.isEntityId(it))
+    }
+  }
+
+  @Test
   fun `new single field checks the id`() =
     assertEquals(
       listOf(FieldError(MOSFET_TEMPERATURE, INVALID)),

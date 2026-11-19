@@ -36,5 +36,6 @@ Use JDK 17 for every Gradle run (the default `java` here is newer):
 ## Mock Home Assistant
 
 - `python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --temps 25,23 --balancing on`
-  (all options in README; `--status 401` returns an error).
+  (all options in README; `--status 401` returns an error; `--user-token` acts
+  as a non-admin token: `POST /api/template` returns 401, `GET /api/states[/<id>]` works).
 - In the app on the emulator use `http://10.0.2.2:8123` and any dummy token.

@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
@@ -35,6 +36,7 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
 import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.widget.WidgetPalette
@@ -62,7 +64,7 @@ class MainScreenTest {
         val container = ApplicationProvider.getApplicationContext<App>().container
         runBlocking {
           container.settingsRepository.update { Settings() }
-          container.tokenStore.clear()
+          TokenType.entries.forEach { container.tokenStore.clear(it) }
           container.readingCache.update { CacheState() }
         }
       }
@@ -186,6 +188,67 @@ class MainScreenTest {
     runBlocking {
       ApplicationProvider.getApplicationContext<App>().container.settingsRepository.settings.first()
     }
+
+  private val tokenStore get() = ApplicationProvider.getApplicationContext<App>().container.tokenStore
+
+  private fun tokenSummary(@StringRes state: Int) =
+    compose.activity.getString(R.string.token_summary_with_type, text(state), text(R.string.token_type_user))
+
+  /** A fresh install needs setup, so the token section starts unfolded. */
+  @Test
+  fun tokenType_switchAndRemove() {
+    waitForContent()
+    compose.onNodeWithText(text(R.string.token_type_user)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().connection.tokenType == TokenType.USER }
+
+    runBlocking {
+      tokenStore.set(TokenType.ADMIN, "admin-token")
+      tokenStore.set(TokenType.USER, "user-token")
+    }
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      compose.onAllNodesWithText(tokenSummary(R.string.token_summary_saved)).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText(text(R.string.token_remove)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.token_remove_title_user)).assertIsDisplayed()
+    compose.onNodeWithText(text(R.string.token_remove_confirm)).performClick()
+
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      compose.onAllNodesWithText(tokenSummary(R.string.summary_not_set)).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText(text(R.string.token_remove)).assertDoesNotExist()
+    assertEquals(setOf(TokenType.ADMIN), runBlocking { tokenStore.savedTypes.first() })
+  }
+
+  private fun tokenFieldText(): String =
+    compose
+      .onNodeWithText(text(R.string.token_label))
+      .fetchSemanticsNode()
+      .config[SemanticsProperties.EditableText]
+      .text
+
+  private fun tapTokenType(type: TokenType, @StringRes label: Int) {
+    compose.onNodeWithText(text(label)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().connection.tokenType == type }
+    compose.waitForIdle()
+  }
+
+  /** A draft typed for one type must never reach the other type's slot. */
+  @Test
+  fun tokenType_tapDropsUnsavedDraft() {
+    waitForContent()
+    compose
+      .onNodeWithText(text(R.string.token_label))
+      .performScrollTo()
+      .performTextReplacement("draft-token")
+    assertTrue(tokenFieldText().isNotEmpty())
+
+    tapTokenType(TokenType.USER, R.string.token_type_user)
+    assertEquals("", tokenFieldText())
+
+    tapTokenType(TokenType.ADMIN, R.string.token_type_admin)
+    assertEquals("", tokenFieldText())
+    assertEquals(emptySet<TokenType>(), runBlocking { tokenStore.savedTypes.first() })
+  }
 
   @Test
   fun scaleSlider_savesWhenReleased() {
