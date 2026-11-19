@@ -2,9 +2,7 @@ package io.lumensync.habattery.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.lumensync.habattery.domain.BatteryMath
 import io.lumensync.habattery.domain.BatteryOverview
-import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
@@ -25,7 +23,6 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.TokenType
-import io.lumensync.habattery.domain.model.customLevels
 import io.lumensync.habattery.domain.model.withCustomLevels
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
@@ -239,20 +236,6 @@ class MainViewModel(
   }
 
   /**
-   * Switches the owner's levels of [value] on or off. The first time on, the list starts as a copy
-   * of the built-in levels; later the stored list stays as it is. Switching off keeps the list.
-   */
-  fun setCustomLevels(value: LevelValue, on: Boolean) {
-    saveWithCapacity { s, capacityAh ->
-      val stored = s.customLevels(value)
-      val levels =
-        if (on && stored.levels.isEmpty()) DefaultLevels.copyForCustom(value, capacityAh)
-        else stored.levels
-      s.withCustomLevels(value, CustomLevels(on, levels))
-    }
-  }
-
-  /**
    * Saves [drafts] as the owner's levels of [value]. Edges are typed in [locale] and rounded to
    * the precision the widget shows. Any error is reported at the draft's position in [drafts] and
    * nothing is stored. The first draft stays first; the rest are sorted by edge.
@@ -293,29 +276,6 @@ class MainViewModel(
   /** Drops the owner's levels of [value]; the built-in ones apply again. */
   fun useDefaults(value: LevelValue) {
     save(emptyList(), syncAfter = false) { it.withCustomLevels(value, CustomLevels()) }
-  }
-
-  /** Refills the levels of [value] with the built-in ones; the switch is turned on. */
-  fun resetLevels(value: LevelValue) {
-    saveWithCapacity { s, capacityAh ->
-      s.withCustomLevels(value, CustomLevels(on = true, DefaultLevels.copyForCustom(value, capacityAh)))
-    }
-  }
-
-  /**
-   * Like [save] with no sync, for edits that need the battery capacity: the cached reading's
-   * (the BMS value) or, with no reading, the one typed in the app.
-   */
-  private fun saveWithCapacity(transform: (Settings, Double?) -> Settings) {
-    viewModelScope.launch {
-      guarded {
-        val reading = cache.state.first().reading
-        settings.update { s ->
-          transform(s, reading?.let { BatteryMath.fullCapacityAh(it, s.capacityAh) } ?: s.capacityAh)
-        }
-        afterSave(syncAfter = false)
-      }
-    }
   }
 
   private fun fail(vararg errors: FieldError) {

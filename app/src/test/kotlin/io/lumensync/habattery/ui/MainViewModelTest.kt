@@ -530,37 +530,6 @@ class MainViewModelTest {
 
   private fun froms(value: LevelValue) = state.settings.customLevels(value).levels.map { it.from }
 
-  @Test fun setCustomLevels_firstOn_copiesDefaults() = runTest(dispatcher) {
-    val vm = start(initial = configuredSettings().copy(capacityAh = 100.0))
-    vm.setCustomLevels(LevelValue.CHARGE_CURRENT, true)
-    advanceUntilIdle()
-    assertEquals(listOf(null, 20.0, 50.0, 80.0), froms(LevelValue.CHARGE_CURRENT))
-    assertTrue(state.settings.customLevels(LevelValue.CHARGE_CURRENT).on)
-    assertEquals(1, source.calls)
-  }
-
-  @Test fun setCustomLevels_firstOn_prefersBmsCapacity() = runTest(dispatcher) {
-    val bms = FakeBatterySource(SyncResult.Success(reading().copy(totalCapacityAh = 280.0)))
-    val vm = start(initial = configuredSettings().copy(capacityAh = 100.0), source = bms)
-    vm.setCustomLevels(LevelValue.CHARGE_CURRENT, true)
-    advanceUntilIdle()
-    assertEquals(listOf(null, 56.0, 140.0, 224.0), froms(LevelValue.CHARGE_CURRENT))
-  }
-
-  @Test fun setCustomLevels_offThenOn_keepsOwnList() = runTest(dispatcher) {
-    val vm = start()
-    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "30")), Locale.US)
-    advanceUntilIdle()
-    vm.setCustomLevels(LevelValue.SOC, false)
-    advanceUntilIdle()
-    assertFalse(state.settings.customLevels(LevelValue.SOC).on)
-    assertEquals(listOf(null, 30.0), froms(LevelValue.SOC))
-    vm.setCustomLevels(LevelValue.SOC, true)
-    advanceUntilIdle()
-    assertTrue(state.settings.customLevels(LevelValue.SOC).on)
-    assertEquals(listOf(null, 30.0), froms(LevelValue.SOC))
-  }
-
   @Test fun saveLevels_sortsByEdge() = runTest(dispatcher) {
     val vm = start()
     vm.saveLevels(
@@ -628,23 +597,22 @@ class MainViewModelTest {
     assertEquals(listOf<Double?>(null, 12.0), froms(LevelValue.DELTA))
   }
 
-  @Test fun resetLevels_refillsDefaults_keepsOn() = runTest(dispatcher) {
-    val vm = start()
-    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "33")), Locale.US)
-    advanceUntilIdle()
-    vm.resetLevels(LevelValue.SOC)
-    advanceUntilIdle()
-    val saved = state.settings.customLevels(LevelValue.SOC)
-    assertTrue(saved.on)
-    assertEquals(listOf(null, 20.0, 40.0, 100.0), saved.levels.map { it.from })
-  }
-
   @Test fun saveLevels_error_returnsFalse() = runTest(dispatcher) {
     val vm = start()
     val saved = vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "  ")), Locale.US)
     advanceUntilIdle()
     assertFalse(saved)
     assertTrue(state.settings.colorLevels.isEmpty())
+  }
+
+  @Test fun saveLevels_duplicate_returnsFalse() = runTest(dispatcher) {
+    val vm = start()
+    val before = state.settings
+    val saved =
+      vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "40"), draft(3, "40")), Locale.US)
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertEquals(before, state.settings)
   }
 
   @Test fun saveLevels_valid_returnsTrue() = runTest(dispatcher) {

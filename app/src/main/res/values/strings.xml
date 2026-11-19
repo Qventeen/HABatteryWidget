@@ -160,13 +160,14 @@
     <string name="colors_value_charge_current">Charge current</string>
     <string name="colors_value_discharge_current">Discharge current</string>
     <string name="colors_value_delta">Cell delta</string>
-    <string name="colors_custom">Custom colours</string>
-    <string name="colors_add_level">Add level</string>
-    <string name="colors_reset">Reset to default</string>
+    <string name="colors_default">Default</string>
+    <string name="colors_edit">Edit</string>
     <!-- %1$s is the value, such as Voltage. -->
-    <string name="colors_reset_title">Reset %1$s?</string>
-    <string name="colors_reset_text">Your levels for this value are replaced with the defaults.</string>
-    <string name="colors_reset_confirm">Reset</string>
+    <string name="colors_default_title">Use default colours for %1$s?</string>
+    <string name="colors_default_text">Your levels for this value are deleted.</string>
+    <string name="colors_default_confirm">Use defaults</string>
+    <string name="colors_add_level">Add level</string>
+    <string name="colors_reset">Reset</string>
     <!-- The range of a level; %1$s is an edge with its unit, such as 20%. -->
     <string name="colors_below">below %1$s</string>
     <string name="colors_from">from %1$s</string>
@@ -178,7 +179,7 @@
     <!-- TalkBack's name for the colour chip of the level type's own colour. -->
     <string name="colors_color_default">%1$s, default</string>
     <string name="colors_two_parts">%1$s · %2$s</string>
-    <!-- A built-in level: range · name · type. -->
+    <!-- TalkBack's text for a level tag: range · name · type. -->
     <string name="colors_three_parts">%1$s · %2$s · %3$s</string>
     <string name="level_type_critical">Critical</string>
     <string name="level_type_warning">Warning</string>
