@@ -27,7 +27,7 @@ class StatesSource(
   client: OkHttpClient,
   private val clock: () -> Long = System::currentTimeMillis,
 ) : BatterySource {
-  private val http = HaHttp(client)
+  private val http = HaHttp.create(client)
 
   override suspend fun fetch(
     connection: ConnectionSettings,

@@ -2,10 +2,13 @@ package io.lumensync.habattery.data.ha
 
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.SyncError
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -20,7 +23,7 @@ class HaHttpTest {
       .readTimeout(5, TimeUnit.SECONDS)
       .callTimeout(1, TimeUnit.SECONDS)
       .build()
-  private val http = HaHttp(client)
+  private val http = HaHttp.create(client)
 
   @After fun tearDown() = servers.forEach { runCatching { it.close() } }
 
@@ -97,6 +100,31 @@ class HaHttpTest {
     s.close()
     val reply = http.get(ConnectionSettings(url), listOf("api"), "t")
     assertEquals(HaReply.Failure(SyncError.Unreachable), reply)
+  }
+
+  @Test
+  fun nonIoException_isUnreachableAndNotRethrown() = runTest {
+    val escaped = CopyOnWriteArrayList<Throwable>()
+    val threads = CopyOnWriteArrayList<Thread>()
+    val pool =
+      Executors.newCachedThreadPool { task ->
+        Thread(task).also {
+          it.uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { _, e -> escaped += e }
+          threads += it
+        }
+      }
+    val failing =
+      client
+        .newBuilder()
+        .dispatcher(Dispatcher(pool))
+        .addInterceptor { throw SecurityException("Permission denied") }
+        .build()
+    val reply =
+      HaHttp.create(failing).get(ConnectionSettings("http://127.0.0.1:8123"), listOf("api"), "t")
+    pool.shutdown()
+    threads.forEach { it.join(5_000) }
+    assertEquals(HaReply.Failure(SyncError.Unreachable), reply)
+    assertEquals(emptyList<Throwable>(), escaped)
   }
 
   @Test

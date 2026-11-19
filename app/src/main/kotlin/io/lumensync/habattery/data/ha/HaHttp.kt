@@ -10,6 +10,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,9 +24,9 @@ internal sealed interface HaReply {
 }
 
 /** One request to Home Assistant. The token goes only in the `Authorization` header. */
-internal class HaHttp(private val client: OkHttpClient) {
+internal class HaHttp private constructor(private val client: OkHttpClient) {
 
-  /** Same connection pool and other limits; only the whole-call timeout changes. */
+  /** Same connection pool, guard and other limits; only the whole-call timeout changes. */
   fun withCallTimeout(seconds: Long): HaHttp =
     HaHttp(client.newBuilder().callTimeout(seconds, TimeUnit.SECONDS).build())
 
@@ -81,7 +82,7 @@ internal class HaHttp(private val client: OkHttpClient) {
    */
   private suspend fun Call.await(): HaReply =
     suspendCancellableCoroutine { continuation ->
-      continuation.invokeOnCancellation { cancel() }
+      continuation.invokeOnCancellation { this@await.cancel() }
       enqueue(
         object : Callback {
           override fun onFailure(call: Call, e: IOException) =
@@ -105,5 +106,32 @@ internal class HaHttp(private val client: OkHttpClient) {
       }
     } catch (_: IOException) {
       HaReply.Failure(SyncError.Unreachable)
+    }
+
+  companion object {
+    /**
+     * Copies [client] with [ExceptionsAsIo] first in its chain, so it also covers the client's own
+     * interceptors. The constructor is private, so the guard is added here only once:
+     * [withCallTimeout] copies a client that already has it.
+     */
+    fun create(client: OkHttpClient): HaHttp =
+      HaHttp(client.newBuilder().apply { interceptors().add(0, ExceptionsAsIo) }.build())
+  }
+}
+
+/**
+ * OkHttp passes an exception that is not an [IOException] to `onFailure` and then throws it again
+ * on its own thread, which kills the app on Android (for example a `SecurityException` from DNS
+ * when the app's network is blocked). As an [IOException] it only reaches `onFailure`:
+ * `Unreachable`. An `Error` passes unchanged.
+ */
+private object ExceptionsAsIo : Interceptor {
+  override fun intercept(chain: Interceptor.Chain): Response =
+    try {
+      chain.proceed(chain.request())
+    } catch (e: IOException) {
+      throw e
+    } catch (e: Exception) {
+      throw IOException(e)
     }
 }
