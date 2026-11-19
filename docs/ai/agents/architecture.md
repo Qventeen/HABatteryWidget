@@ -84,4 +84,5 @@ when it has a second implementation or a test fake.
   (`NoHardcodedTextTest`); no logic on translated text.
 - Stored fields default only to `""`, empty list, `null` or `false`. Exception:
   display choices, font sizes, the home-screen scale and the theme default to the
-  design values (specs 0003, 0007, 0008).
+  design values (specs 0003, 0007, 0008), and a level's type defaults to `NORMAL`
+  (`ColorLevel.type`, spec 0010).
