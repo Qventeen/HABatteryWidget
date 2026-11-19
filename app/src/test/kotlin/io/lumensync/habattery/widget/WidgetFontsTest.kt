@@ -2,11 +2,13 @@ package io.lumensync.habattery.widget
 
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.WidgetModel.Flow
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.testing.configuredSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -40,8 +42,13 @@ class WidgetFontsTest {
       cells = listOf(CellPill("3.312 V", LevelColor.PLAIN), CellPill("Δ 12 mV", LevelColor.PLAIN), CellPill("27 °C", LevelColor.PLAIN, icon = 1)),
     )
 
-  private fun fonts(spec: LayoutSpec, texts: DataTexts = texts(), percents: FontPercents = FontPercents(), fontScale: Float = 1f) =
-    WidgetFonts.data(model, texts, spec, percents, fontScale, FakeMeasurer)
+  private fun fonts(
+    spec: LayoutSpec,
+    texts: DataTexts = texts(),
+    percents: FontPercents = FontPercents(),
+    fontScale: Float = 1f,
+    flow: Flow = model.flow,
+  ) = WidgetFonts.data(model.copy(flow = flow), texts, spec, percents, fontScale, FakeMeasurer)
 
   @Test
   fun fiftyPercent_shortValues_showTheDesignSizes() {
@@ -54,14 +61,17 @@ class WidgetFontsTest {
 
   @Test
   fun hundredPercent_longValue_shrinksBelowTheRequest() {
-    val f = fonts(LayoutSpec.L5x3, texts(main = "125.5 A"), FontPercents(main = 100))
+    val percents = FontPercents(main = 100)
+    val f = fonts(LayoutSpec.L5x3, texts(main = "125.5 A"), percents)
     assertTrue("${f.main}", f.main < 44f)
-    assertTrue("${f.voltage}", f.voltage > f.main)
+    // Each pill fits its own text: the long main value leaves the voltage as it is.
+    assertEquals(fonts(LayoutSpec.L5x3, percents = percents).voltage, f.voltage, 0f)
   }
 
+  /** Without a current arrow the voltage has the whole pill for the raised request. */
   @Test
   fun systemFontScale_raisesTheRequest() =
-    assertEquals(22f * 1.3f, fonts(LayoutSpec.L4x3, fontScale = 1.3f).voltage.coerceAtMost(28.6f), 0.3f)
+    assertEquals(22f * 1.3f, fonts(LayoutSpec.L4x3, fontScale = 1.3f, flow = Flow.NONE).voltage.coerceAtMost(28.6f), 0.3f)
 
   /**
    * Re-review finding 1: in every layout, English and Ukrainian, no text is smaller at a raised
@@ -87,6 +97,31 @@ class WidgetFontsTest {
       }
     }
   }
+
+  @Test
+  fun voltage_withFlow_fitsBesideArrow() {
+    val spec = LayoutSpec.L4x3
+    val requested = fonts(spec, flow = Flow.NONE).voltage
+    val room = spec.fitBoxes(cellPills = 3).packPill.width - 2 * spec.packPadding - TextFit.WIDTH_SLACK_DP
+    val justFits = texts().copy(voltage = "8".repeat((room / (0.5f * requested)).toInt()))
+    assertEquals(requested, fonts(spec, justFits, flow = Flow.NONE).voltage, 0f)
+    assertTrue(fonts(spec, justFits, flow = Flow.UP).voltage < requested)
+  }
+
+  @Test
+  fun temperature_withLevelIcon_fitsBesideTwoIcons() {
+    fun batterySize(levelIcon: LevelIcon?): Float {
+      val battery = CellPill("27 °C", LevelColor.GREEN, icon = 1, levelIcon = levelIcon)
+      val mosfet = CellPill("35 °C", LevelColor.GREEN, icon = 2)
+      return fonts(LayoutSpec.L4x2, texts().copy(cells = texts().cells.take(2) + battery + mosfet)).cells[2]
+    }
+    val oneIcon = batterySize(null)
+    val twoIcons = batterySize(LevelIcon.LEAF)
+    assertTrue("$twoIcons vs $oneIcon", twoIcons < oneIcon)
+  }
+
+  @Test
+  fun levelIconRes_coversEveryIcon() = assertEquals(4, LevelIcon.entries.map(::levelIconRes).toSet().size)
 
   private fun sizesOf(f: DataFonts) = listOf(f.small, f.ringLabel, f.soc, f.underSoc, f.voltage, f.main) + f.cells
 

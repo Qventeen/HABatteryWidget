@@ -142,15 +142,17 @@ internal object WidgetFonts {
     val ring = requestedRing.mapIndexed { i, line -> line.copy(requested = sizes[i]) }
 
     val main = requested(FontGroup.MAIN, design.main)
-    val pack = boxes.packPill.let { Box(it.width - 2 * spec.packPadding, it.height) }
+    // Both pack pills show the current's arrow.
     val arrow = if (m.flow == Flow.NONE) 0f else spec.arrow + spec.arrowGap
+    val pack = boxes.packPill.let { Box(it.width - 2 * spec.packPadding - arrow, it.height) }
 
     val cell = requested(FontGroup.CELL, design.cell)
+    val iconRoom = spec.tempIcon + spec.tempIconGap
     val cells =
       texts.cells.mapIndexed { i, pill ->
         val outer = if (i == texts.cells.lastIndex) boxes.mosfetPill else boxes.cellPill
-        val icon = if (pill.icon != null) spec.tempIcon + spec.tempIconGap else 0f
-        fit(pill.text, cell, TextWeight.MEDIUM, Box(outer.width - 2 * spec.cellPadding - icon, outer.height))
+        val icons = listOfNotNull(pill.icon, pill.levelIcon).size * iconRoom
+        fit(pill.text, cell, TextWeight.MEDIUM, Box(outer.width - 2 * spec.cellPadding - icons, outer.height))
       }
 
     return DataFonts(
@@ -159,7 +161,7 @@ internal object WidgetFonts {
       soc = ring[1].requested,
       underSoc = ring[2].requested,
       voltage = fit(texts.voltage, main, TextWeight.MEDIUM, pack),
-      main = fit(texts.main, main, TextWeight.MEDIUM, pack.copy(width = pack.width - arrow)),
+      main = fit(texts.main, main, TextWeight.MEDIUM, pack),
       cells = cells,
       ringCenters = RingLayout.centers(ring, spec.ringTextGap, measurer),
     )
