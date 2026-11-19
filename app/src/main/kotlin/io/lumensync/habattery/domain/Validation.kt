@@ -44,6 +44,8 @@ object Validation {
 
   fun isPrefixValid(prefix: String): Boolean = PREFIX.matches(prefix.trim())
 
+  fun isEntityId(id: String): Boolean = ENTITY_ID.matches(id)
+
   fun entities(e: EntitySettings): List<FieldError> =
     listOfNotNull(
       if (e.prefix.isNotBlank() && !isPrefixValid(e.prefix)) FieldError(Field.PREFIX, Problem.INVALID)
