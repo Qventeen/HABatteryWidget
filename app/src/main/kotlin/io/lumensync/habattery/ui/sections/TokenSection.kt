@@ -34,9 +34,10 @@ private val TokenKeyboard =
 
 /**
  * The token type and the HA token of that type; [hasToken] and the summary are about the selected
- * type's slot. A type tap saves at once (no Save). The stored token is never shown: the field
- * starts empty, is cleared on save, and says "Token saved" when one is stored. Typing a new value
- * and saving replaces it; Remove, after a confirm, clears the selected slot only.
+ * type's slot. A tap on the other type saves it at once (no Save) and syncs; a tap on the selected
+ * type does nothing. The stored token is never shown: the field starts empty, is cleared on save,
+ * and says "Token saved" when one is stored. Typing a new value and saving replaces it; Remove,
+ * after a confirm, clears the selected slot only.
  */
 @Composable
 fun TokenSection(
@@ -65,10 +66,12 @@ fun TokenSection(
 
   SectionCard(R.string.token_title, summary, initiallyExpanded, modifier) {
     ChoiceRow(R.string.token_type_label, TokenType.entries, tokenType, ::tokenTypeLabel) {
-      // Cleared at the tap too: the key changes only when the new type is stored, and a Save in
-      // between would write the draft into the new slot.
-      if (it != tokenType) draft = ""
-      onTypeChange(it)
+      if (it != tokenType) {
+        // Cleared at the tap too: the key changes only when the new type is stored, and a Save in
+        // between would write the draft into the new slot.
+        draft = ""
+        onTypeChange(it)
+      }
     }
     SettingsTextField(
       value = draft,
