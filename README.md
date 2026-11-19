@@ -3,8 +3,7 @@
 An Android home-screen widget (Jetpack Glance) and a settings screen. They show
 a JK-BMS battery read from Home Assistant (HA): state of charge, total voltage, current, power, Ah left, average cell
 voltage, cell delta, MOSFET temperature, battery temperatures, balancing. The
-app calls `POST {baseUrl}/api/template` with a
-long-lived HA token. The widget draws from the local cache only.
+app reads HA with a long-lived HA token (see "Token type"). The widget draws from the local cache only.
 
 The widget follows design v5 (`docs/design/`): a SOC ring, two big pack values,
 cell and temperature pills, time left, and an auto-refresh toggle. The app
@@ -76,7 +75,8 @@ cannot update installed apps.
 
 ## Try it with the mock HA
 
-`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`.
+`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`,
+`/api/states` and `/api/states/<id>`.
 Local testing only — it accepts any token:
 
 ```bash
@@ -87,9 +87,35 @@ python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
 
 Options you leave out are returned as `null`. For Fill, the mock also lists
 `sensor.<prefix>_temperature_sensor_N` for each value of `--temps`
-(`--prefix`, default `bps_bms`; another prefix gets an empty list). In the app on the Android
+(`--prefix`, default `bps_bms`; another prefix gets an empty list).
+`GET /api/states/<id>` answers for the entity ids that Fill makes from
+`--prefix`, with the option value as the state (`unknown` if you left the option out);
+other ids get 404. `GET /api/states` lists them all. Add `--user-token` to
+make `POST /api/template` return 401, like a non-admin token. `--status` wins
+over everything. In the app on the Android
 emulator, set the HA URL to `http://10.0.2.2:8123` (the emulator's address for
 the host) and use any token.
+
+## Token type
+
+Choose the type of your token in the app's token section.
+
+- **Admin**: one `POST {baseUrl}/api/template` request for each sync.
+- **User**: a token of a non-admin HA user. The app sends one
+  `GET {baseUrl}/api/states/<entity_id>` for each configured entity, at most 4 at
+  a time. Fill uses one `GET {baseUrl}/api/states` (30 s timeout).
+
+The app keeps one saved token for each type. "Remove token" clears the token of
+the selected type only.
+
+To make a non-admin token:
+
+1. In HA, open Settings, People, and add a person without "Administrator".
+2. Log in to HA as that user.
+3. Open Profile, Security, Long-lived access tokens, and create a token.
+
+A non-admin token is not read-only: it can still change states in HA. The app
+itself only reads.
 
 ## Power sign in HA
 

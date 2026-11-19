@@ -17,8 +17,10 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `FullChargeRule`, `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
   `WidgetLevels`, `ToggleAutoRefresh`.
-- `data/`: `ha/` (HTTP source, template, response), `settings/`, `cache/`,
-  `secure/` (Keystore crypto, `EncryptedTokenStore`), `store/` (JSON DataStore
+- `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
+  template; `StatesSource`: User, states per entity and the sensor search;
+  `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,
+  `secure/` (Keystore crypto, `EncryptedTokenStore`: one slot per token type), `store/` (JSON DataStore
   records with `schemaVersion = 1`).
 - `format/`: `Formatters`, `Decimal`; one formatter for widget, screen and
   notification.
@@ -55,18 +57,20 @@ fixed (home screens store them).
 ## Ports (`domain/port/Ports.kt`)
 
 `BatterySource`, `SettingsRepository`, `TokenStore`, `ReadingCache`,
-`WidgetRefresher`, `FullChargeNotifier`, `SyncScheduler`. Add an interface only
+`WidgetRefresher`, `FullChargeNotifier`, `SyncScheduler`. `TokenStore` keeps one
+token per type: `savedTypes`, `get(type)`, `set(type, token)`, `clear(type)`. Add an interface only
 when it has a second implementation or a test fake.
 
 ## One sync path
 
 - Every trigger (worker, widget ↻, "Refresh now", app start) runs `SyncBattery`.
-- `SyncBattery`: settings and token → `BatterySource.fetch` (the one URL) →
+- `SyncBattery`: settings and token → `BatterySource.fetch` (`TokenTypeSource` → Admin: one template request; User: one
+  `GET /api/states/<id>` per entity, at most 4 at a time) →
   reading or error into `ReadingCache` (last good reading kept) →
   `FullChargeRule` → `WidgetRefresher.refreshAll()`.
 - Widget ↻ only marks "refreshing" and enqueues unique one-time work.
 - The widget renders from local data only (`ReadingCache`,
-  `SettingsRepository`, `TokenStore.hasToken`). No network call in
+  `SettingsRepository`, `TokenStore.savedTypes`). No network call in
   `provideGlance`.
 - Every cache or settings write is followed by `WidgetRefresher.refreshAll()`.
 - `SyncError` is sealed; UI and widget map each case to a string. The worker
