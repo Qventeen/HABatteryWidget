@@ -241,6 +241,7 @@ class WidgetFitTest {
     val m = models(context).getValue("typical") as WidgetModel.Data
     val problems = mutableListOf<String>()
     for (spec in LayoutSpec.all) {
+      val pills = DataTexts.of(m, texts).cells
       val f = WidgetFonts.data(m, DataTexts.of(m, texts), spec, FontPercents(), 1f, measurer)
       val d = spec.fonts
       fun fifty(group: FontGroup, design: Float) = FontPercents().requestedDp(group, design, 1f)
@@ -250,11 +251,20 @@ class WidgetFitTest {
           "soc" to (f.soc to fifty(FontGroup.SOC, d.soc)),
           "underSoc" to (f.underSoc to fifty(FontGroup.UNDER_SOC, d.underSoc)),
         )
+      // Spec 0010 §4 (owner accepted it on the phone, 2026-11-20): a level icon, or the voltage
+      // pill's direction arrow, takes room from the text, so those pills may sit under their design
+      // size. The everyText_fits checks still guard them against clipping.
+      val voltage =
+        if (m.flow == WidgetModel.Flow.NONE) mapOf("voltage" to (f.voltage to fifty(FontGroup.MAIN, d.main)))
+        else emptyMap()
       val outside =
-        mapOf(
-          "voltage" to (f.voltage to fifty(FontGroup.MAIN, d.main)),
-          "main" to (f.main to fifty(FontGroup.MAIN, d.main)),
-        ) + f.cells.mapIndexed { i, s -> "cell$i" to (s to fifty(FontGroup.CELL, d.cell)) }
+        voltage +
+          mapOf("main" to (f.main to fifty(FontGroup.MAIN, d.main))) +
+          f.cells
+            .mapIndexedNotNull { i, s ->
+              if (pills[i].levelIcon == null) "cell$i" to (s to fifty(FontGroup.CELL, d.cell)) else null
+            }
+            .toMap()
       fun check(shown: Map<String, Pair<Float, Float>>, share: Float) =
         shown.forEach { (role, pair) ->
           val least = pair.second * share
