@@ -8,11 +8,13 @@ import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -71,17 +73,19 @@ class StatesSource(
     val search = http.withCallTimeout(SEARCH_TIMEOUT_SECONDS)
     return when (val reply = search.get(connection, listOf("api", "states"), token)) {
       is HaReply.Failure -> SensorList.Failed(reply.error)
-      is HaReply.Body -> {
-        val ids =
-          try {
-            StoreJson.decodeFromString<List<StateId>>(reply.text).mapNotNull { it.entityId }
-          } catch (_: SerializationException) {
-            return SensorList.Failed(SyncError.BadResponse)
-          } catch (_: IllegalArgumentException) {
-            return SensorList.Failed(SyncError.BadResponse)
-          }
-        SensorList.Found(TemperatureSensors.select(ids, p))
-      }
+      // The whole list can be megabytes, and Fill calls from the main thread.
+      is HaReply.Body ->
+        withContext(Dispatchers.Default) {
+          val ids =
+            try {
+              StoreJson.decodeFromString<List<StateId>>(reply.text).mapNotNull { it.entityId }
+            } catch (_: SerializationException) {
+              return@withContext SensorList.Failed(SyncError.BadResponse)
+            } catch (_: IllegalArgumentException) {
+              return@withContext SensorList.Failed(SyncError.BadResponse)
+            }
+          SensorList.Found(TemperatureSensors.select(ids, p))
+        }
     }
   }
 
