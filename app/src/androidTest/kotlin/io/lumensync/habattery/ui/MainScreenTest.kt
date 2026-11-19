@@ -35,6 +35,7 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
 import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.widget.WidgetPalette
@@ -62,7 +63,7 @@ class MainScreenTest {
         val container = ApplicationProvider.getApplicationContext<App>().container
         runBlocking {
           container.settingsRepository.update { Settings() }
-          container.tokenStore.clear()
+          TokenType.entries.forEach { container.tokenStore.clear(it) }
           container.readingCache.update { CacheState() }
         }
       }

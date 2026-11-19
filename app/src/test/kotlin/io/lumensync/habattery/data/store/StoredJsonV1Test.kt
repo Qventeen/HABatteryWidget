@@ -255,8 +255,22 @@ class StoredJsonV1Test {
 
   @Test
   fun tokenRecord_v1() {
-    val json = """{ "schemaVersion": 1, "encrypted": "AAECAwQF" }"""
+    val json = """{ "schemaVersion": 1, "encrypted": "AAECAwQF", "userEncrypted": "BgcICQoL" }"""
 
-    assertV1(json, TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF"), TokenRecord.serializer())
+    assertV1(
+      json,
+      TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF", userEncrypted = "BgcICQoL"),
+      TokenRecord.serializer(),
+    )
+  }
+
+  @Test
+  fun tokenRecordWithoutUserSlot_loadsAsAdminSlot() {
+    val record =
+      StoreJson.decodeFromString(
+        TokenRecord.serializer(),
+        """{ "schemaVersion": 1, "encrypted": "AAECAwQF" }""",
+      )
+    assertEquals(TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF"), record)
   }
 }

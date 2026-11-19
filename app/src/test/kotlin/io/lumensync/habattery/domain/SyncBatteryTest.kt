@@ -4,6 +4,7 @@ import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.testing.FakeBatterySource
 import io.lumensync.habattery.testing.FakeNotifier
 import io.lumensync.habattery.testing.FakeReadingCache
@@ -33,9 +34,10 @@ class SyncBatteryTest {
     cache: FakeReadingCache = FakeReadingCache(),
     settings: Settings = configuredSettings(),
     token: String? = "t",
+    userToken: String? = null,
   ) = SyncBattery(
     FakeSettingsRepository(settings),
-    FakeTokenStore(token),
+    FakeTokenStore(token, user = userToken),
     source,
     cache,
     notifier,
@@ -54,6 +56,27 @@ class SyncBatteryTest {
     assertEquals(SyncError.NotConfigured, cache.current.error)
     assertNull(cache.current.refreshingSinceMillis)
     assertEquals(1, widgets.refreshes)
+  }
+
+  @Test
+  fun sendsActiveTypeToken() = runTest {
+    val source = FakeBatterySource(SyncResult.Success(reading()))
+    val user = configuredSettings(tokenType = TokenType.USER)
+
+    sync(source, settings = user, token = "admin-t", userToken = "user-t")()
+
+    assertEquals("user-t", source.lastToken)
+  }
+
+  @Test
+  fun emptyActiveSlot_isNotConfigured() = runTest {
+    val source = FakeBatterySource(SyncResult.Success(reading()))
+    val user = configuredSettings(tokenType = TokenType.USER)
+
+    val result = sync(source, settings = user, token = "admin-t")()
+
+    assertEquals(SyncResult.Failure(SyncError.NotConfigured), result)
+    assertEquals(0, source.calls)
   }
 
   @Test

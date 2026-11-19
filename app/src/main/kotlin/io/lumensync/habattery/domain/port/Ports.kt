@@ -6,6 +6,7 @@ import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
+import io.lumensync.habattery.domain.model.TokenType
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
@@ -20,14 +21,17 @@ interface ReadingCache {
   suspend fun update(transform: (CacheState) -> CacheState)
 }
 
+/** One token per [TokenType]; callers use the slot of the active type in the settings. */
 interface TokenStore {
-  val hasToken: Flow<Boolean>
+  val savedTypes: Flow<Set<TokenType>>
 
-  suspend fun get(): String?
+  /** Null when the [type] slot is empty or cannot be read; an unreadable slot is cleared. */
+  suspend fun get(type: TokenType): String?
 
-  suspend fun set(token: String)
+  /** Stores [token] trimmed; a blank one clears the slot. */
+  suspend fun set(type: TokenType, token: String)
 
-  suspend fun clear()
+  suspend fun clear(type: TokenType)
 }
 
 interface BatterySource {

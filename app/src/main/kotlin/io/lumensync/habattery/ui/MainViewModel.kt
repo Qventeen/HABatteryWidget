@@ -18,6 +18,7 @@ import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
@@ -52,7 +53,8 @@ class MainViewModel(
   private val local = MutableStateFlow(Local())
 
   val uiState: StateFlow<MainUiState> =
-    combine(settings.settings, tokens.hasToken, cache.state, local) { s, hasToken, c, l ->
+    combine(settings.settings, tokens.savedTypes, cache.state, local) { s, saved, c, l ->
+        val hasToken = s.connection.tokenType in saved
         val overview = BatteryOverview.build(c, s, hasToken, clock())
         MainUiState(
           settings = s,
@@ -89,19 +91,42 @@ class MainViewModel(
     }
   }
 
+  /** Saves [token] in the slot of the stored token type. */
   fun saveToken(token: String) {
     val trimmed = token.trim()
     if (trimmed.isEmpty()) return fail(FieldError(Field.TOKEN, Problem.REQUIRED))
     viewModelScope.launch {
       try {
-        tokens.set(trimmed)
+        tokens.set(settings.settings.first().connection.tokenType, trimmed)
       } catch (e: CancellationException) {
         throw e
       } catch (_: Exception) {
-        // GeneralSecurityException / ProviderException from the Keystore. No message in state.
+        // GeneralSecurityException / ProviderException from the Keystore, or a failing store.
+        // No message in state.
         return@launch fail(FieldError(Field.TOKEN, Problem.INVALID))
       }
       guarded { afterSave(syncAfter = true) }
+    }
+  }
+
+  /** The token type saves at once and syncs: it decides which token is sent. */
+  fun saveTokenType(type: TokenType) {
+    save(emptyList(), syncAfter = true) {
+      it.copy(connection = it.connection.copy(tokenType = type))
+    }
+  }
+
+  /**
+   * Clears only the stored type's token; the widgets redraw. No sync: an empty slot already shows
+   * "Set up in the app".
+   */
+  fun removeToken() {
+    viewModelScope.launch {
+      guarded {
+        tokens.clear(settings.settings.first().connection.tokenType)
+        local.update { it.copy(errors = emptyList()) }
+        widgets.refreshAll()
+      }
     }
   }
 
@@ -132,7 +157,7 @@ class MainViewModel(
   suspend fun findTemperatureSensors(prefix: String, stillCurrent: () -> Boolean): SensorSearch =
     try {
       val connection = settings.settings.first().connection
-      val token = tokens.get()
+      val token = tokens.get(connection.tokenType)
       if (connection.url.isBlank() || token == null) {
         SensorSearch.Skipped
       } else {

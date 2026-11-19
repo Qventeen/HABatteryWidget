@@ -7,6 +7,7 @@ import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.FullChargeNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
@@ -32,34 +33,48 @@ class FakeSettingsRepository(initial: Settings = Settings()) : SettingsRepositor
   }
 }
 
-class FakeTokenStore(initial: String? = null) : TokenStore {
-  private val token = MutableStateFlow(initial?.trim()?.takeIf { it.isNotEmpty() })
-  override val hasToken = token.map { it != null }
+/** [initial] is the Admin slot's token, [user] the User slot's. */
+class FakeTokenStore(initial: String? = null, user: String? = null) : TokenStore {
+  private val slots =
+    MutableStateFlow(
+      buildMap<TokenType, String> {
+        clean(initial)?.let { put(TokenType.ADMIN, it) }
+        clean(user)?.let { put(TokenType.USER, it) }
+      }
+    )
+  override val savedTypes = slots.map { it.keys }
 
   /** When set, [get] throws it, like a failing Keystore. */
   var getFailure: Throwable? = null
 
-  override suspend fun get(): String? {
+  override suspend fun get(type: TokenType): String? {
     getFailure?.let { throw it }
-    return token.value
+    return slots.value[type]
   }
 
   /** When set, [set] throws it, like a failing Keystore. */
   var setFailure: Throwable? = null
 
-  override suspend fun set(token: String) {
+  override suspend fun set(type: TokenType, token: String) {
     setFailure?.let { throw it }
-    this.token.value = token.trim().takeIf { it.isNotEmpty() }
+    val cleaned = clean(token)
+    slots.update { if (cleaned == null) it - type else it + (type to cleaned) }
   }
 
-  override suspend fun clear() {
-    token.value = null
+  override suspend fun clear(type: TokenType) {
+    slots.update { it - type }
   }
+
+  private fun clean(token: String?): String? = token?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 /** Returns [results] in order; the last one repeats. Suspends once per call, so parallel runs interleave. */
 class FakeBatterySource(private vararg val results: SyncResult) : BatterySource {
   var calls = 0
+    private set
+
+  /** The token of the last [fetch] or [listTemperatureSensors] call. */
+  var lastToken: String? = null
     private set
 
   /** When set, [fetch] throws it instead of returning a result. */
@@ -72,6 +87,7 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
   ): SyncResult {
     val result = results[minOf(calls, results.lastIndex)]
     calls++
+    lastToken = token
     yield()
     failWith?.let { throw it }
     return result
@@ -93,6 +109,7 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
     token: String,
   ): SensorList {
     sensorCalls += prefix
+    lastToken = token
     sensorGate?.await()
     sensorFailure?.let { throw it }
     return sensors
@@ -142,9 +159,12 @@ class FakeSyncScheduler : SyncScheduler {
   }
 }
 
-fun configuredSettings(notifyOnFull: Boolean = false): Settings =
+fun configuredSettings(
+  notifyOnFull: Boolean = false,
+  tokenType: TokenType = TokenType.ADMIN,
+): Settings =
   Settings(
-    connection = ConnectionSettings(url = "http://ha.local:8123"),
+    connection = ConnectionSettings(url = "http://ha.local:8123", tokenType = tokenType),
     entities = EntitySettings(charge = "sensor.soc"),
     notifyOnFull = notifyOnFull,
   )

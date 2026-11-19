@@ -30,7 +30,7 @@ class SyncBattery(
       var refreshingCleared = false
       try {
         val current = settings.settings.first()
-        val token = tokens.get()
+        val token = tokens.get(current.connection.tokenType)
         val result =
           if (token == null || !Validation.isConfigured(current, hasToken = true)) {
             SyncResult.Failure(SyncError.NotConfigured)

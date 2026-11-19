@@ -67,9 +67,10 @@ class MainViewModelTest {
     initial: Settings = configuredSettings(),
     token: String? = "t",
     batterySource: BatterySource? = null,
+    userToken: String? = null,
   ): MainViewModel {
     settings = FakeSettingsRepository(initial)
-    tokens = FakeTokenStore(token)
+    tokens = FakeTokenStore(token, user = userToken)
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
@@ -86,8 +87,9 @@ class MainViewModelTest {
     initial: Settings = configuredSettings(),
     token: String? = "t",
     source: BatterySource? = null,
+    userToken: String? = null,
   ) =
-    vm(initial, token, source).also {
+    vm(initial, token, source, userToken).also {
       current = it
       advanceUntilIdle()
     }
@@ -141,7 +143,7 @@ class MainViewModelTest {
     val vm = start(token = null)
     vm.saveToken(" abc ")
     advanceUntilIdle()
-    assertEquals("abc", tokens.get())
+    assertEquals("abc", tokens.get(TokenType.ADMIN))
     assertTrue(state.hasToken)
     assertFalse(state.toString().contains("abc"))
   }
@@ -162,6 +164,49 @@ class MainViewModelTest {
     assertFalse(state.hasToken)
     assertFalse(state.toString().contains("abc"))
     assertEquals(0, source.calls)
+  }
+
+  @Test fun saveToken_writesActiveSlot() = runTest(dispatcher) {
+    val vm = start(initial = configuredSettings(tokenType = TokenType.USER), token = "admin-t")
+    vm.saveToken("u")
+    advanceUntilIdle()
+    assertEquals("u", tokens.get(TokenType.USER))
+    assertEquals("admin-t", tokens.get(TokenType.ADMIN))
+  }
+
+  @Test fun saveTokenType_savesAndSyncs() = runTest(dispatcher) {
+    val vm = start(token = "admin-t", userToken = "user-t")
+    val before = source.calls
+    vm.saveTokenType(TokenType.USER)
+    advanceUntilIdle()
+    assertEquals(TokenType.USER, state.settings.connection.tokenType)
+    assertEquals(before + 1, source.calls)
+  }
+
+  @Test fun removeToken_clearsOnlyActiveSlot() = runTest(dispatcher) {
+    val vm =
+      start(
+        initial = configuredSettings(tokenType = TokenType.USER),
+        token = "admin-t",
+        userToken = "user-t",
+      )
+    val calls = source.calls
+    val refreshes = widgets.refreshes
+    vm.removeToken()
+    advanceUntilIdle()
+    assertNull(tokens.get(TokenType.USER))
+    assertEquals("admin-t", tokens.get(TokenType.ADMIN))
+    assertFalse(state.hasToken)
+    assertTrue(widgets.refreshes > refreshes)
+    assertEquals(calls, source.calls)
+  }
+
+  @Test fun hasToken_followsActiveType() = runTest(dispatcher) {
+    val vm = start(token = "admin-t")
+    assertTrue(state.hasToken)
+    vm.saveTokenType(TokenType.USER)
+    advanceUntilIdle()
+    assertFalse(state.hasToken)
   }
 
   @Test fun refreshNow_storageThrows_endsNotSyncing() = runTest(dispatcher) {
@@ -387,6 +432,20 @@ class MainViewModelTest {
     val result = async { vm.findTemperatureSensors("bms") { true } }
     advanceUntilIdle()
     assertEquals(SensorSearch.Failed(SyncError.Unauthorized), result.await())
+  }
+
+  @Test fun sensorSearch_usesActiveTypeToken() = runTest(dispatcher) {
+    val vm =
+      start(
+        initial = configuredSettings(tokenType = TokenType.USER),
+        token = "admin-t",
+        userToken = "user-t",
+      )
+    val result = async { vm.findTemperatureSensors("bms") { true } }
+    advanceUntilIdle()
+    result.await()
+    assertEquals(listOf("bms"), source.sensorCalls)
+    assertEquals("user-t", source.lastToken)
   }
 
   @Test fun findTemperatureSensors_skippedWithoutTokenOrUrl() = runTest(dispatcher) {
