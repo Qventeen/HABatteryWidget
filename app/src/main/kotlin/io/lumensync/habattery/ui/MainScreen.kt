@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
+import io.lumensync.habattery.domain.BatteryMath
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
@@ -28,11 +29,13 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.ActionsRow
 import io.lumensync.habattery.ui.sections.AppearanceSection
 import io.lumensync.habattery.ui.sections.CapacitySection
+import io.lumensync.habattery.ui.sections.ColorsSection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.NotificationSection
@@ -60,6 +63,9 @@ data class MainActions(
   val resetWidgetSettings: () -> Unit,
   val saveAppearance: (AppearanceSettings) -> Unit,
   val setLanguage: (LanguageChoice) -> Unit,
+  val setCustomLevels: (LevelValue, Boolean) -> Unit,
+  val saveLevels: (LevelValue, List<LevelDraft>, Locale) -> Unit,
+  val resetLevels: (LevelValue) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
@@ -120,6 +126,17 @@ private fun MainContent(
       actions.resetWidgetSettings,
     )
     AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
+    val reading = overview.reading
+    ColorsSection(
+      settings.colorLevels,
+      capacityAh =
+        reading?.let { BatteryMath.fullCapacityAh(it, settings.capacityAh) } ?: settings.capacityAh,
+      cellCount = reading?.let(BatteryMath::cellCount),
+      state.errors,
+      actions.setCustomLevels,
+      actions.saveLevels,
+      actions.resetLevels,
+    )
     ConnectionSection(
       settings.connection,
       state.errors,

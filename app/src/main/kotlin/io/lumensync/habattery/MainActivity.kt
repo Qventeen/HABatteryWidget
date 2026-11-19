@@ -169,6 +169,9 @@ class MainActivity : ComponentActivity() {
         // The system recreates the activity; App.onConfigurationChanged redraws the widgets.
         appLanguage.set(it)
       },
+      setCustomLevels = viewModel::setCustomLevels,
+      saveLevels = viewModel::saveLevels,
+      resetLevels = viewModel::resetLevels,
       requestPinWidget = {
         lifecycleScope.launch {
           GlanceAppWidgetManager(this@MainActivity)

@@ -150,6 +150,68 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
+    <!-- Colours section (value levels). -->
+    <string name="colors_title">Colours</string>
+    <string name="colors_summary_default">Default colours</string>
+    <!-- %1$s lists the values with custom colours, comma-separated. -->
+    <string name="colors_summary_custom">Custom: %1$s</string>
+    <string name="colors_value_soc">State of charge</string>
+    <string name="colors_value_voltage">Voltage</string>
+    <string name="colors_value_charge_current">Charge current</string>
+    <string name="colors_value_discharge_current">Discharge current</string>
+    <string name="colors_value_delta">Cell delta</string>
+    <string name="colors_custom">Custom colours</string>
+    <string name="colors_add_level">Add level</string>
+    <string name="colors_reset">Reset to default</string>
+    <!-- %1$s is the value, such as Voltage. -->
+    <string name="colors_reset_title">Reset %1$s?</string>
+    <string name="colors_reset_text">Your levels for this value are replaced with the defaults.</string>
+    <string name="colors_reset_confirm">Reset</string>
+    <!-- The range of a level; %1$s is an edge with its unit, such as 20%. -->
+    <string name="colors_below">below %1$s</string>
+    <string name="colors_from">from %1$s</string>
+    <!-- %1$s is the voltage edge divided by the cell count, such as 3.250 V. -->
+    <string name="colors_per_cell">%1$s per cell</string>
+    <string name="colors_edge">Edge</string>
+    <string name="colors_name">Name</string>
+    <string name="colors_remove_level">Remove level %1$d</string>
+    <!-- TalkBack's name for the colour chip of the level type's own colour. -->
+    <string name="colors_color_default">%1$s, default</string>
+    <string name="colors_two_parts">%1$s · %2$s</string>
+    <!-- A built-in level: range · name · type. -->
+    <string name="colors_three_parts">%1$s · %2$s · %3$s</string>
+    <string name="level_type_critical">Critical</string>
+    <string name="level_type_warning">Warning</string>
+    <string name="level_type_normal">Normal</string>
+    <string name="level_type_info">Info</string>
+    <string name="level_color_plain">Plain</string>
+    <string name="level_color_red">Red</string>
+    <string name="level_color_orange">Orange</string>
+    <string name="level_color_amber">Amber</string>
+    <string name="level_color_green">Green</string>
+    <string name="level_color_teal">Teal</string>
+    <string name="level_color_blue">Blue</string>
+    <string name="level_color_violet">Violet</string>
+    <string name="level_color_grey">Grey</string>
+    <string name="level_icon_none">None</string>
+    <string name="level_icon_snowflake">Snowflake</string>
+    <string name="level_icon_leaf">Leaf</string>
+    <string name="level_icon_flame">Flame</string>
+    <string name="level_icon_flame_alert">Flame with alert</string>
+    <!-- The built-in level names. -->
+    <string name="level_name_low">Low</string>
+    <string name="level_name_getting_low">Getting low</string>
+    <string name="level_name_normal">Normal</string>
+    <string name="level_name_full">Full</string>
+    <string name="level_name_freezing">Freezing</string>
+    <string name="level_name_cool">Cool</string>
+    <string name="level_name_warm">Warm</string>
+    <string name="level_name_hot">Hot</string>
+    <string name="level_name_balanced">Balanced</string>
+    <string name="level_name_high">High</string>
+    <string name="level_name_very_high">Very high</string>
+    <string name="level_name_light">Light</string>
+
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
     <string name="token_summary_saved">Saved</string>
