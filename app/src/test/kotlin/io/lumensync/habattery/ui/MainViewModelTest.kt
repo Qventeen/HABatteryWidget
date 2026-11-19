@@ -6,7 +6,12 @@ import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.LevelType
+import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.customLevels
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.DisplaySettings
@@ -518,5 +523,119 @@ class MainViewModelTest {
     vm.saveEntities(state.settings.entities.copy(prefix = "bms", temperatures = ids))
     advanceUntilIdle()
     assertEquals(ids, state.settings.entities.temperatures)
+  }
+
+  private fun draft(id: Int, edge: String, type: LevelType = LevelType.NORMAL, name: String = "") =
+    LevelDraft(id, edge, type, null, null, name, null)
+
+  private fun froms(value: LevelValue) = state.settings.customLevels(value).levels.map { it.from }
+
+  @Test fun setCustomLevels_firstOn_copiesDefaults() = runTest(dispatcher) {
+    val vm = start(initial = configuredSettings().copy(capacityAh = 100.0))
+    vm.setCustomLevels(LevelValue.CHARGE_CURRENT, true)
+    advanceUntilIdle()
+    assertEquals(listOf(null, 20.0, 50.0, 80.0), froms(LevelValue.CHARGE_CURRENT))
+    assertTrue(state.settings.customLevels(LevelValue.CHARGE_CURRENT).on)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun setCustomLevels_firstOn_prefersBmsCapacity() = runTest(dispatcher) {
+    val bms = FakeBatterySource(SyncResult.Success(reading().copy(totalCapacityAh = 280.0)))
+    val vm = start(initial = configuredSettings().copy(capacityAh = 100.0), source = bms)
+    vm.setCustomLevels(LevelValue.CHARGE_CURRENT, true)
+    advanceUntilIdle()
+    assertEquals(listOf(null, 56.0, 140.0, 224.0), froms(LevelValue.CHARGE_CURRENT))
+  }
+
+  @Test fun setCustomLevels_offThenOn_keepsOwnList() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "30")), Locale.US)
+    advanceUntilIdle()
+    vm.setCustomLevels(LevelValue.SOC, false)
+    advanceUntilIdle()
+    assertFalse(state.settings.customLevels(LevelValue.SOC).on)
+    assertEquals(listOf(null, 30.0), froms(LevelValue.SOC))
+    vm.setCustomLevels(LevelValue.SOC, true)
+    advanceUntilIdle()
+    assertTrue(state.settings.customLevels(LevelValue.SOC).on)
+    assertEquals(listOf(null, 30.0), froms(LevelValue.SOC))
+  }
+
+  @Test fun saveLevels_sortsByEdge() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(
+      LevelValue.SOC,
+      listOf(draft(1, ""), draft(2, "40", name = " Mid "), draft(3, "20")),
+      Locale.US,
+    )
+    advanceUntilIdle()
+    val saved = state.settings.customLevels(LevelValue.SOC)
+    assertTrue(saved.on)
+    assertEquals(listOf<Double?>(null, 20.0, 40.0), saved.levels.map { it.from })
+    assertEquals(listOf(1, 3, 2), saved.levels.map { it.id })
+    assertEquals("Mid", saved.levels[2].name)
+  }
+
+  @Test fun saveLevels_blankEdge_isRequired() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "  ")), Locale.US)
+    advanceUntilIdle()
+    assertEquals(listOf(FieldError(Field.LEVEL_EDGE, Problem.REQUIRED, 1)), state.errors)
+    assertTrue(state.settings.colorLevels.isEmpty())
+  }
+
+  @Test fun saveLevels_unparsableEdge_isInvalid_andReportsAllErrorsAtDraftPositions() =
+    runTest(dispatcher) {
+      val vm = start()
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(draft(1, ""), draft(2, "40"), draft(3, "x"), draft(4, "40")),
+        Locale.US,
+      )
+      advanceUntilIdle()
+      assertEquals(
+        setOf(
+          FieldError(Field.LEVEL_EDGE, Problem.INVALID, 2),
+          FieldError(Field.LEVEL_EDGE, Problem.DUPLICATE, 3),
+        ),
+        state.errors.toSet(),
+      )
+      assertTrue(state.settings.colorLevels.isEmpty())
+    }
+
+  @Test fun saveLevels_duplicate() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "40"), draft(3, "40")), Locale.US)
+    advanceUntilIdle()
+    assertEquals(listOf(FieldError(Field.LEVEL_EDGE, Problem.DUPLICATE, 2)), state.errors)
+    assertTrue(state.settings.colorLevels.isEmpty())
+  }
+
+  @Test fun saveLevels_ukrainianDecimals() = runTest(dispatcher) {
+    val uk = Locale.forLanguageTag("uk")
+    val vm = start()
+    vm.saveLevels(LevelValue.VOLTAGE, listOf(draft(1, ""), draft(2, "52,5")), uk)
+    vm.saveLevels(LevelValue.BATTERY_TEMPERATURE, listOf(draft(1, ""), draft(2, "-5")), uk)
+    advanceUntilIdle()
+    assertEquals(listOf<Double?>(null, 52.5), froms(LevelValue.VOLTAGE))
+    assertEquals(listOf<Double?>(null, -5.0), froms(LevelValue.BATTERY_TEMPERATURE))
+  }
+
+  @Test fun saveLevels_roundsToShownPrecision() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.DELTA, listOf(draft(1, ""), draft(2, "12.4")), Locale.US)
+    advanceUntilIdle()
+    assertEquals(listOf<Double?>(null, 12.0), froms(LevelValue.DELTA))
+  }
+
+  @Test fun resetLevels_refillsDefaults_keepsOn() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(draft(1, ""), draft(2, "33")), Locale.US)
+    advanceUntilIdle()
+    vm.resetLevels(LevelValue.SOC)
+    advanceUntilIdle()
+    val saved = state.settings.customLevels(LevelValue.SOC)
+    assertTrue(saved.on)
+    assertEquals(listOf(null, 20.0, 40.0, 100.0), saved.levels.map { it.from })
   }
 }

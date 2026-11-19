@@ -2,6 +2,7 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.MAX_LEVELS
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 
@@ -22,6 +23,7 @@ enum class Field {
   BALANCING,
   INTERVAL,
   CAPACITY,
+  LEVEL_EDGE,
 }
 
 enum class Problem {
@@ -29,6 +31,7 @@ enum class Problem {
   INVALID,
   OUT_OF_RANGE,
   TOO_MANY,
+  DUPLICATE,
 }
 
 data class FieldError(val field: Field, val problem: Problem, val index: Int? = null)
@@ -81,6 +84,25 @@ object Validation {
     if (ah == null) return emptyList()
     return if (ah > 0.0 && ah <= MAX_CAPACITY_AH) emptyList()
     else listOf(FieldError(Field.CAPACITY, Problem.OUT_OF_RANGE))
+  }
+
+  /**
+   * Checks the edges of one value's levels, in the order shown. Index 0 is the first level, which
+   * has no edge, so it is never checked. A `null` edge is a missing one; an edge equal to an
+   * earlier one is reported at the later index.
+   */
+  fun levels(edges: List<Double?>): List<FieldError> {
+    val errors = mutableListOf<FieldError>()
+    if (edges.size > MAX_LEVELS) errors += FieldError(Field.LEVEL_EDGE, Problem.TOO_MANY)
+    val seen = mutableSetOf<Double>()
+    for (i in 1 until edges.size) {
+      val edge = edges[i]
+      when {
+        edge == null -> errors += FieldError(Field.LEVEL_EDGE, Problem.REQUIRED, i)
+        !seen.add(edge) -> errors += FieldError(Field.LEVEL_EDGE, Problem.DUPLICATE, i)
+      }
+    }
+    return errors
   }
 
   fun isConfigured(s: Settings, hasToken: Boolean): Boolean =

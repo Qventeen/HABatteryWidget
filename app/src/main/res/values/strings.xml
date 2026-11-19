@@ -177,6 +177,8 @@
     <string name="field_interval_invalid">Enter a whole number of minutes</string>
     <string name="field_capacity_invalid">Enter a number</string>
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
+    <string name="field_level_edge_invalid">Enter a number</string>
+    <string name="field_level_edge_duplicate">Two levels can\'t start at the same value</string>
 
     <!-- Sample values for the widget picker preview. -->
     <string name="preview_time_left">17h 16m</string>

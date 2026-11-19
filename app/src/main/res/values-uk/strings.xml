@@ -167,6 +167,8 @@
     <string name="field_interval_invalid">Введіть ціле число хвилин</string>
     <string name="field_capacity_invalid">Введіть число</string>
     <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
+    <string name="field_level_edge_invalid">Введіть число</string>
+    <string name="field_level_edge_duplicate">Два рівні не можуть починатися з одного значення</string>
 
     <string name="preview_time_left">17г і 16х</string>
     <string name="preview_kwh">4,58 кВт·год</string>

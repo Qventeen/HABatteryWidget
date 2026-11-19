@@ -3,12 +3,14 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.Field.CAPACITY
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.INTERVAL
+import io.lumensync.habattery.domain.Field.LEVEL_EDGE
 import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
 import io.lumensync.habattery.domain.Field.PREFIX
 import io.lumensync.habattery.domain.Field.URL
 import io.lumensync.habattery.domain.Field.TEMPERATURES
 import io.lumensync.habattery.domain.Field.TOTAL_CAPACITY
+import io.lumensync.habattery.domain.Problem.DUPLICATE
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
 import io.lumensync.habattery.domain.Problem.REQUIRED
@@ -137,4 +139,21 @@ class ValidationTest {
       listOf(FieldError(MOSFET_TEMPERATURE, INVALID)),
       entities(EntitySettings(charge = "sensor.soc", mosfetTemperature = "bad id")),
     )
+
+  @Test
+  fun levels() {
+    assertEquals(emptyList<FieldError>(), Validation.levels(listOf(null, 20.0, 40.0)))
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, DUPLICATE, 2)),
+      Validation.levels(listOf(null, 20.0, 20.0)),
+    )
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, REQUIRED, 1)),
+      Validation.levels(listOf(null, null)),
+    )
+    assertTrue(
+      FieldError(LEVEL_EDGE, TOO_MANY) in
+        Validation.levels(listOf(null, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
+    )
+  }
 }
