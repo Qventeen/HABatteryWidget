@@ -1,8 +1,8 @@
 # Inverter widget — concept
 
 - **Date:** 2026-11-18. Detailing started 2026-11-19.
-- **Status:** concept, detailing in progress. Not approved. Open questions
-  in §5; a plan is written only after approval.
+- **Status:** detailed, after the builder check (2026-11-19); waiting for
+  the owner's approval. A plan is written only after approval.
 - **Set:** `0012`, epic `epic-widget-improvements`. Code later on branch
   `0012-inverter-widget`, from the epic.
 - **Builds on:** 0009 (both connection ways must fetch the new values), 0010
@@ -122,9 +122,10 @@ to how one widget looks is per widget.
   that widget type, then its sections (display and fonts, colours,
   entities; capacity on Battery only).
 - **Top bar:** ↻ Refresh now as an icon (shared: one sync).
-- **First tab:** a tapped widget opens its own tab; when setup is needed
-  (no connection), the app opens on Common. Each tab keeps its own scroll
-  position.
+- **First tab:** a tapped widget opens its own tab; placing a strip opens
+  the app on the Inverter tab (`MainActivity` is the configure activity of
+  both widget types; my call). When the connection or token is missing,
+  the app opens on Common. Each tab keeps its own scroll position.
 - **No on/off switch per widget:** blank inverter entities mean "not
   used": nothing is fetched and the strip shows "set up".
 - **Build order:** 0010 and 0011 are built as planned (flat list). 0012
@@ -192,13 +193,45 @@ to how one widget looks is per widget.
   icon choice now; it can reuse the picker later.
 - **Tap:** opens the app on the Inverter tab. No ↻ and no auto-refresh
   switch on the strip; the battery widget and the app have them.
-- **One sync for both:** the same run fetches battery and inverter values.
-  Admin: three more lines in the same template (still one request). User
-  token: three more GETs.
+- **One sync, two independent parts** (owner picked option A after the
+  builder check, 2026-11-19: today one ESP32 feeds both, but later the
+  inverter may get its own device). The same run fetches battery and
+  inverter values: admin, three more lines in the same template (still
+  one request); user token, three more GETs. The answer is judged per
+  part:
+  - Each part has its own result: a reading or an error. A missing or
+    `unavailable` battery charge fails only the battery part; the inverter
+    part still updates, and its mode and voltage notifications still run.
+    The same holds the other way.
+  - A failure that touches both (HA not reachable, token rejected, no
+    connection set) fails both parts.
+  - "Configured" is checked per widget: the battery part needs the
+    battery entities, the inverter part needs the three inverter
+    entities. A part that is not configured is not fetched and its widget
+    shows "set up". The sync runs when at least one part is configured.
+  - 0011 level alerts run per part, only on that part's fresh reading.
+  - `WidgetRefresher.refreshAll()` redraws both widget types; the widgets
+    still render from local data only (0001 §13).
+  - This changes the 0001 sync core (`SyncBattery`, the source port, the
+    cache) and the 0009 states path; the template and states parsers stop
+    failing the whole answer on a missing charge.
 - **Stored reading:** a new `InverterReading` next to `BatteryReading` in
-  the cache, so the battery widget code is not touched.
+  the cache, each with its own last good reading and its own error. The
+  existing cache error stays the battery's; the inverter's is a new field
+  with a default, so old cache files read fine (my call; no cache
+  migration, as in 0011).
 - **Stored settings:** the battery fields stay where they are; a new
   `inverter` block is added. Old files get its defaults, so no migration.
+  Defaults (0001 §14): entity ids and the prefix are blank; the mode style
+  and the icon choices are display choices, so they default to the design
+  values (as in 0003, 0007, 0008; my call).
+- **Font sizes** (my call, 0007 model): two sliders on the Inverter tab,
+  mode word and values, 25–100 %, step 5, 50 % = the design size, with
+  "Reset sizes". The home-screen scale is shared (Common): both widgets
+  sit on the same launcher.
+- **Levels** (0010 model): two new level values, grid input voltage and
+  output voltage, whole volts, no level icons, with the §3.4 defaults
+  and their own "Custom colours" copy on the Inverter tab.
 - **Each widget works alone:** a strip placed without inverter entities
   shows "set up", as the battery widget does.
 
@@ -236,7 +269,14 @@ is red: the house has no power.
 - **Voltage bells:** 0011 model. Default bell: grid input "Low"
   (undervoltage, 100–206 V). The grid "No grid" level has no bell by
   default, so a grid loss gives one notification (the mode change), not
-  two.
+  two. Re-arm margin (0011 §3.3, fixed per value): 5 V for both voltages
+  (about 2 %; proposed after the builder check, waiting for the owner's
+  OK): the grid often hovers near 207 V, so a smaller margin would ring
+  the "Low" bell many times a day.
+- **One notification slot per value** (0011): the two voltages and the
+  mode each get their own slot; a new notification replaces the older
+  one of the same value. The last mode is stored like the 0011 level
+  state (first value only stored).
 
 ## 4. Catches
 
@@ -247,7 +287,8 @@ is red: the house has no power.
   size quirks apply (some launchers draw widgets smaller; home-screen scale,
   spec 0007).
 - Partial failure: the battery is fine but an inverter sensor is missing →
-  only that part shows "no value".
+  only that part shows "no value"; a failed battery part never freezes
+  the strip (§3.3).
 - The user-token path makes more requests per sync.
 - A grid loss changes the mode and the grid voltage at once (see §3.5).
 
@@ -261,6 +302,13 @@ is red: the house has no power.
    channel per mode (§3.5).
 5. ~~The full mode list?~~ Decided: the owner's ESPHome YAML (§2.1) and
    the mode table (§3.3).
+6. ~~Battery and inverter sync: one result or two?~~ Decided (owner,
+   builder check): two independent parts (§3.3).
+7. Re-arm margin for the two voltages: 5 V proposed (§3.5), waiting for
+   the owner's OK.
+8. Plan note: the 0012 plan names types from the 0009–0011 plans
+   (`LevelValue`, `LevelAlerts`, `LevelNotifier`, the states source); it
+   gets a quick re-check once 0011 is built, in case names changed.
 
 ## 6. Non-goals
 
