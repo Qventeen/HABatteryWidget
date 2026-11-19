@@ -1,25 +1,45 @@
 # Inverter widget — concept
 
-- **Date:** 2026-11-18
-- **Status:** concept. Not approved. It needs a detailing session before a
-  plan is written.
+- **Date:** 2026-11-18. Detailing started 2026-11-19.
+- **Status:** concept, detailing in progress. Not approved. Open questions
+  in §5; a plan is written only after approval.
 - **Set:** `0012`, epic `epic-widget-improvements`. Code later on branch
   `0012-inverter-widget`, from the epic.
 - **Builds on:** 0009 (both connection ways must fetch the new values), 0010
-  (colour levels for the inverter values), 0005 and 0006 (layouts, app
-  preview). On one topic the newest spec wins.
-- **Design:** new rows on the design canvas (v6). It is an extension: the
-  existing boards and the v5 battery widget stay unchanged.
+  (colour levels for the inverter values), 0011 (bells), 0005 and 0006
+  (layouts, app preview), 0007 (font sizes, home-screen scale). On one topic
+  the newest spec wins.
+- **Design:** new rows on the design canvas (v6), or a fit check on the
+  phone in experiment mode (open, §5). It is an extension: the existing
+  boards and the v5 battery widget stay unchanged.
 
-## 1. Intent (owner, 2026-11-18)
+## 1. Intent
 
-Show the inverter on the home screen: its current state or operating mode,
-the grid input voltage, and the output voltage that goes to the house. It is
-a strip, 4×1 or 5×1 (vertical 1×3 or 1×4 was also named), placed above or
-below the battery widget. It is a separate widget, not physically part of
-the battery widget, but it is set up and placed from the same app and gets
-its data from the same Home Assistant sync. No new app. Its values get
-colours by levels (for example by voltage), the same way as in 0010.
+Owner, 2026-11-18: show the inverter on the home screen: its operating
+mode, the grid input voltage, and the output voltage that goes to the
+house. It is a strip placed above or below the battery widget. It is a
+separate widget, but it is set up from the same app and gets its data from
+the same Home Assistant sync. No new app.
+
+Owner, 2026-11-19:
+
+- **Why:** to see at a glance whether the house runs from the grid or from
+  the battery system, and what voltage the house gets.
+- **The inverter model does not matter.** The three entities come from the
+  same ESP32 (ESPHome, the owner's config) as the BMS values.
+- **One app configures several widgets.** The inverter widget gets the same
+  tools as the battery widget: a preview, its own text sizes, its own
+  colour levels by value, and bells.
+- **Sizes:** 3×1, 4×1 and 5×1.
+- **Mode:** shown as the HA text, as it is ("Off-Grid"); no colour levels.
+- **Voltages:** grid input and output voltage get colour levels (0010
+  model), which also show present / absent (0 V).
+- **Notifications:** the voltages get bells (0011 model). New: a
+  notification when the mode changes; it tells that power at home was lost
+  or came back.
+- **App layout:** a bottom navigation bar with three tabs, Battery |
+  Inverter | Common (owner picked tabs over folding blocks and separate
+  screens, and asked for the bar at the bottom).
 
 ## 2. Today
 
@@ -31,58 +51,135 @@ colours by levels (for example by voltage), the same way as in 0010.
   only `BatteryWidget`.
 - Admin token: one template (`TemplateBuilder`) for all battery entities.
   User token (0009): one `GET /api/states/<id>` per entity.
+- The app is one scrolling list of folding section cards (`SectionCard`):
+  preview, actions (Refresh now, Add widget), Widget, Appearance,
+  Connection, Token, Entities, Refresh, Notifications, Capacity. A tapped
+  widget picks the preview tab (`EXTRA_TAPPED_WIDGET_ID`).
+- Battery entity ids come from a prefix (`EntityFill`): `bps_bms` →
+  `sensor.bps_bms_total_voltage`; every id can be typed by hand.
 
-## 3. Proposed shape (a proposal, not decided)
+### 2.1 Inverter entities (owner's screenshots, 2026-11-19)
+
+| Value | Default id (prefix `<p>`) | Seen state | Notes |
+|---|---|---|---|
+| Mode | `sensor.<p>_operation_mode` | `Off-Grid` | Text; no unit, no device class |
+| Grid input voltage | `sensor.<p>_main_voltage` | `0.0 V` (grid off) | `voltage`, V, 1 decimal |
+| Output voltage | `sensor.<p>_output_voltage` | `230.0 V` | `voltage`, V, 1 decimal |
+
+The owner's prefix is `bps_inverter`. With no grid the input reads exactly
+`0.0 V`.
+
+## 3. Shape
+
+Owner decisions are in §1. The points below are my calls; the owner read
+them ("very good", 2026-11-19) and can still correct them.
+
+### 3.1 Shared or per widget
+
+Rule: what belongs to the data source or the phone is shared; what belongs
+to how one widget looks is per widget.
+
+| Setting | Where |
+|---|---|
+| HA address, token (0009) | Common |
+| Refresh interval, auto-refresh | Common (one sync updates both widgets) |
+| Theme, language | Common |
+| Home-screen scale (0007) | Common (same launcher for both widgets) |
+| Notifications main switch, Android permission | Common |
+| Entities, prefix, Fill | Per widget |
+| Display choices, font sizes | Per widget |
+| Colour levels and bells | Per value, so per widget |
+| Palette, icon set | Shared, in code (0010 base layer) |
+| Capacity | Battery only |
+
+### 3.2 App
+
+- **Bottom navigation bar:** Battery | Inverter | Common, icon + label.
+  Each widget tab: its preview with size tabs, "Add to home screen" for
+  that widget type, then its sections (display and fonts, colours,
+  entities; capacity on Battery only).
+- **Top bar:** ↻ Refresh now as an icon (shared: one sync).
+- **First tab:** a tapped widget opens its own tab; when setup is needed
+  (no connection), the app opens on Common. Each tab keeps its own scroll
+  position.
+- **No on/off switch per widget:** blank inverter entities mean "not
+  used": nothing is fetched and the strip shows "set up".
+- **Build order:** 0010 and 0011 are built as planned (flat list). 0012
+  then moves the sections into the tabs; the approved plans stay as they
+  are.
+
+### 3.3 Widget and data
 
 - **A second widget type:** `InverterWidgetReceiver` with its own
-  `inverter_widget_info.xml` (minimum 4×1, horizontal resize) and its own
-  preview. The launcher lists it as a second widget of the app. Class names
-  are fixed once shipped (home screens store them).
+  `inverter_widget_info.xml` (minimum 3×1, horizontal resize) and its own
+  preview. Class names are fixed once shipped (home screens store them).
+- **Strip content:** mode, grid input voltage, output voltage; small icons
+  instead of labels (exact icons picked later). Voltages in whole volts
+  ("230 V").
+- **Tap:** opens the app on the Inverter tab. No ↻ and no auto-refresh
+  switch on the strip; the battery widget and the app have them.
 - **One sync for both:** the same run fetches battery and inverter values.
-  Admin: more lines in the same template (still 1 request). User: about 3
-  more GETs. `refreshAll` redraws both widget types.
-- **New settings:** inverter entities for the mode (a text state), grid
-  input voltage and output voltage; sensor search (Fill) like for the
-  battery if possible.
-- **Stored reading:** a new `InverterReading` next to `BatteryReading` in the
-  cache, so the battery widget code is not touched.
-- **Colours:** 0010 bands for the two voltages. For the mode, a colour per
-  mode text (for example "Line" green, "Battery" amber, "Fault" red): a text
-  → colour map, not number bands.
-- **App:** an "Inverter" section for its entities; the preview card gets a
-  tab for the strip.
+  Admin: three more lines in the same template (still one request). User
+  token: three more GETs.
+- **Stored reading:** a new `InverterReading` next to `BatteryReading` in
+  the cache, so the battery widget code is not touched.
+- **Stored settings:** the battery fields stay where they are; a new
+  `inverter` block is added. Old files get its defaults, so no migration.
 - **Each widget works alone:** a strip placed without inverter entities
   shows "set up", as the battery widget does.
 
+### 3.4 Default voltage levels
+
+Based on EN 50160 (230 V ±10 % = 207–253 V; Ukraine uses it as DSTU
+EN 50160).
+
+| Level | From | Grid input | Output |
+|---|---|---|---|
+| No grid / No power | 0 V | Info (blue) | Critical (red) |
+| Low | 100 V | Warning (amber) | Warning (amber) |
+| Normal | 207 V | Normal (green) | Normal (green) |
+| High | 254 V | Warning (amber) | Warning (amber) |
+
+Grid 0 V is blue, not red: an outage is normal for this system and the mode
+already says "Off-Grid"; red for hours would be alarm fatigue. Output 0 V
+is red: the house has no power.
+
+### 3.5 Notifications
+
+- **Mode change:** on by default. Any change of the mode text notifies;
+  the first value after install is only stored (0011 rule). A change to or
+  from `unavailable` / `unknown` (the ESP32 is offline) is not a mode
+  change.
+- **Voltage bells:** 0011 model. The grid "No grid" level has no bell by
+  default, so a grid loss gives one notification (the mode change), not
+  two.
+
 ## 4. Catches
 
-- The mode is text, and its values depend on the inverter's HA integration
-  (not known yet). Long texts must fit a 4×1 strip.
+- The mode is free text from the ESP32. Long texts must fit a 3×1 strip.
 - One cell row is short. Fonts must fit (`TextFit` exists), and the launcher
   size quirks apply (some launchers draw widgets smaller; home-screen scale,
   spec 0007).
 - Partial failure: the battery is fine but an inverter sensor is missing →
   only that part shows "no value".
 - The user-token path makes more requests per sync.
+- A grid loss changes the mode and the grid voltage at once (see §3.5).
 
-## 5. Open questions (for the detailing session)
+## 5. Open questions
 
-1. Which inverter and which HA integration? The exact entities for the mode,
-   grid input voltage and output voltage; more values (output power, load %,
-   grid frequency)?
-2. Sizes: 4×1 and 5×1 only, or also vertical 1×3 and 1×4?
-3. Mode text: show the HA text as is, or map it to own short words
-   (translated)?
-4. Mode colours: which modes, which colours?
-5. Default voltage levels (for example < 200 V red, 200–210 V amber,
-   210–245 V green, > 250 V red)?
-6. What does a tap on the strip do: open the app at the inverter section, or
-   refresh?
-7. ↻ and the auto-refresh toggle on the strip too, or only on the battery
-   widget?
-8. Should a mode change (grid loss) notify? See 0011, question 2.
+1. The owner started a word for one more notification case: overvoltage,
+   undervoltage, overload or inverter fault? The first two fit the voltage
+   bells; the last two need more ESP32 entities.
+2. 3×1 content: A, the same content with smaller text, or C, mode and
+   output voltage only? (B, the mode as an icon, is out: the mode is shown
+   as plain text.)
+3. Design: new canvas rows (v6), or a fit check on the phone in experiment
+   mode as for 0010?
+4. The mode-change notification: title, text and channel type.
+5. The longest mode text the ESP32 can send (for the fit check).
 
 ## 6. Non-goals
 
 - No change to the battery widget's layouts or its design boards.
 - No second app and no second sync schedule.
+- No mapping of mode texts to own words, colours or icons.
