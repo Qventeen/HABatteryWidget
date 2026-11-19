@@ -149,12 +149,12 @@ to how one widget looks is per widget.
 
   | ESP32 text | Word EN / UK | Colour | Default icon | Channel |
   |---|---|---|---|---|
-  | `Power On` | power on / увімкнення | grey | `power_settings_new` | Info |
-  | `Standby` | standby / очікування | teal | `mode_standby` | Warning |
+  | `Power On` | power on / запуск | grey | `power_settings_new` | Info |
+  | `Standby` | standby / пауза | teal | `mode_standby` | Warning |
   | `Mains` | main / мережа | blue | tower (`mdi` `transmission-tower`) | Info |
   | `Off-Grid` | battery / батарея | green | `battery_charging_full` | Warning |
   | `Bypass` | bypass / байпас | violet | `alt_route` | Info |
-  | `Charging` | charging / заряджання | amber | `charger` | Info |
+  | `Charging` | charging / заряд | amber | `charger` | Info |
   | `Fault` | fault / аварія | red | `error` | Critical |
   | any other text | the HA text as it is | grey | `help` | Info |
 
@@ -165,7 +165,9 @@ to how one widget looks is per widget.
   palette; `Power On` has no light colour, so grey. Standby gets the
   Warning channel because the inverter most likely gives no output then
   (owner agreed). `unavailable` / `unknown` → "no value". Words are
-  translated (EN + UK, 0001 §12).
+  translated (EN + UK, 0001 §12); the Ukrainian words are short on
+  purpose so they fit the "icon + word" pill at 4×1 (design v7; owner
+  picked "запуск", "пауза", "заряд" over the longer words).
 - **Icon choice:** ten slots: one per mode row above (the defaults there)
   plus grid input voltage (tower) and output voltage (`home`); owner's
   picks from two candidate sheets, 2026-11-19. One shared inverter icon set
