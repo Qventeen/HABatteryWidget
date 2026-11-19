@@ -5,13 +5,16 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.SyncError
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 
 internal sealed interface HaReply {
   data class Body(val text: String) : HaReply
@@ -48,11 +51,10 @@ internal class HaHttp(private val client: OkHttpClient) {
       UrlPolicy.Verdict.INVALID -> HaReply.Failure(SyncError.Unreachable)
       // PUBLIC_HTTP is allowed: the settings screen warns, and the user decides.
       UrlPolicy.Verdict.OK,
-      UrlPolicy.Verdict.PUBLIC_HTTP ->
-        withContext(Dispatchers.IO) { execute(connection.url, path, token, method) }
+      UrlPolicy.Verdict.PUBLIC_HTTP -> execute(connection.url, path, token, method)
     }
 
-  private fun execute(
+  private suspend fun execute(
     baseUrl: String,
     path: List<String>,
     token: String,
@@ -70,8 +72,31 @@ internal class HaHttp(private val client: OkHttpClient) {
         // OkHttp refuses control or non-ASCII characters in a header: no server accepts this token.
         return HaReply.Failure(SyncError.Unauthorized)
       }
-    return try {
-      client.newCall(request).execute().use { response ->
+    return client.newCall(request).await()
+  }
+
+  /**
+   * Runs the call on OkHttp's threads. Cancelling the coroutine cancels the call, so a running
+   * request stops at once instead of holding its caller until the call timeout.
+   */
+  private suspend fun Call.await(): HaReply =
+    suspendCancellableCoroutine { continuation ->
+      continuation.invokeOnCancellation { cancel() }
+      enqueue(
+        object : Callback {
+          override fun onFailure(call: Call, e: IOException) =
+            continuation.resume(HaReply.Failure(SyncError.Unreachable))
+
+          // Any other exception goes to the caller: thrown here, it would leave the caller waiting.
+          override fun onResponse(call: Call, response: Response) =
+            continuation.resumeWith(runCatching { reply(response) })
+        }
+      )
+    }
+
+  private fun reply(response: Response): HaReply =
+    try {
+      response.use {
         when {
           response.code == 401 || response.code == 403 -> HaReply.Failure(SyncError.Unauthorized)
           !response.isSuccessful -> HaReply.Failure(SyncError.HttpError(response.code))
@@ -81,5 +106,4 @@ internal class HaHttp(private val client: OkHttpClient) {
     } catch (_: IOException) {
       HaReply.Failure(SyncError.Unreachable)
     }
-  }
 }

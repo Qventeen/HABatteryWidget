@@ -88,16 +88,16 @@ class StatesSource(
   /**
    * The state text of each id; null when HA has no such entity (404) or the entity has no state.
    *
-   * @throws StateFailure on any other failure. It cancels the requests still waiting, so the first
-   *   failure ends the sync.
+   * @throws StateFailure on any other failure. It cancels the other requests, running or waiting,
+   *   so the first failure ends the sync.
    */
   private suspend fun readStates(
     connection: ConnectionSettings,
     ids: List<String>,
     token: String,
   ): Map<String, String?> {
-    // HaHttp blocks in execute(), which OkHttp's per-host limit does not cover. Without this gate
-    // every id would open its own connection (and TLS handshake) at once.
+    // Holds one sync to 4 open requests (connections and TLS handshakes). OkHttp's per-host limit
+    // does not do this: it is client-wide and 5 by default.
     val gate = Semaphore(MAX_PARALLEL)
     return coroutineScope {
         ids

@@ -5,6 +5,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.test.runTest
@@ -82,7 +83,7 @@ class StatesSourceTest {
 
   @After fun tearDown() = servers.forEach { runCatching { it.close() } }
 
-  private fun server(dispatcher: StatesDispatcher): MockWebServer {
+  private fun server(dispatcher: Dispatcher): MockWebServer {
     val s = MockWebServer()
     s.dispatcher = dispatcher
     s.start()
@@ -232,6 +233,40 @@ class StatesSourceTest {
     val s = server(states)
     assertEquals(SyncError.Unauthorized, fetch(s.base()).error())
     assertTrue("requests: ${s.requestCount}", s.requestCount < 18)
+  }
+
+  @Test
+  fun failure_cancelsRunningRequests() = runTest {
+    // Timeouts longer than the held answer, so only cancelling the call can end it early.
+    val patientClient =
+      client
+        .newBuilder()
+        .readTimeout(10, TimeUnit.SECONDS)
+        .callTimeout(10, TimeUnit.SECONDS)
+        .build()
+    val patient = StatesSource(patientClient) { 1234L }
+    val held = state("-500").newBuilder().headersDelay(5, TimeUnit.SECONDS).build()
+    val heldArrived = CountDownLatch(1)
+    // The 401 waits until the held request has reached the server, so that request is running.
+    val dispatcher =
+      object : Dispatcher() {
+        override fun dispatch(request: RecordedRequest): MockResponse =
+          if (request.url.encodedPath == "/api/states/sensor.watts") {
+            heldArrived.countDown()
+            held
+          } else {
+            heldArrived.await(2, TimeUnit.SECONDS)
+            reply(401)
+          }
+      }
+    val s = server(dispatcher)
+    val entities = EntitySettings(charge = "sensor.soc", power = "sensor.watts")
+    val started = System.nanoTime()
+    val result = patient.fetch(ConnectionSettings(s.base()), entities, "t0ken")
+    val millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
+    assertEquals(SyncError.Unauthorized, result.error())
+    assertEquals(2, s.requestCount)
+    assertTrue("took $millis ms", millis < 2_000)
   }
 
   @Test
