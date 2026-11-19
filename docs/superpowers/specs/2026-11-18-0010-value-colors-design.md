@@ -3,6 +3,9 @@
 - **Date:** 2026-11-18
 - **Status:** approved by the owner (2026-11-18), after the builder check.
   Plan: `docs/superpowers/plans/2026-11-18-0010-value-colors.md`.
+  Amended by the owner on 2026-11-20 after the phone check of the
+  Colours section: Default and Edit replace the "Custom colours" switch
+  (§3.5, §3.6), and the colour picker gets smaller (§3.4).
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -26,7 +29,8 @@ Additions (owner, 2026-11-18, after reading this concept):
 - The app has a **minimal default set** of levels and colours (the levels
   that exist today). They work by default. (The defaults were then set
   value by value, §3.3 and §3.5.)
-- **A switch per value** turns customisation on or off. With customisation
+- **A switch per value** turns customisation on or off (replaced on
+  2026-11-20 by the Default and Edit buttons, §3.5). With customisation
   on, the owner can add more levels.
 - When customisation is turned on, the levels are **already filled with the
   defaults**, ready to edit.
@@ -105,10 +109,10 @@ One level system for all values, in two layers. A level is a band of values
     untouched names (my call, changed while planning: the code that copies
     the levels has no access to translated strings, and this way names stay
     in the app language).
-  - The default list of each value is in code and is not stored. "Custom
-    colours" on gives the value its own **copy** of the defaults (§3.5), not
-    a live link: a later app version may change a default, and the owner's
-    own list stays as set.
+  - The default list of each value is in code and is not stored. Edit and
+    Save give the value its own **copy** of the defaults (§3.5), not a live
+    link: a later app version may change a default, and the owner's own
+    list stays as set.
 - **Why dynamic, not a fixed count:** the values need different counts
   (SOC 4, battery temperature 5, MOSFET 3, voltage 1). Prior art: the
   Grafana threshold editor (a base colour plus steps you add and remove).
@@ -128,7 +132,8 @@ One level system for all values, in two layers. A level is a band of values
     [+ Add level]                    [Reset to default]
   ```
 
-  The 🔔 column comes with 0011.
+  The 🔔 column comes with 0011. Since 2026-11-20 the switch is replaced by
+  the Default and Edit buttons, and this list is the editor (§3.5, §3.6).
 
 ### 3.2 What gets coloured (owner, 2026-11-18, round 1)
 
@@ -196,6 +201,12 @@ One level system for all values, in two layers. A level is a band of values
   plain pill background; its ring shade is new.
 - Orange, teal and violet are free choices for custom levels (for example
   orange as a step between amber and red); no default uses them.
+- **The picker in the app** (owner, 2026-11-20, after the phone check: nine
+  chips were too many and wrapped to a second line): "no colour" (plain),
+  drawn as an empty ring like the icon picker's "none", not as a white
+  disc, then red, orange, amber, green, blue, violet and grey: eight chips,
+  one row. Teal is not offered for levels; it stays in the palette because
+  0012 colours the inverter's Standby mode with it.
 
   | Colour | Default for | Light text / bg / ring | Dark text / bg / ring |
   |---|---|---|---|
@@ -217,7 +228,7 @@ One level system for all values, in two layers. A level is a band of values
 - Red and orange look close on the light card; they read apart best side
   by side.
 
-### 3.5 Defaults, custom switch and reset
+### 3.5 Defaults, Default and Edit
 
 - **Built-in default set:** each value has default bands in code; they are
   not stored in settings.
@@ -255,7 +266,7 @@ One level system for all values, in two layers. A level is a band of values
     already shows the charge.
   - Average cell (owner, 2026-11-18): uses the voltage levels (default or
     custom) with each edge divided by the cell count, so it gets the same
-    names and colours; it has no own list, switch or reset. Example, 16
+    names and colours; it has no own list and no buttons. Example, 16
     cells: a voltage edge of 52.0 V is 3.25 V per cell.
     - The cell count is worked out per reading: total voltage ÷ average cell
       voltage, rounded to a whole number (my call; the app has no cell-count
@@ -286,31 +297,45 @@ One level system for all values, in two layers. A level is a band of values
       is always grey, as today.
     - No capacity known: the pill keeps today's direction colours
       (charging green, discharging amber).
-    - "Custom colours" on copies the defaults as plain amps, worked out
-      from the capacity at that moment and rounded to whole amps; the owner
-      then edits amps (my call). With no capacity known at that moment, the
+    - Edit copies the defaults as plain amps, worked out from the
+      capacity at that moment and rounded to whole amps; the owner then
+      edits amps (my call). With no capacity known at that moment, the
       copy is one level per direction in today's direction colours (charge
       green, discharge amber), and the owner adds levels (my call).
     - Orange is not in the defaults; the owner can add it as a custom step.
     - No current level notifies by default (0011).
     - Look change: today any charge is green and any discharge amber; now
       both are blue below 0.2 C, green from 0.2 C, and so on.
-- **"Custom colours" switch per value**, off by default:
-  - Off: the value uses the built-in default bands.
-  - First time on: the value's own bands are created as a copy of the
-    defaults, ready to edit; the owner adds, removes and edits bands.
-  - Off again: the defaults apply; the own bands stay stored, so the next
-    "on" brings them back (owner, 2026-11-18).
-- **"Reset to default" per value:** replaces the own bands with a fresh copy
-  of the defaults; the switch stays on. It asks for confirmation first,
-  because own names and edges are lost (owner, 2026-11-18). Today's "Reset
-  sizes" does not ask; this is the one reset in the app that asks.
+- **Default and Edit per value** (owner, 2026-11-20, after the phone
+  check; this replaces the "Custom colours" switch of 2026-11-18, which
+  made the screen long and gave no sign that Save worked):
+  - Each value shows its levels as tags (§3.6) and two buttons, **Default**
+    and **Edit**. A value without own bands uses the built-in default
+    bands.
+  - **Edit** opens the editor on a draft: the value's own bands, or a copy
+    of the defaults when it has none (as the first "on" did). The owner
+    adds, removes and edits bands. One editor is open at a time.
+  - **Save** stores the draft as the value's own bands, closes the editor
+    and shows the tags again, so the owner sees that it worked. With a
+    field error the editor stays open and nothing is stored.
+  - **Cancel** closes the editor and stores nothing.
+  - **Reset** (in the editor; was "Reset to default") fills the draft with
+    a fresh copy of the defaults. Nothing is stored until Save, so it does
+    not ask.
+  - **Default** (enabled only when the value has own bands) asks first,
+    then deletes the own bands; the value uses the built-in defaults again.
+    No hidden copy is kept (the switch's "off keeps the bands for the next
+    on" of 2026-11-18 is dropped). This is the one action in the Colours
+    section that asks.
+  - Stored data does not change: `CustomLevels.on` now means "the value
+    has own bands"; Default stores an empty `CustomLevels`. The field was
+    never released, so no migration is needed (0001 §14).
 - No switch for all values at once in the first version (owner,
   2026-11-18): the defaults work without any setup.
 
 ### 3.6 Code and storage
 
-- Stored values (the switch, the own bands) default to `false` and an empty
+- Stored values (`on`, the own bands) default to `false` and an empty
   list, so the "defaults are empty" rule (0001 §14) holds.
 - **Domain:** a pure function picks the level for a value; `WidgetModel`
   takes the levels from settings (or the defaults) instead of
@@ -325,12 +350,19 @@ One level system for all values, in two layers. A level is a band of values
   values: SOC, voltage, charge current, discharge current, cell delta,
   battery temperature, MOSFET. The voltage row also shows each edge per
   cell (for example "from 52.0 V · 3.25 V per cell") when the cell count is
-  known (my call). A tap opens that value's level list, one value open at a
-  time; there the owner adds, removes and edits
-  levels (edge, name, type, colour chip, icon; sketch in §3.1). The app
-  preview (0006) at the top shows the result live; it scrolls out of view
-  while editing lower down (accepted: levels are set once and rarely
-  changed).
+  known (my call). Since 2026-11-20 (owner, after the phone check):
+  - Each value shows its name, the Default and Edit buttons (§3.5) and its
+    levels as **tags**: small pills in the widget's own look (the level's
+    text colour on its soft background; plain levels as the plain pill),
+    with the level icon for temperatures and the text "below 20 % · Low"
+    or "from 20 % · Getting low". The type word is left out; the colour
+    shows it.
+  - Edit puts the editor in place of the tags (edge, name, type, colour
+    chip, icon; sketch in §3.1). The edge and name fields look the same:
+    both have their label on the border and a hint inside.
+  - The app preview (0006) at the top shows the saved result; it scrolls
+    out of view while editing lower down (accepted: levels are set once
+    and rarely changed).
 - **Stored** in `Settings` as a new field with a default; no migration is
   needed for a new field (0001 §14).
 
@@ -362,7 +394,7 @@ One level system for all values, in two layers. A level is a band of values
   fit-check task. The palette is fixed in §3.4.
 - A missing value (sensor not set or unavailable) draws in the plain colour.
 - More settings make the app screen longer; the Colours section stays
-  collapsed and opens one value at a time (§3.6).
+  collapsed and opens one editor at a time (§3.6).
 
 ## 5. Questions (all decided, 2026-11-18)
 
@@ -385,11 +417,15 @@ One level system for all values, in two layers. A level is a band of values
 8. ~~Should a band also carry a notification?~~ Decided (owner,
    2026-11-18): yes, added by 0011.
 9. ~~Turning the switch off: keep or drop the own bands?~~ Decided (owner,
-   2026-11-18): keep them for the next "on".
+   2026-11-18): keep them for the next "on". Replaced (owner, 2026-11-20):
+   no switch; Default deletes the own bands after asking (§3.5).
 10. ~~Does reset turn the switch off; does it confirm?~~ Decided (owner,
     2026-11-18): it only refills the bands, and it asks for confirmation.
+    Replaced (owner, 2026-11-20): Reset refills the editor's draft and does
+    not ask; Default asks (§3.5).
 11. ~~Also one switch for all values?~~ Decided (owner, 2026-11-18): no,
-    one switch per value only.
+    one switch per value only (since 2026-11-20: Default and Edit per
+    value, §3.5).
 12. ~~Current/power levels in amps or watts?~~ Decided (owner,
     2026-11-18): amps for both displays.
 13. ~~Default current levels?~~ Decided (owner, 2026-11-18): C-rate edges
