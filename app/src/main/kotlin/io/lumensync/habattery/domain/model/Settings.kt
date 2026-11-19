@@ -46,8 +46,22 @@ object HomeScale {
   fun factor(percent: Int): Float = percent / 100f
 }
 
+/** Which kind of Home Assistant token the user stored (spec 0009). */
 @Serializable
-data class ConnectionSettings(val url: String = "")
+enum class TokenType {
+  ADMIN,
+  USER,
+}
+
+@Serializable
+data class ConnectionSettings(
+  val url: String = "",
+  /**
+   * Not user data, so the default is [TokenType.ADMIN], not empty (0001 §14 exception, like
+   * [ThemeChoice]): settings stored before this field load as ADMIN.
+   */
+  val tokenType: TokenType = TokenType.ADMIN,
+)
 
 @Serializable
 data class EntitySettings(

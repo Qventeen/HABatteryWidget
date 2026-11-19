@@ -8,6 +8,7 @@ import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.ThemeChoice
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
@@ -111,6 +112,21 @@ class MainViewModelTest {
     assertTrue(widgets.refreshes >= 1)
     assertTrue(scheduler.applied.last().second)
     assertEquals(2, source.calls)
+  }
+
+  @Test fun saveConnection_keepsTokenType() = runTest(dispatcher) {
+    val vm =
+      start(
+        initial =
+          configuredSettings()
+            .copy(connection = ConnectionSettings("http://ha.local:8123", TokenType.USER)),
+      )
+    vm.saveConnection("http://other.local:8123")
+    advanceUntilIdle()
+    assertEquals(
+      ConnectionSettings("http://other.local:8123", TokenType.USER),
+      state.settings.connection,
+    )
   }
 
   @Test fun saveConnection_publicHttp_saves() = runTest(dispatcher) {

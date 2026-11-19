@@ -13,6 +13,7 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
+import io.lumensync.habattery.domain.model.TokenType
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -40,7 +41,8 @@ class StoredJsonV1Test {
         "schemaVersion": 1,
         "settings": {
           "connection": {
-            "url": "http://ha.local:8123"
+            "url": "http://ha.local:8123",
+            "tokenType": "USER"
           },
           "entities": {
             "prefix": "bps_bms",
@@ -73,7 +75,7 @@ class StoredJsonV1Test {
         settings =
           Settings(
             connection =
-              ConnectionSettings(url = "http://ha.local:8123"),
+              ConnectionSettings(url = "http://ha.local:8123", tokenType = TokenType.USER),
             entities =
               EntitySettings(
                 prefix = "bps_bms",
@@ -99,6 +101,16 @@ class StoredJsonV1Test {
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun settingsWithoutTokenType_loadAsAdmin() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"connection":{"url":"http://ha.local:8123"}}}""",
+      )
+    assertEquals(TokenType.ADMIN, record.settings.connection.tokenType)
   }
 
   @Test

@@ -82,8 +82,11 @@ class MainViewModel(
   }
 
   fun saveConnection(url: String) {
-    val connection = ConnectionSettings(url.trim())
-    save(Validation.connection(connection), syncAfter = true) { it.copy(connection = connection) }
+    val trimmed = url.trim()
+    // Validation reads only the URL; the stored token type is kept by copying inside the update.
+    save(Validation.connection(ConnectionSettings(trimmed)), syncAfter = true) {
+      it.copy(connection = it.connection.copy(url = trimmed))
+    }
   }
 
   fun saveToken(token: String) {
