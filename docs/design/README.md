@@ -1,5 +1,8 @@
 # Widget design — 4×2, 5×2, 4×3, 5×3
 
+The inverter strip (3×1, 4×1, 5×1, spec 0012) has its own section at the
+end, "Inverter strip".
+
 Status: approved (v5), built in spec 0005 (layouts); temperatures in
 spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
 
@@ -192,3 +195,63 @@ The app theme is green; no blue.
   and the card.
 - The app shows the real widget as its preview (Glance `compose()`, spec
   0006), so there is no second drawing to keep in sync.
+
+## Inverter strip — 3×1, 4×1, 5×1 (v6)
+
+Status: approved (v6, 2026-11-19), for spec 0012; not built yet. A second
+widget with its own settings tab. On the canvas the v6 row has one column
+per size and eight lines (both mode styles, light, dark, sync error).
+
+| File | What it is |
+|---|---|
+| `inverter-3x1.png` | 3×1, card 194 × 59 dp: eight frames (see the captions) |
+| `inverter-4x1.png` | 4×1, card 267 × 59 dp: the same eight frames |
+| `inverter-5x1.png` | 5×1, card 340 × 59 dp: the same eight frames |
+
+Rendered at 2× scale, like the battery pictures.
+
+![Inverter 3×1](inverter-3x1.png)
+![Inverter 4×1](inverter-4x1.png)
+![Inverter 5×1](inverter-5x1.png)
+
+### Strip layout
+
+All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
+
+| Part | 3×1 | 4×1 | 5×1 |
+|---|---|---|---|
+| Card | 194 × 59 | 267 × 59 | 340 × 59 |
+| Card padding, corner radius | 8, 20 | 8, 20 | 8, 20 |
+| Gap between pills | 3 | 4 | 6 |
+| Mode pill, big icon | icon 28, padding 8 | icon 32, padding 12 | icon 32, padding 12 |
+| Mode pill, icon + word | icon 20 over the word (10.5), word ≤ 38 wide | icon 22, gap 5, word 14, ≤ 56 wide | icon 22, gap 5, word 16, ≤ 90 wide |
+| Voltage pills | icon 11, gap 2, value 12.5 | icon 13, gap 2, value 15 | icon 15, gap 2, value 18 |
+
+- Left to right: mode pill, grid input voltage, output voltage, and on a
+  sync error a red ⚠ (14) at the end. Every pill is 43 high and fully
+  round; the mode pill keeps its content width (at least 43), the two
+  voltage pills share the rest equally (weights). Text weight 500.
+- Voltages in whole volts ("230 V"). A long mode word ends with "…".
+- No update time and no buttons on the strip; a tap opens the app on the
+  Inverter tab.
+
+### Icons and colours
+
+- Defaults: mode "main" = tower (Material Design Icons
+  `transmission-tower`), mode "battery" = `battery_charging_full`, other
+  mode = `help`; grid voltage = tower, output voltage = `home`. The user
+  can change each icon (spec 0012).
+- Mode colours (text and soft background from the 0010 palette): battery
+  green, main blue, other modes from the mode table, unknown text grey.
+- Voltage pills by the 0012 default levels: below 100 V grid blue / output
+  red, from 100 amber, from 207 green, from 254 amber.
+
+### Strip states
+
+| State | Strip |
+|---|---|
+| Normal | As above |
+| Sync error, data exists | The last values stay; a red ⚠ at the end (content description "Sync error: <reason>") |
+| Unknown mode text | `help` icon, grey; with "icon + word" the HA text as it is |
+| No data yet / setup needed | The tower icon and one line: "No data" or "Set up in the app"; no button |
+
