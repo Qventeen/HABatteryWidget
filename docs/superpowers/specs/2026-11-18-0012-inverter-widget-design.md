@@ -214,6 +214,12 @@ is red: the house has no power.
   notification names the new mode and takes its colour (owner): to
   "battery" green, to "main" blue, other modes their table colour. Title
   "Inverter: <word>", body "Measured at hh:mm" (0011 style; my call).
+  Channel by type (0011: one channel per type; owner picked option A):
+  to "battery" (power lost) the Warning channel, so it pops up with
+  sound; to "main" (power back) the Info channel, sound without pop-up;
+  fault the Critical channel; other modes Info. The small icon follows
+  the type (0011); the accent is the mode colour, not the type's
+  default colour.
   Any change of the mode text notifies;
   the first value after install is only stored (0011 rule). A change to or
   from `unavailable` / `unknown` (the ESP32 is offline) is not a mode
