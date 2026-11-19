@@ -198,21 +198,26 @@ The app theme is green; no blue.
 
 ## Inverter strip — 3×1, 4×1, 5×1 (v6)
 
-Status: approved (v6, 2026-11-19), for spec 0012; not built yet. A second
-widget with its own settings tab. On the canvas the v6 row has one column
-per size and eight lines (both mode styles, light, dark, sync error).
+Status: approved (v6 layout and v7 modes, 2026-11-19), for spec 0012; not
+built yet. A second widget with its own settings tab. On the canvas the v6
+row has one column per size and eight lines (both mode styles, light,
+dark, sync error); the v7 row shows every inverter mode at 4×1 (big icon
+light and dark, icon + word in English and Ukrainian) and at 3×1
+(Ukrainian words).
 
 | File | What it is |
 |---|---|
 | `inverter-3x1.png` | 3×1, card 194 × 59 dp: eight frames (see the captions) |
 | `inverter-4x1.png` | 4×1, card 267 × 59 dp: the same eight frames |
 | `inverter-5x1.png` | 5×1, card 340 × 59 dp: the same eight frames |
+| `inverter-modes.png` | Every mode (rows) in five looks (columns), cards only |
 
 Rendered at 2× scale, like the battery pictures.
 
 ![Inverter 3×1](inverter-3x1.png)
 ![Inverter 4×1](inverter-4x1.png)
 ![Inverter 5×1](inverter-5x1.png)
+![Inverter modes](inverter-modes.png)
 
 ### Strip layout
 
@@ -224,7 +229,7 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 | Card padding, corner radius | 8, 20 | 8, 20 | 8, 20 |
 | Gap between pills | 3 | 4 | 6 |
 | Mode pill, big icon | icon 28, padding 8 | icon 32, padding 12 | icon 32, padding 12 |
-| Mode pill, icon + word | icon 20 over the word (10.5), word ≤ 38 wide | icon 22, gap 5, word 14, ≤ 56 wide | icon 22, gap 5, word 16, ≤ 90 wide |
+| Mode pill, icon + word | icon 20 over the word (10.5), word ≤ 44 wide | icon 22, gap 5, word 14, ≤ 72 wide | icon 22, gap 5, word 16, ≤ 90 wide |
 | Voltage pills | icon 11, gap 2, value 12.5 | icon 13, gap 2, value 15 | icon 15, gap 2, value 18 |
 
 - Left to right: mode pill, grid input voltage, output voltage, and on a
@@ -237,12 +242,21 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 
 ### Icons and colours
 
-- Defaults: mode "main" = tower (Material Design Icons
-  `transmission-tower`), mode "battery" = `battery_charging_full`, other
-  mode = `help`; grid voltage = tower, output voltage = `home`. The user
-  can change each icon (spec 0012).
-- Mode colours (text and soft background from the 0010 palette): battery
-  green, main blue, other modes from the mode table, unknown text grey.
+- Modes (spec 0012 mode table; text and soft background from the 0010
+  palette; the user can change each icon):
+
+  | ESP32 text | Word EN / UK | Colour | Icon |
+  |---|---|---|---|
+  | `Power On` | power on / запуск | grey | `power_settings_new` |
+  | `Standby` | standby / пауза | teal | `mode_standby` |
+  | `Mains` | main / мережа | blue | tower (`mdi` `transmission-tower`) |
+  | `Off-Grid` | battery / батарея | green | `battery_charging_full` |
+  | `Bypass` | bypass / байпас | violet | `alt_route` |
+  | `Charging` | charging / заряд | amber | `charger` |
+  | `Fault` | fault / аварія | red | `error` |
+  | any other text | the HA text as it is | grey | `help` |
+
+- Voltage icons: grid input = tower, output = `home`.
 - Voltage pills by the 0012 default levels: below 100 V grid blue / output
   red, from 100 amber, from 207 green, from 254 amber.
 
