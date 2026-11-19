@@ -9,9 +9,9 @@
   (colour levels for the inverter values), 0011 (bells), 0005 and 0006
   (layouts, app preview), 0007 (font sizes, home-screen scale). On one topic
   the newest spec wins.
-- **Design:** new rows on the design canvas (v6), or a fit check on the
-  phone in experiment mode (open, §5). It is an extension: the existing
-  boards and the v5 battery widget stay unchanged.
+- **Design:** new rows on the existing design canvas (owner, 2026-11-19).
+  It is an extension: the existing boards and the v5 battery widget stay
+  unchanged.
 
 ## 1. Intent
 
@@ -31,12 +31,19 @@ Owner, 2026-11-19:
   tools as the battery widget: a preview, its own text sizes, its own
   colour levels by value, and bells.
 - **Sizes:** 3×1, 4×1 and 5×1.
-- **Mode:** shown as the HA text, as it is ("Off-Grid"); no colour levels.
+- **Mode:** today the ESP32 sends only `On-Grid` and `Off-Grid`. The strip
+  shows own short lowercase words, "battery" (Off-Grid) and "main"
+  (On-Grid), or a bigger, nice icon instead; the design compares both.
+  Colours follow the inverter's own light: Off-Grid (on battery) green,
+  On-Grid (from the grid) blue. The inverter has more modes; the strip
+  should show them as icons too. (This replaces "show the HA text as it
+  is", said earlier the same day.)
 - **Voltages:** grid input and output voltage get colour levels (0010
   model), which also show present / absent (0 V).
-- **Notifications:** the voltages get bells (0011 model). New: a
-  notification when the mode changes; it tells that power at home was lost
-  or came back.
+- **Notifications:** the voltages get bells (0011 model); undervoltage of
+  the grid input should notify. New: a notification when the mode
+  changes; it tells that power at home was lost or came back.
+- **Output voltage** is shown, although it is almost always 230 V.
 - **App layout:** a bottom navigation bar with three tabs, Battery |
   Inverter | Common (owner picked tabs over folding blocks and separate
   screens, and asked for the bar at the bottom).
@@ -116,6 +123,12 @@ to how one widget looks is per widget.
 - **Strip content:** mode, grid input voltage, output voltage; small icons
   instead of labels (exact icons picked later). Voltages in whole volts
   ("230 V").
+- **Mode table (in code):** HA text → word, icon, colour, matched ignoring
+  case. `On-Grid` → "main", grid icon, blue; `Off-Grid` → "battery",
+  battery icon, green. More rows when the full mode list is known. Any
+  other text → a neutral grey icon and the HA text as it is, so a new mode
+  from the ESP32 still shows. `unavailable` / `unknown` → "no value".
+  Words are translated (EN + UK, 0001 §12).
 - **Tap:** opens the app on the Inverter tab. No ↻ and no auto-refresh
   switch on the strip; the battery widget and the app have them.
 - **One sync for both:** the same run fetches battery and inverter values.
@@ -150,13 +163,16 @@ is red: the house has no power.
   the first value after install is only stored (0011 rule). A change to or
   from `unavailable` / `unknown` (the ESP32 is offline) is not a mode
   change.
-- **Voltage bells:** 0011 model. The grid "No grid" level has no bell by
+- **Voltage bells:** 0011 model. Default bell: grid input "Low"
+  (undervoltage, 100–206 V). The grid "No grid" level has no bell by
   default, so a grid loss gives one notification (the mode change), not
   two.
 
 ## 4. Catches
 
-- The mode is free text from the ESP32. Long texts must fit a 3×1 strip.
+- The mode is free text from the ESP32. An unknown text must still fit a
+  3×1 strip (owner's grid: 3×1 ≈ 194 × 59 dp, 4×1 ≈ 267 × 59, 5×1 ≈
+  340 × 59; from the v5 card sizes).
 - One cell row is short. Fonts must fit (`TextFit` exists), and the launcher
   size quirks apply (some launchers draw widgets smaller; home-screen scale,
   spec 0007).
@@ -167,19 +183,16 @@ is red: the house has no power.
 
 ## 5. Open questions
 
-1. The owner started a word for one more notification case: overvoltage,
-   undervoltage, overload or inverter fault? The first two fit the voltage
-   bells; the last two need more ESP32 entities.
-2. 3×1 content: A, the same content with smaller text, or C, mode and
-   output voltage only? (B, the mode as an icon, is out: the mode is shown
-   as plain text.)
-3. Design: new canvas rows (v6), or a fit check on the phone in experiment
-   mode as for 0010?
+1. ~~One more notification case?~~ Decided (owner): undervoltage (§3.5).
+2. Mode on the strip: a bigger icon only, or icon + word? Decided on the
+   design canvas; it also settles the 3×1 content.
+3. ~~Design?~~ Decided (owner): new rows on the existing canvas.
 4. The mode-change notification: title, text and channel type.
-5. The longest mode text the ESP32 can send (for the fit check).
+5. The full mode list: the inverter model was not found online, so it
+   comes from the owner's ESPHome YAML (the `operation_mode` mapping) or
+   the nameplate model.
 
 ## 6. Non-goals
 
 - No change to the battery widget's layouts or its design boards.
 - No second app and no second sync schedule.
-- No mapping of mode texts to own words, colours or icons.
