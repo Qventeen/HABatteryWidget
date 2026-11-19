@@ -9,9 +9,9 @@
   (colour levels for the inverter values), 0011 (bells), 0005 and 0006
   (layouts, app preview), 0007 (font sizes, home-screen scale). On one topic
   the newest spec wins.
-- **Design:** new rows on the existing design canvas (owner, 2026-11-19).
-  It is an extension: the existing boards and the v5 battery widget stay
-  unchanged.
+- **Design:** v6 rows on the existing design canvas, **approved by the
+  owner (2026-11-19)**; the default look is the "big icon" line. It is an
+  extension: the existing boards and the v5 battery widget stay unchanged.
 
 ## 1. Intent
 
@@ -136,7 +136,7 @@ to how one widget looks is per widget.
   instead of labels (exact icons picked later). Voltages in whole volts
   ("230 V").
 - **Mode style (display choice):** one setting for all sizes, default
-  "icon + word" (the word says what the mode means). At 3×1 the word goes
+  "big icon" (owner, 2026-11-19: looks better as the default). At 3×1 the word goes
   under the icon. Stored like the battery display choices (0007: defaults
   to the design value). Design: canvas v6, lines 1–4.
 - **Icon choice:** five slots, each with a default (owner's picks from the
@@ -167,6 +167,13 @@ to how one widget looks is per widget.
   of the set, the same component as the 0010 level icon picker; the
   preview changes at once. The battery widget gets no icon choice now; it
   can reuse the picker later.
+- **Mode colours** follow the inverter's own RGB light. The owner's
+  inverter is an Anenji 5 kW Wi-Fi; the default RGB table of a sibling
+  model (ANJ-11KW-48V-WIFI-P manual) gives: inverter (battery) mode green,
+  AC (grid) mode blue, standby cyan, fault red, bypass purple, charging
+  yellow. Mapped to the 0010 palette: green, blue, teal, red, violet,
+  amber. Rows for the modes beyond On-Grid / Off-Grid are added once the
+  exact ESP32 texts are known (owner's ESPHome YAML).
 - **Mode table (in code):** HA text → word, icon, colour, matched ignoring
   case. `On-Grid` → "main", the "main" icon slot, blue; `Off-Grid` →
   "battery", the "battery" icon slot, green. More rows when the full mode
@@ -203,7 +210,11 @@ is red: the house has no power.
 
 ### 3.5 Notifications
 
-- **Mode change:** on by default. Any change of the mode text notifies;
+- **Mode change:** on by default; not configurable for now (owner). The
+  notification names the new mode and takes its colour (owner): to
+  "battery" green, to "main" blue, other modes their table colour. Title
+  "Inverter: <word>", body "Measured at hh:mm" (0011 style; my call).
+  Any change of the mode text notifies;
   the first value after install is only stored (0011 rule). A change to or
   from `unavailable` / `unknown` (the ESP32 is offline) is not a mode
   change.
@@ -232,9 +243,9 @@ is red: the house has no power.
    user picks it in the app (§3.3).
 3. ~~Design?~~ Decided (owner): new rows on the existing canvas.
 4. The mode-change notification: title, text and channel type.
-5. The full mode list: the inverter model was not found online, so it
-   comes from the owner's ESPHome YAML (the `operation_mode` mapping) or
-   the nameplate model.
+5. The full mode list: the manual gives the modes (inverter, AC, standby,
+   fault, bypass, charging); the exact ESP32 texts come from the owner's
+   ESPHome YAML (`operation_mode` mapping).
 
 ## 6. Non-goals
 
