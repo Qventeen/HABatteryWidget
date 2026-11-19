@@ -44,6 +44,9 @@ Owner, 2026-11-19:
   the grid input should notify. New: a notification when the mode
   changes; it tells that power at home was lost or came back.
 - **Output voltage** is shown, although it is almost always 230 V.
+- **More values later:** more inverter parameters may join this widget in
+  the future. Keep `InverterReading`, the settings block and the strip
+  layout open for more values; no generic "any entity" engine now.
 - **App layout:** a bottom navigation bar with three tabs, Battery |
   Inverter | Common (owner picked tabs over folding blocks and separate
   screens, and asked for the bar at the bottom).
