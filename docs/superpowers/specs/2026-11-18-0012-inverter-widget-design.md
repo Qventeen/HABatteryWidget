@@ -143,47 +143,51 @@ to how one widget looks is per widget.
   icon" (owner, 2026-11-19: looks better as the default). At 3×1 the word
   goes under the icon. Stored like the battery display choices (0007:
   defaults to the design value). Design: canvas v6, lines 1–4.
-- **Icon choice:** five slots, each with a default (owner's picks from the
-  candidate sheet, 2026-11-19):
+- **Mode table (in code; owner approved 2026-11-19):** the ESP32 text
+  (matched ignoring case) → word, colour, default icon, notification
+  channel.
 
-  | Slot | Default |
-  |---|---|
-  | Mode "main" (`Mains`) | tower (`mdi` `transmission-tower`) |
-  | Mode "battery" (Off-Grid) | `battery_charging_full` |
-  | Other mode | `help` |
-  | Grid input voltage | tower |
-  | Output voltage | `home` |
+  | ESP32 text | Word EN / UK | Colour | Default icon | Channel |
+  |---|---|---|---|---|
+  | `Power On` | power on / увімкнення | grey | `power_settings_new` | Info |
+  | `Standby` | standby / очікування | teal | `mode_standby` | Warning |
+  | `Mains` | main / мережа | blue | tower (`mdi` `transmission-tower`) | Info |
+  | `Off-Grid` | battery / батарея | green | `battery_charging_full` | Warning |
+  | `Bypass` | bypass / байпас | violet | `alt_route` | Info |
+  | `Charging` | charging / заряджання | amber | `charger` | Info |
+  | `Fault` | fault / аварія | red | `error` | Critical |
+  | any other text | the HA text as it is | grey | `help` | Info |
 
-  One shared inverter icon set (my call: one simple rule, any slot can use
-  any icon), the candidates from the sheet: tower, `location_city`,
-  `electrical_services`, `power_input`, `electric_meter`, `factory`,
-  `apartment`, `offline_bolt`, `bolt`, `electric_bolt`,
-  `battery_charging_full`, `battery_full`, `battery_5_bar`,
-  `battery_android_full`, `battery_horiz_075`, `energy_savings_leaf`,
-  `nest_eco_leaf`, `energy_program_saving`, `solar_power`, `help`,
-  `question_mark`, `device_unknown`, `pending`, `info`, `power`, `home`,
-  `house`, `cottage`, `home_work`, `home-lightning-bolt` (`mdi`), `outlet`.
-  Material Symbols Rounded and Material Design Icons are both Apache-2.0
-  (repo licence rule); each drawable names its source and licence, as in
-  0010. Choices are stored by stable names (an enum, like 0010's
-  `LevelIcon`); an unknown stored name falls back to the slot's default.
-  Each icon has an EN and UK name for screen readers. The picker is a grid
-  of the set, the same component as the 0010 level icon picker; the
-  preview changes at once. The battery widget gets no icon choice now; it
-  can reuse the picker later.
-- **Mode colours** follow the inverter's own RGB light. The owner's
-  inverter is an Anenji 5 kW Wi-Fi; the default RGB table of a sibling
-  model (ANJ-11KW-48V-WIFI-P manual) gives: inverter (battery) mode green,
-  AC (grid) mode blue, standby cyan, fault red, bypass purple, charging
-  yellow. Mapped to the 0010 palette: green, blue, teal, red, violet,
-  amber. Rows for the modes beyond Mains / Off-Grid are added once the
-  exact ESP32 texts are known (owner's ESPHome YAML).
-- **Mode table (in code):** HA text → word, icon, colour, matched ignoring
-  case. `Mains` → "main", the "main" icon slot, blue; `Off-Grid` →
-  "battery", the "battery" icon slot, green. More rows when the full mode
-  list is known. Any other text → the "other mode" icon slot, grey, and the
-  HA text as it is, so a new mode from the ESP32 still shows. `unavailable`
-  / `unknown` → "no value". Words are translated (EN + UK, 0001 §12).
+  Colours follow the inverter's own RGB light. The owner's inverter is an
+  Anenji 5 kW Wi-Fi; the default RGB table of a sibling model
+  (ANJ-11KW-48V-WIFI-P manual) gives battery green, AC (grid) blue, standby
+  cyan, fault red, bypass purple, charging yellow, mapped here to the 0010
+  palette; `Power On` has no light colour, so grey. Standby gets the
+  Warning channel because the inverter most likely gives no output then
+  (owner agreed). `unavailable` / `unknown` → "no value". Words are
+  translated (EN + UK, 0001 §12).
+- **Icon choice:** ten slots: one per mode row above (the defaults there)
+  plus grid input voltage (tower) and output voltage (`home`); owner's
+  picks from two candidate sheets, 2026-11-19. One shared inverter icon set
+  (my call: one simple rule, any slot can use any icon), the candidates
+  from both sheets (45): tower, `location_city`, `electrical_services`,
+  `power_input`, `electric_meter`, `factory`, `apartment`, `offline_bolt`,
+  `bolt`, `electric_bolt`, `battery_charging_full`, `battery_full`,
+  `battery_5_bar`, `battery_android_full`, `battery_horiz_075`,
+  `energy_savings_leaf`, `nest_eco_leaf`, `energy_program_saving`,
+  `solar_power`, `help`, `question_mark`, `device_unknown`, `pending`,
+  `info`, `power`, `home`, `house`, `cottage`, `home_work`,
+  `home-lightning-bolt` (`mdi`), `outlet`, `power_settings_new`,
+  `restart_alt`, `mode_standby`, `bedtime`, `alt_route`, `call_split`,
+  `swap_horiz`, `charger`, `battery_charging_90`, `ev_charger`, `error`,
+  `report`, `warning`, `dangerous`. Material Symbols Rounded and Material
+  Design Icons are both Apache-2.0 (repo licence rule); each drawable names
+  its source and licence, as in 0010. Choices are stored by stable names
+  (an enum, like 0010's `LevelIcon`); an unknown stored name falls back to
+  the slot's default. Each icon has an EN and UK name for screen readers.
+  The picker is a grid of the set, the same component as the 0010 level
+  icon picker; the preview changes at once. The battery widget gets no
+  icon choice now; it can reuse the picker later.
 - **Tap:** opens the app on the Inverter tab. No ↻ and no auto-refresh
   switch on the strip; the battery widget and the app have them.
 - **One sync for both:** the same run fetches battery and inverter values.
@@ -218,16 +222,15 @@ is red: the house has no power.
   notification names the new mode and takes its colour (owner): to
   "battery" green, to "main" blue, other modes their table colour. Title
   "Inverter: <word>", body "Measured at hh:mm" (0011 style; my call).
-  Channel by type (0011: one channel per type; owner picked option A):
-  to "battery" (power lost) the Warning channel, so it pops up with
-  sound; to "main" (power back) the Info channel, sound without pop-up;
-  fault the Critical channel; other modes Info. The small icon follows
-  the type (0011); the accent is the mode colour, not the type's
-  default colour.
-  Any change of the mode text notifies;
-  the first value after install is only stored (0011 rule). A change to or
-  from `unavailable` / `unknown` (the ESP32 is offline) is not a mode
-  change.
+  Channel by type (0011: one channel per type; owner picked option A),
+  per the mode table (§3.3): to "battery" (power lost) and to "standby"
+  the Warning channel, so they pop up with sound; to "main" (power back)
+  the Info channel, sound without pop-up; fault the Critical channel;
+  other modes Info. The small icon follows the type (0011); the accent is
+  the mode colour, not the type's default colour. Any change of the mode
+  text notifies; the first value after install is only stored (0011
+  rule). A change to or from `unavailable` / `unknown` (the ESP32 is
+  offline) is not a mode change.
 - **Voltage bells:** 0011 model. Default bell: grid input "Low"
   (undervoltage, 100–206 V). The grid "No grid" level has no bell by
   default, so a grid loss gives one notification (the mode change), not
@@ -252,10 +255,10 @@ is red: the house has no power.
 2. ~~Mode on the strip: big icon or icon + word?~~ Decided (owner): the
    user picks it in the app (§3.3).
 3. ~~Design?~~ Decided (owner): new rows on the existing canvas.
-4. The mode-change notification: title, text and channel type.
-5. The full mode list: the manual gives the modes (inverter, AC, standby,
-   fault, bypass, charging); the exact ESP32 texts come from the owner's
-   ESPHome YAML (`operation_mode` mapping).
+4. ~~The mode-change notification?~~ Decided (owner): title, text and
+   channel per mode (§3.5).
+5. ~~The full mode list?~~ Decided: the owner's ESPHome YAML (§2.1) and
+   the mode table (§3.3).
 
 ## 6. Non-goals
 
