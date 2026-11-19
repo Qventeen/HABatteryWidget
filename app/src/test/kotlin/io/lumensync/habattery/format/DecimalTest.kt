@@ -18,6 +18,10 @@ class DecimalTest {
         listOf("", "abc", "12abc", " ").forEach { assertNull(parseDecimal(it, Locale.US)) }
 
     @Test
+    fun parseDecimal_rejectsTypedNumberBeyondDouble() =
+        assertNull(parseDecimal("9".repeat(400), Locale.US))
+
+    @Test
     fun formatDecimal_usesLocaleSeparatorWithoutGrouping() {
         assertEquals("314,5", formatDecimal(314.5, Locale.forLanguageTag("uk")))
         assertEquals("1000", formatDecimal(1000.0, Locale.US))
