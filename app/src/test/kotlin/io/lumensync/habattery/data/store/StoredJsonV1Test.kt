@@ -153,6 +153,21 @@ class StoredJsonV1Test {
     assertEquals(CustomLevels(), record.settings.customLevels(LevelValue.SOC))
   }
 
+  /** A later build may store enum values this one lacks (spec 0012): they read as defaults, the file survives. */
+  @Test
+  fun unknownEnumValuesInColorLevels_loadAsDefaults_andKeepTheRestOfTheSettings() {
+    val json =
+      """{"schemaVersion":1,"settings":{"connection":{"url":"http://ha.local:8123"},"colorLevels":{""" +
+        """"GRID_VOLTAGE":{"on":true,"levels":[{"defaultName":"NO_GRID"}]},""" +
+        """"DELTA":{"on":true,"levels":[{"id":3,"from":5.0,"icon":"BOLT","color":"PINK","type":"FATAL","name":"X"}]}}}}"""
+    val record = StoreJson.decodeFromString(SettingsRecord.serializer(), json)
+    assertEquals("http://ha.local:8123", record.settings.connection.url)
+    assertEquals(
+      listOf(ColorLevel(3, 5.0, LevelType.NORMAL, null, null, "X")),
+      record.settings.customLevels(LevelValue.DELTA).levels,
+    )
+  }
+
   @Test
   fun settingsWithoutTokenType_loadAsAdmin() {
     val record =
