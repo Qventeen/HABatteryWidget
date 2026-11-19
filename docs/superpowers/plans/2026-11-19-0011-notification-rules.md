@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-18-0011-notification-rules-design.md` (read it before each task; §3.x below points into it). It builds on 0010: read `docs/superpowers/specs/2026-11-18-0010-value-colors-design.md` and its plan `docs/superpowers/plans/2026-11-18-0010-value-colors.md`; their types (`LevelValue`, `ColorLevel`, `DefaultLevels`, `LevelPicker`, `LevelDraft`, `ColorsSection`) exist when this plan starts.
 
+**Amended 2026-11-20 (0010 changed before merge):** the "Custom colours" switch is gone; each value has Default and Edit (0010 §3.5). In Task 5 read "with custom on" as "in the editor", "the read-only default list" as "the tags", and `resetLevels` as the editor's Reset (draft only, nothing stored) plus `useDefaults(value)` (deletes own levels). Check the built names before Task 1.
+
 ## Global Constraints
 
 - Start only after 0010 is merged into `epic-widget-improvements`. Branch `0011-notification-rules` from the epic; merge back after review.
@@ -17,7 +19,7 @@
 - `domain/` imports nothing from `android.*`.
 - Stored data (0001 §14): the settings rename is a meaning change after a release, so `SettingsRecord.schemaVersion` goes 1 → 2 with a `DataMigration` and a test on a saved v1 sample. The cache change only adds and removes fields: `CacheRecord` stays at 1, no migration.
 - Default bells (spec §3.1): on for SOC Low and Full, battery temperature Freezing and Hot, MOSFET Hot; off everywhere else ("Getting low" stays off).
-- Re-arm margins (spec §3.3): SOC 2 %, voltage 0.1 V, current 0.05 C (1 A without a capacity), delta 3 mV, temperatures 2 °C. Editable per value with custom on: `CustomLevels.margin` (null = the default; amended 2026-11-19).
+- Re-arm margins (spec §3.3): SOC 2 %, voltage 0.1 V, current 0.05 C (1 A without a capacity), delta 3 mV, temperatures 2 °C. Editable per value in the value's editor (Edit, 0010 §3.5 as amended 2026-11-20): `CustomLevels.margin` (null = the default; amended 2026-11-19).
 - Channels (spec §3.5): ids `level_critical`, `level_warning`, `level_normal`, `level_info`; Critical and Warning `IMPORTANCE_HIGH`, Normal and Info `IMPORTANCE_DEFAULT`; each created again before each post (0001 §12); the old `full_charge` channel is deleted.
 - Every visible text goes in `res/values/strings.xml` and `res/values-uk/strings.xml` in the same commit (`NoHardcodedTextTest`).
 - Code comments: use the `writing-code-comments` skill before writing them.

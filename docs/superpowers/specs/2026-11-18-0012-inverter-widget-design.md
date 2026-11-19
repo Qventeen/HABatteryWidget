@@ -232,7 +232,7 @@ to how one widget looks is per widget.
   sit on the same launcher.
 - **Levels** (0010 model): two new level values, grid input voltage and
   output voltage, whole volts, no level icons, with the §3.4 defaults
-  and their own "Custom colours" copy on the Inverter tab.
+  and their own copy through Edit (0010 §3.5) on the Inverter tab.
 - **Each widget works alone:** a strip placed without inverter entities
   shows "set up", as the battery widget does.
 
@@ -273,7 +273,7 @@ is red: the house has no power.
   two. Re-arm margin (0011 §3.3): default 5 V for both voltages (owner,
   2026-11-19; about 2 %): the grid often hovers near 207 V, so a smaller
   margin would ring the "Low" bell many times a day. Editable per value
-  with custom on, like every 0011 value (owner made margins editable the
+  in the value's editor, like every 0011 value (owner made margins editable the
   same day; 0011 spec and plan amended).
 - **One notification slot per value** (0011): the two voltages and the
   mode each get their own slot; a new notification replaces the older
