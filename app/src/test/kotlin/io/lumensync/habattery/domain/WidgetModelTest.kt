@@ -131,7 +131,7 @@ class WidgetModelTest {
     assertEquals(Flow.NONE to LevelColor.GREY, flow(-0.1))
     assertEquals(Flow.UP to LevelColor.GREEN, flow(0.11))
     assertEquals(Flow.DOWN to LevelColor.AMBER, flow(-0.11))
-    assertEquals(Flow.NONE to LevelColor.GREY, flow(null))
+    assertEquals(Flow.NONE to LevelColor.PLAIN, flow(null))
   }
 
   @Test
@@ -174,6 +174,21 @@ class WidgetModelTest {
   }
 
   @Test
+  fun main_missingShownValue_isPlain() {
+    val power = settings(display = DisplaySettings(mainValue = MainValue.POWER), capacityAh = 100.0)
+    // The pill shows "—", so no level colour, although the current alone would give one.
+    assertEquals(plain, data(sample.copy(currentA = -85.0, powerW = null), power).mainLook)
+  }
+
+  @Test
+  fun main_missingCurrentWithPower_isGrey() {
+    val power = settings(display = DisplaySettings(mainValue = MainValue.POWER))
+    val d = data(sample.copy(currentA = null, powerW = -265.0), power)
+    assertEquals(Flow.NONE, d.flow)
+    assertEquals(LevelLook(LevelColor.GREY), d.mainLook)
+  }
+
+  @Test
   fun `time left from the overview`() = assertEquals(942.minutes, data().timeLeft)
 
   @Test
@@ -212,6 +227,22 @@ class WidgetModelTest {
     assertEquals(LevelLook(LevelColor.GREEN), cell(3.2495)) // shown as 3.250 V
     assertEquals(plain, cell(3.2494))
     assertEquals(plain, cell(null))
+  }
+
+  @Test
+  fun averageCell_perCellEdgeIsRoundedLikeTheShownNumber() {
+    fun levels(edge: Double) =
+      custom(
+        LevelValue.VOLTAGE,
+        ColorLevel(id = 1, type = LevelType.NORMAL, color = LevelColor.PLAIN),
+        ColorLevel(id = 2, from = edge, type = LevelType.NORMAL),
+      )
+    fun cell(total: Double, average: Double, edge: Double) =
+      data(sample.copy(totalVoltageV = total, averageCellVoltageV = average), levels(edge)).averageCellLook
+    // 35.70 / 14 = 2.5500000000000003, yet the shown 2.550 V is on the edge.
+    assertEquals(LevelLook(LevelColor.GREEN), cell(35.7, 2.55, 35.7))
+    // 52.90 / 16 = 3.30625: the settings show 3.306 V, so the shown 3.306 V is on the edge.
+    assertEquals(LevelLook(LevelColor.GREEN), cell(52.9, 3.306, 52.9))
   }
 
   @Test
@@ -308,7 +339,7 @@ class WidgetModelTest {
     assertNull(bare.balancing)
     assertNull(bare.timeLeft)
     assertEquals(plain, bare.voltageLook)
-    assertEquals(LevelLook(LevelColor.GREY), bare.mainLook)
+    assertEquals(plain, bare.mainLook)
     assertEquals(plain, bare.averageCellLook)
     assertEquals(plain, bare.deltaLook)
     assertEquals(plain, bare.mosfetLook)

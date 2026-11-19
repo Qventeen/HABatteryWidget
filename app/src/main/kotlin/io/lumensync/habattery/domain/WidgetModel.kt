@@ -87,6 +87,11 @@ sealed interface WidgetModel {
         shown?.let { LevelPicker.pick(levels(value), it).toLook(value) } ?: PLAIN
       // The pill may show watts; its levels are in amps either way.
       val amps = r.currentA?.let { abs(it).roundTo(1) }
+      val mainValue =
+        when (display.mainValue) {
+          MainValue.CURRENT -> r.currentA
+          MainValue.POWER -> r.powerW
+        }?.let(::abs)
       return Data(
         socPercent = soc,
         ringFraction = BatteryMath.progress(r.chargePercent),
@@ -96,17 +101,14 @@ sealed interface WidgetModel {
         voltage = r.totalVoltageV,
         voltageLook = look(LevelValue.VOLTAGE, r.totalVoltageV?.roundTo(2)),
         main = display.mainValue,
-        mainValue =
-          when (display.mainValue) {
-            MainValue.CURRENT -> r.currentA
-            MainValue.POWER -> r.powerW
-          }?.let(::abs),
+        mainValue = mainValue,
         flow = flow,
         mainLook =
-          when (flow) {
-            Flow.UP -> look(LevelValue.CHARGE_CURRENT, amps)
-            Flow.DOWN -> look(LevelValue.DISCHARGE_CURRENT, amps)
-            Flow.NONE -> LevelLook(LevelColor.GREY)
+          when {
+            mainValue == null -> PLAIN
+            flow == Flow.NONE -> LevelLook(LevelColor.GREY)
+            flow == Flow.UP -> look(LevelValue.CHARGE_CURRENT, amps)
+            else -> look(LevelValue.DISCHARGE_CURRENT, amps)
           },
         timeLeft = overview.timeRemaining?.duration,
         balancing = r.balancing,
