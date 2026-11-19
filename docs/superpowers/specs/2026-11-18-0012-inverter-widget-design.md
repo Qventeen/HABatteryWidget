@@ -1,8 +1,8 @@
-# Inverter widget — concept
+# Inverter widget — design
 
 - **Date:** 2026-11-18. Detailing started 2026-11-19.
-- **Status:** detailed, after the builder check (2026-11-19); waiting for
-  the owner's approval. A plan is written only after approval.
+- **Status:** approved by the owner (2026-11-19), after the builder check.
+  Plan: `docs/superpowers/plans/2026-11-19-0012-inverter-widget.md`.
 - **Set:** `0012`, epic `epic-widget-improvements`. Code later on branch
   `0012-inverter-widget`, from the epic.
 - **Builds on:** 0009 (both connection ways must fetch the new values), 0010
