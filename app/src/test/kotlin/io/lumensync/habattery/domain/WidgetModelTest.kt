@@ -7,12 +7,20 @@ import io.lumensync.habattery.domain.WidgetModel.Flow
 import io.lumensync.habattery.domain.WidgetModel.Temperatures
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
+import io.lumensync.habattery.domain.model.LevelLook
+import io.lumensync.habattery.domain.model.LevelType
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
+import io.lumensync.habattery.domain.model.withCustomLevels
 import io.lumensync.habattery.testing.configuredSettings
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
@@ -37,18 +45,34 @@ class WidgetModelTest {
       updatedAtMillis = 1_000L,
     )
 
+  private val plain = LevelLook(LevelColor.PLAIN)
+  private val greenLeaf = LevelLook(LevelColor.GREEN, LevelIcon.LEAF)
+
   private fun settings(
     sensors: Int = 1,
     display: DisplaySettings = DisplaySettings(),
     refresh: RefreshSettings = RefreshSettings(),
+    capacityAh: Double? = null,
   ): Settings {
     val base = configuredSettings()
     return base.copy(
       entities = base.entities.copy(temperatures = List(sensors) { "sensor.t$it" }),
       display = display,
       refresh = refresh,
+      capacityAh = capacityAh,
     )
   }
+
+  private fun custom(value: LevelValue, vararg levels: ColorLevel): Settings =
+    settings().withCustomLevels(value, CustomLevels(on = true, levels = levels.toList()))
+
+  /** Plain below 52.0 V, green from it. */
+  private val customVoltage =
+    custom(
+      LevelValue.VOLTAGE,
+      ColorLevel(id = 1, type = LevelType.NORMAL, color = LevelColor.PLAIN),
+      ColorLevel(id = 2, from = 52.0, type = LevelType.NORMAL),
+    )
 
   private fun build(
     reading: BatteryReading? = sample,
@@ -102,20 +126,51 @@ class WidgetModelTest {
 
   @Test
   fun `flow at the 0_1 A edges`() {
-    fun flow(current: Double?) = data(sample.copy(currentA = current)).let { it.flow to it.mainLevel }
-    assertEquals(Flow.NONE to Level.IDLE, flow(0.1))
-    assertEquals(Flow.NONE to Level.IDLE, flow(-0.1))
-    assertEquals(Flow.UP to Level.OK, flow(0.11))
-    assertEquals(Flow.DOWN to Level.WARN, flow(-0.11))
-    assertEquals(Flow.NONE to Level.IDLE, flow(null))
+    fun flow(current: Double?) = data(sample.copy(currentA = current)).let { it.flow to it.mainLook.color }
+    assertEquals(Flow.NONE to LevelColor.GREY, flow(0.1))
+    assertEquals(Flow.NONE to LevelColor.GREY, flow(-0.1))
+    assertEquals(Flow.UP to LevelColor.GREEN, flow(0.11))
+    assertEquals(Flow.DOWN to LevelColor.AMBER, flow(-0.11))
+    assertEquals(Flow.NONE to LevelColor.GREY, flow(null))
   }
 
   @Test
   fun `flow follows current when full`() {
     val full = data(sample.copy(chargePercent = 100.0, currentA = 0.5), configuredSettings().copy(capacityAh = 314.0))
     assertEquals(Flow.UP, full.flow)
-    assertEquals(Level.OK, full.mainLevel)
+    assertEquals(LevelLook(LevelColor.BLUE), full.mainLook)
     assertNull(full.timeLeft)
+  }
+
+  @Test
+  fun main_idle_isGrey() {
+    fun main(current: Double) = data(sample.copy(currentA = current), settings(capacityAh = 100.0)).mainLook
+    assertEquals(LevelLook(LevelColor.GREY), main(0.1))
+    assertEquals(LevelLook(LevelColor.BLUE), main(0.15))
+  }
+
+  @Test
+  fun main_charge20A_100Ah_isGreen() {
+    fun main(current: Double) = data(sample.copy(currentA = current), settings(capacityAh = 100.0)).mainLook
+    assertEquals(LevelLook(LevelColor.GREEN), main(20.0))
+    assertEquals(LevelLook(LevelColor.GREEN), main(19.95)) // shown as 20.0 A
+    assertEquals(LevelLook(LevelColor.BLUE), main(19.85)) // shown as 19.8 A
+  }
+
+  @Test
+  fun main_discharge85A_100Ah_isRed() =
+    assertEquals(LevelLook(LevelColor.RED), data(sample.copy(currentA = -85.0, totalCapacityAh = 100.0)).mainLook)
+
+  @Test
+  fun main_noCapacity() {
+    assertEquals(LevelLook(LevelColor.GREEN), data(sample.copy(currentA = 85.0)).mainLook)
+    assertEquals(LevelLook(LevelColor.AMBER), data(sample.copy(currentA = -85.0)).mainLook)
+  }
+
+  @Test
+  fun main_powerDisplay_usesAmps() {
+    val power = settings(display = DisplaySettings(mainValue = MainValue.POWER), capacityAh = 100.0)
+    assertEquals(LevelLook(LevelColor.AMBER), data(sample.copy(currentA = 55.0, powerW = 1_457.5), power).mainLook)
   }
 
   @Test
@@ -126,12 +181,62 @@ class WidgetModelTest {
     data().let {
       assertEquals(55, it.socPercent)
       assertEquals(0.546f, it.ringFraction, 1e-6f)
-      assertEquals(Level.OK, it.ringLevel)
+      assertEquals(LevelLook(LevelColor.GREEN), it.ringLook)
     }
-    assertEquals(Level.WARN, data(sample.copy(chargePercent = 24.4)).ringLevel)
-    assertEquals(Level.BAD, data(sample.copy(chargePercent = 14.4)).ringLevel)
     assertEquals(1f, data(sample.copy(chargePercent = 104.6)).ringFraction)
     assertEquals(0f, data(sample.copy(chargePercent = -3.0)).ringFraction)
+  }
+
+  @Test
+  fun ring_followsSocLevels() {
+    fun ring(soc: Double) = data(sample.copy(chargePercent = soc)).ringLook
+    assertEquals(LevelLook(LevelColor.RED), ring(19.4)) // shown as 19
+    assertEquals(LevelLook(LevelColor.AMBER), ring(19.6)) // shown as 20
+    assertEquals(LevelLook(LevelColor.BLUE), ring(100.0))
+  }
+
+  @Test
+  fun voltage_customLevels() {
+    fun voltage(v: Double, settings: Settings = customVoltage) = data(sample.copy(totalVoltageV = v), settings).voltageLook
+    assertEquals(LevelLook(LevelColor.GREEN), voltage(52.0))
+    assertEquals(plain, voltage(51.99))
+    assertEquals(LevelLook(LevelColor.GREEN), voltage(51.995)) // shown as 52.00 V
+    assertEquals(plain, voltage(52.0, settings()))
+  }
+
+  @Test
+  fun averageCell_followsVoltagePerCell() {
+    fun cell(average: Double?) =
+      data(sample.copy(totalVoltageV = 52.8, averageCellVoltageV = average), customVoltage).averageCellLook
+    assertEquals(LevelLook(LevelColor.GREEN), cell(3.300)) // 16 cells: the 52.0 V edge is 3.25 V
+    assertEquals(LevelLook(LevelColor.GREEN), cell(3.2495)) // shown as 3.250 V
+    assertEquals(plain, cell(3.2494))
+    assertEquals(plain, cell(null))
+  }
+
+  @Test
+  fun averageCell_withoutCellCount_isPlain() {
+    val greenFirst =
+      custom(
+        LevelValue.VOLTAGE,
+        ColorLevel(id = 1, type = LevelType.NORMAL),
+        ColorLevel(id = 2, from = 52.0, type = LevelType.WARNING),
+      )
+    assertEquals(plain, data(sample.copy(totalVoltageV = 0.0, averageCellVoltageV = 3.3), greenFirst).averageCellLook)
+    assertEquals(plain, data(sample.copy(totalVoltageV = null), greenFirst).averageCellLook)
+  }
+
+  @Test
+  fun delta_9mV_blue_10mV_green() {
+    fun delta(volts: Double) = data(sample.copy(deltaCellVoltageV = volts)).deltaLook
+    assertEquals(LevelLook(LevelColor.BLUE), delta(0.009))
+    assertEquals(LevelLook(LevelColor.GREEN), delta(0.010))
+  }
+
+  @Test
+  fun icon_onlyForTemperatures() {
+    val socWithIcon = custom(LevelValue.SOC, ColorLevel(id = 1, type = LevelType.NORMAL, icon = LevelIcon.LEAF))
+    assertEquals(LevelLook(LevelColor.GREEN), data(settings = socWithIcon).ringLook)
   }
 
   private fun temps(vararg values: Double?, sensors: Int = values.size) =
@@ -144,9 +249,9 @@ class WidgetModelTest {
 
   @Test
   fun `battery pill shows the average of the sensors`() {
-    assertEquals(Temperatures.Battery(25.0, Level.PLAIN, 1), data().temperatures)
-    assertEquals(Temperatures.Battery(24.0, Level.PLAIN, 2), temps(25.0, 23.0))
-    assertEquals(Temperatures.Battery(26.0, Level.PLAIN, 3), temps(25.0, 23.0, 30.0))
+    assertEquals(Temperatures.Battery(25.0, greenLeaf, 1), data().temperatures)
+    assertEquals(Temperatures.Battery(24.0, greenLeaf, 2), temps(25.0, 23.0))
+    assertEquals(Temperatures.Battery(26.0, greenLeaf, 3), temps(25.0, 23.0, 30.0))
   }
 
   @Test
@@ -158,29 +263,39 @@ class WidgetModelTest {
 
   @Test
   fun `missing temperature values are left out`() {
-    assertEquals(Temperatures.Battery(30.0, Level.PLAIN, 3), temps(30.0, null, sensors = 3))
-    assertEquals(Temperatures.Battery(null, Level.PLAIN, 2), temps(null, null))
-    assertEquals(Temperatures.Battery(null, Level.PLAIN, 1), temps(sensors = 1))
+    assertEquals(Temperatures.Battery(30.0, greenLeaf, 3), temps(30.0, null, sensors = 3))
+    assertEquals(Temperatures.Battery(null, plain, 2), temps(null, null))
+    assertEquals(Temperatures.Battery(null, plain, 1), temps(sensors = 1))
   }
 
   @Test
-  fun `battery colour follows the worst sensor`() {
-    assertEquals(Temperatures.Battery(35.0, Level.WARN, 2), temps(20.0, 50.0))
-    assertEquals(Temperatures.Battery(40.0, Level.BAD, 2), temps(20.0, 60.0))
-    assertEquals(Temperatures.Battery(9.5, Level.BAD, 2), temps(-1.0, 20.0))
+  fun temperatures_worstSensor() {
+    val blueSnowflake = LevelLook(LevelColor.BLUE, LevelIcon.SNOWFLAKE)
+    assertEquals(Temperatures.Battery(14.0, blueSnowflake, 2), temps(25.0, 3.0))
+    assertEquals(Temperatures.Battery(26.5, LevelLook(LevelColor.AMBER, LevelIcon.FLAME), 2), temps(3.0, 50.0))
+    assertEquals(Temperatures.Battery(40.0, LevelLook(LevelColor.RED, LevelIcon.FLAME_ALERT), 2), temps(20.0, 60.0))
+    assertEquals(Temperatures.Battery(9.5, LevelLook(LevelColor.RED, LevelIcon.SNOWFLAKE), 2), temps(-1.0, 20.0))
+    assertEquals(Temperatures.Battery(null, plain, 2), temps(null, null))
   }
 
   @Test
   fun `temperature levels follow the shown whole degrees of each sensor`() {
-    fun level(c: Double) = (temps(c) as Temperatures.Battery).level
-    assertEquals(Level.BAD, level(0.4)) // shown as 0 °C
-    assertEquals(Level.PLAIN, level(4.6)) // shown as 5 °C
-    assertEquals(Level.PLAIN, level(45.4)) // shown as 45 °C
-    assertEquals(Level.WARN, level(55.4)) // shown as 55 °C
-    assertEquals(Level.BAD, level(55.6)) // shown as 56 °C
-    assertEquals(Level.WARN, level(4.4)) // shown as 4 °C
-    assertEquals(Level.PLAIN, data(sample.copy(mosfetTemperatureC = 65.4)).mosfetLevel)
+    fun look(c: Double) = (temps(c) as Temperatures.Battery).look
+    assertEquals(LevelLook(LevelColor.RED, LevelIcon.SNOWFLAKE), look(-0.6)) // shown as -1 °C
+    assertEquals(LevelLook(LevelColor.BLUE, LevelIcon.SNOWFLAKE), look(-0.4)) // shown as 0 °C
+    assertEquals(LevelLook(LevelColor.BLUE, LevelIcon.SNOWFLAKE), look(4.4)) // shown as 4 °C
+    assertEquals(greenLeaf, look(4.6)) // shown as 5 °C
+    assertEquals(greenLeaf, look(44.4)) // shown as 44 °C
+    assertEquals(LevelLook(LevelColor.AMBER, LevelIcon.FLAME), look(44.6)) // shown as 45 °C
+    assertEquals(LevelLook(LevelColor.AMBER, LevelIcon.FLAME), look(54.4)) // shown as 54 °C
+    assertEquals(LevelLook(LevelColor.RED, LevelIcon.FLAME_ALERT), look(54.6)) // shown as 55 °C
+    fun mosfet(c: Double) = data(sample.copy(mosfetTemperatureC = c)).mosfetLook
+    assertEquals(greenLeaf, mosfet(64.4)) // shown as 64 °C
+    assertEquals(LevelLook(LevelColor.AMBER, LevelIcon.FLAME), mosfet(64.6)) // shown as 65 °C
   }
+
+  @Test
+  fun mosfet_64_isGreenLeaf() = assertEquals(greenLeaf, data(sample.copy(mosfetTemperatureC = 64.0)).mosfetLook)
 
   @Test
   fun `null inputs give null values`() {
@@ -192,8 +307,11 @@ class WidgetModelTest {
     assertNull(bare.mosfet)
     assertNull(bare.balancing)
     assertNull(bare.timeLeft)
-    assertEquals(Level.PLAIN, bare.deltaLevel)
-    assertEquals(Level.PLAIN, bare.mosfetLevel)
+    assertEquals(plain, bare.voltageLook)
+    assertEquals(LevelLook(LevelColor.GREY), bare.mainLook)
+    assertEquals(plain, bare.averageCellLook)
+    assertEquals(plain, bare.deltaLook)
+    assertEquals(plain, bare.mosfetLook)
   }
 
   @Test
@@ -201,9 +319,9 @@ class WidgetModelTest {
     val d = data(sample.copy(deltaCellVoltageV = 0.018, mosfetTemperatureC = 85.0, balancing = true), error = SyncError.Unreachable)
     assertEquals(3.312, d.averageCellVoltage!!, 1e-9)
     assertEquals(18, d.deltaMv)
-    assertEquals(Level.WARN, d.deltaLevel)
+    assertEquals(LevelLook(LevelColor.GREEN), d.deltaLook)
     assertEquals(85.0, d.mosfet!!, 1e-9)
-    assertEquals(Level.BAD, d.mosfetLevel)
+    assertEquals(LevelLook(LevelColor.RED, LevelIcon.FLAME_ALERT), d.mosfetLook)
     assertEquals(true, d.balancing)
     assertEquals(26.5, d.voltage!!, 1e-9)
     assertEquals(1_000L, d.updatedAtMillis)

@@ -51,11 +51,14 @@ object BatteryMath {
     return TimeRemaining(direction, (ah / current * 60).roundToLong().minutes)
   }
 
-  /** Cells in series: total voltage over the average cell voltage; `null` when either is unusable. */
+  /**
+   * Cells in series: total voltage over the average cell voltage; `null` when either is unusable
+   * or the count is below 1 (a 0 V total).
+   */
   fun cellCount(reading: BatteryReading): Int? {
     val total = reading.totalVoltageV ?: return null
     val average = reading.averageCellVoltageV?.takeIf { it > 0.0 } ?: return null
-    return (total / average).roundToInt()
+    return (total / average).roundToInt().takeIf { it >= 1 }
   }
 
   fun progress(chargePercent: Double): Float = (chargePercent / 100).toFloat().coerceIn(0f, 1f)

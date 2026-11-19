@@ -1,12 +1,12 @@
 package io.lumensync.habattery.widget
 
 import io.lumensync.habattery.domain.BatteryOverview
-import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.testing.configuredSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -37,7 +37,7 @@ class WidgetFontsTest {
       underSoc = "4.58 kWh",
       voltage = "26.50 V",
       main = main,
-      cells = listOf(CellPill("3.312 V", Level.PLAIN), CellPill("Δ 12 mV", Level.PLAIN), CellPill("27 °C", Level.PLAIN, icon = 1)),
+      cells = listOf(CellPill("3.312 V", LevelColor.PLAIN), CellPill("Δ 12 mV", LevelColor.PLAIN), CellPill("27 °C", LevelColor.PLAIN, icon = 1)),
     )
 
   private fun fonts(spec: LayoutSpec, texts: DataTexts = texts(), percents: FontPercents = FontPercents(), fontScale: Float = 1f) =

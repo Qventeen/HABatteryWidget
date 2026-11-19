@@ -16,7 +16,7 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `FullChargeRule`, `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
-  `WidgetLevels`, `ToggleAutoRefresh`.
+  `DefaultLevels` and `LevelPicker` (value colours), `ToggleAutoRefresh`.
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
   template; `StatesSource`: User, states per entity and the sensor search;
   `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,

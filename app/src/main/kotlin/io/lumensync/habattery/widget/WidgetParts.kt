@@ -31,8 +31,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.unit.ColorProvider
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel.Flow
+import io.lumensync.habattery.domain.model.LevelColor
 import kotlin.math.roundToInt
 
 /** Cell pills keep fully round ends; Android clamps the radius to half the pill's height. */
@@ -167,7 +167,7 @@ internal fun Ring(d: DataLook, modifier: GlanceModifier) {
       contentDescription = null,
       modifier = GlanceModifier.fillMaxSize(),
       contentScale = ContentScale.Fit,
-      colorFilter = ColorFilter.tint(c.ring(d.model.ringLevel)),
+      colorFilter = ColorFilter.tint(c.ring(d.model.ringLook.color)),
     )
     val f = d.fonts
     RingText(d.texts.socLabel, d.look.sp(f.ringLabel), c.sub, FontWeight.Normal, f.ringCenters[0])
@@ -199,9 +199,9 @@ private fun RingText(
 internal fun PackColumn(d: DataLook, modifier: GlanceModifier) {
   Column(modifier) {
     val fill = GlanceModifier.defaultWeight().fillMaxWidth()
-    PackPill(d, d.texts.voltage, d.fonts.voltage, Level.PLAIN, Flow.NONE, fill)
+    PackPill(d, d.texts.voltage, d.fonts.voltage, d.model.voltageLook.color, Flow.NONE, fill)
     Spacer(GlanceModifier.height(d.spec.packGap.dp))
-    PackPill(d, d.texts.main, d.fonts.main, d.model.mainLevel, d.model.flow, fill)
+    PackPill(d, d.texts.main, d.fonts.main, d.model.mainLook.color, d.model.flow, fill)
   }
 }
 
@@ -210,16 +210,16 @@ private fun PackPill(
   d: DataLook,
   text: String,
   sizeDp: Float,
-  level: Level,
+  levelColor: LevelColor,
   flow: Flow,
   modifier: GlanceModifier,
 ) {
   val context = LocalContext.current
   val s = d.spec
-  val color = d.colors.pillText(level)
+  val color = d.colors.pillText(levelColor)
   Box(
     modifier
-      .background(d.colors.pillBackground(level))
+      .background(d.colors.pillBackground(levelColor))
       .cornerRadius(s.packRadius.dp)
       .padding(horizontal = s.packPadding.dp),
     contentAlignment = Alignment.Center,
@@ -275,10 +275,10 @@ internal fun CellGrid(d: DataLook) {
 private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: GlanceModifier) {
   val context = LocalContext.current
   val s = d.spec
-  val color = d.colors.pillText(pill.level)
+  val color = d.colors.pillText(pill.color)
   Box(
     modifier
-      .background(d.colors.pillBackground(pill.level))
+      .background(d.colors.pillBackground(pill.color))
       .cornerRadius(CELL_RADIUS)
       .padding(horizontal = s.cellPadding.dp),
     contentAlignment = Alignment.Center,

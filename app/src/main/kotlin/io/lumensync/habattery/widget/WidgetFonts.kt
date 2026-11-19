@@ -3,19 +3,21 @@ package io.lumensync.habattery.widget
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.Flow
 import io.lumensync.habattery.domain.WidgetModel.Temperatures
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
 
-/** A cell pill: its text, its level and, for a temperature, its icon. */
+/** A cell pill: its text, its level colour and, for a temperature, its icon and level icon. */
 internal data class CellPill(
   val text: String,
-  val level: Level,
+  val color: LevelColor,
   @param:DrawableRes val icon: Int? = null,
   @param:StringRes val iconDescription: Int? = null,
+  val levelIcon: LevelIcon? = null,
 )
 
 /** Every text of a widget with data, resolved once per drawing. */
@@ -44,10 +46,11 @@ internal data class DataTexts(
             listOf(
               CellPill(
                 texts.temperature(t.celsius),
-                t.level,
+                t.look.color,
                 R.drawable.ic_thermometer,
                 if (t.sensors > 1) R.string.widget_average_temperature
                 else R.string.widget_battery_temperature,
+                t.look.icon,
               )
             )
         }
@@ -63,13 +66,17 @@ internal data class DataTexts(
         voltage = texts.voltage(m),
         main = texts.main(m),
         cells =
-          listOf(CellPill(texts.averageCell(m), Level.PLAIN), CellPill(texts.delta(m), m.deltaLevel)) +
+          listOf(
+            CellPill(texts.averageCell(m), m.averageCellLook.color),
+            CellPill(texts.delta(m), m.deltaLook.color),
+          ) +
             battery +
             CellPill(
               texts.temperature(m.mosfet),
-              m.mosfetLevel,
+              m.mosfetLook.color,
               R.drawable.ic_chip,
               R.string.widget_mosfet_temperature,
+              m.mosfetLook.icon,
             ),
       )
     }

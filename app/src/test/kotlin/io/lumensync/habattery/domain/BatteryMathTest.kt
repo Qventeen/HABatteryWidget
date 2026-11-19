@@ -153,4 +153,12 @@ class BatteryMathTest {
     assertNull(cells(52.8, null))
     assertNull(cells(52.8, 0.0))
   }
+
+  @Test
+  fun `cellCount below one cell is null`() {
+    fun cells(total: Double) = BatteryMath.cellCount(base.copy(totalVoltageV = total, averageCellVoltageV = 3.3))
+    assertNull(cells(0.0))
+    assertNull(cells(1.6))
+    assertNull(cells(-52.8))
+  }
 }
