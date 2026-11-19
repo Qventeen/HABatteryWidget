@@ -269,10 +269,11 @@ is red: the house has no power.
 - **Voltage bells:** 0011 model. Default bell: grid input "Low"
   (undervoltage, 100–206 V). The grid "No grid" level has no bell by
   default, so a grid loss gives one notification (the mode change), not
-  two. Re-arm margin (0011 §3.3, fixed per value): 5 V for both voltages
-  (about 2 %; proposed after the builder check, waiting for the owner's
-  OK): the grid often hovers near 207 V, so a smaller margin would ring
-  the "Low" bell many times a day.
+  two. Re-arm margin (0011 §3.3): default 5 V for both voltages (owner,
+  2026-11-19; about 2 %): the grid often hovers near 207 V, so a smaller
+  margin would ring the "Low" bell many times a day. Editable per value
+  with custom on, like every 0011 value (owner made margins editable the
+  same day; 0011 spec and plan amended).
 - **One notification slot per value** (0011): the two voltages and the
   mode each get their own slot; a new notification replaces the older
   one of the same value. The last mode is stored like the 0011 level
@@ -304,8 +305,8 @@ is red: the house has no power.
    the mode table (§3.3).
 6. ~~Battery and inverter sync: one result or two?~~ Decided (owner,
    builder check): two independent parts (§3.3).
-7. Re-arm margin for the two voltages: 5 V proposed (§3.5), waiting for
-   the owner's OK.
+7. ~~Re-arm margin for the two voltages?~~ Decided (owner): default 5 V,
+   editable like all margins (§3.5; 0011 amended).
 8. Plan note: the 0012 plan names types from the 0009–0011 plans
    (`LevelValue`, `LevelAlerts`, `LevelNotifier`, the states source); it
    gets a quick re-check once 0011 is built, in case names changed.

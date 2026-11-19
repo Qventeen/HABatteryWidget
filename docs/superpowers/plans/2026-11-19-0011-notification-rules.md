@@ -17,7 +17,7 @@
 - `domain/` imports nothing from `android.*`.
 - Stored data (0001 §14): the settings rename is a meaning change after a release, so `SettingsRecord.schemaVersion` goes 1 → 2 with a `DataMigration` and a test on a saved v1 sample. The cache change only adds and removes fields: `CacheRecord` stays at 1, no migration.
 - Default bells (spec §3.1): on for SOC Low and Full, battery temperature Freezing and Hot, MOSFET Hot; off everywhere else ("Getting low" stays off).
-- Re-arm margins (spec §3.3): SOC 2 %, voltage 0.1 V, current 0.05 C (1 A without a capacity), delta 3 mV, temperatures 2 °C.
+- Re-arm margins (spec §3.3): SOC 2 %, voltage 0.1 V, current 0.05 C (1 A without a capacity), delta 3 mV, temperatures 2 °C. Editable per value with custom on: `CustomLevels.margin` (null = the default; amended 2026-11-19).
 - Channels (spec §3.5): ids `level_critical`, `level_warning`, `level_normal`, `level_info`; Critical and Warning `IMPORTANCE_HIGH`, Normal and Info `IMPORTANCE_DEFAULT`; each created again before each post (0001 §12); the old `full_charge` channel is deleted.
 - Every visible text goes in `res/values/strings.xml` and `res/values-uk/strings.xml` in the same commit (`NoHardcodedTextTest`).
 - Code comments: use the `writing-code-comments` skill before writing them.
@@ -38,20 +38,20 @@
 ### Task 1: Bells on the levels
 
 **Files:**
-- Modify: `domain/model/ColorLevels.kt` (`ColorLevel`), `domain/DefaultLevels.kt`
+- Modify: `domain/model/ColorLevels.kt` (`ColorLevel`, `CustomLevels`), `domain/DefaultLevels.kt`
 - Test: `test/.../domain/DefaultLevelsTest.kt`, `test/.../data/store/StoredJsonV1Test.kt`
 
 **Interfaces:**
-- Produces: `ColorLevel.notify: Boolean = false` (last field).
+- Produces: `ColorLevel.notify: Boolean = false` (last field); `CustomLevels.margin: Double? = null` (last field; null = the value's default margin).
 
 - [ ] **Step 1: Write the failing tests**
   - `DefaultLevelsTest.defaultBells`: for every `LevelValue` (current with capacity 100.0 and with null), the levels with `notify == true` are exactly: SOC `LOW`, `FULL`; BATTERY_TEMPERATURE `FREEZING`, `HOT`; MOSFET_TEMPERATURE `HOT` (compare `defaultName`s).
   - `DefaultLevelsTest.copyForCustom_keepsBells`: `copyForCustom(SOC, null).map { it.notify } == of(SOC, null).map { it.notify }`.
-  - `StoredJsonV1Test.customLevels_v1`: the 0010 sample gets `"notify": false` on the first level and `"notify": true` on the second; `expected` matches.
+  - `StoredJsonV1Test.customLevels_v1`: the 0010 sample gets `"notify": false` on the first level and `"notify": true` on the second, and `"margin": 4.0` on the `CustomLevels`; `expected` matches. The same sample without `"margin"` decodes to `margin == null`.
 - [ ] **Step 2: Run, expect FAIL**: `./gradlew :app:testDebugUnitTest --tests "*DefaultLevelsTest" --tests "*StoredJsonV1Test"`
-- [ ] **Step 3: Add the field and set the default bells**
+- [ ] **Step 3: Add the fields and set the default bells**
 - [ ] **Step 4: Run the same tests, expect PASS**
-- [ ] **Step 5: Commit** `feat(levels): Add a bell to each level`
+- [ ] **Step 5: Commit** `feat(levels): Add bells and a margin to levels`
 
 ### Task 2: Main switch rename and settings migration
 
@@ -85,12 +85,12 @@
 - Test: `app/src/test/kotlin/io/lumensync/habattery/domain/LevelAlertsTest.kt`
 
 **Interfaces:**
-- Consumes: `LevelPicker.effective`, `pick`, `worst`, `roundTo`; `BatteryMath.fullCapacityAh`; `ColorLevel.notify`.
+- Consumes: `LevelPicker.effective`, `pick`, `worst`, `roundTo`; `BatteryMath.fullCapacityAh`; `ColorLevel.notify`; `CustomLevels.margin`, `Settings.customLevels`.
 - Produces:
   - `@Serializable data class LevelAlertState(val current: Int? = null, val disarmed: List<Int> = emptyList())`.
   - `data class LevelAlert(val value: LevelValue, val level: ColorLevel, val rising: Boolean, val shown: Double, val measuredAtMillis: Long)`.
   - `data class AlertOutcome(val alerts: List<LevelAlert>, val state: Map<String, LevelAlertState>)` (keyed by `LevelValue.name`).
-  - `object LevelAlerts { fun evaluate(reading: BatteryReading, settings: Settings, enabled: Boolean, state: Map<String, LevelAlertState>): AlertOutcome; fun margin(value: LevelValue, capacityAh: Double?): Double }`.
+  - `object LevelAlerts { fun evaluate(reading: BatteryReading, settings: Settings, enabled: Boolean, state: Map<String, LevelAlertState>): AlertOutcome; fun margin(value: LevelValue, capacityAh: Double?, custom: CustomLevels = CustomLevels()): Double }` (`custom.margin` when `custom.on` and it is not null, else the default; `evaluate` passes `settings.customLevels(value)`).
 - Rules (spec §3.2, §3.3), per `LevelValue`:
   - The number: SOC whole %; voltage `roundTo(2)`; delta mV; temperatures whole degrees; battery temperature = the known sensor whose level ranks `worst`, first in settings order on a tie. Charge current = `abs(currentA).roundTo(1)` while charging (`currentA > BatteryMath.IDLE_CURRENT_A`), else 0.0; discharge current the other way round; `currentA == null` → no number. No number → the value's state is copied unchanged.
   - Order: drop disarmed ids that are not in the list; re-arm a disarmed level when `x <= from − margin` or `x >= upper + margin` (`upper` = the next level's `from`; open ends never re-arm on that side); pick the level; no stored `current`, or a stored `current` that is not in the list → store the pick, no alert; a pick different from `current` → if `enabled && pick.notify && pick.id !in disarmed`, add an alert (`rising` = the pick comes after `current` in the sorted list) and disarm the pick; store the pick.
@@ -106,6 +106,8 @@
   - `current_otherDirectionCountsZero`: custom DISCHARGE_CURRENT list with every bell on, `capacityAh = 100.0`; stored LIGHT; `currentA = -85.0` → alert VERY_HIGH, `shown == 85.0`; the CHARGE_CURRENT state picks its first level (0 A).
   - `current_unknown_keepsState`: `currentA = null` → both current states unchanged.
   - `margin_values`: `margin(SOC, null) == 2.0`, `margin(CHARGE_CURRENT, 100.0) == 5.0`, `margin(DISCHARGE_CURRENT, null) == 1.0`, `margin(DELTA, null) == 3.0`, `margin(MOSFET_TEMPERATURE, null) == 2.0`, `margin(VOLTAGE, null) == 0.1`.
+  - `margin_custom`: `margin(SOC, null, CustomLevels(on = true, margin = 5.0)) == 5.0`; `on = false` with `margin = 5.0` → 2.0; `on = true` with `margin = null` → 2.0.
+  - `rearm_customMargin`: custom SOC = `copyForCustom` with `margin = 5.0`; after LOW fired at 19, SOC 22 → still disarmed; SOC 25 → re-armed.
   - `batteryTemperature_worstSensor`: two sensors, stored WARM; temperatures `[25.0, 56.0]` → alert HOT, `shown == 56.0`; `[56.0, 60.0]` from WARM → `shown == 56.0` (first on a tie).
   - `editedList_storesOnly` (Review Focus 3): stored `current = 9` (no such id) with `disarmed = [9]`, SOC 19 → no alert, current = LOW, `disarmed` empty.
   - `missingDelta_keepsState`: `deltaCellVoltageV = null` → `state["DELTA"]` unchanged.
@@ -167,18 +169,18 @@
 ### Task 6: Bells and the Notifications section in the app
 
 **Files:**
-- Modify: `ui/sections/NotificationSection.kt`, `ui/sections/ColorsSection.kt`, `ui/LevelDraft.kt`, `ui/MainViewModel.kt` (`saveLevels` keeps `notify`), `ui/MainScreen.kt`; strings EN/UK; `res/drawable/ic_bell.xml` (`notifications`), `ic_bell_off.xml` (`notifications_off`), Material Symbols Rounded as above
+- Modify: `ui/sections/NotificationSection.kt`, `ui/sections/ColorsSection.kt`, `ui/LevelDraft.kt`, `ui/MainViewModel.kt` (`saveLevels` keeps `notify` and saves the margin), `ui/MainScreen.kt` (`MainActions.saveLevels`), `domain/Validation.kt` (`Field.LEVEL_MARGIN`); strings EN/UK; `res/drawable/ic_bell.xml` (`notifications`), `ic_bell_off.xml` (`notifications_off`), Material Symbols Rounded as above
 - Test: `MainViewModelTest.kt`; `NoHardcodedTextTest`; the done gate
 
 **Interfaces:**
 - Consumes: Tasks 1–2.
-- Produces: `LevelDraft.notify: Boolean`; `NotificationSection(enabled: Boolean, autoRefresh: Boolean, onEnabledChange: (Boolean) -> Unit, onOpenSettings: () -> Unit, …)`.
-- Behaviour (spec §3.7): the switch label "Notifications"; under it the hint; when `autoRefresh == false`, the note; the permission flow and the "On / Off" summary stay as today. In the Colours editor each row gets a bell toggle (`ic_bell` / `ic_bell_off`, with a content description); the read-only default list shows `ic_bell` on the levels that notify.
-- Strings (EN / UK): `notifications_switch` "Notifications" / "Сповіщення"; `notifications_hint` "Choose the levels with the bells in Colours." / "Рівні для сповіщень обирайте дзвіночками в розділі «Кольори»."; `notifications_no_auto_refresh` "Auto refresh is off, so no notifications can come." / "Автооновлення вимкнено, тому сповіщення не надходитимуть."; `level_bell` "Notify about %1$s" / "Сповіщати про «%1$s»". Remove the old switch string if nothing else uses it.
+- Produces: `LevelDraft.notify: Boolean`; `saveLevels(value: LevelValue, drafts: List<LevelDraft>, margin: String, locale: Locale)` (and the same in `MainActions`): blank → `margin = null`; else `parseDecimal(margin, locale)` rounded to `value.decimals` (current: whole amps); unparsable or < 0 → `FieldError(Field.LEVEL_MARGIN, Problem.INVALID)` and nothing is stored; `resetLevels` sets `margin = null`. `NotificationSection(enabled: Boolean, autoRefresh: Boolean, onEnabledChange: (Boolean) -> Unit, onOpenSettings: () -> Unit, …)`.
+- Behaviour (spec §3.7): the switch label "Notifications"; under it the hint; when `autoRefresh == false`, the note; the permission flow and the "On / Off" summary stay as today. In the Colours editor each row gets a bell toggle (`ic_bell` / `ic_bell_off`, with a content description); the read-only default list shows `ic_bell` on the levels that notify. Under the rows, with custom on, one margin field with the value's unit; the default margin is its hint; its error under the field.
+- Strings (EN / UK): `notifications_switch` "Notifications" / "Сповіщення"; `notifications_hint` "Choose the levels with the bells in Colours." / "Рівні для сповіщень обирайте дзвіночками в розділі «Кольори»."; `notifications_no_auto_refresh` "Auto refresh is off, so no notifications can come." / "Автооновлення вимкнено, тому сповіщення не надходитимуть."; `level_bell` "Notify about %1$s" / "Сповіщати про «%1$s»"; `level_margin` "Notify again after it moves back by" / "Сповіщати знову, коли значення відійде на"; `level_margin_default` "Default: %1$s" / "Типово: %1$s". Remove the old switch string if nothing else uses it.
 
-- [ ] **Step 1: Write the failing test** `MainViewModelTest.saveLevels_keepsBells`: drafts with `notify = true` on the second row → the stored level has `notify == true`.
+- [ ] **Step 1: Write the failing tests** `MainViewModelTest.saveLevels_keepsBells`: drafts with `notify = true` on the second row → the stored level has `notify == true`. `saveLevels_margin`: SOC with margin `"4"` → `margin == 4.0`; `""` → `null`; `"-1"` → `FieldError(LEVEL_MARGIN, INVALID)` in `uiState.errors`, stored settings unchanged; Ukrainian `"0,2"` for VOLTAGE → 0.2. `resetLevels_clearsMargin`.
 - [ ] **Step 2: Run, expect FAIL**: `./gradlew :app:testDebugUnitTest --tests "*MainViewModelTest"`
 - [ ] **Step 3: Implement the draft field, the bell toggles and the section texts**
 - [ ] **Step 4: Run the done gate, expect PASS**: `./gradlew lint testDebugUnitTest assembleRelease :app:compileDebugAndroidTestKotlin`
-- [ ] **Step 5: Ask the owner** to try it on the phone: main switch on, a bell on a level just next to the current value (for example "Getting low" while near 40 %), auto refresh on; check the title, the body time, the type's sound and pop-up, and that one value keeps one notification.
-- [ ] **Step 6: Commit** `feat(ui): Add bells and the notification switch`
+- [ ] **Step 5: Ask the owner** to try it on the phone: main switch on, a bell on a level just next to the current value (for example "Getting low" while near 40 %), auto refresh on; check the title, the body time, the type's sound and pop-up, and that one value keeps one notification; set a bigger margin and check that the jitter posts nothing more.
+- [ ] **Step 6: Commit** `feat(ui): Add bells, margins and the switch`

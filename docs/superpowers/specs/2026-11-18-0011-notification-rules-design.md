@@ -3,6 +3,8 @@
 - **Date:** 2026-11-18
 - **Status:** approved by the owner (2026-11-19), after the builder check.
   Plan: `docs/superpowers/plans/2026-11-19-0011-notification-rules.md`.
+  Amended 2026-11-19 (owner, while detailing 0012): editable re-arm
+  margins (§3.3); the plan is amended to match.
 - **Set:** `0011`, epic `epic-widget-improvements`. Code later on branch
   `0011-notification-rules`, from the epic.
 - **Builds on:** 0010 (value colours; required, build it first) and spec 0001
@@ -143,8 +145,9 @@ The check runs inside `SyncBattery` after each successful reading, where
 ### 3.3 Re-arm margin
 
 - A level that has notified is disarmed. It re-arms when the number is
-  outside the level's range by at least the margin of its value (owner,
-  2026-11-18: fixed in code; editable later if needed):
+  outside the level's range by at least the margin of its value. The
+  defaults (owner, 2026-11-18) are below; since 2026-11-19 the owner can
+  change them per value (next point):
 
   | Value | Margin |
   |---|---|
@@ -154,6 +157,15 @@ The check runs inside `SyncBattery` after each successful reading, where
   | Cell delta | 3 mV |
   | Battery and MOSFET temperature | 2 °C |
 
+- **Editable margin** (owner, 2026-11-19, while detailing 0012): with
+  "Custom colours" on, the value's editor has one field, "Notify again
+  after it moves back by", in the value's unit (current in whole amps,
+  like the custom copy). Blank means the default above, shown as a hint.
+  A number ≥ 0 at the value's shown precision; anything else is a field
+  error and nothing is saved. Stored as `CustomLevels.margin` (null = the
+  default); Reset sets it back to null. With custom off the default
+  applies. One field per value keeps the editor small (owner's worry
+  about an overloaded screen).
 - Example, SOC with the default bells, the charge moving 21 → 19 → 20 → 19
   → 20 %: "Low ↓ 19 %" is posted; "Getting low" has no bell; Low re-arms only
   at 22 % or more, so the jitter at 19–20 % posts nothing more. Today's full
@@ -267,8 +279,9 @@ The check runs inside `SyncBattery` after each successful reading, where
    with custom on only (§3.1).
 6. ~~The type of a level?~~ Decided by the 0010 level model: the owner picks
    the type; the colour follows the type and can be changed.
-7. ~~Re-arm margin: fixed or editable?~~ Decided (owner): fixed per value
-   (§3.3).
+7. ~~Re-arm margin: fixed or editable?~~ Decided (owner, 2026-11-18):
+   fixed per value; changed (owner, 2026-11-19): editable per value with
+   custom on, defaults unchanged (§3.3).
 8. ~~Which values can notify?~~ Decided (owner): every value with levels;
    the inverter with 0012.
 9. ~~Title and body?~~ Decided (owner): "value: name, arrow, number"; the
