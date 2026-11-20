@@ -1,6 +1,5 @@
 package io.lumensync.habattery.domain.model
 
-import io.lumensync.habattery.domain.LevelPicker
 import kotlinx.serialization.Serializable
 
 /** Most levels one value can have. */
@@ -103,7 +102,7 @@ data class ColorLevel(
     get() = color ?: type.defaultColor
 }
 
-/** The owner's own levels for one value; they count only through [LevelPicker.ownLevels]. */
+/** The owner's own levels for one value; they count only through `LevelPicker.ownLevels`. */
 @Serializable
 data class CustomLevels(val on: Boolean = false, val levels: List<ColorLevel> = emptyList())
 

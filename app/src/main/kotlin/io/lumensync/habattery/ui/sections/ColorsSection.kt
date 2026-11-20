@@ -2,7 +2,6 @@ package io.lumensync.habattery.ui.sections
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -14,34 +13,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -49,10 +38,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.LevelPicker
+import io.lumensync.habattery.domain.LevelSpan
+import io.lumensync.habattery.domain.LevelSpans
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
-import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -60,13 +51,13 @@ import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.customLevels
-import io.lumensync.habattery.format.formatDecimal
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.ui.formatEdge
+import io.lumensync.habattery.ui.numberText
+import io.lumensync.habattery.ui.placeText
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 /**
  * The colour levels of every value as tags, with Default and Edit; one editor is open at a time.
@@ -84,10 +75,13 @@ fun ColorsSection(
 ) {
   // The level helpers take Settings; they read only the level lists.
   val settings = remember(colorLevels) { Settings(colorLevels = colorLevels) }
+  // The one own-levels check per value; the summary, the Default button and the tags share it.
+  val own =
+    remember(settings) {
+      LevelValue.entries.associateWith { LevelPicker.ownLevels(it, settings.customLevels(it)) }
+    }
   val customNames =
-    LevelValue.entries
-      .filter { LevelPicker.ownLevels(it, settings.customLevels(it)) != null }
-      .map { stringResource(valueLabel(it)) }
+    LevelValue.entries.filter { own[it] != null }.map { stringResource(valueLabel(it)) }
   val summary =
     if (customNames.isEmpty()) stringResource(R.string.colors_summary_default)
     else stringResource(R.string.colors_summary_custom, customNames.joinToString(", "))
@@ -100,14 +94,12 @@ fun ColorsSection(
       // Keyed by value: by call order, an editor opened in the same tap that closes another would
       // take over the closed editor's draft and errors.
       key(value) {
-        val stored = settings.customLevels(value)
-        val own = LevelPicker.ownLevels(value, stored) != null
-        val levels = LevelPicker.effective(value, settings, basis)
+        val levels = LevelPicker.effective(value, own[value], basis)
         if (editing == value) {
-          ValueRow(value, palette)
+          ValueRow(value)
           LevelEditor(
             value = value,
-            stored = stored,
+            stored = settings.customLevels(value),
             shown = levels,
             basis = basis,
             palette = palette,
@@ -116,8 +108,10 @@ fun ColorsSection(
             onClose = { editing = null },
           )
         } else {
-          ValueRow(value, palette) {
-            ValueButton(R.string.colors_default, enabled = own) { confirmDefault = value }
+          ValueRow(value) {
+            ValueButton(R.string.colors_default, enabled = own[value] != null) {
+              confirmDefault = value
+            }
             ValueButton(R.string.colors_edit) { editing = value }
           }
           LevelTags(value, levels, basis.cells, palette)
@@ -137,37 +131,19 @@ fun ColorsSection(
   }
 }
 
-/**
- * A value's title with its unit and the from tag, then its [buttons]. The title wraps, so long
- * titles keep the tag and the buttons on screen.
- */
+/** A value's name, then its [buttons]. The name wraps, so a long name keeps the buttons in view. */
 @Composable
-private fun ValueRow(
-  value: LevelValue,
-  palette: WidgetPalette,
-  buttons: @Composable RowScope.() -> Unit = {},
-) {
+private fun ValueRow(value: LevelValue, buttons: @Composable RowScope.() -> Unit = {}) {
   Row(
     Modifier.fillMaxWidth().heightIn(min = 48.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Row(
-      Modifier.weight(1f),
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Text(
-        stringResource(
-          R.string.colors_value_title,
-          stringResource(valueLabel(value)),
-          stringResource(unitLabel(value)),
-        ),
-        Modifier.weight(1f, fill = false).semantics { heading() },
-        style = MaterialTheme.typography.titleSmall,
-      )
-      FromTag(palette)
-    }
+    Text(
+      stringResource(valueLabel(value)),
+      Modifier.weight(1f).semantics { heading() },
+      style = MaterialTheme.typography.titleSmall,
+    )
     buttons()
   }
 }
@@ -185,55 +161,9 @@ private fun ValueButton(@StringRes label: Int, enabled: Boolean = true, onClick:
 }
 
 /**
- * "↑ from" in the plain pill; a tap shows the hint that every level goes up from its number. The
- * hint stays until the next tap elsewhere: the timed tooltip goes before the sentence can be read.
+ * The [levels] of [value], in shown order, as pills in the widget's look. With [cells], each
+ * voltage tag also shows its numbers per cell.
  */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FromTag(palette: WidgetPalette) {
-  val shades = palette.shades(LevelColor.PLAIN)
-  val hint = stringResource(R.string.colors_from_hint)
-  val state = rememberTooltipState(isPersistent = true)
-  val scope = rememberCoroutineScope()
-  TooltipBox(
-    positionProvider =
-      TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-    tooltip = { PlainTooltip { Text(hint) } },
-    state = state,
-    // Only the tap shows the hint; a long press would add a second TalkBack action for it.
-    enableUserInput = false,
-  ) {
-    Row(
-      Modifier.minimumInteractiveComponentSize()
-        .clip(CircleShape)
-        .background(shades.background)
-        .clickable(
-          onClickLabel = stringResource(R.string.colors_from_hint_action),
-          role = Role.Button,
-        ) {
-          scope.launch { state.show() }
-        }
-        .clearAndSetSemantics { contentDescription = hint }
-        .padding(horizontal = 8.dp, vertical = 2.dp),
-      horizontalArrangement = Arrangement.spacedBy(2.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Icon(
-        painterResource(R.drawable.ic_arrow_up),
-        contentDescription = null,
-        modifier = Modifier.size(14.dp),
-        tint = shades.text,
-      )
-      Text(
-        stringResource(R.string.colors_from_tag),
-        color = shades.text,
-        style = MaterialTheme.typography.labelMedium,
-      )
-    }
-  }
-}
-
-/** The [levels] of [value] as pills in the widget's look; the first level is open below. */
 @Composable
 private fun LevelTags(
   value: LevelValue,
@@ -242,39 +172,52 @@ private fun LevelTags(
   palette: WidgetPalette,
 ) {
   val locale = LocalConfiguration.current.locales[0]
+  val cellLevels =
+    cells?.takeIf { value == LevelValue.VOLTAGE }?.let { LevelPicker.perCell(levels, it) }
   FlowRow(
     Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
     levels.forEach { level ->
-      LevelTag(value, level, level.edge, cells, locale, palette)
+      val span = LevelSpans.of(levels, level, value.decimals, value.floor)
+      val perCell =
+        cellLevels?.let { all ->
+          // The average cell voltage is shown with 3 decimals and is never below 0.
+          LevelSpans.of(all, all.first { it.id == level.id }, 3, 0.0)
+            .numberText(3, locale, level.side)
+        }
+      LevelTag(value, level, span, perCell, locale, palette)
     }
   }
 }
 
 /**
- * One level: its icon and "[start] · name", without the unit (the title has it). The colour shows
- * the type, so only TalkBack says it; a level with no name shows its type word instead.
+ * One level: its icon and "place · per cell · name", such as "↓20 % · Low". The colour shows the
+ * type, so only TalkBack says it, and TalkBack reads the place in words. A level with no name shows
+ * its type word instead.
  */
 @Composable
 private fun LevelTag(
   value: LevelValue,
   level: ColorLevel,
-  start: Double?,
-  cells: Int?,
+  span: LevelSpan,
+  perCell: String?,
   locale: Locale,
   palette: WidgetPalette,
 ) {
   val shades = palette.shades(level.shownColor)
+  val unit = stringResource(unitLabel(value))
   val name = level.name.ifBlank { defaultNameText(level.defaultName) }.ifBlank { null }
   val type = stringResource(typeLabel(level.type))
-  val number = start?.let { value.formatEdge(it, locale) }
-  val perCell = start?.let { perCellText(value, it, cells, locale) }
-  val text = joined(number, perCell, name ?: type)
-  val from =
-    number?.let { stringResource(R.string.colors_from, it, stringResource(unitLabel(value))) }
-  val description = joined(from, perCell, name, type)
+  val place =
+    span.placeText(value.decimals, locale, level.side)?.let {
+      stringResource(R.string.colors_place, it, unit)
+    }
+  val cellText = perCell?.let { stringResource(R.string.colors_per_cell, it) }
+  val text = joined(R.string.colors_two_parts, place, cellText, name ?: type)
+  val words = placeWords(value, span, unit, locale)
+  val description = joined(R.string.colors_list_parts, words, name, type)
   Row(
     Modifier.background(shades.background, CircleShape)
       .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -294,20 +237,27 @@ private fun LevelTag(
   }
 }
 
-/** A voltage level's [start] per cell, such as "3.2 per cell"; `null` without [cells]. */
+/** The [span] in words with the [unit], such as "20 % and below"; `null` for `Anything`. */
 @Composable
-private fun perCellText(value: LevelValue, start: Double, cells: Int?, locale: Locale): String? {
-  if (value != LevelValue.VOLTAGE || cells == null) return null
-  val edge = LevelPicker.perCell(listOf(ColorLevel(edge = start)), cells).single().edge
-  return edge?.let { stringResource(R.string.colors_per_cell, formatDecimal(it, locale)) }
-}
-
-/** The [parts] that are not null, joined as " · " in the app's language. One must be there. */
-@Composable
-private fun joined(vararg parts: String?): String =
-  parts.filterNotNull().reduce { text, part ->
-    stringResource(R.string.colors_two_parts, text, part)
+private fun placeWords(value: LevelValue, span: LevelSpan, unit: String, locale: Locale): String? =
+  when (span) {
+    is LevelSpan.AtOrBelow ->
+      stringResource(R.string.colors_place_below, value.formatEdge(span.edge, locale), unit)
+    is LevelSpan.AtOrAbove ->
+      stringResource(R.string.colors_place_above, value.formatEdge(span.edge, locale), unit)
+    is LevelSpan.Between -> {
+      val low = value.formatEdge(span.low, locale)
+      val high = value.formatEdge(span.high, locale)
+      if (low == high) stringResource(R.string.colors_place, low, unit)
+      else stringResource(R.string.colors_place_between, low, high, unit)
+    }
+    LevelSpan.Anything -> null
   }
+
+/** The [parts] that are not null, joined pairwise by the [join] string. One must be there. */
+@Composable
+private fun joined(@StringRes join: Int, vararg parts: String?): String =
+  parts.filterNotNull().reduce { text, part -> stringResource(join, text, part) }
 
 /** Asks before [value] drops its own levels; only [onConfirm] changes anything. */
 @Composable
@@ -350,7 +300,7 @@ private fun valueLabel(value: LevelValue): Int =
   }
 
 @StringRes
-private fun unitLabel(value: LevelValue): Int =
+internal fun unitLabel(value: LevelValue): Int =
   when (value) {
     LevelValue.SOC -> R.string.colors_unit_percent
     LevelValue.VOLTAGE -> R.string.colors_unit_volts

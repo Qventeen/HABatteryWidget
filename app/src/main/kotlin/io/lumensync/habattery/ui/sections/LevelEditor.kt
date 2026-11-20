@@ -26,6 +26,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldLabelPosition
@@ -54,9 +57,11 @@ import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.LevelBasis
+import io.lumensync.habattery.domain.LevelSpans
+import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
-import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelSide
@@ -67,6 +72,8 @@ import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.ui.defaultDrafts
 import io.lumensync.habattery.ui.edgeOrNull
 import io.lumensync.habattery.ui.editorDrafts
+import io.lumensync.habattery.ui.mark
+import io.lumensync.habattery.ui.placeText
 import io.lumensync.habattery.ui.withNewLevel
 import io.lumensync.habattery.ui.withoutLevel
 import io.lumensync.habattery.widget.WidgetPalette
@@ -112,6 +119,7 @@ internal fun LevelEditor(
   // The screen has one error list. Only this editor's own save gives its edge errors, and their
   // indexes no longer match once a row is removed or the draft is reset.
   var ownErrors by remember(value) { mutableStateOf(false) }
+  val middleRange = middleRangeText(value, drafts, locale)
 
   // The text fields keep their own text, and the built-in levels reuse ids, so the rows are built
   // again whenever the drafts are: on a reset, and when the stored levels change under the open
@@ -125,6 +133,7 @@ internal fun LevelEditor(
           index = index,
           draft = draft,
           error = if (ownErrors) errors.errorFor(Field.LEVEL_EDGE, index) else null,
+          middleRange = middleRange,
           palette = palette,
           // On the current draft by id: a text field reports its change a moment later, when the
           // index and the other fields of the draft it saw may be old.
@@ -173,8 +182,10 @@ internal fun LevelEditor(
 }
 
 /**
- * One level in the editor: edge, name, type and remove, colour, and the icon if it has one.
- * [onUpdate] takes a change to apply to the level's current draft.
+ * One level in the editor. A ↓ or ↑ level starts with its side and its limit; the middle level has
+ * neither and shows [middleRange] in their place. Then come the name, the type, the remove button
+ * (not on the middle level), the colour, and the icon if the value has one. [onUpdate] takes a
+ * change to apply to the level's current draft.
  */
 @Composable
 private fun LevelRow(
@@ -182,15 +193,22 @@ private fun LevelRow(
   index: Int,
   draft: LevelDraft,
   error: FieldError?,
+  middleRange: String,
   palette: WidgetPalette,
   onUpdate: ((LevelDraft) -> LevelDraft) -> Unit,
   onRemove: () -> Unit,
 ) {
   val shown = draft.color ?: draft.type.defaultColor
   HorizontalDivider()
-  Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-    // The middle level has no edge.
-    if (draft.side != LevelSide.MIDDLE) {
+  if (draft.side == LevelSide.MIDDLE) {
+    Text(middleRange, style = MaterialTheme.typography.bodyLarge)
+  } else {
+    // On their own line: on a phone the ↓|↑ choice leaves too little room for a name beside them.
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      SideChoice(draft.side) { side -> onUpdate { it.copy(side = side) } }
       LevelTextField(
         text = draft.edgeText,
         onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
@@ -200,15 +218,15 @@ private fun LevelRow(
         error = error,
       )
     }
-    LevelTextField(
-      text = draft.name,
-      onTextChange = { text -> onUpdate { it.copy(name = text) } },
-      label = stringResource(R.string.colors_name),
-      keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-      modifier = Modifier.weight(1.5f),
-      placeholder = draft.defaultName?.let { defaultNameText(it) },
-    )
   }
+  LevelTextField(
+    text = draft.name,
+    onTextChange = { text -> onUpdate { it.copy(name = text) } },
+    label = stringResource(R.string.colors_name),
+    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+    modifier = Modifier.fillMaxWidth(),
+    placeholder = draft.defaultName?.let { defaultNameText(it) },
+  )
   Row(verticalAlignment = Alignment.CenterVertically) {
     TypeMenu(draft.type) { type -> onUpdate { it.copy(type = type) } }
     Spacer(Modifier.weight(1f))
@@ -225,6 +243,56 @@ private fun LevelRow(
   if (value.hasIcons) {
     IconChips(draft.icon, palette.shades(shown).text) { icon -> onUpdate { it.copy(icon = icon) } }
   }
+}
+
+/** The ↓ and ↑ buttons of a level; TalkBack reads them in words. */
+@Composable
+private fun SideChoice(side: LevelSide, onSelect: (LevelSide) -> Unit) {
+  val options =
+    listOf(
+      LevelSide.BELOW to R.string.colors_side_below,
+      LevelSide.ABOVE to R.string.colors_side_above,
+    )
+  SingleChoiceSegmentedButtonRow {
+    options.forEachIndexed { i, (option, words) ->
+      val description = stringResource(words)
+      SegmentedButton(
+        selected = option == side,
+        onClick = { onSelect(option) },
+        shape = SegmentedButtonDefaults.itemShape(i, options.size),
+        modifier = Modifier.semantics { contentDescription = description },
+        label = { Text(option.mark()) },
+      )
+    }
+  }
+}
+
+/**
+ * The middle level's range, such as "↕41–99 %", from the rows whose limits are numbers, so a new
+ * empty row changes nothing; [R.string.colors_range_unknown] while those rows break a rule. With no
+ * other level and no floor, the range is anything and only the mark shows.
+ */
+@Composable
+private fun middleRangeText(value: LevelValue, drafts: List<LevelDraft>, locale: Locale): String {
+  val levels =
+    drafts.mapNotNull { draft ->
+      if (draft.side == LevelSide.MIDDLE) {
+        ColorLevel(id = draft.id, side = draft.side)
+      } else {
+        draft.edgeOrNull(value, locale)?.let { edge ->
+          ColorLevel(id = draft.id, side = draft.side, edge = edge)
+        }
+      }
+    }
+  if (Validation.levels(value, levels).isNotEmpty()) {
+    return stringResource(R.string.colors_range_unknown)
+  }
+  val middle = levels.single { it.side == LevelSide.MIDDLE }
+  val place =
+    LevelSpans.of(levels, middle, value.decimals, value.floor)
+      .placeText(value.decimals, locale, LevelSide.MIDDLE)
+      ?: return LevelSide.MIDDLE.mark()
+  return stringResource(R.string.colors_place, place, stringResource(unitLabel(value)))
 }
 
 /**

@@ -42,7 +42,11 @@ object LevelPicker {
 
   /** The owner's levels when [ownLevels] accepts them, else the built-in ones. */
   fun effective(value: LevelValue, settings: Settings, basis: LevelBasis): List<ColorLevel> =
-    ownLevels(value, settings.customLevels(value)) ?: DefaultLevels.of(value, basis)
+    effective(value, ownLevels(value, settings.customLevels(value)), basis)
+
+  /** [effective] for a caller that already has the result of [ownLevels] as [own]. */
+  fun effective(value: LevelValue, own: List<ColorLevel>?, basis: LevelBasis): List<ColorLevel> =
+    own ?: DefaultLevels.of(value, basis)
 
   /** The levels as shown: ↓ by edge ascending, then the middle one, then ↑ by edge ascending. */
   fun ordered(levels: List<ColorLevel>): List<ColorLevel> =
