@@ -10,6 +10,16 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-18-0012-inverter-widget-design.md` (design: `docs/design/README.md`, section "Inverter strip"; `inverter-*.png`).
 
+**Amended 2026-11-21 (0011 as built):**
+
+- `LevelAlert` has no `rising` field: the arrow is the level's side; it carries `span: LevelSpan`. Read Task 5's `rising == false` as `level.side == LevelSide.BELOW`.
+- `LevelAlerts.margin(value, basis: LevelBasis, custom)` takes a `LevelBasis`, not a capacity: read `margin(GRID_VOLTAGE, null)` as `margin(GRID_VOLTAGE, LevelBasis(null, null))`.
+- There is no `notification_measured_at`: the 0011 body is `notification_level_text` "%1$s · measured at %2$s" (number first). The mode notification has no number, so Task 6 adds its own string, e.g. `notification_mode_text` "Measured at %1$s" / "Виміряно о %1$s".
+- The number a level is picked by comes from `ShownNumber` (domain); the inverter voltages should get their whole-volt rounding there, so the widget colour and the alert agree.
+- All four level channels are created on each post (0011 §7); `postMode` keeps that.
+- The section "Colours" is now "Levels and alerts" (`ColorsSection` keeps its name); read "Colours" in Tasks 11–12 as that section.
+- The margin field is "Hysteresis" with an ⓘ tip; the voltage default is per cell (0.025 V × cells); the inverter voltages keep their own 5 V default.
+
 ## Global Constraints
 
 - Start only after 0011 is merged into `epic-widget-improvements`. Branch `0012-inverter-widget` from the epic; merge back after review.

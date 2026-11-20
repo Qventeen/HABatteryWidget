@@ -263,11 +263,12 @@ The check runs inside `SyncBattery` after each successful reading, where
 ### 3.7 App
 
 - **Notifications section:** the main switch ("Notifications"), a hint
-  "Choose the levels with the bells in Colours", and, when auto refresh is
+  "Choose the levels with the bells in Colours" (since 2026-11-21: "Choose the
+  levels with the bells in Levels and alerts"), and, when auto refresh is
   off, a note that no notification can come without it (§4, Delay). Its
   summary stays "On" or "Off" (0002).
-- **Colours section (0010):** a bell toggle on each level row in the editor;
-  the read-only default list shows the bells.
+- **Colours section (0010; since 2026-11-21: Levels and alerts):** a bell toggle on each level
+  row in the editor; the read-only default list shows the bells.
 - **Sync condition:** the periodic sync runs when auto refresh is on and (a
   widget exists or the main switch is on), as today.
 
@@ -336,7 +337,8 @@ The check runs inside `SyncBattery` after each successful reading, where
   arrow is the level's side.
 - Margin precision: the margin field takes the value's shown precision
   (current 0.1 A), not whole amps — one rule for edges, hint and margin; a
-  typed 0.5 A was saved as 0. Owner to confirm.
+  typed 0.5 A was saved as 0. Kept: the owner gave 'go'
+  without asking for whole amps (2026-11-21).
 - Every level channel is created on each post — the owner can set all four
   sounds after the first notification, and the names follow the language.
 - The no-auto-refresh note says a manual refresh still notifies — it does
@@ -352,3 +354,14 @@ The check runs inside `SyncBattery` after each successful reading, where
 - Voltage default margin (owner, 2026-11-20): 0.025 V per cell, rounded to
   0.01 V (16S 0.40, 15S 0.38, 8S 0.20, 4S 0.10), so it fits every pack size.
   `LevelAlerts.margin` now takes the `LevelBasis`.
+- The percent is written "↓20 %" in the title (the tag format) and "20%" in
+  the body (the widget format); kept as built.
+- Level pills (owner, 2026-11-21): the pills of each value stand in a
+  column, one per line, and fold under the value's name; they start folded.
+- Edit buttons (owner, 2026-11-21): while a value is edited, its name row
+  shows Cancel and Save, so the owner does not scroll to the bottom; the
+  bottom buttons stay.
+- Section name (owner, 2026-11-21): the section "Colours" is renamed
+  "Levels and alerts" / "Рівні та сповіщення" (summary "Default levels", the
+  Default dialog and the Notifications hint follow), because it now holds
+  the bells and the hysteresis too.
