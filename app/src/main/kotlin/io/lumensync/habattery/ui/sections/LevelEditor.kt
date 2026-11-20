@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -117,7 +119,9 @@ private val PickerColors =
  * re-arm margin, blank for the default of [basis]. Nothing is stored before Save; [onSave] takes
  * the drafts and the margin text and returns `false` when a field has an error, and the editor stays
  * open. The rows stay in draft order, so the index of an edge error still names its row. [shown]
- * are the levels the tags show; a new level's id stays above theirs.
+ * are the levels the tags show; a new level's id stays above theirs. The [header] draws the value's
+ * name row and places the Cancel and Save buttons it is given, so they stay in view above the rows;
+ * they act like the ones at the bottom.
  */
 @Composable
 internal fun LevelEditor(
@@ -129,8 +133,10 @@ internal fun LevelEditor(
   errors: List<FieldError>,
   onSave: (List<LevelDraft>, margin: String, Locale) -> Boolean,
   onClose: () -> Unit,
+  header: @Composable (buttons: @Composable RowScope.() -> Unit) -> Unit,
 ) {
   val locale = LocalConfiguration.current.locales[0]
+  val focusManager = LocalFocusManager.current
   // Plain remember: losing an unsaved draft on rotation is accepted. Not keyed by the basis: a
   // sync may bring a new one while the owner types.
   var drafts by
@@ -144,6 +150,21 @@ internal fun LevelEditor(
   val middle = middleSpan(value, drafts, locale)
   val middleRange = middleRangeText(middle, value.decimals, unit, locale)
   val middleWords = middle?.let { spanWords(it, value.decimals, unit, locale) }
+  // The one save, for both Save buttons. It clears focus, which hides the keyboard.
+  val save = {
+    focusManager.clearFocus()
+    ownErrors = true
+    if (onSave(drafts, margin, locale)) onClose()
+  }
+
+  header {
+    ValueButton(R.string.dialog_cancel, onClick = onClose)
+    ValueButton(
+      R.string.action_save,
+      filled = true,
+      onClick = save,
+    )
+  }
 
   // The text fields keep their own text, and the built-in levels reuse ids, so the rows are built
   // again whenever the drafts are: on a reset, and when the stored levels change under the open
@@ -211,10 +232,7 @@ internal fun LevelEditor(
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
     TextButton(onClick = onClose) { Text(stringResource(R.string.dialog_cancel)) }
-    SaveButton {
-      ownErrors = true
-      if (onSave(drafts, margin, locale)) onClose()
-    }
+    SaveButton(onClick = save)
   }
 }
 

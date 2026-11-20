@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +69,7 @@ import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
 
 /**
- * The colour levels of every value as tags, with Default and Edit; one editor is open at a time.
+ * The levels of every value as tags, with Default and Edit; one editor is open at a time.
  * [basis] gives the built-in edges.
  * [onSaveLevels] returns `false` when a field has an error, and the editor stays open.
  */
@@ -106,7 +107,6 @@ fun ColorsSection(
         // Above the editor branch, so the fold state survives an open editor.
         var folded by rememberSaveable { mutableStateOf(true) }
         if (editing == value) {
-          ValueRow(value)
           LevelEditor(
             value = value,
             stored = settings.customLevels(value),
@@ -116,6 +116,7 @@ fun ColorsSection(
             errors = errors,
             onSave = { drafts, margin, locale -> onSaveLevels(value, drafts, margin, locale) },
             onClose = { editing = null },
+            header = { buttons -> ValueRow(value, buttons = buttons) },
           )
         } else {
           ValueRow(value, expanded = !folded, onToggle = { folded = !folded }) {
@@ -187,15 +188,26 @@ private fun ValueRow(
   }
 }
 
-/** A value's button, with the narrow text-button padding so two fit beside a long name. */
+/**
+ * A value's button, with the narrow text-button padding so two fit beside a long name. [filled]
+ * marks the primary action.
+ */
 @Composable
-private fun ValueButton(@StringRes label: Int, enabled: Boolean = true, onClick: () -> Unit) {
-  OutlinedButton(
-    onClick = onClick,
-    enabled = enabled,
-    contentPadding = ButtonDefaults.TextButtonContentPadding,
-  ) {
-    Text(stringResource(label))
+internal fun ValueButton(
+  @StringRes label: Int,
+  enabled: Boolean = true,
+  filled: Boolean = false,
+  onClick: () -> Unit,
+) {
+  val padding = ButtonDefaults.TextButtonContentPadding
+  if (filled) {
+    Button(onClick = onClick, enabled = enabled, contentPadding = padding) {
+      Text(stringResource(label))
+    }
+  } else {
+    OutlinedButton(onClick = onClick, enabled = enabled, contentPadding = padding) {
+      Text(stringResource(label))
+    }
   }
 }
 
