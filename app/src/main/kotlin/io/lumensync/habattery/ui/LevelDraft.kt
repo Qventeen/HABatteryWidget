@@ -12,7 +12,7 @@ import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.roundTo
-import io.lumensync.habattery.format.formatDecimal
+import io.lumensync.habattery.format.formatEdge
 import io.lumensync.habattery.format.parseDecimal
 import java.util.Locale
 
@@ -30,10 +30,6 @@ data class LevelDraft(
   val name: String,
   val defaultName: LevelName?,
 )
-
-/** An edge as the edge field and the tags show it: at the value's precision, no trailing zeros. */
-fun LevelValue.formatEdge(edge: Double, locale: Locale): String =
-  formatDecimal(edge.roundTo(decimals), locale)
 
 fun ColorLevel.toDraft(value: LevelValue, locale: Locale): LevelDraft =
   LevelDraft(

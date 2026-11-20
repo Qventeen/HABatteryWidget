@@ -51,10 +51,10 @@ import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.customLevels
+import io.lumensync.habattery.format.formatEdge
+import io.lumensync.habattery.format.numberText
+import io.lumensync.habattery.format.placeText
 import io.lumensync.habattery.ui.LevelDraft
-import io.lumensync.habattery.ui.formatEdge
-import io.lumensync.habattery.ui.numberText
-import io.lumensync.habattery.ui.placeText
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale

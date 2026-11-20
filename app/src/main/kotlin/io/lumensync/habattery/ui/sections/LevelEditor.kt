@@ -68,12 +68,12 @@ import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
+import io.lumensync.habattery.format.mark
+import io.lumensync.habattery.format.placeText
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.ui.defaultDrafts
 import io.lumensync.habattery.ui.edgeOrNull
 import io.lumensync.habattery.ui.editorDrafts
-import io.lumensync.habattery.ui.mark
-import io.lumensync.habattery.ui.placeText
 import io.lumensync.habattery.ui.withNewLevel
 import io.lumensync.habattery.ui.withoutLevel
 import io.lumensync.habattery.widget.WidgetPalette
