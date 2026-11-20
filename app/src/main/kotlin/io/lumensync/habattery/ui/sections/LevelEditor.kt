@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -73,7 +74,9 @@ import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
 import io.lumensync.habattery.format.mark
-import io.lumensync.habattery.format.placeText
+import io.lumensync.habattery.format.placeWithUnit
+import io.lumensync.habattery.format.typeLabel
+import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.ui.defaultDrafts
 import io.lumensync.habattery.ui.editorDrafts
@@ -469,7 +472,6 @@ private fun edgeKeyboard(value: LevelValue): KeyboardType =
 @Composable
 private fun middleRangeText(span: LevelSpan?, decimals: Int, unit: String, locale: Locale): String {
   if (span == null) return stringResource(R.string.colors_range_unknown)
-  val place =
-    span.placeText(decimals, locale, LevelSide.MIDDLE) ?: return LevelSide.MIDDLE.mark()
-  return stringResource(R.string.colors_place, place, unit)
+  return span.placeWithUnit(decimals, unit, locale, LevelSide.MIDDLE, LocalResources.current)
+    ?: LevelSide.MIDDLE.mark()
 }

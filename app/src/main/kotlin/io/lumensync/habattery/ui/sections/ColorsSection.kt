@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -47,14 +48,17 @@ import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
-import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.customLevels
 import io.lumensync.habattery.format.SpanText
+import io.lumensync.habattery.format.levelNameRes
+import io.lumensync.habattery.format.nameOrNull
 import io.lumensync.habattery.format.numberText
-import io.lumensync.habattery.format.placeText
+import io.lumensync.habattery.format.placeWithUnit
 import io.lumensync.habattery.format.spanText
+import io.lumensync.habattery.format.typeLabel
+import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
@@ -192,12 +196,10 @@ private fun LevelTag(
 ) {
   val shades = palette.shades(level.shownColor)
   val unit = stringResource(unitLabel(value))
-  val name = level.name.ifBlank { defaultNameText(level.defaultName) }.ifBlank { null }
+  val resources = LocalResources.current
+  val name = level.nameOrNull(resources)
   val type = stringResource(typeLabel(level.type))
-  val place =
-    span.placeText(value.decimals, locale, level.side)?.let {
-      stringResource(R.string.colors_place, it, unit)
-    }
+  val place = span.placeWithUnit(value.decimals, unit, locale, level.side, resources)
   val text = joined(R.string.colors_two_parts, place, name ?: type)
   val words = spanWords(span, value.decimals, unit, locale)
   val description = joined(R.string.colors_list_parts, words, name, type)
@@ -265,7 +267,7 @@ internal fun appPalette(): WidgetPalette =
 
 @Composable
 internal fun defaultNameText(name: LevelName?): String =
-  name?.let { stringResource(nameLabel(it)) }.orEmpty()
+  name?.let { stringResource(levelNameRes(it)) }.orEmpty()
 
 @StringRes
 private fun valueLabel(value: LevelValue): Int =
@@ -277,27 +279,6 @@ private fun valueLabel(value: LevelValue): Int =
     LevelValue.DELTA -> R.string.colors_value_delta
     LevelValue.BATTERY_TEMPERATURE -> R.string.widget_battery_temperature
     LevelValue.MOSFET_TEMPERATURE -> R.string.widget_mosfet_temperature
-  }
-
-@StringRes
-internal fun unitLabel(value: LevelValue): Int =
-  when (value) {
-    LevelValue.SOC -> R.string.colors_unit_percent
-    LevelValue.VOLTAGE -> R.string.colors_unit_volts
-    LevelValue.CHARGE_CURRENT,
-    LevelValue.DISCHARGE_CURRENT -> R.string.colors_unit_amps
-    LevelValue.DELTA -> R.string.colors_unit_millivolts
-    LevelValue.BATTERY_TEMPERATURE,
-    LevelValue.MOSFET_TEMPERATURE -> R.string.colors_unit_celsius
-  }
-
-@StringRes
-internal fun typeLabel(type: LevelType): Int =
-  when (type) {
-    LevelType.CRITICAL -> R.string.level_type_critical
-    LevelType.WARNING -> R.string.level_type_warning
-    LevelType.NORMAL -> R.string.level_type_normal
-    LevelType.INFO -> R.string.level_type_info
   }
 
 @StringRes
@@ -322,21 +303,4 @@ internal fun iconLabel(icon: LevelIcon?): Int =
     LevelIcon.LEAF -> R.string.level_icon_leaf
     LevelIcon.FLAME -> R.string.level_icon_flame
     LevelIcon.FLAME_ALERT -> R.string.level_icon_flame_alert
-  }
-
-@StringRes
-private fun nameLabel(name: LevelName): Int =
-  when (name) {
-    LevelName.LOW -> R.string.level_name_low
-    LevelName.GETTING_LOW -> R.string.level_name_getting_low
-    LevelName.NORMAL -> R.string.level_name_normal
-    LevelName.FULL -> R.string.level_name_full
-    LevelName.FREEZING -> R.string.level_name_freezing
-    LevelName.COOL -> R.string.level_name_cool
-    LevelName.WARM -> R.string.level_name_warm
-    LevelName.HOT -> R.string.level_name_hot
-    LevelName.BALANCED -> R.string.level_name_balanced
-    LevelName.HIGH -> R.string.level_name_high
-    LevelName.VERY_HIGH -> R.string.level_name_very_high
-    LevelName.LIGHT -> R.string.level_name_light
   }
