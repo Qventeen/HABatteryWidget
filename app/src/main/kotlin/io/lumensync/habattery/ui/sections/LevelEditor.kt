@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,12 +30,17 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldLabelPosition
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +48,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -90,6 +97,7 @@ import io.lumensync.habattery.ui.withoutLevel
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 /** The picker's colours. Teal is left out: 0012 keeps it for the inverter, a stored teal stays. */
 private val PickerColors =
@@ -211,8 +219,8 @@ internal fun LevelEditor(
 }
 
 /**
- * The value's re-arm margin, in its [unit]. Under it: the [error] of the last save, else the
- * [defaultMargin] that a blank field keeps.
+ * The value's re-arm margin (hysteresis), in its [unit]. An info button inside the field opens a
+ * tip. Under it: the [error] of the last save, else the [defaultMargin] that a blank field keeps.
  */
 @Composable
 private fun MarginField(
@@ -236,7 +244,31 @@ private fun MarginField(
           R.string.level_margin_default,
           stringResource(R.string.colors_place, defaultMargin, unit),
         ),
+    trailingIcon = { MarginInfo() },
   )
+}
+
+/**
+ * The info button of the margin field. A tap shows a rich tip that stays until a tap outside; a
+ * persistent tip is also what TalkBack can read.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MarginInfo() {
+  val tip = rememberTooltipState(isPersistent = true)
+  val scope = rememberCoroutineScope()
+  TooltipBox(
+    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+    tooltip = { RichTooltip { Text(stringResource(R.string.level_margin_tip)) } },
+    state = tip,
+  ) {
+    IconButton(onClick = { scope.launch { tip.show() } }) {
+      Icon(
+        painterResource(R.drawable.ic_info),
+        contentDescription = stringResource(R.string.level_margin_info),
+      )
+    }
+  }
 }
 
 /**
@@ -388,6 +420,7 @@ private fun LevelTextField(
   suffix: String? = null,
   isError: Boolean = false,
   supportingText: String? = null,
+  trailingIcon: (@Composable () -> Unit)? = null,
 ) {
   // Plain remember, like the draft: an unsaved edit may be lost on rotation.
   val state = remember { TextFieldState(text) }
@@ -401,6 +434,7 @@ private fun LevelTextField(
     placeholder = placeholder?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
     suffix = suffix?.let { { Text(it) } },
     supportingText = supportingText?.let { { Text(it) } },
+    trailingIcon = trailingIcon,
     isError = isError,
     keyboardOptions = keyboardOptions,
     lineLimits = TextFieldLineLimits.SingleLine,

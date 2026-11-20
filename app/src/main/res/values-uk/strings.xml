@@ -190,7 +190,10 @@
     <string name="colors_list_parts">%1$s, %2$s</string>
     <string name="colors_tag_bell">Дзвіночок увімкнено</string>
     <string name="level_bell">Сповіщати про «%1$s»</string>
-    <string name="level_margin">Сповіщати знову, коли значення відійде на</string>
+    <string name="level_margin">Гістерезис</string>
+    <!-- The info button of the margin field: TalkBack name and the tip it opens. -->
+    <string name="level_margin_info">Про гістерезис</string>
+    <string name="level_margin_tip">Після сповіщення рівень сповістить знову, лише коли значення відійде від межі на цю величину. Захищає від повторів, коли значення коливається.</string>
     <string name="level_margin_default">Типово: %1$s</string>
     <string name="level_type_critical">Критичний</string>
     <string name="level_type_warning">Попередження</string>

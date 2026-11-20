@@ -214,7 +214,10 @@
     <!-- TalkBack's name for a level's bell in the editor; %1$s is the level's name, such as Low. -->
     <string name="level_bell">Notify about %1$s</string>
     <!-- The re-arm margin field, in the value's unit. -->
-    <string name="level_margin">Notify again after it moves back by</string>
+    <string name="level_margin">Hysteresis</string>
+    <!-- The info button of the margin field: TalkBack name and the tip it opens. -->
+    <string name="level_margin_info">About hysteresis</string>
+    <string name="level_margin_tip">After a notification, the level notifies again only when the value moves this far from its edge. Stops repeats when the value jitters.</string>
     <!-- %1$s is the default margin with its unit, such as 2 %. -->
     <string name="level_margin_default">Default: %1$s</string>
     <string name="level_type_critical">Critical</string>
