@@ -19,15 +19,16 @@ import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import io.lumensync.habattery.data.store.settingsDataStore
+import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.port.BatterySource
+import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
 import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
-import io.lumensync.habattery.system.AndroidFullChargeNotifier
 import io.lumensync.habattery.system.AppLanguage
 import io.lumensync.habattery.system.ConfigWatcher
 import io.lumensync.habattery.system.TextConfig
@@ -38,6 +39,13 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+
+/** Stand-in until the Android notifier replaces it. */
+private object NoLevelNotifier : LevelNotifier {
+  override fun canPost(): Boolean = false
+
+  override fun post(alert: LevelAlert) = Unit
+}
 
 /** Manual DI: builds every object once per process, so each DataStore file has one instance. */
 class AppContainer(context: Context) {
@@ -96,7 +104,7 @@ class AppContainer(context: Context) {
       tokens = tokenStore,
       source = batterySource,
       cache = readingCache,
-      notifier = AndroidFullChargeNotifier(appContext),
+      notifier = NoLevelNotifier,
       widgets = widgetRefresher,
     )
 

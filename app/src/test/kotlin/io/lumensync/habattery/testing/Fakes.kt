@@ -1,5 +1,6 @@
 package io.lumensync.habattery.testing
 
+import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
@@ -9,7 +10,7 @@ import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.port.BatterySource
-import io.lumensync.habattery.domain.port.FullChargeNotifier
+import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
@@ -127,12 +128,15 @@ class FakeReadingCache(initial: CacheState = CacheState()) : ReadingCache {
   }
 }
 
-class FakeNotifier : FullChargeNotifier {
-  var shown = 0
-    private set
+class FakeLevelNotifier(private val canPost: Boolean = true) : LevelNotifier {
+  private val _posted = mutableListOf<LevelAlert>()
+  val posted: List<LevelAlert>
+    get() = _posted
 
-  override fun showFullCharge() {
-    shown++
+  override fun canPost(): Boolean = canPost
+
+  override fun post(alert: LevelAlert) {
+    _posted += alert
   }
 }
 

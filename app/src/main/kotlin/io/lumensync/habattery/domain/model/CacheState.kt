@@ -7,5 +7,5 @@ data class CacheState(
   val reading: BatteryReading? = null,
   val error: SyncError? = null,
   val refreshingSinceMillis: Long? = null,
-  val fullChargeNotified: Boolean = false,
+  val levelAlerts: Map<String, LevelAlertState> = emptyMap(),
 )

@@ -9,6 +9,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -215,6 +216,12 @@ class StoredJsonV1Test {
         """{"schemaVersion":1,"state":{"reading":{"chargePercent":50.0,"cellVoltagesV":[3.3],"updatedAtMillis":1}}}""",
       )
     assertEquals(BatteryReading(chargePercent = 50.0, updatedAtMillis = 1), cache.state.reading)
+    val oldCache =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """{"schemaVersion":1,"state":{"fullChargeNotified":true}}""",
+      )
+    assertEquals(CacheState(), oldCache.state)
   }
 
   /** Spec 0005: the sp sizes of 0003 are dropped, so everyone starts at the design size (50 %). */
@@ -291,7 +298,7 @@ class StoredJsonV1Test {
           },
           "error": { "type": "http", "code": 503 },
           "refreshingSinceMillis": 1800000001000,
-          "fullChargeNotified": true
+          "levelAlerts": { "SOC": { "current": 2, "disarmed": [1] } }
         }
       }
       """
@@ -318,7 +325,7 @@ class StoredJsonV1Test {
               ),
             error = SyncError.HttpError(503),
             refreshingSinceMillis = 1_800_000_001_000L,
-            fullChargeNotified = true,
+            levelAlerts = mapOf("SOC" to LevelAlertState(current = 2, disarmed = listOf(1))),
           ),
       )
     assertV1(json, expected, CacheRecord.serializer())

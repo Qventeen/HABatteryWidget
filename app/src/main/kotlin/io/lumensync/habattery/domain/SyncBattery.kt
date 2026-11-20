@@ -3,7 +3,7 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
-import io.lumensync.habattery.domain.port.FullChargeNotifier
+import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.TokenStore
@@ -20,7 +20,7 @@ class SyncBattery(
   private val tokens: TokenStore,
   private val source: BatterySource,
   private val cache: ReadingCache,
-  private val notifier: FullChargeNotifier,
+  private val notifier: LevelNotifier,
   private val widgets: WidgetRefresher,
 ) {
   private val mutex = Mutex()
@@ -38,31 +38,27 @@ class SyncBattery(
             source.fetch(current.connection, current.entities, token)
           }
 
-        var notify = false
+        // Read once, before the write, so tracking and posting agree on the same answer.
+        val enabled = current.notificationsOn && notifier.canPost()
+        var alerts = emptyList<LevelAlert>()
         cache.update { state ->
           when (result) {
             is SyncResult.Success -> {
               val r = result.reading
-              val decision =
-                FullChargeRule.evaluate(
-                  state = BatteryMath.state(r.chargePercent, r.currentA),
-                  chargePercent = r.chargePercent,
-                  enabled = current.notificationsOn,
-                  alreadyNotified = state.fullChargeNotified,
-                )
-              notify = decision.notify
+              val outcome = LevelAlerts.evaluate(r, current, enabled, state.levelAlerts)
+              alerts = outcome.alerts
               state.copy(
                 reading = r,
                 error = null,
                 refreshingSinceMillis = null,
-                fullChargeNotified = decision.notified,
+                levelAlerts = outcome.state,
               )
             }
             is SyncResult.Failure -> state.copy(error = result.error, refreshingSinceMillis = null)
           }
         }
         refreshingCleared = true
-        if (notify) notifier.showFullCharge()
+        alerts.forEach(notifier::post)
         result
       } finally {
         withContext(NonCancellable) {

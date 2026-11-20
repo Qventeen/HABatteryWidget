@@ -26,7 +26,7 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.testing.FakeBatterySource
-import io.lumensync.habattery.testing.FakeNotifier
+import io.lumensync.habattery.testing.FakeLevelNotifier
 import io.lumensync.habattery.testing.FakeReadingCache
 import io.lumensync.habattery.testing.FakeSettingsRepository
 import io.lumensync.habattery.testing.FakeSyncScheduler
@@ -79,7 +79,7 @@ class MainViewModelTest {
     tokens = FakeTokenStore(token, user = userToken)
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
-    val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
+    val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeLevelNotifier(), widgets)
     val vm = MainViewModel(
         settings, tokens, cache, sync, scheduler, widgets, batterySource ?: source, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
