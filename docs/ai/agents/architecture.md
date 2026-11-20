@@ -14,17 +14,21 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   place), `MainActivity` (launcher and widget configure activity; `singleTop`; reads
   `EXTRA_TAPPED_WIDGET_ID`; first preview tab: configured, tapped, first placed, 4×2).
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
-  `BatteryMath`, `BatteryOverview`, `EntityFill`, `FullChargeRule`, `RefreshPolicy`,
+  `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
+  the per-value alert state), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
   `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value colours), `ToggleAutoRefresh`.
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
   template; `StatesSource`: User, states per entity and the sensor search;
   `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,
   `secure/` (Keystore crypto, `EncryptedTokenStore`: one slot per token type), `store/` (JSON DataStore
-  records with `schemaVersion = 1`).
-- `format/`: `Formatters`, `Decimal`, `LevelTagText` (the level tag text); one formatter for
+  records: settings `schemaVersion = 2`, migrated from v1 by `SettingsMigrationV2` in
+  `settingsDataStore`; cache and token `schemaVersion = 1`).
+- `format/`: `Formatters`, `Decimal`, `LevelTagText` (the level tag text),
+  `LevelLabels` (level name, type word, unit and notification value labels); one formatter for
   widget, screen and notification.
-- `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`,
+- `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidLevelNotifier` (one channel per level
+  type),
   `AppLanguage` (per-app language through `LocaleManager`, Android 13+ only; the system
   stores it), `ConfigWatcher` (`App` reports language and font-scale changes, and night mode
   below API 31; a real change redraws widgets) and `LocaleChangedReceiver` (redraws on
@@ -52,13 +56,14 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   (`WidgetPreviewCard` hosts the preview), `theme/`.
 
 Dependency rule: `ui`, `widget`, `system`, `data` → `domain`. `domain` depends
-on nothing Android. Names of `MainActivity` and `BatteryWidgetReceiver` are
+on nothing Android. One accepted edge: `system/AndroidLevelNotifier` reads the accent
+colour from `widget/WidgetPalette`. Names of `MainActivity` and `BatteryWidgetReceiver` are
 fixed (home screens store them).
 
 ## Ports (`domain/port/Ports.kt`)
 
 `BatterySource`, `SettingsRepository`, `TokenStore`, `ReadingCache`,
-`WidgetRefresher`, `FullChargeNotifier`, `SyncScheduler`. `TokenStore` keeps one
+`WidgetRefresher`, `LevelNotifier`, `SyncScheduler`. `TokenStore` keeps one
 token per type: `savedTypes`, `get(type)`, `set(type, token)`, `clear(type)`. Add an interface only
 when it has a second implementation or a test fake.
 
@@ -67,8 +72,9 @@ when it has a second implementation or a test fake.
 - Every trigger (worker, widget ↻, "Refresh now", app start) runs `SyncBattery`.
 - `SyncBattery`: settings and token → `BatterySource.fetch` (`TokenTypeSource` → Admin: one template request; User: one
   `GET /api/states/<id>` per entity, at most 4 at a time) →
-  reading or error into `ReadingCache` (last good reading kept) →
-  `FullChargeRule` → `WidgetRefresher.refreshAll()`.
+  reading or error into `ReadingCache` (last good reading kept; on success `LevelAlerts.evaluate`
+  runs in the same write and stores `CacheState.levelAlerts`) → `LevelNotifier.post` for each
+  alert → `WidgetRefresher.refreshAll()`.
 - Widget ↻ only marks "refreshing" and enqueues unique one-time work.
 - The widget renders from local data only (`ReadingCache`,
   `SettingsRepository`, `TokenStore.savedTypes`). No network call in
