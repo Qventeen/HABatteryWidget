@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -96,7 +97,6 @@ internal fun LevelEditor(
   stored: CustomLevels,
   shown: List<ColorLevel>,
   basis: LevelBasis,
-  ranges: RangeText,
   palette: WidgetPalette,
   errors: List<FieldError>,
   onSave: (List<LevelDraft>, Locale) -> Boolean,
@@ -107,16 +107,14 @@ internal fun LevelEditor(
   // sync may bring a new one while the owner types.
   var drafts by
     remember(value, stored) { mutableStateOf(editorDrafts(value, stored, basis, locale)) }
-  // The text fields keep their own text, and the built-in levels reuse ids, so a reset must build
-  // new rows.
   var resets by remember { mutableIntStateOf(0) }
   // The screen has one error list. Only this editor's own save gives its edge errors, and their
   // indexes no longer match once a row is removed or the draft is reset.
   var ownErrors by remember(value) { mutableStateOf(false) }
 
-  val edges = drafts.map { it.edgeOrNull(value, locale) }
-  // The first level reaches up to the lowest edge; the save sorts the others by edge.
-  val upper = edges.drop(1).filterNotNull().minOrNull()
+  // The text fields keep their own text, and the built-in levels reuse ids, so the rows are built
+  // again whenever the drafts are: on a reset, and when the stored levels change under the open
+  // editor.
   key(stored, resets) {
     drafts.forEachIndexed { index, draft ->
       // Keyed by id: after a removal, the fields' own state stays with its level, not its position.
@@ -125,12 +123,14 @@ internal fun LevelEditor(
           value = value,
           index = index,
           draft = draft,
-          range = ranges.of(index, edges[index], upper),
           error = if (ownErrors) errors.errorFor(Field.LEVEL_EDGE, index) else null,
           canRemove = drafts.size > 1,
           palette = palette,
-          // By id: a text field reports its change a moment later, when the index may be old.
-          onChange = { changed -> drafts = drafts.map { if (it.id == changed.id) changed else it } },
+          // On the current draft by id: a text field reports its change a moment later, when the
+          // index and the other fields of the draft it saw may be old.
+          onUpdate = { update ->
+            drafts = drafts.map { if (it.id == draft.id) update(it) else it }
+          },
           onRemove = {
             drafts = drafts.withoutLevel(index) { it.edgeOrNull(value, locale) }
             ownErrors = false
@@ -172,36 +172,29 @@ internal fun LevelEditor(
   }
 }
 
-/** One level in the editor: range, remove, edge, name, type, colour, and the icon if it has one. */
+/**
+ * One level in the editor: edge, name, type and remove, colour, and the icon if it has one.
+ * [onUpdate] takes a change to apply to the level's current draft.
+ */
 @Composable
 private fun LevelRow(
   value: LevelValue,
   index: Int,
   draft: LevelDraft,
-  range: String?,
   error: FieldError?,
   canRemove: Boolean,
   palette: WidgetPalette,
-  onChange: (LevelDraft) -> Unit,
+  onUpdate: ((LevelDraft) -> LevelDraft) -> Unit,
   onRemove: () -> Unit,
 ) {
   val shown = draft.color ?: draft.type.defaultColor
   HorizontalDivider()
-  Row(verticalAlignment = Alignment.CenterVertically) {
-    Text(range.orEmpty(), Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
-    IconButton(onClick = onRemove, enabled = canRemove) {
-      Icon(
-        painterResource(R.drawable.ic_close),
-        contentDescription = stringResource(R.string.colors_remove_level, index + 1),
-      )
-    }
-  }
   Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
     // The first level is open below: the save ignores its edge.
     if (index > 0) {
       LevelTextField(
         text = draft.edgeText,
-        onTextChange = { onChange(draft.copy(edgeText = it)) },
+        onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
         label = stringResource(R.string.colors_edge),
         keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
         modifier = Modifier.weight(1f),
@@ -210,17 +203,26 @@ private fun LevelRow(
     }
     LevelTextField(
       text = draft.name,
-      onTextChange = { onChange(draft.copy(name = it)) },
+      onTextChange = { text -> onUpdate { it.copy(name = text) } },
       label = stringResource(R.string.colors_name),
       keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
       modifier = Modifier.weight(1.5f),
       placeholder = draft.defaultName?.let { defaultNameText(it) },
     )
   }
-  TypeMenu(draft.type) { onChange(draft.copy(type = it)) }
-  ColorChips(draft.type, shown, palette) { onChange(draft.copy(color = it)) }
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    TypeMenu(draft.type) { type -> onUpdate { it.copy(type = type) } }
+    Spacer(Modifier.weight(1f))
+    IconButton(onClick = onRemove, enabled = canRemove) {
+      Icon(
+        painterResource(R.drawable.ic_close),
+        contentDescription = stringResource(R.string.colors_remove_level, index + 1),
+      )
+    }
+  }
+  ColorChips(draft.type, shown, palette) { color -> onUpdate { it.copy(color = color) } }
   if (value.hasIcons) {
-    IconChips(draft.icon, palette.shades(shown).text) { onChange(draft.copy(icon = it)) }
+    IconChips(draft.icon, palette.shades(shown).text) { icon -> onUpdate { it.copy(icon = icon) } }
   }
 }
 

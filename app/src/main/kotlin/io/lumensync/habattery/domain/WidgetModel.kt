@@ -118,7 +118,8 @@ sealed interface WidgetModel {
         refreshing = overview.refreshing,
         autoRefresh = settings.refresh.auto,
         averageCellVoltage = r.averageCellVoltageV,
-        averageCellLook = averageCellLook(r, levels(LevelValue.VOLTAGE)),
+        averageCellLook =
+          averageCellLook(r.averageCellVoltageV, basis.cells, levels(LevelValue.VOLTAGE)),
         deltaMv = deltaMv,
         deltaLook = look(LevelValue.DELTA, deltaMv?.toDouble()),
         temperatures =
@@ -138,9 +139,12 @@ sealed interface WidgetModel {
       LevelLook(shownColor, icon.takeIf { value.hasIcons })
 
     /** The voltage levels per cell; plain without a cell count. */
-    private fun averageCellLook(r: BatteryReading, voltageLevels: List<ColorLevel>): LevelLook {
-      val average = r.averageCellVoltageV ?: return PLAIN
-      val cells = BatteryMath.cellCount(r) ?: return PLAIN
+    private fun averageCellLook(
+      average: Double?,
+      cells: Int?,
+      voltageLevels: List<ColorLevel>,
+    ): LevelLook {
+      if (average == null || cells == null) return PLAIN
       return LevelPicker.pick(LevelPicker.perCell(voltageLevels, cells), average.roundTo(3))
         .toLook(LevelValue.VOLTAGE)
     }

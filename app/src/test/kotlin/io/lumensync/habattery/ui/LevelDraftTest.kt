@@ -100,4 +100,12 @@ class LevelDraftTest {
     val drafts = defaultDrafts(LevelValue.VOLTAGE, LevelBasis(null, 16), Locale.US)
     assertEquals(listOf("", "48", "51.2", "55.2", "56.8", "58.4"), drafts.map { it.edgeText })
   }
+
+  @Test
+  fun formatEdge_valuePrecisionWithoutTrailingZeros() {
+    assertEquals("20", LevelValue.SOC.formatEdge(20.0, Locale.US))
+    assertEquals("20", LevelValue.CHARGE_CURRENT.formatEdge(20.0, Locale.US))
+    assertEquals("51.75", LevelValue.VOLTAGE.formatEdge(51.75000000000001, Locale.US))
+    assertEquals("51,2", LevelValue.VOLTAGE.formatEdge(51.2, uk))
+  }
 }

@@ -160,6 +160,18 @@
     <string name="colors_value_charge_current">Charge current</string>
     <string name="colors_value_discharge_current">Discharge current</string>
     <string name="colors_value_delta">Cell delta</string>
+    <!-- A value's title in the Colours section: %1$s is the value, such as Voltage; %2$s its unit. -->
+    <string name="colors_value_title">%1$s (%2$s)</string>
+    <string name="colors_unit_percent">%</string>
+    <string name="colors_unit_volts">V</string>
+    <string name="colors_unit_amps">A</string>
+    <string name="colors_unit_millivolts">mV</string>
+    <string name="colors_unit_celsius">°C</string>
+    <!-- The tag beside a value's title: every level goes up from its number. -->
+    <string name="colors_from_tag">from</string>
+    <string name="colors_from_hint">Each level starts at its number and goes up to the next level.</string>
+    <!-- TalkBack's name for tapping the from tag. -->
+    <string name="colors_from_hint_action">Show hint</string>
     <string name="colors_default">Default</string>
     <string name="colors_edit">Edit</string>
     <!-- %1$s is the value, such as Voltage. -->
@@ -168,19 +180,17 @@
     <string name="colors_default_confirm">Use defaults</string>
     <string name="colors_add_level">Add level</string>
     <string name="colors_reset">Reset</string>
-    <!-- The range of a level; %1$s is an edge with its unit, such as 20%. -->
-    <string name="colors_below">below %1$s</string>
-    <string name="colors_from">from %1$s</string>
-    <!-- %1$s is the voltage edge divided by the cell count, such as 3.250 V. -->
+    <!-- TalkBack's start of a level tag: %1$s is the number, such as 20; %2$s its unit, such as %. -->
+    <string name="colors_from">from %1$s %2$s</string>
+    <!-- %1$s is a voltage level's start divided by the cell count, such as 3.2. -->
     <string name="colors_per_cell">%1$s per cell</string>
-    <string name="colors_edge">Edge</string>
+    <string name="colors_edge">From</string>
     <string name="colors_name">Name</string>
     <string name="colors_remove_level">Remove level %1$d</string>
     <!-- TalkBack's name for the colour chip of the level type's own colour. -->
     <string name="colors_color_default">%1$s, default</string>
+    <!-- Joins the parts of a level tag, such as 20 · Getting low. -->
     <string name="colors_two_parts">%1$s · %2$s</string>
-    <!-- TalkBack's text for a level tag: range · name · type. -->
-    <string name="colors_three_parts">%1$s · %2$s · %3$s</string>
     <string name="level_type_critical">Critical</string>
     <string name="level_type_warning">Warning</string>
     <string name="level_type_normal">Normal</string>

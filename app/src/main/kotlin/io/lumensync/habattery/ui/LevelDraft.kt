@@ -25,11 +25,15 @@ data class LevelDraft(
   val defaultName: LevelName?,
 )
 
+/** An edge as the edge field and the tags show it: at the value's precision, no trailing zeros. */
+fun LevelValue.formatEdge(edge: Double, locale: Locale): String =
+  formatDecimal(edge.roundTo(decimals), locale)
+
 /** The first level has no edge, so its text is empty. */
 fun ColorLevel.toDraft(value: LevelValue, locale: Locale): LevelDraft =
   LevelDraft(
     id = id,
-    edgeText = from?.let { formatDecimal(it.roundTo(value.decimals), locale) } ?: "",
+    edgeText = from?.let { value.formatEdge(it, locale) } ?: "",
     type = type,
     color = color,
     icon = icon,
