@@ -163,6 +163,8 @@ threshold around a normal band. So a level list has three kinds of level:
 - **The middle level** (named Normal by default): exactly one per value.
   It has no edge of its own; the nearest ↓ and ↑ edges set its range.
   Its type, colour, name and icon can be edited like any other level.
+  Its mark is **↕** (owner, 2026-11-20), so ↓ and ↑ always mean a "too
+  low" or a "too high" level.
 
 Rules:
 
@@ -177,15 +179,15 @@ Rules:
   build before round 3) is ignored: the value uses the built-in levels,
   as if it had no own levels. Save stores a valid list again. No migration:
   the field was never released (0001 §14).
-- **The middle level's range**, shown at the value's precision with one
-  step (0.01 V, 0.1 A, 1 for the rest) taken off each side:
+- **The middle level's range**, shown with ↕ at the value's precision,
+  with one step (0.01 V, 0.1 A, 1 for the rest) taken off each side:
 
   | Neighbours | It shows | Example |
   |---|---|---|
-  | ↓ and ↑ levels | the band between | `41–99 %`, `6–44 °C`, `51.21–55.19 V`; one number when the band has one (`41 %`) |
-  | only ↑ levels | ↓ the top of the band | MOSFET `↓64 °C` |
-  | only ↓ levels | ↑ the bottom of the band | `↑21 %` |
-  | none | ↑ the natural floor | `↑0 V`, `↑0 A` (SOC, voltage, current and delta start at 0) |
+  | ↓ and ↑ levels | the band between | `↕41–99 %`, `↕6–44 °C`, `↕51.21–55.19 V`; one number when the band has one (`↕41 %`) |
+  | only ↑ levels | ≤ the top of the band | MOSFET `↕≤64 °C` |
+  | only ↓ levels | ≥ the bottom of the band | `↕≥21 %` |
+  | none | ≥ the natural floor | `↕≥0 V`, `↕≥0 A` (SOC, voltage, current and delta start at 0) |
 
   Temperatures have no natural floor: a temperature with only the middle
   level shows just its name (my call; it happens only after the owner
@@ -404,7 +406,7 @@ Rules:
     - Look change: today any charge is green and any discharge amber; now
       both are blue up to 0.2 C, green above it, and so on.
     - Without a capacity, or without a cell count for the voltage, the one
-      default level is the middle level ("↑0 A · Normal", "↑0 V ·
+      default level is the middle level ("↕≥0 A · Normal", "↕≥0 V ·
       Normal").
 - **Default and Edit per value** (owner, 2026-11-20, after the phone
   check; this replaces the "Custom colours" switch of 2026-11-18, which
@@ -462,15 +464,15 @@ Rules:
   - **Tag text** (owner, 2026-11-20, round 3; replaces the "from" tags and
     the arrow tag with its hint of round 2): every tag starts with the
     level's place, then its name: "↓20 % · Low", "↓40 % · Getting low",
-    "41–99 % · Normal", "↑100 % · Full"; "↓0 °C · Freezing"; "↓64 °C ·
-    Normal" (MOSFET). The arrow is the level's side; the middle level
-    shows its range (§3.1). Numbers have the value's precision without
+    "↕41–99 % · Normal", "↑100 % · Full"; "↓0 °C · Freezing"; "↕≤64 °C ·
+    Normal" (MOSFET). The mark is the level's side: ↓, ↑, or ↕ on the
+    middle level, which shows its range (§3.1). Numbers have the value's precision without
     trailing zeros ("20", "51.2") and the unit after them. A level with no
     name shows its type word instead. No hint and no explanation line:
     the arrows say it (owner).
   - **Voltage tags** add the per-cell edge or range when the cell count is
-    known: "↓48 V · 3 V per cell · Low", "51.21–55.19 V · 3.201–3.449 V
-    per cell · Normal".
+    known, without a second mark: "↓48 V · 3 V per cell · Low",
+    "↕51.21–55.19 V · 3.201–3.449 V per cell · Normal".
   - **For TalkBack** a tag reads in words: "20 % and below, Low,
     Critical"; "41 to 99 %, Normal, Normal".
   - **Value names have no units** again (owner, round 3): "State of
@@ -479,8 +481,9 @@ Rules:
   - Edit puts the editor in place of the tags (sketch in §3.1). A ↓ or ↑
     row has a two-button ↓/↑ choice, a "Limit" field (the edge, bare
     number), then name, type, colour chip and icon. The middle row has no
-    choice, no field and no delete; in their place it shows its range,
-    worked out live from the other rows ("—" while they are not valid).
+    choice, no field and no delete; in their place it shows its range
+    with ↕ ("↕41–99 %"), worked out live from the other rows ("—" while
+    they are not valid).
     The limit and name fields look the same: both have their label on the
     border and a hint inside. Temperature limits take a minus sign.
   - The app preview (0006) at the top shows the saved result; it scrolls

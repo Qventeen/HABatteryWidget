@@ -196,8 +196,8 @@ The check runs inside `SyncBattery` after each successful reading, where
   example "Charge: Low ↓20 %", "Battery temperature: Hot ↑55 °C". Since
   2026-11-20 (0010 round 3) the arrow and number are the level's own, as
   its Colours tag shows them: the arrow is the level's side, the number its
-  edge; a middle level with a bell shows its range ("Charge: Normal
-  41–99 %"). The "value: name" form works with free names in English and
+  edge; a middle level with a bell shows ↕ and its range ("Charge:
+  Normal ↕41–99 %"). The "value: name" form works with free names in English and
   Ukrainian.
 - **Value labels:** Charge, Voltage, Charge current, Discharge current, Cell
   delta, Battery temperature, MOSFET temperature (Ukrainian: Заряд, Напруга,
