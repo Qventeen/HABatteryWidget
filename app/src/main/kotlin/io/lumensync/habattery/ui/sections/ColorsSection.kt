@@ -2,8 +2,9 @@ package io.lumensync.habattery.ui.sections
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,10 +33,12 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.FieldError
@@ -100,6 +103,8 @@ fun ColorsSection(
       // take over the closed editor's draft and errors.
       key(value) {
         val levels = LevelPicker.effective(value, own[value], basis)
+        // Above the editor branch, so the fold state survives an open editor.
+        var folded by rememberSaveable { mutableStateOf(true) }
         if (editing == value) {
           ValueRow(value)
           LevelEditor(
@@ -113,13 +118,13 @@ fun ColorsSection(
             onClose = { editing = null },
           )
         } else {
-          ValueRow(value) {
+          ValueRow(value, expanded = !folded, onToggle = { folded = !folded }) {
             ValueButton(R.string.colors_default, enabled = own[value] != null) {
               confirmDefault = value
             }
             ValueButton(R.string.colors_edit) { editing = value }
           }
-          LevelTags(value, levels, palette)
+          if (!folded) LevelTags(value, levels, palette)
         }
       }
     }
@@ -136,19 +141,48 @@ fun ColorsSection(
   }
 }
 
-/** A value's name, then its [buttons]. The name wraps, so a long name keeps the buttons in view. */
+/**
+ * A value's name, then its [buttons]. The name wraps, so a long name keeps the buttons in view.
+ * With [onToggle] the name and an arrow form one button that folds the value's tags; [expanded]
+ * says whether they show.
+ */
 @Composable
-private fun ValueRow(value: LevelValue, buttons: @Composable RowScope.() -> Unit = {}) {
+private fun ValueRow(
+  value: LevelValue,
+  expanded: Boolean = false,
+  onToggle: (() -> Unit)? = null,
+  buttons: @Composable RowScope.() -> Unit = {},
+) {
+  val name = stringResource(valueLabel(value))
+  var toggle: Modifier = Modifier.heightIn(min = 48.dp)
+  if (onToggle != null) {
+    val action =
+      stringResource(if (expanded) R.string.section_hide else R.string.section_show, name)
+    val state =
+      stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
+    toggle =
+      toggle
+        .clickable(onClickLabel = action, role = Role.Button, onClick = onToggle)
+        .semantics { stateDescription = state }
+  }
   Row(
     Modifier.fillMaxWidth().heightIn(min = 48.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Text(
-      stringResource(valueLabel(value)),
-      Modifier.weight(1f).semantics { heading() },
-      style = MaterialTheme.typography.titleSmall,
-    )
+    Row(Modifier.weight(1f).then(toggle), verticalAlignment = Alignment.CenterVertically) {
+      Text(
+        name,
+        Modifier.weight(1f, fill = false).semantics { heading() },
+        style = MaterialTheme.typography.titleSmall,
+      )
+      if (onToggle != null) {
+        Icon(
+          painterResource(if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
+          contentDescription = null, // the row speaks for it
+        )
+      }
+    }
     buttons()
   }
 }
@@ -165,15 +199,11 @@ private fun ValueButton(@StringRes label: Int, enabled: Boolean = true, onClick:
   }
 }
 
-/** The [levels] of [value], in shown order, as pills in the widget's look. */
+/** The [levels] of [value], in shown order, as pills in the widget's look, one per line. */
 @Composable
 private fun LevelTags(value: LevelValue, levels: List<ColorLevel>, palette: WidgetPalette) {
   val locale = LocalConfiguration.current.locales[0]
-  FlowRow(
-    Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-  ) {
+  Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     levels.forEach { level ->
       val span = LevelSpans.of(levels, level, value.decimals, value.floor)
       LevelTag(value, level, span, locale, palette)
