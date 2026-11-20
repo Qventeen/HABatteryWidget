@@ -62,7 +62,7 @@ import java.util.Locale
 
 /**
  * The colour levels of every value as tags, with Default and Edit; one editor is open at a time.
- * [basis] gives the built-in edges; with its cells each voltage tag also shows per cell.
+ * [basis] gives the built-in edges.
  * [onSaveLevels] returns `false` when a field has an error, and the editor stays open.
  */
 @Composable
