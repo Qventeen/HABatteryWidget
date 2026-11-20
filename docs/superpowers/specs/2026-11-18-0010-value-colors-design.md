@@ -5,7 +5,11 @@
   Plan: `docs/superpowers/plans/2026-11-18-0010-value-colors.md`.
   Amended by the owner on 2026-11-20 after the phone check of the
   Colours section: Default and Edit replace the "Custom colours" switch
-  (§3.5, §3.6), and the colour picker gets smaller (§3.4).
+  (§3.5, §3.6), and the colour picker gets smaller (§3.4). Amended again
+  the same day: every level reads "from" with an arrow and a hint, units
+  move into the value names (§3.6), and the total voltage gets LiFePO4
+  default levels (§3.5); a battery type and a cell count setting are
+  left to spec 0013.
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -143,7 +147,7 @@ One level system for all values, in two layers. A level is a band of values
   | Widget part | Levels |
   |---|---|
   | SOC ring | SOC levels; the SOC number stays plain |
-  | Voltage pill | voltage levels (default: plain), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
+  | Voltage pill | voltage levels (default: plain; LiFePO4 levels since 2026-11-20, §3.5), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
   | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery can have different limits each way; idle is grey; defaults in §3.5; the arrow stays. A high level can notify (0011), for example a very high discharge current |
   | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list |
   | Cell delta, battery temperature, MOSFET pills | levels (defaults §3.3 and §3.5; the worst battery sensor wins) |
@@ -263,7 +267,34 @@ One level system for all values, in two layers. A level is a band of values
     16 mV and red from 41 mV.
   - Total voltage (owner, 2026-11-18): one level, "Normal", plain (no
     colour), as today. The pack voltage depends on the cell count; SOC
-    already shows the charge.
+    already shows the charge. **Changed (owner, 2026-11-20):** LiFePO4
+    default levels, set per cell and multiplied by the cell count of the
+    reading (the same count the average cell uses):
+
+    | From (per cell) | 16 cells | Name | Type (colour) |
+    |---|---|---|---|
+    | – | below 48.0 V | Low | Critical (red) |
+    | 3.00 V | 48.0 V | Getting low | Warning (amber) |
+    | 3.20 V | 51.2 V | Normal | Normal (green) |
+    | 3.45 V | 55.2 V | Full | Info (blue) |
+    | 3.55 V | 56.8 V | High | Warning (amber) |
+    | 3.65 V | 58.4 V | Very high | Critical (red) |
+
+    - Sources (checked 2026-11-20): the EVE LF105 datasheet (charge and
+      discharge cut-off 3.65 V / 2.5 V, recommended SOC window 10–90 %),
+      JK-BMS settings sheets (OVP 3.65 V, charge target 3.45 V, UVP
+      2.6 V) and LiFePO4 charge charts (3.00 V ≈ 10 %, 3.20 V ≈ 20 %).
+      Charging at a usual target (3.45–3.50 V per cell) shows blue "Full";
+      a full pack at rest (3.35–3.40 V) shows green.
+    - Pack edges are rounded to the voltage's precision (2 decimals).
+      Without a cell count (total or average voltage missing) the voltage
+      keeps one plain level, as before.
+    - The average cell uses these levels divided by the cell count, so it
+      gets the per-cell edges of the table.
+    - **Assumption:** the cells are LiFePO4 (the owner's pack). Other
+      chemistries need Edit until spec 0013 adds a battery type and a cell
+      count setting with presets per type (owner, 2026-11-20).
+    - No voltage level notifies by default (0011).
   - Average cell (owner, 2026-11-18): uses the voltage levels (default or
     custom) with each edge divided by the cell count, so it gets the same
     names and colours; it has no own list and no buttons. Example, 16
@@ -354,9 +385,21 @@ One level system for all values, in two layers. A level is a band of values
   - Each value shows its name, the Default and Edit buttons (§3.5) and its
     levels as **tags**: small pills in the widget's own look (the level's
     text colour on its soft background; plain levels as the plain pill),
-    with the level icon for temperatures and the text "below 20 % · Low"
-    or "from 20 % · Getting low". The type word is left out; the colour
-    shows it.
+    with the level icon for temperatures. The type word is left out; the
+    colour shows it.
+  - **Every level reads "from"** (owner, 2026-11-20, second round): a tag
+    shows where its level starts and its name, "20 · Getting low"; the
+    first level has no start, so its tag shows only the name ("Low"). No
+    "below" anywhere. A level with no name shows its type word instead.
+  - **An arrow tag next to each value name** (↑) says the direction; a tap
+    on it shows a short hint: "Each level starts at its number and goes up
+    to the next level."
+  - **Units move into the value names** (owner, 2026-11-20): "State of
+    charge (%)", "Voltage (V)", "Charge current (A)", "Discharge current
+    (A)", "Cell delta (mV)", "Battery temperature (°C)", "MOSFET
+    temperature (°C)". Tags and edge fields show bare numbers without
+    trailing zeros ("20", "51.2"); voltage tags add the per-cell number
+    when the cell count is known ("51.2 · 3.2 per cell · Normal").
   - Edit puts the editor in place of the tags (edge, name, type, colour
     chip, icon; sketch in §3.1). The edge and name fields look the same:
     both have their label on the border and a hint inside.
@@ -387,7 +430,8 @@ One level system for all values, in two layers. A level is a band of values
   the icon.
 - Together these change the approved v5 look (blue SOC at 100 %, blue or green
   low current, coloured delta, voltage arrow, temperature icons, green normal
-  temperatures, blue cool battery). No design-canvas drawing (owner,
+  temperatures, blue cool battery; since 2026-11-20 also a coloured voltage
+  and average cell pill). No design-canvas drawing (owner,
   2026-11-18): a drawing cannot prove the real fit, because launchers draw
   widgets at other sizes. The fit is checked in the app preview and on the
   owner's phone during the build, in experiment mode; the plan has an early
