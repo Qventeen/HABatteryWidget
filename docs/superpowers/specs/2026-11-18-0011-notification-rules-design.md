@@ -324,3 +324,24 @@ The check runs inside `SyncBattery` after each successful reading, where
   exact alarms); they would cost phone battery.
 - No direction setting, no repeat, no quiet hours, no sync-error
   notification in this version.
+
+## 7. Build notes (2026-11-20)
+
+- The number a level is picked by comes from one domain function
+  (`ShownNumber`), used by the widget colours and the alerts — so both
+  always agree.
+- Title is "Value: Name ↓20 %" (the tag's place) and body is
+  "20% · measured at 14:05", as amended; the alert has no arrow field — the
+  arrow is the level's side.
+- Margin precision: the margin field takes the value's shown precision
+  (current 0.1 A), not whole amps — one rule for edges, hint and margin; a
+  typed 0.5 A was saved as 0. Owner to confirm.
+- Every level channel is created on each post — the owner can set all four
+  sounds after the first notification, and the names follow the language.
+- The no-auto-refresh note says a manual refresh still notifies — it does
+  still sync and can post.
+- `system/` reads the type colour from `widget/WidgetPalette` — an accepted
+  package edge.
+- Default current and voltage lists reuse level ids when the capacity or
+  cell count becomes known — harmless while those lists have no default
+  bells; spec 0013 must re-check it when it changes `LevelBasis`.
