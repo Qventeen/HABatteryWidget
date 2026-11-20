@@ -76,5 +76,38 @@ class LevelSpansTest {
     )
   }
 
+  private fun bounds(levels: List<ColorLevel>) = levels.map { LevelSpans.bounds(levels, it) }
+
+  @Test
+  fun bounds_soc_defaults() =
+    assertEquals(
+      listOf(null to 20.0, 20.0 to 40.0, 40.0 to 100.0, 100.0 to null),
+      bounds(DefaultLevels.of(LevelValue.SOC, LevelBasis(null, null))),
+    )
+
+  @Test
+  fun bounds_batteryTemperature_defaults() =
+    assertEquals(
+      listOf(null to 0.0, 0.0 to 5.0, 5.0 to 45.0, 45.0 to 55.0, 55.0 to null),
+      bounds(DefaultLevels.of(LevelValue.BATTERY_TEMPERATURE, LevelBasis(null, null))),
+    )
+
+  @Test
+  fun bounds_mosfet_middleHasOnlyAnUpperBound() =
+    assertEquals(
+      listOf(null to 65.0, 65.0 to 80.0, 80.0 to null),
+      bounds(DefaultLevels.of(LevelValue.MOSFET_TEMPERATURE, LevelBasis(null, null))),
+    )
+
+  @Test
+  fun bounds_unsortedList_usesTheNearestEdges() =
+    assertEquals(
+      listOf(20.0 to 40.0, null to 20.0, 80.0 to null, 40.0 to 50.0, 50.0 to 80.0),
+      bounds(listOf(below(1, 40.0), below(2, 20.0), above(3, 80.0), middle(4), above(5, 50.0))),
+    )
+
+  @Test
+  fun bounds_singleMiddle_hasNone() = assertEquals(listOf(null to null), bounds(listOf(middle(1))))
+
   private val Anything = LevelSpan.Anything
 }
