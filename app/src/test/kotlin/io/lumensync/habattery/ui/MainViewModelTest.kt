@@ -635,6 +635,19 @@ class MainViewModelTest {
     assertEquals(before, state.settings)
   }
 
+  @Test fun saveLevels_gapOfOneNumber_saves() = runTest(dispatcher) {
+    val vm = start()
+    val saved =
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(draft(LevelSide.BELOW, "40", id = 1), mid, draft(LevelSide.ABOVE, "42", id = 3)),
+        Locale.US,
+      )
+    advanceUntilIdle()
+    assertTrue(saved)
+    assertEquals(listOf<Double?>(40.0, null, 42.0), edges(LevelValue.SOC))
+  }
+
   @Test fun saveLevels_negativeAndUkrainian() = runTest(dispatcher) {
     val uk = Locale.forLanguageTag("uk")
     val vm = start()

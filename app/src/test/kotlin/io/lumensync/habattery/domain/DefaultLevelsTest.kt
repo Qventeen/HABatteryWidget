@@ -193,5 +193,18 @@ class DefaultLevelsTest {
   }
 
   @Test
+  fun defaults_areOrdered() {
+    for (value in LevelValue.entries) {
+      for (basis in
+        listOf(LevelBasis(100.0, 16), LevelBasis(null, null), LevelBasis(105.0, 15))) {
+        val levels = DefaultLevels.of(value, basis)
+        assertEquals(LevelPicker.ordered(levels), levels)
+        val copy = DefaultLevels.copyForCustom(value, basis)
+        assertEquals(LevelPicker.ordered(copy), copy)
+      }
+    }
+  }
+
+  @Test
   fun sidesAreTyped() = assertEquals(LevelSide.MIDDLE, ColorLevel().side)
 }

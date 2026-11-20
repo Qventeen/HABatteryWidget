@@ -218,6 +218,17 @@ class ValidationTest {
   }
 
   @Test
+  fun levels_duplicateBeatsOverlapAtOneIndex() =
+    assertEquals(
+      setOf(
+        FieldError(LEVEL_EDGE, OVERLAP, 0),
+        FieldError(LEVEL_EDGE, OVERLAP, 2),
+        FieldError(LEVEL_EDGE, DUPLICATE, 3),
+      ),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(41.0), a(41.0))).toSet(),
+    )
+
+  @Test
   fun levels_overlapUsesTheValuesStep() {
     assertEquals(
       setOf(FieldError(LEVEL_EDGE, OVERLAP, 0), FieldError(LEVEL_EDGE, OVERLAP, 2)),
