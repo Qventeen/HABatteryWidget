@@ -165,7 +165,6 @@
     <string name="colors_place_below">%1$s %2$s і нижче</string>
     <string name="colors_place_above">%1$s %2$s і вище</string>
     <string name="colors_place_between">від %1$s до %2$s %3$s</string>
-    <string name="colors_per_cell">%1$s В на комірку</string>
     <string name="colors_side_below">І нижче</string>
     <string name="colors_side_above">І вище</string>
     <string name="colors_edge">Межа</string>

@@ -181,7 +181,6 @@
     <!-- %1$s and %2$s are the lowest and the highest number, such as 41 and 99; %3$s the unit. -->
     <string name="colors_place_between">%1$s to %2$s %3$s</string>
     <!-- %1$s is a voltage level's edge or range divided by the cell count, such as 3.2 or 3.201–3.449. -->
-    <string name="colors_per_cell">%1$s V per cell</string>
     <!-- TalkBack's names for the ↓ and ↑ buttons of a level in the editor. -->
     <string name="colors_side_below">And below</string>
     <string name="colors_side_above">And above</string>

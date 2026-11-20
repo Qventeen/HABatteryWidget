@@ -115,7 +115,7 @@ fun ColorsSection(
             }
             ValueButton(R.string.colors_edit) { editing = value }
           }
-          LevelTags(value, levels, basis.cells, palette)
+          LevelTags(value, levels, palette)
         }
       }
     }
@@ -161,49 +161,32 @@ private fun ValueButton(@StringRes label: Int, enabled: Boolean = true, onClick:
   }
 }
 
-/**
- * The [levels] of [value], in shown order, as pills in the widget's look. With [cells], each
- * voltage tag also shows its numbers per cell.
- */
+/** The [levels] of [value], in shown order, as pills in the widget's look. */
 @Composable
-private fun LevelTags(
-  value: LevelValue,
-  levels: List<ColorLevel>,
-  cells: Int?,
-  palette: WidgetPalette,
-) {
+private fun LevelTags(value: LevelValue, levels: List<ColorLevel>, palette: WidgetPalette) {
   val locale = LocalConfiguration.current.locales[0]
-  val cellLevels =
-    cells?.takeIf { value == LevelValue.VOLTAGE }?.let { LevelPicker.perCell(levels, it) }
   FlowRow(
     Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    levels.forEachIndexed { index, level ->
+    levels.forEach { level ->
       val span = LevelSpans.of(levels, level, value.decimals, value.floor)
-      val perCell =
-        cellLevels?.let { all ->
-          // perCell keeps the order of the levels, so the same index is the same level.
-          LevelSpans.of(all, all[index], LevelPicker.CELL_DECIMALS, LevelValue.VOLTAGE.floor)
-            .numberText(LevelPicker.CELL_DECIMALS, locale, level.side)
-        }
-      LevelTag(value, level, span, perCell, locale, palette)
+      LevelTag(value, level, span, locale, palette)
     }
   }
 }
 
 /**
- * One level: its icon and "place · per cell · name", such as "↓20 % · Low". The colour shows the
- * type, so only TalkBack says it, and TalkBack reads the place in words. A level with no name shows
- * its type word instead.
+ * One level: its icon and "place · name", such as "↓20 % · Low". The colour shows the type, so only
+ * TalkBack says it, and TalkBack reads the place in words. A level with no name shows its type word
+ * instead.
  */
 @Composable
 private fun LevelTag(
   value: LevelValue,
   level: ColorLevel,
   span: LevelSpan,
-  perCell: String?,
   locale: Locale,
   palette: WidgetPalette,
 ) {
@@ -215,8 +198,7 @@ private fun LevelTag(
     span.placeText(value.decimals, locale, level.side)?.let {
       stringResource(R.string.colors_place, it, unit)
     }
-  val cellText = perCell?.let { stringResource(R.string.colors_per_cell, it) }
-  val text = joined(R.string.colors_two_parts, place, cellText, name ?: type)
+  val text = joined(R.string.colors_two_parts, place, name ?: type)
   val words = spanWords(span, value.decimals, unit, locale)
   val description = joined(R.string.colors_list_parts, words, name, type)
   Row(
