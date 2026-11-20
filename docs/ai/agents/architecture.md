@@ -17,7 +17,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
   the per-value alert state), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
-  `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value colours), `ToggleAutoRefresh`.
+  `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value levels and alerts),
+  `ToggleAutoRefresh`.
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
   template; `StatesSource`: User, states per entity and the sensor search;
   `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,
