@@ -9,7 +9,12 @@
   the same day: every level reads "from" with an arrow and a hint, units
   move into the value names (§3.6), and the total voltage gets LiFePO4
   default levels (§3.5); a battery type and a cell count setting are
-  left to spec 0013.
+  left to spec 0013. Amended a third time the same day (owner, round 3):
+  levels are **two-sided**. A ↓ level covers its number and below, an ↑
+  level its number and above, and the middle level (Normal) fills the gap
+  between them (§3.1). Every tag shows an arrow and a number or a range,
+  units go back into the tags, and the "from" arrow tag with its hint is
+  dropped (§3.6).
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -72,7 +77,7 @@ Additions (owner, 2026-11-18, after reading this concept):
   wants to add and remove levels. Rejected.
 - **A fixed number of levels per value** (for example always 4). Simple
   storage, but the values need different counts (SOC 4, temperature 5,
-  MOSFET 3, voltage 1). Rejected.
+  MOSFET 3, voltage 6 or 1). Rejected.
 - **A dynamic level list per value on a shared base of types** (picked,
   owner, 2026-11-18): one model for colours, icons and, with 0011,
   notifications. A separate rule list for notifications was also rejected:
@@ -80,8 +85,10 @@ Additions (owner, 2026-11-18, after reading this concept):
 
 ### 3.1 Level model (owner, 2026-11-18)
 
-One level system for all values, in two layers. A level is a band of values
-("from X"); this spec uses "level" and "band" for the same thing.
+One level system for all values, in two layers. A level is a band of
+values; this spec uses "level" and "band" for the same thing. Since round 3
+(owner, 2026-11-20) a band is **two-sided**, see "Two-sided levels" below;
+the "from X" wording of the older bullets is replaced there.
 
 - **Base layer: fixed in code, the same for every value.**
   - **Four types** (severity): Critical, Warning, Normal, Info. Each type
@@ -91,23 +98,23 @@ One level system for all values, in two layers. A level is a band of values
   - **The icon set** (temperatures only for now, §3.3): none, snowflake,
     leaf, flame, flame with alert.
 - **Value layer: a level list per value, dynamic.**
-  - Each level has: a lower edge "from X" (it includes X; the first level
-    has none), a name (for example "Cool"; 0011 puts it into the
+  - Each level has: a side and an edge (round 3, below), a name (for
+    example "Cool"; 0011 puts it into the
     notification title), a type, a colour (default: the colour of its type;
     the owner can pick another palette colour), an icon (temperature values
     only) and a notify switch (added by 0011).
   - Each level also has a stable id (my call, after the builder check), so
     0011 can attach its notify state to a level that later moves or is
     renamed.
-  - 1 to 6 levels per value. The levels always stay sorted by "from"; two
-    levels may not share an edge.
-  - **Add level** adds a level with an empty edge field. When the owner
-    types a valid edge, the level takes its place in the sorted list, so it
-    splits the range it falls in (my call: no guessed edge). An edge that is
-    empty, not a number or equal to another edge shows a field error, as
-    other app fields do.
-  - **Delete** merges the range into the level below (the first level
-    merges into the one above). The last level cannot be deleted.
+  - 1 to 6 levels per value, the middle level included.
+  - **Add level** adds an ↑ level with an empty edge field (my call: no
+    guessed edge; the owner can switch it to ↓). Save puts it in its place.
+    An edge that is empty, not a number, equal to another edge on the same
+    side or leaving no gap (below) shows a field error, as other app fields
+    do.
+  - **Delete** works on every level but the middle one. The range of a
+    deleted level goes to its neighbour toward the middle; no other edge
+    moves.
   - A copied level keeps a link to its default name (translated by the
     app) until the owner types an own name; a language switch translates the
     untouched names (my call, changed while planning: the code that copies
@@ -118,26 +125,76 @@ One level system for all values, in two layers. A level is a band of values
     link: a later app version may change a default, and the owner's own
     list stays as set.
 - **Why dynamic, not a fixed count:** the values need different counts
-  (SOC 4, battery temperature 5, MOSFET 3, voltage 1). Prior art: the
+  (SOC 4, battery temperature 5, MOSFET 3, voltage 6 or 1). Prior art: the
   Grafana threshold editor (a base colour plus steps you add and remove).
 - **The worst sensor** (battery temperature, today's rule kept): the pill
   shows the colour and icon of the sensor whose type ranks highest, in the
   order Critical, Warning, Info, Normal (my call: Info ranks above Normal so
   a cold sensor is not hidden).
-- **One value in the app, with custom colours on (sketch):**
+- **One value in the editor (sketch, round 3):**
 
   ```
-  Battery temperature                 Custom colours [on]
-    below 0 °C   Freezing   Critical ▾   ❄    🔔
-    from 0 °C    Cool       Info     ▾   ❄    🔔
-    from 5 °C    Normal     Normal   ▾   🍃
-    from 45 °C   Warm       Warning  ▾   🔥   🔔
-    from 55 °C   Hot        Critical ▾   🔥!  🔔
-    [+ Add level]                    [Reset to default]
+  Battery temperature
+    [↓|↑] 0       Freezing   Critical ▾   ❄    🔔
+    [↓|↑] 5       Cool       Info     ▾   ❄    🔔
+          6–44 °C Normal     Normal   ▾   🍃
+    [↓|↑] 45      Warm       Warning  ▾   🔥   🔔
+    [↓|↑] 55      Hot        Critical ▾   🔥!  🔔
+    [+ Add level]          [Reset] [Cancel] [Save]
   ```
 
-  The 🔔 column comes with 0011. Since 2026-11-20 the switch is replaced by
-  the Default and Edit buttons, and this list is the editor (§3.5, §3.6).
+  The 🔔 column comes with 0011. The Default and Edit buttons open and
+  close this editor (§3.5, §3.6).
+
+#### Two-sided levels (owner, 2026-11-20, round 3)
+
+The owner found "from" plus an open first level hard to read ("below 20,
+from 20"), and wanted "20 is 20 and below". Expert practice agrees: a BMS
+sets an undervoltage limit (at or below) and an overvoltage limit (at or
+above), and alarm tools (Grafana, Home Assistant) set a low and a high
+threshold around a normal band. So a level list has three kinds of level:
+
+- **↓ levels** (under the middle): each covers its edge and every number
+  below it, down to the next ↓ edge. Example: ↓20 % Low is 20 % and
+  below; ↓40 % Getting low is 21–40 %.
+- **↑ levels** (over the middle): each covers its edge and every number
+  above it, up to the next ↑ edge. Example: ↑45 °C Warm is 45–54 °C; ↑55 °C
+  Hot is 55 °C and above.
+- **The middle level** (named Normal by default): exactly one per value.
+  It has no edge of its own; the nearest ↓ and ↑ edges set its range.
+  Its type, colour, name and icon can be edited like any other level.
+
+Rules:
+
+- **Picking** (the shown number x, rounded as the widget shows it): the ↓
+  level with the smallest edge ≥ x; else the ↑ level with the largest
+  edge ≤ x; else the middle level.
+- **A gap between the sides:** every ↓ edge is below every ↑ edge by at
+  least two steps of the shown precision, so the middle level keeps at
+  least one shown number (SOC ↓40 and ↑42 leave 41). Edges on the same
+  side differ.
+- **A stored list that breaks a rule** (for example one saved by a test
+  build before round 3) is ignored: the value uses the built-in levels,
+  as if it had no own levels. Save stores a valid list again. No migration:
+  the field was never released (0001 §14).
+- **The middle level's range**, shown at the value's precision with one
+  step (0.01 V, 0.1 A, 1 for the rest) taken off each side:
+
+  | Neighbours | It shows | Example |
+  |---|---|---|
+  | ↓ and ↑ levels | the band between | `41–99 %`, `6–44 °C`, `51.21–55.19 V`; one number when the band has one (`41 %`) |
+  | only ↑ levels | ↓ the top of the band | MOSFET `↓64 °C` |
+  | only ↓ levels | ↑ the bottom of the band | `↑21 %` |
+  | none | ↑ the natural floor | `↑0 V`, `↑0 A` (SOC, voltage, current and delta start at 0) |
+
+  Temperatures have no natural floor: a temperature with only the middle
+  level shows just its name (my call; it happens only after the owner
+  deletes every other level).
+- **Look change at the low edges** (owner, round 3: "20 is 20 and
+  below"): SOC 20 % turns red (was amber), 40 % amber (was green); 0 °C is
+  Freezing (was Cool) and 5 °C Cool (was Normal); 20 A on 100 Ah is Light
+  (was Normal); the pack voltage at exactly 48.00 or 51.20 V moves one
+  level down. Cell delta keeps its look: Balanced is ↓9 mV.
 
 ### 3.2 What gets coloured (owner, 2026-11-18, round 1)
 
@@ -175,18 +232,20 @@ One level system for all values, in two layers. A level is a band of values
   The custom-level icon picker offers exactly this set. More icons can join
   the set later.
 - **Defaults** (edges as today's limits; names, types and icons from the
-  owner's picks):
+  owner's picks; two-sided since round 3, §3.1):
 
-  | Value | Range | Name | Type (colour) | Icon |
-  |---|---|---|---|---|
-  | Battery | below 0 °C | Freezing | Critical (red) | snowflake |
-  | Battery | 0–5 °C | Cool | Info (blue) | snowflake |
-  | Battery | 5–45 °C | Normal | Normal (green) | leaf |
-  | Battery | 45–55 °C | Warm | Warning (amber) | flame |
-  | Battery | from 55 °C | Hot | Critical (red) | flame with alert |
-  | MOSFET | below 65 °C | Normal | Normal (green) | leaf |
-  | MOSFET | 65–80 °C | Warm | Warning (amber) | flame |
-  | MOSFET | from 80 °C | Hot | Critical (red) | flame with alert |
+  | Value | Level | Covers | Name | Type (colour) | Icon |
+  |---|---|---|---|---|---|
+  | Battery | ↓0 °C | 0 °C and below | Freezing | Critical (red) | snowflake |
+  | Battery | ↓5 °C | 1–5 °C | Cool | Info (blue) | snowflake |
+  | Battery | middle | 6–44 °C | Normal | Normal (green) | leaf |
+  | Battery | ↑45 °C | 45–54 °C | Warm | Warning (amber) | flame |
+  | Battery | ↑55 °C | 55 °C and above | Hot | Critical (red) | flame with alert |
+  | MOSFET | middle | 64 °C and below | Normal | Normal (green) | leaf |
+  | MOSFET | ↑65 °C | 65–79 °C | Warm | Warning (amber) | flame |
+  | MOSFET | ↑80 °C | 80 °C and above | Hot | Critical (red) | flame with alert |
+
+  Negative edges are allowed (for example ↓−10 °C).
 
   The MOSFET rows follow the battery picks (my call). Default names come
   from the app strings, so they are translated (proposal; 0011, question 9).
@@ -236,14 +295,15 @@ One level system for all values, in two layers. A level is a band of values
 
 - **Built-in default set:** each value has default bands in code; they are
   not stored in settings.
-  - SOC (owner, 2026-11-18; amber widened to 40 % in round 2):
+  - SOC (owner, 2026-11-18; amber widened to 40 % in round 2; two-sided
+    since round 3, §3.1):
 
-    | Range | Name | Type (colour) |
-    |---|---|---|
-    | below 20 % | Low | Critical (red) |
-    | from 20 % | Getting low | Warning (amber) |
-    | from 40 % | Normal | Normal (green) |
-    | from 100 % | Full | Info (blue) |
+    | Level | Covers | Name | Type (colour) |
+    |---|---|---|---|
+    | ↓20 % | 20 % and below | Low | Critical (red) |
+    | ↓40 % | 21–40 % | Getting low | Warning (amber) |
+    | middle | 41–99 % | Normal | Normal (green) |
+    | ↑100 % | 100 % | Full | Info (blue) |
 
     This changes today's look (today: red below 15 %, amber below 25 %,
     no blue).
@@ -251,12 +311,12 @@ One level system for all values, in two layers. A level is a band of values
   - Cell delta (owner, 2026-11-18; checked against community rules of
     thumb for 16S LiFePO4, there is no standard number):
 
-    | Range | Name | Type (colour) |
-    |---|---|---|
-    | below 10 mV | Balanced | Info (blue) |
-    | from 10 mV | Normal | Normal (green) |
-    | from 20 mV | High | Warning (amber) |
-    | from 50 mV | Very high | Critical (red) |
+    | Level | Covers | Name | Type (colour) |
+    |---|---|---|---|
+    | ↓9 mV | 9 mV and below | Balanced | Info (blue) |
+    | middle | 10–19 mV | Normal | Normal (green) |
+    | ↑20 mV | 20–49 mV | High | Warning (amber) |
+    | ↑50 mV | 50 mV and above | Very high | Critical (red) |
 
     10 mV is the JK-BMS factory balance trigger (and the owner's setting):
     below it the balancer has nothing to do. Top-balanced packs show about
@@ -271,14 +331,18 @@ One level system for all values, in two layers. A level is a band of values
     default levels, set per cell and multiplied by the cell count of the
     reading (the same count the average cell uses):
 
-    | From (per cell) | 16 cells | Name | Type (colour) |
-    |---|---|---|---|
-    | – | below 48.0 V | Low | Critical (red) |
-    | 3.00 V | 48.0 V | Getting low | Warning (amber) |
-    | 3.20 V | 51.2 V | Normal | Normal (green) |
-    | 3.45 V | 55.2 V | Full | Info (blue) |
-    | 3.55 V | 56.8 V | High | Warning (amber) |
-    | 3.65 V | 58.4 V | Very high | Critical (red) |
+    | Level (per cell) | 16 cells | Covers (16 cells) | Name | Type (colour) |
+    |---|---|---|---|---|
+    | ↓3.00 V | ↓48 V | 48.00 V and below | Low | Critical (red) |
+    | ↓3.20 V | ↓51.2 V | 48.01–51.20 V | Getting low | Warning (amber) |
+    | middle | middle | 51.21–55.19 V | Normal | Normal (green) |
+    | ↑3.45 V | ↑55.2 V | 55.20–56.79 V | Full | Info (blue) |
+    | ↑3.55 V | ↑56.8 V | 56.80–58.39 V | High | Warning (amber) |
+    | ↑3.65 V | ↑58.4 V | 58.40 V and above | Very high | Critical (red) |
+
+    (Round 3 changed only the sides; the owner confirmed the numbers on
+    2026-11-20. Known effect: the edges are rest voltages, so under load a
+    half-full pack, about 3.18 V per cell, shows amber.)
 
     - Sources (checked 2026-11-20): the EVE LF105 datasheet (charge and
       discharge cut-off 3.65 V / 2.5 V, recommended SOC window 10–90 %),
@@ -297,8 +361,9 @@ One level system for all values, in two layers. A level is a band of values
     - No voltage level notifies by default (0011).
   - Average cell (owner, 2026-11-18): uses the voltage levels (default or
     custom) with each edge divided by the cell count, so it gets the same
-    names and colours; it has no own list and no buttons. Example, 16
-    cells: a voltage edge of 52.0 V is 3.25 V per cell.
+    names, sides and colours; it has no own list and no buttons. Example,
+    16 cells: a voltage edge of ↑55.2 V is ↑3.45 V per cell. Per-cell
+    edges are rounded to the 3 decimals the average cell is shown with.
     - The cell count is worked out per reading: total voltage ÷ average cell
       voltage, rounded to a whole number (my call; the app has no cell-count
       setting or entity). An error of half a cell (about 1.6 V) would be
@@ -314,16 +379,17 @@ One level system for all values, in two layers. A level is a band of values
     charge and discharge lists have the same defaults (the datasheets are
     symmetric); the owner can make them differ.
 
-    | Range (charge and discharge) | Name | Type (colour) |
+    | Level (charge and discharge) | Name | Type (colour) |
     |---|---|---|
-    | below 0.2 C | Light | Info (blue) |
-    | from 0.2 C | Normal | Normal (green) |
-    | from 0.5 C | High | Warning (amber) |
-    | from 0.8 C | Very high | Critical (red) |
+    | ↓0.2 C | Light | Info (blue) |
+    | middle | Normal | Normal (green) |
+    | ↑0.5 C | High | Warning (amber) |
+    | ↑0.8 C | Very high | Critical (red) |
 
-    Example, the owner's 100 Ah: blue below 20 A, green from 20 A, amber
-    from 50 A (above the standard rate), red from 80 A (near the 1 C
-    maximum, before a BMS cut-off). The name "Light" is my call.
+    Example, the owner's 100 Ah: blue up to 20 A (↓20 A), green 20.1–49.9
+    A, amber from 50 A (↑50 A, above the standard rate), red from 80 A
+    (↑80 A, near the 1 C maximum, before a BMS cut-off). The name "Light"
+    is my call.
     - Idle (|I| ≤ 0.1 A, `BatteryMath.IDLE_CURRENT_A`) is not a level: it
       is always grey, as today.
     - No capacity known: the pill keeps today's direction colours
@@ -336,7 +402,10 @@ One level system for all values, in two layers. A level is a band of values
     - Orange is not in the defaults; the owner can add it as a custom step.
     - No current level notifies by default (0011).
     - Look change: today any charge is green and any discharge amber; now
-      both are blue below 0.2 C, green from 0.2 C, and so on.
+      both are blue up to 0.2 C, green above it, and so on.
+    - Without a capacity, or without a cell count for the voltage, the one
+      default level is the middle level ("↑0 A · Normal", "↑0 V ·
+      Normal").
 - **Default and Edit per value** (owner, 2026-11-20, after the phone
   check; this replaces the "Custom colours" switch of 2026-11-18, which
   made the screen long and gave no sign that Save worked):
@@ -360,7 +429,10 @@ One level system for all values, in two layers. A level is a band of values
     section that asks.
   - Stored data does not change: `CustomLevels.on` now means "the value
     has own bands"; Default stores an empty `CustomLevels`. The field was
-    never released, so no migration is needed (0001 §14).
+    never released, so no migration is needed (0001 §14). Since round 3
+    the value has own bands only when `on` is set and the stored list
+    keeps the rules of §3.1; one check decides it for the widget, the
+    tags, the summary, Edit and the Default button.
 - No switch for all values at once in the first version (owner,
   2026-11-18): the defaults work without any setup.
 
@@ -379,35 +451,46 @@ One level system for all values, in two layers. A level is a band of values
   Appearance, collapsed by default, the same pattern as the other sections
   (the app is one scrolling screen with no navigation library). It lists 7
   values: SOC, voltage, charge current, discharge current, cell delta,
-  battery temperature, MOSFET. The voltage row also shows each edge per
-  cell (for example "from 52.0 V · 3.25 V per cell") when the cell count is
-  known (my call). Since 2026-11-20 (owner, after the phone check):
+  battery temperature, MOSFET. The voltage tags also show each edge per
+  cell when the cell count is known (my call; format below). Since
+  2026-11-20 (owner, after the phone check):
   - Each value shows its name, the Default and Edit buttons (§3.5) and its
     levels as **tags**: small pills in the widget's own look (the level's
     text colour on its soft background; plain levels as the plain pill),
     with the level icon for temperatures. The type word is left out; the
     colour shows it.
-  - **Every level reads "from"** (owner, 2026-11-20, second round): a tag
-    shows where its level starts and its name, "20 · Getting low"; the
-    first level has no start, so its tag shows only the name ("Low"). No
-    "below" anywhere. A level with no name shows its type word instead.
-  - **An arrow tag next to each value name** (↑) says the direction; a tap
-    on it shows a short hint: "Each level starts at its number and goes up
-    to the next level."
-  - **Units move into the value names** (owner, 2026-11-20): "State of
-    charge (%)", "Voltage (V)", "Charge current (A)", "Discharge current
-    (A)", "Cell delta (mV)", "Battery temperature (°C)", "MOSFET
-    temperature (°C)". Tags and edge fields show bare numbers without
-    trailing zeros ("20", "51.2"); voltage tags add the per-cell number
-    when the cell count is known ("51.2 · 3.2 per cell · Normal").
-  - Edit puts the editor in place of the tags (edge, name, type, colour
-    chip, icon; sketch in §3.1). The edge and name fields look the same:
-    both have their label on the border and a hint inside.
+  - **Tag text** (owner, 2026-11-20, round 3; replaces the "from" tags and
+    the arrow tag with its hint of round 2): every tag starts with the
+    level's place, then its name: "↓20 % · Low", "↓40 % · Getting low",
+    "41–99 % · Normal", "↑100 % · Full"; "↓0 °C · Freezing"; "↓64 °C ·
+    Normal" (MOSFET). The arrow is the level's side; the middle level
+    shows its range (§3.1). Numbers have the value's precision without
+    trailing zeros ("20", "51.2") and the unit after them. A level with no
+    name shows its type word instead. No hint and no explanation line:
+    the arrows say it (owner).
+  - **Voltage tags** add the per-cell edge or range when the cell count is
+    known: "↓48 V · 3 V per cell · Low", "51.21–55.19 V · 3.201–3.449 V
+    per cell · Normal".
+  - **For TalkBack** a tag reads in words: "20 % and below, Low,
+    Critical"; "41 to 99 %, Normal, Normal".
+  - **Value names have no units** again (owner, round 3): "State of
+    charge", "Voltage", "Charge current", "Discharge current", "Cell
+    delta", "Battery temperature", "MOSFET temperature".
+  - Edit puts the editor in place of the tags (sketch in §3.1). A ↓ or ↑
+    row has a two-button ↓/↑ choice, a "Limit" field (the edge, bare
+    number), then name, type, colour chip and icon. The middle row has no
+    choice, no field and no delete; in their place it shows its range,
+    worked out live from the other rows ("—" while they are not valid).
+    The limit and name fields look the same: both have their label on the
+    border and a hint inside. Temperature limits take a minus sign.
   - The app preview (0006) at the top shows the saved result; it scrolls
     out of view while editing lower down (accepted: levels are set once
     and rarely changed).
 - **Stored** in `Settings` as a new field with a default; no migration is
-  needed for a new field (0001 §14).
+  needed for a new field (0001 §14). Round 3: a level stores its side
+  (default: the middle, the one level with no edge) and its edge (`null`
+  on the middle level); the round-2 key `from` is gone, so a round-2 list
+  reads as all-middle levels, breaks the rules and is ignored (§3.1).
 
 ## 4. Catches
 
@@ -455,7 +538,9 @@ One level system for all values, in two layers. A level is a band of values
    directions. 20 % is amber; red is below 20 %, so falling to 19 % enters
    red. The re-arm margin of 0011 stops repeat alerts near an edge. Decimal
    edges have the precision the value is shown with, because the colour
-   follows the shown number (my call).
+   follows the shown number (my call). Replaced (owner, 2026-11-20, round
+   3): two-sided levels (§3.1); ↓20 % includes 20 %, so 20 % is red. The
+   precision rule stays.
 7. ~~Where in the app?~~ Decided (owner, 2026-11-18): a new "Colours"
    section below Appearance (§3.6).
 8. ~~Should a band also carry a notification?~~ Decided (owner,

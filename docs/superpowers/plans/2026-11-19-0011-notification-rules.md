@@ -10,7 +10,11 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-18-0011-notification-rules-design.md` (read it before each task; §3.x below points into it). It builds on 0010: read `docs/superpowers/specs/2026-11-18-0010-value-colors-design.md` and its plan `docs/superpowers/plans/2026-11-18-0010-value-colors.md`; their types (`LevelValue`, `ColorLevel`, `DefaultLevels`, `LevelPicker`, `LevelDraft`, `ColorsSection`) exist when this plan starts.
 
-**Amended 2026-11-20 (0010 changed before merge):** the "Custom colours" switch is gone; each value has Default and Edit (0010 §3.5). In Task 5 read "with custom on" as "in the editor", "the read-only default list" as "the tags", and `resetLevels` as the editor's Reset (draft only, nothing stored) plus `useDefaults(value)` (deletes own levels). Check the built names before Task 1.
+**Amended 2026-11-20 (0010 changed before merge; check the built names before Task 1):**
+
+- The "Custom colours" switch is gone; each value has Default and Edit (0010 §3.5). In Task 6 read "with custom on" as "in the editor", "the read-only default list" as "the tags", and `resetLevels` as the editor's Reset (draft only, nothing stored) plus `useDefaults(value)` (deletes own levels).
+- Defaults depend on a `LevelBasis(capacityAh, cells)`: `DefaultLevels.of(value, basis)`, `copyForCustom(value, basis)`, `LevelPicker.effective(value, settings, basis)`. `LevelAlerts.evaluate` builds `LevelBasis.of(reading, settings)` once, as `WidgetModel` does. `saveLevels(...)` returns `Boolean` (`false` on a field error); Task 6 adds the margin parameter to that signature.
+- Two-sided levels (0010 §3.1, round 3): `ColorLevel.from` is now `edge` plus `side` (`BELOW`, `MIDDLE`, `ABOVE`); the own list counts only when valid (`LevelPicker.ownLevels`); levels are kept in shown order (↓ ascending, middle, ↑ ascending). In Task 3 a level's range comes from its bounds (`LevelSpans`), and re-arm is `x >= upper + margin` or `x <= lower − margin` on the bounds that exist (Low ↓20 re-arms at 22, Hot ↑55 at 53). `LevelAlert.rising` goes: the arrow is the level's side. In Task 5 the title is `"%1$s: %2$s %3$s"` (value label, name, the tag's span text with its unit, for example "Charge: Low ↓20 %") and the body `"%1$s · measured at %2$s"` with the shown number (spec 0011 §3.4 as amended). Read the examples "Low ↓ 19 %" in Review Focus 2 and Tasks 3 and 5 as "Low ↓20 %" with the charge at 20 %.
 
 ## Global Constraints
 
