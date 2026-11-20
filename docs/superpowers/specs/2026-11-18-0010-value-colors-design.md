@@ -14,7 +14,9 @@
   level its number and above, and the middle level (Normal) fills the gap
   between them (§3.1). Every tag shows an arrow and a number or a range,
   units go back into the tags, and the "from" arrow tag with its hint is
-  dropped (§3.6).
+  dropped (§3.6). Round 4 (owner, 2026-11-20): a new editor row layout,
+  voltage tags without the per-cell part (§3.6), and an "avg" label on
+  the average cell pill (§3.2).
 - **Set:** `0010`, epic `epic-widget-improvements`. Code later on branch
   `0010-value-colors`, from the epic.
 - **Builds on:** spec 0003 (widget v4 colours), 0005 (layouts v5), 0006 (app
@@ -208,7 +210,7 @@ Rules:
   | SOC ring | SOC levels; the SOC number stays plain |
   | Voltage pill | voltage levels (default: plain; LiFePO4 levels since 2026-11-20, §3.5), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
   | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery can have different limits each way; idle is grey; defaults in §3.5; the arrow stays. A high level can notify (0011), for example a very high discharge current |
-  | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list |
+  | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list. Its text gets a label like "Δ 12 mV": "avg 3.312 V", Ukrainian "сер. 3,312 В" (owner, 2026-11-20, round 4) |
   | Cell delta, battery temperature, MOSFET pills | levels (defaults §3.3 and §3.5; the worst battery sensor wins) |
   | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
   | Inverter values | later (0012) |
@@ -455,9 +457,8 @@ Rules:
   Appearance, collapsed by default, the same pattern as the other sections
   (the app is one scrolling screen with no navigation library). It lists 7
   values: SOC, voltage, charge current, discharge current, cell delta,
-  battery temperature, MOSFET. The voltage tags also show each edge per
-  cell when the cell count is known (my call; format below). Since
-  2026-11-20 (owner, after the phone check):
+  battery temperature, MOSFET. Since 2026-11-20 (owner, after the phone
+  check):
   - Each value shows its name, the Default and Edit buttons (§3.5) and its
     levels as **tags**: small pills in the widget's own look (the level's
     text colour on its soft background; plain levels as the plain pill),
@@ -472,9 +473,11 @@ Rules:
     trailing zeros ("20", "51.2") and the unit after them. A level with no
     name shows its type word instead. No hint and no explanation line:
     the arrows say it (owner).
-  - **Voltage tags** add the per-cell edge or range when the cell count is
-    known, without a second mark: "↓48 V · 3 V per cell · Low",
-    "↕51.21–55.19 V · 3.201–3.449 V per cell · Normal".
+  - **Voltage tags** show the pack numbers only (owner, 2026-11-20, round
+    4: the per-cell part made them too long): "↓48 V · Low",
+    "↕51.21–55.19 V · Normal". The average cell pill still takes these
+    levels divided by the cell count (§3.2, §3.5); the app does not show
+    those per-cell numbers.
   - **For TalkBack** a tag reads in words: "20 % and below, Low,
     Critical"; "41 to 99 %, Normal, Normal".
   - **Value names have no units** again (owner, round 3): "State of
@@ -482,7 +485,8 @@ Rules:
     delta", "Battery temperature", "MOSFET temperature".
   - Edit puts the editor in place of the tags (sketch in §3.1). A ↓ or ↑
     row has a two-button ↓/↑ choice, a "Limit" field (the edge, bare
-    number), then name, type, colour chip and icon. The middle row has no
+    number), a name, a type, colour chips and icon chips (row layout
+    below). The middle row has no
     choice, no field and no delete; in their place it shows its range
     with ↕ ("↕41–99 %"), worked out live from the limits typed so far: a
     limit that is empty or not a number is left out (a just-added row does
@@ -491,6 +495,13 @@ Rules:
     on the border; the name shows its default name as a hint inside, the
     limit its unit after the number. Temperature limits take a minus
     sign.
+  - **Row layout** (owner, 2026-11-20, round 4): line 1 holds the name and
+    the limit; line 2 the ↓/↑ choice, the type and the delete button; then
+    the colour chips and, for temperatures, the icon chips. The ↓/↑
+    buttons have no check mark: the chosen one is filled. The middle row
+    has its name and its range on line 1 and the type alone on line 2. A
+    limit error shows under line 1, across the row (a narrow limit field
+    would break it into many short lines).
   - The app preview (0006) at the top shows the saved result; it scrolls
     out of view while editing lower down (accepted: levels are set once
     and rarely changed).
