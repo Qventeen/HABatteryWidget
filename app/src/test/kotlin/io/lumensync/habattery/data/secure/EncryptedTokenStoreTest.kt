@@ -47,7 +47,7 @@ class EncryptedTokenStoreTest {
   private val file: File by lazy { File(tmp.root, SECURE_FILE) }
 
   private fun TestScope.dataStore() =
-    jsonDataStore(JsonSerializer(TokenRecord(), TokenRecord.serializer()), backgroundScope, { file })
+    jsonDataStore(JsonSerializer(TokenRecord(), TokenRecord.serializer()), backgroundScope) { file }
 
   private fun TestScope.store() = EncryptedTokenStore(dataStore(), FlipCrypto)
 

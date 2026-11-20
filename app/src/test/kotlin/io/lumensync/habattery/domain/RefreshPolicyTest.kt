@@ -8,7 +8,7 @@ import org.junit.Test
 
 class RefreshPolicyTest {
   private fun s(auto: Boolean, interval: Int?, notify: Boolean = false) =
-    Settings(refresh = RefreshSettings(auto, interval), notifyOnFull = notify)
+    Settings(refresh = RefreshSettings(auto, interval), notificationsOn = notify)
 
   @Test
   fun rules() {

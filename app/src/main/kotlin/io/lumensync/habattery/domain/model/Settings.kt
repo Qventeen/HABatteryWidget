@@ -1,18 +1,22 @@
 package io.lumensync.habattery.domain.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 /**
  * Stored settings. Defaults are empty values (0001 §14), except the display choices, the font
  * percents, the home-screen scale and the [appearance] (theme): they are not user data, so they
  * default to the design values (specs 0003, 0005, 0007, 0008).
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class Settings(
   val connection: ConnectionSettings = ConnectionSettings(),
   val entities: EntitySettings = EntitySettings(),
   val refresh: RefreshSettings = RefreshSettings(),
-  val notifyOnFull: Boolean = false,
+  /** The main notification switch; a v1 file stored it as `notifyOnFull`. */
+  @JsonNames("notifyOnFull") val notificationsOn: Boolean = false,
   val capacityAh: Double? = null,
   val display: DisplaySettings = DisplaySettings(),
   val fontPercents: FontPercents = FontPercents(),

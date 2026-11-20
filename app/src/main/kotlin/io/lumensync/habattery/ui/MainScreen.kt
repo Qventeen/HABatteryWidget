@@ -55,7 +55,7 @@ data class MainActions(
   val saveEntities: (EntitySettings) -> Unit,
   val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
-  val setNotifyOnFull: (Boolean) -> Unit,
+  val setNotificationsOn: (Boolean) -> Unit,
   val saveCapacity: (text: String, locale: Locale) -> Unit,
   val saveDisplay: (DisplaySettings) -> Unit,
   val saveFontPercents: (FontPercents) -> Unit,
@@ -158,8 +158,8 @@ private fun MainContent(
     )
     RefreshSection(settings.refresh, state.errors, actions.saveRefresh)
     NotificationSection(
-      settings.notifyOnFull,
-      actions.setNotifyOnFull,
+      settings.notificationsOn,
+      actions.setNotificationsOn,
       actions.openNotificationSettings,
     )
     CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)

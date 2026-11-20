@@ -47,7 +47,7 @@ class SyncBattery(
                 FullChargeRule.evaluate(
                   state = BatteryMath.state(r.chargePercent, r.currentA),
                   chargePercent = r.chargePercent,
-                  enabled = current.notifyOnFull,
+                  enabled = current.notificationsOn,
                   alreadyNotified = state.fullChargeNotified,
                 )
               notify = decision.notify

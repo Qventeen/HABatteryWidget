@@ -110,7 +110,7 @@ class SyncBatteryTest {
   fun full_notifiesOnce() = runTest {
     val full = SyncResult.Success(reading(100.0, 0.0))
     val cache = FakeReadingCache()
-    val useCase = sync(FakeBatterySource(full), cache, configuredSettings(notifyOnFull = true))
+    val useCase = sync(FakeBatterySource(full), cache, configuredSettings(notificationsOn = true))
 
     useCase()
     useCase()
@@ -124,7 +124,7 @@ class SyncBatteryTest {
     val cache = FakeReadingCache(CacheState(fullChargeNotified = true))
     val source = FakeBatterySource(SyncResult.Success(reading(98.0, -5.0)))
 
-    sync(source, cache, configuredSettings(notifyOnFull = true))()
+    sync(source, cache, configuredSettings(notificationsOn = true))()
 
     assertFalse(cache.current.fullChargeNotified)
     assertEquals(0, notifier.shown)
@@ -145,7 +145,7 @@ class SyncBatteryTest {
     val useCase =
       sync(
         FakeBatterySource(SyncResult.Success(reading(100.0, 0.0))),
-        settings = configuredSettings(notifyOnFull = true),
+        settings = configuredSettings(notificationsOn = true),
       )
 
     listOf(async { useCase() }, async { useCase() }).awaitAll()
@@ -157,7 +157,7 @@ class SyncBatteryTest {
   fun sourceThrows_rethrowsButStillClearsRefreshingAndRedraws() = runTest {
     val source = FakeBatterySource(SyncResult.Success(reading())).apply { failWith = IOException("disk") }
     val cache = FakeReadingCache(CacheState(refreshingSinceMillis = 5L))
-    val useCase = sync(source, cache, configuredSettings(notifyOnFull = true))
+    val useCase = sync(source, cache, configuredSettings(notificationsOn = true))
 
     assertThrows(IOException::class.java) { runBlocking { useCase() } }
 

@@ -10,7 +10,7 @@ object RefreshPolicy {
     return if (
       refresh.auto &&
         Validation.refresh(refresh).isEmpty() &&
-        (hasWidgets || settings.notifyOnFull)
+        (hasWidgets || settings.notificationsOn)
     )
       minutes
     else null

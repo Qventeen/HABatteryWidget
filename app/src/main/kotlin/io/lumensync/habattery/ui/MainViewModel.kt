@@ -196,8 +196,8 @@ class MainViewModel(
     save(Validation.refresh(refresh), syncAfter = false) { it.copy(refresh = refresh) }
   }
 
-  fun setNotifyOnFull(enabled: Boolean) {
-    save(emptyList(), syncAfter = false) { it.copy(notifyOnFull = enabled) }
+  fun setNotificationsOn(enabled: Boolean) {
+    save(emptyList(), syncAfter = false) { it.copy(notificationsOn = enabled) }
   }
 
   /** Display choices save at once; only the drawings change, so no sync. */

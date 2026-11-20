@@ -160,13 +160,13 @@ class FakeSyncScheduler : SyncScheduler {
 }
 
 fun configuredSettings(
-  notifyOnFull: Boolean = false,
+  notificationsOn: Boolean = false,
   tokenType: TokenType = TokenType.ADMIN,
 ): Settings =
   Settings(
     connection = ConnectionSettings(url = "http://ha.local:8123", tokenType = tokenType),
     entities = EntitySettings(charge = "sensor.soc"),
-    notifyOnFull = notifyOnFull,
+    notificationsOn = notificationsOn,
   )
 
 fun reading(charge: Double = 50.0, current: Double? = 0.0): BatteryReading =

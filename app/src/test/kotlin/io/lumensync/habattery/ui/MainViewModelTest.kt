@@ -229,11 +229,11 @@ class MainViewModelTest {
     settings.updateFailure = IOException("disk")
     vm.saveConnection("http://192.168.1.2:8123")
     vm.saveCapacity("100", Locale.US)
-    vm.setNotifyOnFull(true)
+    vm.setNotificationsOn(true)
     advanceUntilIdle()
     assertEquals("http://ha.local:8123", state.settings.connection.url)
     assertNull(state.settings.capacityAh)
-    assertFalse(state.settings.notifyOnFull)
+    assertFalse(state.settings.notificationsOn)
     assertEquals(1, source.calls)
     settings.updateFailure = null
     vm.saveCapacity("100", Locale.US)
@@ -381,11 +381,11 @@ class MainViewModelTest {
     assertTrue(widgets.refreshes > before)
   }
 
-  @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {
+  @Test fun setNotificationsOn_saves() = runTest(dispatcher) {
     val vm = start()
-    vm.setNotifyOnFull(true)
+    vm.setNotificationsOn(true)
     advanceUntilIdle()
-    assertTrue(state.settings.notifyOnFull)
+    assertTrue(state.settings.notificationsOn)
     assertEquals(1, source.calls)
   }
 

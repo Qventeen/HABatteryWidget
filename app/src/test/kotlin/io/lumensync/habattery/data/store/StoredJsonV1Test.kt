@@ -104,7 +104,7 @@ class StoredJsonV1Test {
                 balancing = "sensor.bal",
               ),
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
-            notifyOnFull = true,
+            notificationsOn = true,
             capacityAh = 314.5,
             display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
             fontPercents = FontPercents(soc = 45, underSoc = 30, main = 75, cell = 60, small = 100),
@@ -112,7 +112,7 @@ class StoredJsonV1Test {
             appearance = AppearanceSettings(ThemeChoice.DARK),
           ),
       )
-    assertV1(json, expected, SettingsRecord.serializer())
+    assertEquals(expected, StoreJson.decodeFromString(SettingsRecord.serializer(), json))
   }
 
   @Test
