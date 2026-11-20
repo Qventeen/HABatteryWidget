@@ -1,16 +1,20 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ColorLevel
-import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
+import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import kotlin.math.floor
 
-/** The built-in levels of each value. Ids run 1..n in list order and names stay empty. */
+/** The built-in levels of each value, in shown order. Ids run 1..n and names stay empty. */
 object DefaultLevels {
+  private val BELOW = LevelSide.BELOW
+  private val MIDDLE = LevelSide.MIDDLE
+  private val ABOVE = LevelSide.ABOVE
+
   fun of(value: LevelValue, basis: LevelBasis): List<ColorLevel> =
     build(value, basis) { round1(it) }
 
@@ -29,64 +33,65 @@ object DefaultLevels {
       when (value) {
         LevelValue.SOC ->
           listOf(
-            Row(null, LevelType.CRITICAL, LevelName.LOW),
-            Row(20.0, LevelType.WARNING, LevelName.GETTING_LOW),
-            Row(40.0, LevelType.NORMAL, LevelName.NORMAL),
-            Row(100.0, LevelType.INFO, LevelName.FULL),
+            Row(BELOW, 20.0, LevelType.CRITICAL, LevelName.LOW),
+            Row(BELOW, 40.0, LevelType.WARNING, LevelName.GETTING_LOW),
+            Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
+            Row(ABOVE, 100.0, LevelType.INFO, LevelName.FULL),
           )
         LevelValue.VOLTAGE ->
           if (cells != null) {
             // LiFePO4 volts per cell, scaled to the pack.
             listOf(
-              Row(null, LevelType.CRITICAL, LevelName.LOW),
-              Row(packEdge(3.00, cells), LevelType.WARNING, LevelName.GETTING_LOW),
-              Row(packEdge(3.20, cells), LevelType.NORMAL, LevelName.NORMAL),
-              Row(packEdge(3.45, cells), LevelType.INFO, LevelName.FULL),
-              Row(packEdge(3.55, cells), LevelType.WARNING, LevelName.HIGH),
-              Row(packEdge(3.65, cells), LevelType.CRITICAL, LevelName.VERY_HIGH),
+              Row(BELOW, packEdge(3.00, cells), LevelType.CRITICAL, LevelName.LOW),
+              Row(BELOW, packEdge(3.20, cells), LevelType.WARNING, LevelName.GETTING_LOW),
+              Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
+              Row(ABOVE, packEdge(3.45, cells), LevelType.INFO, LevelName.FULL),
+              Row(ABOVE, packEdge(3.55, cells), LevelType.WARNING, LevelName.HIGH),
+              Row(ABOVE, packEdge(3.65, cells), LevelType.CRITICAL, LevelName.VERY_HIGH),
             )
           } else {
-            listOf(Row(null, LevelType.NORMAL, LevelName.NORMAL, LevelColor.PLAIN))
+            listOf(Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL, LevelColor.PLAIN))
           }
         LevelValue.CHARGE_CURRENT,
         LevelValue.DISCHARGE_CURRENT ->
           if (capacity != null) {
             listOf(
-              Row(null, LevelType.INFO, LevelName.LIGHT),
-              Row(roundEdge(0.2 * capacity), LevelType.NORMAL, LevelName.NORMAL),
-              Row(roundEdge(0.5 * capacity), LevelType.WARNING, LevelName.HIGH),
-              Row(roundEdge(0.8 * capacity), LevelType.CRITICAL, LevelName.VERY_HIGH),
+              Row(BELOW, roundEdge(0.2 * capacity), LevelType.INFO, LevelName.LIGHT),
+              Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
+              Row(ABOVE, roundEdge(0.5 * capacity), LevelType.WARNING, LevelName.HIGH),
+              Row(ABOVE, roundEdge(0.8 * capacity), LevelType.CRITICAL, LevelName.VERY_HIGH),
             )
           } else {
             val color = if (value == LevelValue.DISCHARGE_CURRENT) LevelColor.AMBER else null
-            listOf(Row(null, LevelType.NORMAL, LevelName.NORMAL, color))
+            listOf(Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL, color))
           }
         LevelValue.DELTA ->
           listOf(
-            Row(null, LevelType.INFO, LevelName.BALANCED),
-            Row(10.0, LevelType.NORMAL, LevelName.NORMAL),
-            Row(20.0, LevelType.WARNING, LevelName.HIGH),
-            Row(50.0, LevelType.CRITICAL, LevelName.VERY_HIGH),
+            Row(BELOW, 9.0, LevelType.INFO, LevelName.BALANCED),
+            Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
+            Row(ABOVE, 20.0, LevelType.WARNING, LevelName.HIGH),
+            Row(ABOVE, 50.0, LevelType.CRITICAL, LevelName.VERY_HIGH),
           )
         LevelValue.BATTERY_TEMPERATURE ->
           listOf(
-            Row(null, LevelType.CRITICAL, LevelName.FREEZING, icon = LevelIcon.SNOWFLAKE),
-            Row(0.0, LevelType.INFO, LevelName.COOL, icon = LevelIcon.SNOWFLAKE),
-            Row(5.0, LevelType.NORMAL, LevelName.NORMAL, icon = LevelIcon.LEAF),
-            Row(45.0, LevelType.WARNING, LevelName.WARM, icon = LevelIcon.FLAME),
-            Row(55.0, LevelType.CRITICAL, LevelName.HOT, icon = LevelIcon.FLAME_ALERT),
+            Row(BELOW, 0.0, LevelType.CRITICAL, LevelName.FREEZING, icon = LevelIcon.SNOWFLAKE),
+            Row(BELOW, 5.0, LevelType.INFO, LevelName.COOL, icon = LevelIcon.SNOWFLAKE),
+            Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL, icon = LevelIcon.LEAF),
+            Row(ABOVE, 45.0, LevelType.WARNING, LevelName.WARM, icon = LevelIcon.FLAME),
+            Row(ABOVE, 55.0, LevelType.CRITICAL, LevelName.HOT, icon = LevelIcon.FLAME_ALERT),
           )
         LevelValue.MOSFET_TEMPERATURE ->
           listOf(
-            Row(null, LevelType.NORMAL, LevelName.NORMAL, icon = LevelIcon.LEAF),
-            Row(65.0, LevelType.WARNING, LevelName.WARM, icon = LevelIcon.FLAME),
-            Row(80.0, LevelType.CRITICAL, LevelName.HOT, icon = LevelIcon.FLAME_ALERT),
+            Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL, icon = LevelIcon.LEAF),
+            Row(ABOVE, 65.0, LevelType.WARNING, LevelName.WARM, icon = LevelIcon.FLAME),
+            Row(ABOVE, 80.0, LevelType.CRITICAL, LevelName.HOT, icon = LevelIcon.FLAME_ALERT),
           )
       }
     return rows.mapIndexed { index, row ->
       ColorLevel(
         id = index + 1,
-        from = row.from,
+        side = row.side,
+        edge = row.edge,
         type = row.type,
         color = row.color,
         icon = row.icon,
@@ -96,7 +101,8 @@ object DefaultLevels {
   }
 
   private class Row(
-    val from: Double?,
+    val side: LevelSide,
+    val edge: Double?,
     val type: LevelType,
     val name: LevelName,
     val color: LevelColor? = null,

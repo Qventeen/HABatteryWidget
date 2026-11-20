@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.Validation
@@ -18,6 +19,7 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
+import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
@@ -237,38 +239,36 @@ class MainViewModel(
 
   /**
    * Saves [drafts] as the owner's levels of [value]. Edges are typed in [locale] and rounded to
-   * the precision the widget shows. Any error is reported at the draft's position in [drafts] and
-   * nothing is stored. The first draft stays first; the rest are sorted by edge.
+   * the precision the widget shows; the middle draft has no edge. Any error is reported at the
+   * draft's position in [drafts] and nothing is stored. The stored list is in shown order.
    *
    * @return `false` when an error was found, `true` when the save was started.
    */
   fun saveLevels(value: LevelValue, drafts: List<LevelDraft>, locale: Locale): Boolean {
-    val edges = mutableListOf<Double?>(null)
     val errors = mutableListOf<FieldError>()
     val unparsed = mutableSetOf<Int>()
-    for (i in 1 until drafts.size) {
-      val text = drafts[i].edgeText.trim()
-      val edge = if (text.isEmpty()) null else parseDecimal(text, locale)?.roundTo(value.decimals)
-      edges += edge
-      if (edge == null) {
-        unparsed += i
-        val problem = if (text.isEmpty()) Problem.REQUIRED else Problem.INVALID
-        errors += FieldError(Field.LEVEL_EDGE, problem, i)
+    val built =
+      drafts.mapIndexed { i, d ->
+        var edge: Double? = null
+        if (d.side != LevelSide.MIDDLE) {
+          val text = d.edgeText.trim()
+          edge = if (text.isEmpty()) null else parseDecimal(text, locale)?.roundTo(value.decimals)
+          if (edge == null) {
+            unparsed += i
+            val problem = if (text.isEmpty()) Problem.REQUIRED else Problem.INVALID
+            errors += FieldError(Field.LEVEL_EDGE, problem, i)
+          }
+        }
+        ColorLevel(d.id, d.side, edge, d.type, d.color, d.icon, d.name.trim(), d.defaultName)
       }
-    }
     // A missing edge is already reported above, with the more precise problem.
-    errors += Validation.levels(edges).filterNot { it.index in unparsed }
+    errors += Validation.levels(value, built).filterNot { it.index in unparsed }
     if (errors.isNotEmpty()) {
       fail(*errors.toTypedArray())
       return false
     }
-    val levels =
-      drafts.mapIndexed { i, d ->
-        ColorLevel(d.id, edges[i], d.type, d.color, d.icon, d.name.trim(), d.defaultName)
-      }
-    val sorted = levels.take(1) + levels.drop(1).sortedBy { it.from }
     save(emptyList(), syncAfter = false) {
-      it.withCustomLevels(value, CustomLevels(on = true, sorted))
+      it.withCustomLevels(value, CustomLevels(on = true, LevelPicker.ordered(built)))
     }
     return true
   }

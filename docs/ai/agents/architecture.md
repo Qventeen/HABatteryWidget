@@ -16,7 +16,7 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `FullChargeRule`, `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
-  `DefaultLevels`, `LevelBasis` and `LevelPicker` (value colours), `ToggleAutoRefresh`.
+  `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value colours), `ToggleAutoRefresh`.
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
   template; `StatesSource`: User, states per entity and the sensor search;
   `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,
@@ -85,4 +85,5 @@ when it has a second implementation or a test fake.
 - Stored fields default only to `""`, empty list, `null` or `false`. Exception:
   display choices, font sizes, the home-screen scale and the theme default to the
   design values (specs 0003, 0007, 0008), and a level's type defaults to `NORMAL`
-  (`ColorLevel.type`, spec 0010).
+  and its side to `MIDDLE`, the level with no edge (`ColorLevel.type`, `ColorLevel.side`,
+  spec 0010).

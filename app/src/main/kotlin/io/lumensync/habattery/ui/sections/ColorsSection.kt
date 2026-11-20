@@ -52,7 +52,7 @@ import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
-import io.lumensync.habattery.domain.model.LevelBasis
+import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -86,7 +86,7 @@ fun ColorsSection(
   val settings = remember(colorLevels) { Settings(colorLevels = colorLevels) }
   val customNames =
     LevelValue.entries
-      .filter { settings.customLevels(it).on }
+      .filter { LevelPicker.ownLevels(it, settings.customLevels(it)) != null }
       .map { stringResource(valueLabel(it)) }
   val summary =
     if (customNames.isEmpty()) stringResource(R.string.colors_summary_default)
@@ -101,6 +101,7 @@ fun ColorsSection(
       // take over the closed editor's draft and errors.
       key(value) {
         val stored = settings.customLevels(value)
+        val own = LevelPicker.ownLevels(value, stored) != null
         val levels = LevelPicker.effective(value, settings, basis)
         if (editing == value) {
           ValueRow(value, palette)
@@ -116,7 +117,7 @@ fun ColorsSection(
           )
         } else {
           ValueRow(value, palette) {
-            ValueButton(R.string.colors_default, enabled = stored.on) { confirmDefault = value }
+            ValueButton(R.string.colors_default, enabled = own) { confirmDefault = value }
             ValueButton(R.string.colors_edit) { editing = value }
           }
           LevelTags(value, levels, basis.cells, palette)
@@ -246,8 +247,8 @@ private fun LevelTags(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    levels.forEachIndexed { index, level ->
-      LevelTag(value, level, level.from?.takeIf { index > 0 }, cells, locale, palette)
+    levels.forEach { level ->
+      LevelTag(value, level, level.edge, cells, locale, palette)
     }
   }
 }
@@ -297,7 +298,7 @@ private fun LevelTag(
 @Composable
 private fun perCellText(value: LevelValue, start: Double, cells: Int?, locale: Locale): String? {
   if (value != LevelValue.VOLTAGE || cells == null) return null
-  val edge = LevelPicker.perCell(listOf(ColorLevel(from = start)), cells).single().from
+  val edge = LevelPicker.perCell(listOf(ColorLevel(edge = start)), cells).single().edge
   return edge?.let { stringResource(R.string.colors_per_cell, formatDecimal(it, locale)) }
 }
 

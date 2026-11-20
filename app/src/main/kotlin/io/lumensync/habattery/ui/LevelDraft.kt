@@ -1,12 +1,14 @@
 package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.DefaultLevels
+import io.lumensync.habattery.domain.LevelBasis
+import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
-import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
+import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.roundTo
@@ -14,9 +16,13 @@ import io.lumensync.habattery.format.formatDecimal
 import io.lumensync.habattery.format.parseDecimal
 import java.util.Locale
 
-/** One level while the owner edits it: the edge is text, so a half-typed number survives. */
+/**
+ * One level while the owner edits it: the edge is text, so a half-typed number survives. The
+ * middle level has no edge, so its text is empty.
+ */
 data class LevelDraft(
   val id: Int,
+  val side: LevelSide,
   val edgeText: String,
   val type: LevelType,
   val color: LevelColor?,
@@ -29,11 +35,11 @@ data class LevelDraft(
 fun LevelValue.formatEdge(edge: Double, locale: Locale): String =
   formatDecimal(edge.roundTo(decimals), locale)
 
-/** The first level has no edge, so its text is empty. */
 fun ColorLevel.toDraft(value: LevelValue, locale: Locale): LevelDraft =
   LevelDraft(
     id = id,
-    edgeText = from?.let { value.formatEdge(it, locale) } ?: "",
+    side = side,
+    edgeText = edge?.let { value.formatEdge(it, locale) } ?: "",
     type = type,
     color = color,
     icon = icon,
@@ -46,40 +52,29 @@ fun LevelDraft.edgeOrNull(value: LevelValue, locale: Locale): Double? =
   parseDecimal(edgeText, locale)?.roundTo(value.decimals)
 
 /**
- * The drafts with a new last level that has an empty edge. Its id is above every id in the drafts
- * and in [stored], so the id of a level removed from this draft is not given out again before the
- * save.
+ * The drafts with a new last level: above, with an empty edge. Its id is above every id in the
+ * drafts and in [stored], so the id of a level removed from this draft is not given out again
+ * before the save.
  */
 fun List<LevelDraft>.withNewLevel(stored: List<ColorLevel>): List<LevelDraft> {
   val id = ((map { it.id } + stored.map { it.id }).maxOrNull() ?: 0) + 1
-  return this + LevelDraft(id, "", LevelType.NORMAL, null, null, "", null)
+  return this + LevelDraft(id, LevelSide.ABOVE, "", LevelType.NORMAL, null, null, "", null)
 }
 
-/**
- * The drafts without the level at [index]. A later level's range goes to the level below it, as
- * the edges already say. When the first level goes, the level with the lowest [edgeOf] moves to the
- * front: the save ignores the first edge, so that level's range grows down.
- */
-fun List<LevelDraft>.withoutLevel(index: Int, edgeOf: (LevelDraft) -> Double?): List<LevelDraft> {
-  val rest = filterIndexed { i, _ -> i != index }
-  if (index != 0 || rest.isEmpty()) return rest
-  val lowest = rest.indices.minBy { edgeOf(rest[it]) ?: Double.POSITIVE_INFINITY }
-  return listOf(rest[lowest]) + rest.filterIndexed { i, _ -> i != lowest }
-}
+/** The drafts without the row at [index]; no other edge moves. The middle row cannot go. */
+fun List<LevelDraft>.withoutLevel(index: Int): List<LevelDraft> =
+  if (getOrNull(index)?.side == LevelSide.MIDDLE) this else filterIndexed { i, _ -> i != index }
 
 /** The built-in levels of [value] as drafts, with edges scaled to [basis]. */
 fun defaultDrafts(value: LevelValue, basis: LevelBasis, locale: Locale): List<LevelDraft> =
   DefaultLevels.copyForCustom(value, basis).map { it.toDraft(value, locale) }
 
-/**
- * The drafts the editor opens with: the own levels, or the built-in ones. A list left over from
- * a build with a switch is ignored while [CustomLevels.on] is false.
- */
+/** The drafts the editor opens with: the own levels, or the built-in ones. */
 fun editorDrafts(
   value: LevelValue,
   custom: CustomLevels,
   basis: LevelBasis,
   locale: Locale,
 ): List<LevelDraft> =
-  if (custom.on && custom.levels.isNotEmpty()) custom.levels.map { it.toDraft(value, locale) }
-  else defaultDrafts(value, basis, locale)
+  LevelPicker.ownLevels(value, custom)?.map { it.toDraft(value, locale) }
+    ?: defaultDrafts(value, basis, locale)

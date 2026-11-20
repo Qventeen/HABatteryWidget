@@ -1,7 +1,6 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
-import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.Settings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -33,4 +32,14 @@ class LevelBasisTest {
 
   @Test
   fun cells_withoutReading_isNull() = assertNull(LevelBasis.of(null, settings).cells)
+
+  @Test
+  fun cells_belowOne_isNull() =
+    assertNull(LevelBasis.of(reading(total = 0.4, average = 3.3), settings).cells)
+
+  @Test
+  fun capacity_zeroOrNegative_isNull() {
+    assertNull(LevelBasis.of(null, Settings(capacityAh = 0.0)).capacityAh)
+    assertNull(LevelBasis.of(null, Settings(capacityAh = -5.0)).capacityAh)
+  }
 }

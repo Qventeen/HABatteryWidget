@@ -56,9 +56,10 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
-import io.lumensync.habattery.domain.model.LevelBasis
+import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
+import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
@@ -124,7 +125,6 @@ internal fun LevelEditor(
           index = index,
           draft = draft,
           error = if (ownErrors) errors.errorFor(Field.LEVEL_EDGE, index) else null,
-          canRemove = drafts.size > 1,
           palette = palette,
           // On the current draft by id: a text field reports its change a moment later, when the
           // index and the other fields of the draft it saw may be old.
@@ -132,7 +132,7 @@ internal fun LevelEditor(
             drafts = drafts.map { if (it.id == draft.id) update(it) else it }
           },
           onRemove = {
-            drafts = drafts.withoutLevel(index) { it.edgeOrNull(value, locale) }
+            drafts = drafts.withoutLevel(index)
             ownErrors = false
           },
         )
@@ -182,7 +182,6 @@ private fun LevelRow(
   index: Int,
   draft: LevelDraft,
   error: FieldError?,
-  canRemove: Boolean,
   palette: WidgetPalette,
   onUpdate: ((LevelDraft) -> LevelDraft) -> Unit,
   onRemove: () -> Unit,
@@ -190,8 +189,8 @@ private fun LevelRow(
   val shown = draft.color ?: draft.type.defaultColor
   HorizontalDivider()
   Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-    // The first level is open below: the save ignores its edge.
-    if (index > 0) {
+    // The middle level has no edge.
+    if (draft.side != LevelSide.MIDDLE) {
       LevelTextField(
         text = draft.edgeText,
         onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
@@ -213,11 +212,13 @@ private fun LevelRow(
   Row(verticalAlignment = Alignment.CenterVertically) {
     TypeMenu(draft.type) { type -> onUpdate { it.copy(type = type) } }
     Spacer(Modifier.weight(1f))
-    IconButton(onClick = onRemove, enabled = canRemove) {
-      Icon(
-        painterResource(R.drawable.ic_close),
-        contentDescription = stringResource(R.string.colors_remove_level, index + 1),
-      )
+    if (draft.side != LevelSide.MIDDLE) {
+      IconButton(onClick = onRemove) {
+        Icon(
+          painterResource(R.drawable.ic_close),
+          contentDescription = stringResource(R.string.colors_remove_level, index + 1),
+        )
+      }
     }
   }
   ColorChips(draft.type, shown, palette) { color -> onUpdate { it.copy(color = color) } }

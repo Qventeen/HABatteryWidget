@@ -28,7 +28,7 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LanguageChoice
-import io.lumensync.habattery.domain.model.LevelBasis
+import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged

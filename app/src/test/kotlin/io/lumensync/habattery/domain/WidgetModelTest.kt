@@ -13,6 +13,7 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelLook
+import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MainValue
@@ -66,12 +67,12 @@ class WidgetModelTest {
   private fun custom(value: LevelValue, vararg levels: ColorLevel): Settings =
     settings().withCustomLevels(value, CustomLevels(on = true, levels = levels.toList()))
 
-  /** Plain below 52.0 V, green from it. */
+  /** Plain up to 51.99 V, green above it. */
   private val customVoltage =
     custom(
       LevelValue.VOLTAGE,
-      ColorLevel(id = 1, type = LevelType.NORMAL, color = LevelColor.PLAIN),
-      ColorLevel(id = 2, from = 52.0, type = LevelType.NORMAL),
+      ColorLevel(id = 1, side = LevelSide.BELOW, edge = 51.99, type = LevelType.NORMAL, color = LevelColor.PLAIN),
+      ColorLevel(id = 2, type = LevelType.NORMAL),
     )
 
   private fun build(
@@ -150,11 +151,11 @@ class WidgetModelTest {
   }
 
   @Test
-  fun main_charge20A_100Ah_isGreen() {
+  fun main_charge20A_100Ah_isLight() {
     fun main(current: Double) = data(sample.copy(currentA = current), settings(capacityAh = 100.0)).mainLook
-    assertEquals(LevelLook(LevelColor.GREEN), main(20.0))
-    assertEquals(LevelLook(LevelColor.GREEN), main(19.95)) // shown as 20.0 A
-    assertEquals(LevelLook(LevelColor.BLUE), main(19.85)) // shown as 19.8 A
+    assertEquals(LevelLook(LevelColor.BLUE), main(20.0)) // a ↓ edge includes itself
+    assertEquals(LevelLook(LevelColor.BLUE), main(19.95)) // shown as 20.0 A
+    assertEquals(LevelLook(LevelColor.GREEN), main(20.1))
   }
 
   @Test
@@ -206,7 +207,11 @@ class WidgetModelTest {
   fun ring_followsSocLevels() {
     fun ring(soc: Double) = data(sample.copy(chargePercent = soc)).ringLook
     assertEquals(LevelLook(LevelColor.RED), ring(19.4)) // shown as 19
-    assertEquals(LevelLook(LevelColor.AMBER), ring(19.6)) // shown as 20
+    assertEquals(LevelLook(LevelColor.RED), ring(19.6)) // shown as 20: a ↓ edge includes itself
+    assertEquals(LevelLook(LevelColor.RED), ring(20.0))
+    assertEquals(LevelLook(LevelColor.AMBER), ring(21.0))
+    assertEquals(LevelLook(LevelColor.AMBER), ring(40.0))
+    assertEquals(LevelLook(LevelColor.GREEN), ring(41.0))
     assertEquals(LevelLook(LevelColor.BLUE), ring(100.0))
   }
 
@@ -252,7 +257,7 @@ class WidgetModelTest {
       custom(
         LevelValue.VOLTAGE,
         ColorLevel(id = 1, type = LevelType.NORMAL, color = LevelColor.PLAIN),
-        ColorLevel(id = 2, from = edge, type = LevelType.NORMAL),
+        ColorLevel(id = 2, side = LevelSide.ABOVE, edge = edge, type = LevelType.NORMAL),
       )
     fun cell(total: Double, average: Double, edge: Double) =
       data(sample.copy(totalVoltageV = total, averageCellVoltageV = average), levels(edge)).averageCellLook
@@ -268,7 +273,7 @@ class WidgetModelTest {
       custom(
         LevelValue.VOLTAGE,
         ColorLevel(id = 1, type = LevelType.NORMAL),
-        ColorLevel(id = 2, from = 52.0, type = LevelType.WARNING),
+        ColorLevel(id = 2, side = LevelSide.ABOVE, edge = 52.0, type = LevelType.WARNING),
       )
     assertEquals(plain, data(sample.copy(totalVoltageV = 0.0, averageCellVoltageV = 3.3), greenFirst).averageCellLook)
     assertEquals(plain, data(sample.copy(totalVoltageV = null), greenFirst).averageCellLook)
@@ -330,9 +335,10 @@ class WidgetModelTest {
   fun `temperature levels follow the shown whole degrees of each sensor`() {
     fun look(c: Double) = (temps(c) as Temperatures.Battery).look
     assertEquals(LevelLook(LevelColor.RED, LevelIcon.SNOWFLAKE), look(-0.6)) // shown as -1 °C
-    assertEquals(LevelLook(LevelColor.BLUE, LevelIcon.SNOWFLAKE), look(-0.4)) // shown as 0 °C
+    assertEquals(LevelLook(LevelColor.RED, LevelIcon.SNOWFLAKE), look(-0.4)) // shown as 0 °C
     assertEquals(LevelLook(LevelColor.BLUE, LevelIcon.SNOWFLAKE), look(4.4)) // shown as 4 °C
-    assertEquals(greenLeaf, look(4.6)) // shown as 5 °C
+    assertEquals(LevelLook(LevelColor.BLUE, LevelIcon.SNOWFLAKE), look(4.6)) // shown as 5 °C
+    assertEquals(greenLeaf, look(5.6)) // shown as 6 °C
     assertEquals(greenLeaf, look(44.4)) // shown as 44 °C
     assertEquals(LevelLook(LevelColor.AMBER, LevelIcon.FLAME), look(44.6)) // shown as 45 °C
     assertEquals(LevelLook(LevelColor.AMBER, LevelIcon.FLAME), look(54.4)) // shown as 54 °C

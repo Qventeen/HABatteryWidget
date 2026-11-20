@@ -2,7 +2,6 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ColorLevel
-import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelLook
 import io.lumensync.habattery.domain.model.LevelValue
