@@ -144,7 +144,8 @@ sealed interface WidgetModel {
       voltageLevels: List<ColorLevel>,
     ): LevelLook {
       if (average == null || cells == null) return PLAIN
-      return LevelPicker.pick(LevelPicker.perCell(voltageLevels, cells), average.roundTo(3))
+      val perCell = LevelPicker.perCell(voltageLevels, cells)
+      return LevelPicker.pick(perCell, average.roundTo(LevelPicker.CELL_DECIMALS))
         .toLook(LevelValue.VOLTAGE)
     }
 

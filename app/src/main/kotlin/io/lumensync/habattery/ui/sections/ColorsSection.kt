@@ -51,9 +51,10 @@ import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.customLevels
-import io.lumensync.habattery.format.formatEdge
+import io.lumensync.habattery.format.SpanText
 import io.lumensync.habattery.format.numberText
 import io.lumensync.habattery.format.placeText
+import io.lumensync.habattery.format.spanText
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
@@ -179,13 +180,13 @@ private fun LevelTags(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    levels.forEach { level ->
+    levels.forEachIndexed { index, level ->
       val span = LevelSpans.of(levels, level, value.decimals, value.floor)
       val perCell =
         cellLevels?.let { all ->
-          // The average cell voltage is shown with 3 decimals and is never below 0.
-          LevelSpans.of(all, all.first { it.id == level.id }, 3, 0.0)
-            .numberText(3, locale, level.side)
+          // perCell keeps the order of the levels, so the same index is the same level.
+          LevelSpans.of(all, all[index], LevelPicker.CELL_DECIMALS, LevelValue.VOLTAGE.floor)
+            .numberText(LevelPicker.CELL_DECIMALS, locale, level.side)
         }
       LevelTag(value, level, span, perCell, locale, palette)
     }
@@ -216,7 +217,7 @@ private fun LevelTag(
     }
   val cellText = perCell?.let { stringResource(R.string.colors_per_cell, it) }
   val text = joined(R.string.colors_two_parts, place, cellText, name ?: type)
-  val words = placeWords(value, span, unit, locale)
+  val words = spanWords(span, value.decimals, unit, locale)
   val description = joined(R.string.colors_list_parts, words, name, type)
   Row(
     Modifier.background(shades.background, CircleShape)
@@ -237,21 +238,18 @@ private fun LevelTag(
   }
 }
 
-/** The [span] in words with the [unit], such as "20 % and below"; `null` for `Anything`. */
+/**
+ * The [span] in words with the [unit], such as "20 % and below", for TalkBack; `null` for
+ * `Anything`. The tags and the editor's middle row read the same words.
+ */
 @Composable
-private fun placeWords(value: LevelValue, span: LevelSpan, unit: String, locale: Locale): String? =
-  when (span) {
-    is LevelSpan.AtOrBelow ->
-      stringResource(R.string.colors_place_below, value.formatEdge(span.edge, locale), unit)
-    is LevelSpan.AtOrAbove ->
-      stringResource(R.string.colors_place_above, value.formatEdge(span.edge, locale), unit)
-    is LevelSpan.Between -> {
-      val low = value.formatEdge(span.low, locale)
-      val high = value.formatEdge(span.high, locale)
-      if (low == high) stringResource(R.string.colors_place, low, unit)
-      else stringResource(R.string.colors_place_between, low, high, unit)
-    }
-    LevelSpan.Anything -> null
+internal fun spanWords(span: LevelSpan, decimals: Int, unit: String, locale: Locale): String? =
+  when (val text = span.spanText(decimals, locale)) {
+    is SpanText.AtMost -> stringResource(R.string.colors_place_below, text.number, unit)
+    is SpanText.AtLeast -> stringResource(R.string.colors_place_above, text.number, unit)
+    is SpanText.Range -> stringResource(R.string.colors_place_between, text.low, text.high, unit)
+    is SpanText.Single -> stringResource(R.string.colors_place, text.number, unit)
+    null -> null
   }
 
 /** The [parts] that are not null, joined pairwise by the [join] string. One must be there. */

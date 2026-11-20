@@ -10,6 +10,9 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 object LevelPicker {
+  /** The decimals of the average cell voltage, as shown and as the per-cell edges are rounded. */
+  const val CELL_DECIMALS = 3
+
   /**
    * The level for [shown], the number as the widget shows it: the ↓ level with the smallest edge at
    * or above it, else the ↑ level with the largest edge at or below it, else the middle level. A
@@ -53,11 +56,14 @@ object LevelPicker {
     levels.sortedWith(compareBy<ColorLevel> { it.side.ordinal }.thenBy { it.edge ?: 0.0 })
 
   /**
-   * Pack-voltage levels as per-cell levels: every edge divided by [cells] and rounded to the three
-   * decimals the average cell voltage is shown with, so the colour follows the shown number.
+   * Pack-voltage levels as per-cell levels: every edge divided by [cells] and rounded to the
+   * [CELL_DECIMALS] the average cell voltage is shown with, so the colour follows the shown
+   * number.
    */
   fun perCell(voltageLevels: List<ColorLevel>, cells: Int): List<ColorLevel> =
-    voltageLevels.map { level -> level.copy(edge = level.edge?.let { (it / cells).roundTo(3) }) }
+    voltageLevels.map { level ->
+      level.copy(edge = level.edge?.let { (it / cells).roundTo(CELL_DECIMALS) })
+    }
 
   /** The most serious level by `type.rank`; the first one wins a tie. */
   fun worst(levels: List<ColorLevel>): ColorLevel? = levels.maxByOrNull { it.type.rank }
