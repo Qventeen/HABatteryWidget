@@ -56,12 +56,15 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
         .setCategory(NotificationCompat.CATEGORY_STATUS)
         .build()
     try {
-      // Created again before each post, so the channel name follows the current language.
+      // All four are created again before each post: the owner can set every type's sound at
+      // once, and the names follow the current language.
       manager.deleteNotificationChannel(OLD_CHANNEL_ID)
-      manager.createNotificationChannel(
-        NotificationChannelCompat.Builder(channelId(type), importance(type))
-          .setName(context.getString(channelName(type)))
-          .build()
+      manager.createNotificationChannelsCompat(
+        LevelType.entries.map {
+          NotificationChannelCompat.Builder(channelId(it), importance(it))
+            .setName(context.getString(channelName(it)))
+            .build()
+        }
       )
       // One notification per value: a newer level of the same value replaces the older one.
       manager.notify(BASE_ID + alert.value.ordinal, notification)

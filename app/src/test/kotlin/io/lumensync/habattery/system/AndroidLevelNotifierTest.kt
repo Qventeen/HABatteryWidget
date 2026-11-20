@@ -90,6 +90,19 @@ class AndroidLevelNotifierTest {
   }
 
   @Test
+  fun onePost_createsEveryLevelChannel() {
+    grant()
+    notifier.post(full())
+
+    val high = NotificationManager.IMPORTANCE_HIGH
+    val default = NotificationManager.IMPORTANCE_DEFAULT
+    assertEquals(high, manager.getNotificationChannel("level_critical").importance)
+    assertEquals(high, manager.getNotificationChannel("level_warning").importance)
+    assertEquals(default, manager.getNotificationChannel("level_normal").importance)
+    assertEquals(default, manager.getNotificationChannel("level_info").importance)
+  }
+
+  @Test
   fun sameValue_replaces() {
     grant()
     notifier.post(low())
