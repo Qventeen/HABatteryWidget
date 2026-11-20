@@ -82,7 +82,7 @@ enum class LevelValue(val decimals: Int, val hasIcons: Boolean, val floor: Doubl
 /**
  * One band of a value. A [LevelSide.BELOW] or [LevelSide.ABOVE] level has an [edge]; the one
  * [LevelSide.MIDDLE] level has none. [id] stays the same when the level moves or is renamed. A
- * blank [name] means "show [defaultName]".
+ * blank [name] means "show [defaultName]". With [notify] on, entering the level raises an alert.
  */
 @Serializable
 data class ColorLevel(
@@ -96,15 +96,24 @@ data class ColorLevel(
   val icon: LevelIcon? = null,
   val name: String = "",
   val defaultName: LevelName? = null,
+  val notify: Boolean = false,
 ) {
   /** The chosen colour, or the colour of the [type]. */
   val shownColor: LevelColor
     get() = color ?: type.defaultColor
 }
 
-/** The owner's own levels for one value; they count only through `LevelPicker.ownLevels`. */
+/**
+ * The owner's own levels for one value; they count only through `LevelPicker.ownLevels`. [margin]
+ * is how far past a level's bounds the value must move before that level can alert again; `null`
+ * means the value's default margin.
+ */
 @Serializable
-data class CustomLevels(val on: Boolean = false, val levels: List<ColorLevel> = emptyList())
+data class CustomLevels(
+  val on: Boolean = false,
+  val levels: List<ColorLevel> = emptyList(),
+  val margin: Double? = null,
+)
 
 /** What the widget draws for a value. Not stored. */
 data class LevelLook(val color: LevelColor, val icon: LevelIcon? = null)

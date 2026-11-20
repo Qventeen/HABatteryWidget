@@ -122,9 +122,10 @@ class StoredJsonV1Test {
       {
         "on": true,
         "levels": [
-          {"id": 1, "side": "MIDDLE", "edge": null, "type": "INFO", "color": null, "icon": null, "name": "", "defaultName": "BALANCED"},
-          {"id": 2, "side": "ABOVE", "edge": 12.0, "type": "WARNING", "color": "ORANGE", "icon": "FLAME", "name": "Drift", "defaultName": null}
-        ]
+          {"id": 1, "side": "MIDDLE", "edge": null, "type": "INFO", "color": null, "icon": null, "name": "", "defaultName": "BALANCED", "notify": false},
+          {"id": 2, "side": "ABOVE", "edge": 12.0, "type": "WARNING", "color": "ORANGE", "icon": "FLAME", "name": "Drift", "defaultName": null, "notify": true}
+        ],
+        "margin": 4.0
       }
       """
     val expected =
@@ -132,10 +133,19 @@ class StoredJsonV1Test {
         true,
         listOf(
           ColorLevel(1, LevelSide.MIDDLE, null, LevelType.INFO, defaultName = LevelName.BALANCED),
-          ColorLevel(2, LevelSide.ABOVE, 12.0, LevelType.WARNING, LevelColor.ORANGE, LevelIcon.FLAME, "Drift"),
+          ColorLevel(2, LevelSide.ABOVE, 12.0, LevelType.WARNING, LevelColor.ORANGE, LevelIcon.FLAME, "Drift", notify = true),
         ),
+        margin = 4.0,
       )
     assertV1(json, expected, CustomLevels.serializer())
+  }
+
+  @Test
+  fun customLevels_withoutMargin_decodesNull() {
+    val json = """{"on": true, "levels": [{"id": 1, "notify": true}]}"""
+    val decoded = StoreJson.decodeFromString(CustomLevels.serializer(), json)
+    assertEquals(null, decoded.margin)
+    assertEquals(true, decoded.levels.single().notify)
   }
 
   @Test
