@@ -1,7 +1,11 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.MAX_LEVELS
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 
@@ -22,6 +26,7 @@ enum class Field {
   BALANCING,
   INTERVAL,
   CAPACITY,
+  LEVEL_EDGE,
 }
 
 enum class Problem {
@@ -29,6 +34,8 @@ enum class Problem {
   INVALID,
   OUT_OF_RANGE,
   TOO_MANY,
+  DUPLICATE,
+  OVERLAP,
 }
 
 data class FieldError(val field: Field, val problem: Problem, val index: Int? = null)
@@ -81,6 +88,42 @@ object Validation {
     if (ah == null) return emptyList()
     return if (ah > 0.0 && ah <= MAX_CAPACITY_AH) emptyList()
     else listOf(FieldError(Field.CAPACITY, Problem.OUT_OF_RANGE))
+  }
+
+  /**
+   * Checks the levels of one [value]. At most one error per index, the first found: a missing or
+   * stray edge, the same edge twice on one side, or a ↓ and an ↑ edge less than two steps apart
+   * (the middle level would be empty). Errors with no index: more than [MAX_LEVELS] levels, and a
+   * list without exactly one middle level.
+   */
+  fun levels(value: LevelValue, levels: List<ColorLevel>): List<FieldError> {
+    val errors = mutableListOf<FieldError>()
+    if (levels.size > MAX_LEVELS) errors += FieldError(Field.LEVEL_EDGE, Problem.TOO_MANY)
+    if (levels.count { it.side == LevelSide.MIDDLE } != 1) {
+      errors += FieldError(Field.LEVEL_EDGE, Problem.INVALID)
+    }
+    val atIndex = mutableMapOf<Int, Problem>()
+    val seen = mutableSetOf<Pair<LevelSide, Long>>()
+    levels.forEachIndexed { i, level ->
+      val edge = level.edge
+      when {
+        level.side == LevelSide.MIDDLE -> if (edge != null) atIndex[i] = Problem.INVALID
+        edge == null || !edge.isFinite() -> atIndex[i] = Problem.REQUIRED
+        !seen.add(level.side to edge.toSteps(value.decimals)) -> atIndex[i] = Problem.DUPLICATE
+      }
+    }
+    for ((i, below) in levels.withIndex()) {
+      if (below.side != LevelSide.BELOW || below.edge == null || !below.edge.isFinite()) continue
+      for ((k, above) in levels.withIndex()) {
+        if (above.side != LevelSide.ABOVE || above.edge == null || !above.edge.isFinite()) continue
+        val gap = above.edge.toSteps(value.decimals) - below.edge.toSteps(value.decimals)
+        if (gap < 2) {
+          atIndex.putIfAbsent(i, Problem.OVERLAP)
+          atIndex.putIfAbsent(k, Problem.OVERLAP)
+        }
+      }
+    }
+    return errors + atIndex.toSortedMap().map { (i, problem) -> FieldError(Field.LEVEL_EDGE, problem, i) }
   }
 
   fun isConfigured(s: Settings, hasToken: Boolean): Boolean =

@@ -17,6 +17,8 @@ internal fun fieldErrorText(error: FieldError): String =
   when (error.problem) {
     Problem.REQUIRED -> stringResource(R.string.field_required)
     Problem.INVALID -> stringResource(invalidMessage(error.field))
+    Problem.DUPLICATE -> stringResource(R.string.field_level_edge_duplicate)
+    Problem.OVERLAP -> stringResource(R.string.field_level_edge_overlap)
     Problem.TOO_MANY ->
       stringResource(R.string.field_temperatures_too_many, EntitySettings.MAX_TEMPERATURES)
     // Only the interval and the capacity have a range.
@@ -52,4 +54,5 @@ private fun invalidMessage(field: Field): Int =
     Field.PREFIX -> R.string.field_prefix_invalid
     Field.INTERVAL -> R.string.field_interval_invalid
     Field.CAPACITY -> R.string.field_capacity_invalid
+    Field.LEVEL_EDGE -> R.string.field_level_edge_invalid
   }

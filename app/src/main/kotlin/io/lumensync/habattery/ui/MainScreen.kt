@@ -28,11 +28,14 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.domain.LevelBasis
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.ActionsRow
 import io.lumensync.habattery.ui.sections.AppearanceSection
 import io.lumensync.habattery.ui.sections.CapacitySection
+import io.lumensync.habattery.ui.sections.ColorsSection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.NotificationSection
@@ -60,6 +63,8 @@ data class MainActions(
   val resetWidgetSettings: () -> Unit,
   val saveAppearance: (AppearanceSettings) -> Unit,
   val setLanguage: (LanguageChoice) -> Unit,
+  val saveLevels: (LevelValue, List<LevelDraft>, Locale) -> Boolean,
+  val useDefaults: (LevelValue) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
 )
@@ -120,6 +125,14 @@ private fun MainContent(
       actions.resetWidgetSettings,
     )
     AppearanceSection(settings.appearance, language, actions.saveAppearance, actions.setLanguage)
+    val reading = overview.reading
+    ColorsSection(
+      settings.colorLevels,
+      LevelBasis.of(reading, settings),
+      state.errors,
+      actions.saveLevels,
+      actions.useDefaults,
+    )
     ConnectionSection(
       settings.connection,
       state.errors,

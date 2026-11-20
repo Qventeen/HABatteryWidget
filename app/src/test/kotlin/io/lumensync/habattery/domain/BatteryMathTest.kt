@@ -143,4 +143,22 @@ class BatteryMathTest {
     assertEquals(0f, BatteryMath.progress(-2.0))
     assertEquals(0.55f, BatteryMath.progress(55.0), 0.0001f)
   }
+
+  @Test
+  fun `cellCount rounds total over average`() {
+    fun cells(total: Double?, avg: Double?) =
+      BatteryMath.cellCount(base.copy(totalVoltageV = total, averageCellVoltageV = avg))
+    assertEquals(16, cells(52.8, 3.3))
+    assertNull(cells(null, 3.3))
+    assertNull(cells(52.8, null))
+    assertNull(cells(52.8, 0.0))
+  }
+
+  @Test
+  fun `cellCount below one cell is null`() {
+    fun cells(total: Double) = BatteryMath.cellCount(base.copy(totalVoltageV = total, averageCellVoltageV = 3.3))
+    assertNull(cells(0.0))
+    assertNull(cells(1.6))
+    assertNull(cells(-52.8))
+  }
 }

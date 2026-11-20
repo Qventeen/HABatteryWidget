@@ -4,7 +4,9 @@
 - **Status:** approved by the owner (2026-11-19), after the builder check.
   Plan: `docs/superpowers/plans/2026-11-19-0011-notification-rules.md`.
   Amended 2026-11-19 (owner, while detailing 0012): editable re-arm
-  margins (§3.3); the plan is amended to match.
+  margins (§3.3); the plan is amended to match. Amended 2026-11-20 (0010
+  round 3, two-sided levels): the examples, the re-arm wording (§3.3) and
+  the title (§3.4) follow 0010 §3.1; the rules do not change.
 - **Set:** `0011`, epic `epic-widget-improvements`. Code later on branch
   `0011-notification-rules`, from the epic.
 - **Builds on:** 0010 (value colours; required, build it first) and spec 0001
@@ -41,9 +43,9 @@ today's notification code to work on the levels.
 
 Owner decision on direction (2026-11-18): a crossing sends the notification
 of the level the value **enters**, in both directions. Falling from 21 % to
-19 % enters red → a red (Critical) notification. Rising from 19 % to 20 %
-enters amber → a yellow (Warning) notification that says the charge went
-up. No direction setting for now; it may come later if this is too noisy.
+20 % enters red (↓20 % Low) → a red (Critical) notification. Rising from
+20 % to 21 % enters amber (↓40 % Getting low) → a yellow (Warning)
+notification. (Numbers as amended 2026-11-20, 0010 §3.1.) No direction setting for now; it may come later if this is too noisy.
 
 ## 2. Today
 
@@ -83,19 +85,22 @@ up. No direction setting for now; it may come later if this is too noisy.
   temperature (owner, 2026-11-18). The average cell has none (0010 §3.5).
   Inverter values come with 0012.
 - **Defaults** (owner, 2026-11-18): the bell is on for
-  - SOC: Low (below 20 %) and Full (100 %);
-  - battery temperature: Freezing (below 0 °C) and Hot (from 55 °C);
-  - MOSFET: Hot (from 80 °C);
+  - SOC: Low (↓20 %: 20 % and below) and Full (↑100 %);
+  - battery temperature: Freezing (↓0 °C: 0 °C and below) and Hot (↑55 °C:
+    55 °C and above);
+  - MOSFET: Hot (↑80 °C);
 
   and off for every other level. These are rare and important; the
   temperature ones are about safety. "Getting low" stays silent by default
-  (owner, 2026-11-18): a full cycle sends only "Low ↓" and "Full ↑"; the
-  "↑ 20 %" example of §1 comes once its bell is on.
-- **Bells are edited with "Custom colours" on** (owner, 2026-11-18). Turning
-  custom on alone changes nothing visible (the copy equals the defaults);
-  then the owner sets the bells. All level settings stay in one place. With
-  custom off, the read-only list in the Colours section shows which default
-  levels have a bell.
+  (owner, 2026-11-18): a full cycle sends only "Low ↓20 %" and "Full
+  ↑100 %"; the "rising into Getting low" example of §1 comes once its bell
+  is on.
+- **Bells are edited in the value's editor** (owner, 2026-11-18: "with
+  Custom colours on"; since 2026-11-20 the switch is replaced by Default and
+  Edit, 0010 §3.5). Edit starts from a copy of the defaults, so the bells
+  start as the defaults; Save stores them as the value's own levels. All
+  level settings stay in one place. Without own levels, the tags in the
+  Colours section show which default levels have a bell.
 - **Main switch** (owner, 2026-11-18): the Notifications section keeps one
   switch, off by default, which asks for the permission on Android 13+, as
   today. Off: nothing is posted, whatever the bells say. Its label changes
@@ -145,7 +150,8 @@ The check runs inside `SyncBattery` after each successful reading, where
 ### 3.3 Re-arm margin
 
 - A level that has notified is disarmed. It re-arms when the number is
-  outside the level's range by at least the margin of its value. The
+  past one of the level's bounding edges by at least the margin of its
+  value (amended 2026-11-20, below: bounds are edges, not shown numbers). The
   defaults (owner, 2026-11-18) are below; since 2026-11-19 the owner can
   change them per value (next point):
 
@@ -157,41 +163,59 @@ The check runs inside `SyncBattery` after each successful reading, where
   | Cell delta | 3 mV |
   | Battery and MOSFET temperature | 2 °C |
 
-- **Editable margin** (owner, 2026-11-19, while detailing 0012): with
-  "Custom colours" on, the value's editor has one field, "Notify again
+- **Editable margin** (owner, 2026-11-19, while detailing 0012): the
+  value's editor (Edit, 0010 §3.5) has one field, "Notify again
   after it moves back by", in the value's unit (current in whole amps,
   like the custom copy). Blank means the default above, shown as a hint.
   A number ≥ 0 at the value's shown precision; anything else is a field
   error and nothing is saved. Stored as `CustomLevels.margin` (null = the
-  default); Reset sets it back to null. With custom off the default
-  applies. One field per value keeps the editor small (owner's worry
+  default); Reset in the editor sets it back to blank. Without own levels
+  (Default) the default applies. One field per value keeps the editor small (owner's worry
   about an overloaded screen).
-- Example, SOC with the default bells, the charge moving 21 → 19 → 20 → 19
-  → 20 %: "Low ↓ 19 %" is posted; "Getting low" has no bell; Low re-arms only
-  at 22 % or more, so the jitter at 19–20 % posts nothing more. Today's full
-  notification behaves the same way (it re-arms at 98 %).
+- **With two-sided levels** (0010 §3.1, 2026-11-20) the bounds of a level
+  are edges: a ↓ level's upper bound is its own edge and its lower bound
+  the nearest lower ↓ edge; an ↑ level's lower bound is its own edge and
+  its upper bound the nearest higher ↑ edge; the middle level's bounds are
+  the highest ↓ edge and the lowest ↑ edge. An outer level has one bound.
+  A disarmed level re-arms when `x >= upper + margin` or `x <= lower −
+  margin`, on the bounds it has. So the margin counts from the number on
+  the level's tag, away from the alarm side: Low ↓20 % re-arms at 22 %,
+  Freezing ↓0 °C at 2 °C, Hot ↑55 °C at 53 °C, Full ↑100 % at 98 %. An
+  inner level also re-arms when the value goes deeper by the margin past
+  the next edge: Getting low ↓40 % at 42 % or at 18 %, Warm ↑45 °C at
+  43 °C or 57 °C; the SOC middle level (between ↓40 and ↑100) at 38 % or
+  102 %.
+- Example, SOC with the default bells, the charge moving 22 → 20 → 21 → 20
+  → 21 %: "Charge: Low ↓20 %" is posted; "Getting low" has no bell; Low
+  re-arms only at 22 % or more, so the jitter at 20–21 % posts nothing
+  more. Today's full notification behaves the same way (it re-arms at
+  98 %).
 - With a bell on both sides of an edge, a value jumping across the edge can
   post once on each side, then both levels are disarmed until the value
   moves away by the margin.
 - **Level ids** (0010 §3.1): the custom copy keeps the ids of the default
-  levels, so turning "Custom colours" on or off keeps the stored state; a
+  levels, so Edit + Save and Default keep the stored state; a
   new level gets the highest id plus one. Disarmed ids of levels that no
   longer exist are dropped at each check (my call).
 
 ### 3.4 What a notification shows
 
 - **Title** (owner, 2026-11-18): "value: level name, arrow, number", for
-  example "Charge: Low ↓ 19 %", "Battery temperature: Hot ↑ 55 °C". The arrow
-  is ↓ when the new level is below the previous one, ↑ when above. The
-  number uses the widget's formatter. The "value: name" form works with free
-  names in English and Ukrainian.
+  example "Charge: Low ↓20 %", "Battery temperature: Hot ↑55 °C". Since
+  2026-11-20 (0010 round 3) the arrow and number are the level's own, as
+  its Colours tag shows them: the arrow is the level's side, the number its
+  edge; a middle level with a bell shows ↕ and its range ("Charge:
+  Normal ↕41–99 %"). The "value: name" form works with free names in English and
+  Ukrainian.
 - **Value labels:** Charge, Voltage, Charge current, Discharge current, Cell
   delta, Battery temperature, MOSFET temperature (Ukrainian: Заряд, Напруга,
   Струм заряду, Струм розряду, Різниця комірок, Температура батареї,
   Температура MOSFET).
 - **Body** (owner, 2026-11-18): when the value was measured, "Measured at
   14:05" (the reading's time, in the update-time format), because a
-  notification can come 15–30 min late.
+  notification can come 15–30 min late. Since 2026-11-20 the measured
+  number moves here from the title (my call, so it is not lost): "19 % ·
+  measured at 14:05", formatted as the widget shows it.
 - **Tap:** opens the app, as today.
 - **One notification per value** (my call): a new level of the same value
   replaces the older notification of that value, so they do not stack.
@@ -276,12 +300,13 @@ The check runs inside `SyncBattery` after each successful reading, where
    battery temperature Freezing and Hot, MOSFET Hot (§3.1).
 4. ~~Keep one main switch?~~ Decided (owner): yes, today's switch (§3.1).
 5. ~~Bells with "Custom colours" off?~~ Decided (owner): bells are edited
-   with custom on only (§3.1).
+   with custom on only (§3.1); since 2026-11-20: in the value's editor
+   (Edit), 0010 §3.5.
 6. ~~The type of a level?~~ Decided by the 0010 level model: the owner picks
    the type; the colour follows the type and can be changed.
 7. ~~Re-arm margin: fixed or editable?~~ Decided (owner, 2026-11-18):
-   fixed per value; changed (owner, 2026-11-19): editable per value with
-   custom on, defaults unchanged (§3.3).
+   fixed per value; changed (owner, 2026-11-19): editable per value in
+   the value's editor, defaults unchanged (§3.3).
 8. ~~Which values can notify?~~ Decided (owner): every value with levels;
    the inverter with 0012.
 9. ~~Title and body?~~ Decided (owner): "value: name, arrow, number"; the

@@ -31,8 +31,9 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.unit.ColorProvider
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel.Flow
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
 import kotlin.math.roundToInt
 
 /** Cell pills keep fully round ends; Android clamps the radius to half the pill's height. */
@@ -167,7 +168,7 @@ internal fun Ring(d: DataLook, modifier: GlanceModifier) {
       contentDescription = null,
       modifier = GlanceModifier.fillMaxSize(),
       contentScale = ContentScale.Fit,
-      colorFilter = ColorFilter.tint(c.ring(d.model.ringLevel)),
+      colorFilter = ColorFilter.tint(c.ring(d.model.ringLook.color)),
     )
     val f = d.fonts
     RingText(d.texts.socLabel, d.look.sp(f.ringLabel), c.sub, FontWeight.Normal, f.ringCenters[0])
@@ -199,9 +200,12 @@ private fun RingText(
 internal fun PackColumn(d: DataLook, modifier: GlanceModifier) {
   Column(modifier) {
     val fill = GlanceModifier.defaultWeight().fillMaxWidth()
-    PackPill(d, d.texts.voltage, d.fonts.voltage, Level.PLAIN, Flow.NONE, fill)
+    val flow = d.model.flow
+    // Both pills show the current's arrow; only the main pill's arrow is described, so TalkBack
+    // says the direction once.
+    PackPill(d, d.texts.voltage, d.fonts.voltage, d.model.voltageLook.color, flow, describeArrow = false, fill)
     Spacer(GlanceModifier.height(d.spec.packGap.dp))
-    PackPill(d, d.texts.main, d.fonts.main, d.model.mainLevel, d.model.flow, fill)
+    PackPill(d, d.texts.main, d.fonts.main, d.model.mainLook.color, flow, describeArrow = true, fill)
   }
 }
 
@@ -210,16 +214,17 @@ private fun PackPill(
   d: DataLook,
   text: String,
   sizeDp: Float,
-  level: Level,
+  levelColor: LevelColor,
   flow: Flow,
+  describeArrow: Boolean,
   modifier: GlanceModifier,
 ) {
   val context = LocalContext.current
   val s = d.spec
-  val color = d.colors.pillText(level)
+  val color = d.colors.pillText(levelColor)
   Box(
     modifier
-      .background(d.colors.pillBackground(level))
+      .background(d.colors.pillBackground(levelColor))
       .cornerRadius(s.packRadius.dp)
       .padding(horizontal = s.packPadding.dp),
     contentAlignment = Alignment.Center,
@@ -230,7 +235,7 @@ private fun PackPill(
           if (flow == Flow.UP) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
           s.arrow.dp,
           color,
-          context.getString(description),
+          if (describeArrow) context.getString(description) else null,
         )
         Spacer(GlanceModifier.width(s.arrowGap.dp))
       }
@@ -275,10 +280,10 @@ internal fun CellGrid(d: DataLook) {
 private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: GlanceModifier) {
   val context = LocalContext.current
   val s = d.spec
-  val color = d.colors.pillText(pill.level)
+  val color = d.colors.pillText(pill.color)
   Box(
     modifier
-      .background(d.colors.pillBackground(pill.level))
+      .background(d.colors.pillBackground(pill.color))
       .cornerRadius(CELL_RADIUS)
       .padding(horizontal = s.cellPadding.dp),
     contentAlignment = Alignment.Center,
@@ -286,6 +291,11 @@ private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: Glan
     Row(verticalAlignment = Alignment.CenterVertically) {
       if (pill.icon != null) {
         WidgetIcon(pill.icon, s.tempIcon.dp, color, pill.iconDescription?.let(context::getString))
+        Spacer(GlanceModifier.width(s.tempIconGap.dp))
+      }
+      // Not described: TalkBack reads the temperature, which already tells the level.
+      pill.levelIcon?.let { level ->
+        WidgetIcon(levelIconRes(level), s.tempIcon.dp, color, null)
         Spacer(GlanceModifier.width(s.tempIconGap.dp))
       }
       Text(
@@ -296,3 +306,12 @@ private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: Glan
     }
   }
 }
+
+@DrawableRes
+internal fun levelIconRes(icon: LevelIcon): Int =
+  when (icon) {
+    LevelIcon.SNOWFLAKE -> R.drawable.ic_level_snowflake
+    LevelIcon.LEAF -> R.drawable.ic_level_leaf
+    LevelIcon.FLAME -> R.drawable.ic_level_flame
+    LevelIcon.FLAME_ALERT -> R.drawable.ic_level_flame_alert
+  }

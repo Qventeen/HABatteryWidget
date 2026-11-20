@@ -10,6 +10,12 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-18-0011-notification-rules-design.md` (read it before each task; §3.x below points into it). It builds on 0010: read `docs/superpowers/specs/2026-11-18-0010-value-colors-design.md` and its plan `docs/superpowers/plans/2026-11-18-0010-value-colors.md`; their types (`LevelValue`, `ColorLevel`, `DefaultLevels`, `LevelPicker`, `LevelDraft`, `ColorsSection`) exist when this plan starts.
 
+**Amended 2026-11-20 (0010 changed before merge; check the built names before Task 1):**
+
+- The "Custom colours" switch is gone; each value has Default and Edit (0010 §3.5). In Task 6 read "with custom on" as "in the editor", "the read-only default list" as "the tags", and `resetLevels` as the editor's Reset (draft only, nothing stored) plus `useDefaults(value)` (deletes own levels).
+- Defaults depend on a `LevelBasis(capacityAh, cells)`: `DefaultLevels.of(value, basis)`, `copyForCustom(value, basis)`, `LevelPicker.effective(value, settings, basis)`. `LevelAlerts.evaluate` builds `LevelBasis.of(reading, settings)` once, as `WidgetModel` does. `saveLevels(...)` returns `Boolean` (`false` on a field error); Task 6 adds the margin parameter to that signature.
+- Two-sided levels (0010 §3.1, round 3): `ColorLevel.from` is now `edge` plus `side` (`BELOW`, `MIDDLE`, `ABOVE`); the own list counts only when valid (`LevelPicker.ownLevels`); levels are kept in shown order (↓ ascending, middle, ↑ ascending). In Task 3 a level's bounds are edges (spec §3.3 as amended): Task 3 adds one pure function next to `LevelSpans` (for example `LevelSpans.bounds(levels, level): Pair<Double?, Double?>`, lower and upper edge) and `LevelSpans.of` may reuse it for the middle level; re-arm is `x >= upper + margin` or `x <= lower − margin` on the bounds that exist (Low ↓20 re-arms at 22, Getting low ↓40 at 42 or 18, Hot ↑55 at 53, the SOC middle at 38 or 102). The margin is the own one only when `LevelPicker.ownLevels(value, custom) != null`, not when `custom.on` is set. `LevelAlert.rising` goes: the arrow is the level's side; `LevelAlert` carries the level's `LevelSpan` (the notifier cannot work out a middle level's "↕41–99 %" from one `ColorLevel`). The tag-text helpers (`mark`, `numberText`, `placeText`, `formatEdge`) are in `format/` since 0010; Task 5 also moves the unit labels (`unitLabel` in `ColorsSection.kt`) to `format/LevelLabels.kt` next to `levelNameRes`. In Task 5 the title is `"%1$s: %2$s %3$s"` (value label, name, the tag's span text with its unit, for example "Charge: Low ↓20 %") and the body `"%1$s · measured at %2$s"` with the shown number (spec 0011 §3.4 as amended). Read the examples "Low ↓ 19 %" in Review Focus 2 and Tasks 3 and 5 as "Low ↓20 %" with the charge at 20 %.
+
 ## Global Constraints
 
 - Start only after 0010 is merged into `epic-widget-improvements`. Branch `0011-notification-rules` from the epic; merge back after review.
@@ -17,7 +23,7 @@
 - `domain/` imports nothing from `android.*`.
 - Stored data (0001 §14): the settings rename is a meaning change after a release, so `SettingsRecord.schemaVersion` goes 1 → 2 with a `DataMigration` and a test on a saved v1 sample. The cache change only adds and removes fields: `CacheRecord` stays at 1, no migration.
 - Default bells (spec §3.1): on for SOC Low and Full, battery temperature Freezing and Hot, MOSFET Hot; off everywhere else ("Getting low" stays off).
-- Re-arm margins (spec §3.3): SOC 2 %, voltage 0.1 V, current 0.05 C (1 A without a capacity), delta 3 mV, temperatures 2 °C. Editable per value with custom on: `CustomLevels.margin` (null = the default; amended 2026-11-19).
+- Re-arm margins (spec §3.3): SOC 2 %, voltage 0.1 V, current 0.05 C (1 A without a capacity), delta 3 mV, temperatures 2 °C. Editable per value in the value's editor (Edit, 0010 §3.5 as amended 2026-11-20): `CustomLevels.margin` (null = the default; amended 2026-11-19).
 - Channels (spec §3.5): ids `level_critical`, `level_warning`, `level_normal`, `level_info`; Critical and Warning `IMPORTANCE_HIGH`, Normal and Info `IMPORTANCE_DEFAULT`; each created again before each post (0001 §12); the old `full_charge` channel is deleted.
 - Every visible text goes in `res/values/strings.xml` and `res/values-uk/strings.xml` in the same commit (`NoHardcodedTextTest`).
 - Code comments: use the `writing-code-comments` skill before writing them.

@@ -18,6 +18,8 @@ data class Settings(
   val fontPercents: FontPercents = FontPercents(),
   val homeScalePercent: Int = HomeScale.DEFAULT,
   val appearance: AppearanceSettings = AppearanceSettings(),
+  /** Keyed by [LevelValue.name]: a key written by a later version cannot break the file. */
+  val colorLevels: Map<String, CustomLevels> = emptyMap(),
 )
 
 /** Both stored ranges applied (fonts and home-screen scale); readers get only valid values. */

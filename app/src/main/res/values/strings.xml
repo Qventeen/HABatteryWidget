@@ -27,6 +27,7 @@
     <string name="widget_error">Widget error. Open the app.</string>
     <string name="widget_refresh_action">Refresh</string>
     <string name="delta_label">Δ %1$s</string>
+    <string name="average_cell_label">avg %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
     <plurals name="widget_soc_description">
         <item quantity="one">State of charge %1$d percent</item>
@@ -150,6 +151,83 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
+    <!-- Colours section (value levels). -->
+    <string name="colors_title">Colours</string>
+    <string name="colors_summary_default">Default colours</string>
+    <!-- %1$s lists the values with custom colours, comma-separated. -->
+    <string name="colors_summary_custom">Custom: %1$s</string>
+    <string name="colors_value_soc">State of charge</string>
+    <string name="colors_value_voltage">Voltage</string>
+    <string name="colors_value_charge_current">Charge current</string>
+    <string name="colors_value_discharge_current">Discharge current</string>
+    <string name="colors_value_delta">Cell delta</string>
+    <string name="colors_unit_percent">%</string>
+    <string name="colors_unit_volts">V</string>
+    <string name="colors_unit_amps">A</string>
+    <string name="colors_unit_millivolts">mV</string>
+    <string name="colors_unit_celsius">°C</string>
+    <string name="colors_default">Default</string>
+    <string name="colors_edit">Edit</string>
+    <!-- %1$s is the value, such as Voltage. -->
+    <string name="colors_default_title">Use default colours for %1$s?</string>
+    <string name="colors_default_text">Your levels for this value are deleted.</string>
+    <string name="colors_default_confirm">Use defaults</string>
+    <string name="colors_add_level">Add level</string>
+    <string name="colors_reset">Reset</string>
+    <!-- A level's place: %1$s is its mark and numbers, such as ↓20 or ↕41–99, or a bare number; %2$s the unit. -->
+    <string name="colors_place">%1$s %2$s</string>
+    <!-- TalkBack's place of a level: %1$s is the number, such as 20; %2$s its unit, such as %. -->
+    <string name="colors_place_below">%1$s %2$s and below</string>
+    <string name="colors_place_above">%1$s %2$s and above</string>
+    <!-- %1$s and %2$s are the lowest and the highest number, such as 41 and 99; %3$s the unit. -->
+    <string name="colors_place_between">%1$s to %2$s %3$s</string>
+    <!-- %1$s is a voltage level's edge or range divided by the cell count, such as 3.2 or 3.201–3.449. -->
+    <!-- TalkBack's names for the ↓ and ↑ buttons of a level in the editor. -->
+    <string name="colors_side_below">And below</string>
+    <string name="colors_side_above">And above</string>
+    <string name="colors_edge">Limit</string>
+    <!-- The middle level's range while the other levels have an error. -->
+    <string name="colors_range_unknown">—</string>
+    <string name="colors_name">Name</string>
+    <string name="colors_remove_level">Remove level %1$d</string>
+    <!-- TalkBack's name for the colour chip of the level type's own colour. -->
+    <string name="colors_color_default">%1$s, default</string>
+    <!-- Joins the parts of a level tag, such as ↓20 % · Low. -->
+    <string name="colors_two_parts">%1$s · %2$s</string>
+    <!-- Joins the parts TalkBack reads for a level tag, such as 20 % and below, Low. -->
+    <string name="colors_list_parts">%1$s, %2$s</string>
+    <string name="level_type_critical">Critical</string>
+    <string name="level_type_warning">Warning</string>
+    <string name="level_type_normal">Normal</string>
+    <string name="level_type_info">Info</string>
+    <string name="level_color_plain">Plain</string>
+    <string name="level_color_red">Red</string>
+    <string name="level_color_orange">Orange</string>
+    <string name="level_color_amber">Amber</string>
+    <string name="level_color_green">Green</string>
+    <string name="level_color_teal">Teal</string>
+    <string name="level_color_blue">Blue</string>
+    <string name="level_color_violet">Violet</string>
+    <string name="level_color_grey">Grey</string>
+    <string name="level_icon_none">None</string>
+    <string name="level_icon_snowflake">Snowflake</string>
+    <string name="level_icon_leaf">Leaf</string>
+    <string name="level_icon_flame">Flame</string>
+    <string name="level_icon_flame_alert">Flame with alert</string>
+    <!-- The built-in level names. -->
+    <string name="level_name_low">Low</string>
+    <string name="level_name_getting_low">Getting low</string>
+    <string name="level_name_normal">Normal</string>
+    <string name="level_name_full">Full</string>
+    <string name="level_name_freezing">Freezing</string>
+    <string name="level_name_cool">Cool</string>
+    <string name="level_name_warm">Warm</string>
+    <string name="level_name_hot">Hot</string>
+    <string name="level_name_balanced">Balanced</string>
+    <string name="level_name_high">High</string>
+    <string name="level_name_very_high">Very high</string>
+    <string name="level_name_light">Light</string>
+
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
     <string name="token_summary_saved">Saved</string>
@@ -177,6 +255,9 @@
     <string name="field_interval_invalid">Enter a whole number of minutes</string>
     <string name="field_capacity_invalid">Enter a number</string>
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
+    <string name="field_level_edge_invalid">Enter a number</string>
+    <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
+    <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
 
     <!-- Sample values for the widget picker preview. -->
     <string name="preview_time_left">17h 16m</string>
@@ -185,7 +266,7 @@
     <string name="preview_kwh">4.58 kWh</string>
     <string name="preview_voltage">26.50 V</string>
     <string name="preview_current">10.0 A</string>
-    <string name="preview_cell">3.312 V</string>
+    <string name="preview_cell">avg 3.312 V</string>
     <string name="preview_delta">Δ 12 mV</string>
     <string name="preview_battery_temperature" translatable="false">25 °C</string>
     <string name="preview_mosfet_temperature" translatable="false">27 °C</string>

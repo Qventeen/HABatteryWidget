@@ -3,19 +3,25 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.Field.CAPACITY
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.INTERVAL
+import io.lumensync.habattery.domain.Field.LEVEL_EDGE
 import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
 import io.lumensync.habattery.domain.Field.PREFIX
 import io.lumensync.habattery.domain.Field.URL
 import io.lumensync.habattery.domain.Field.TEMPERATURES
 import io.lumensync.habattery.domain.Field.TOTAL_CAPACITY
+import io.lumensync.habattery.domain.Problem.DUPLICATE
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
+import io.lumensync.habattery.domain.Problem.OVERLAP
 import io.lumensync.habattery.domain.Problem.REQUIRED
 import io.lumensync.habattery.domain.Problem.TOO_MANY
 import io.lumensync.habattery.domain.Validation.isPrefixValid
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import org.junit.Assert.assertEquals
@@ -136,5 +142,108 @@ class ValidationTest {
     assertEquals(
       listOf(FieldError(MOSFET_TEMPERATURE, INVALID)),
       entities(EntitySettings(charge = "sensor.soc", mosfetTemperature = "bad id")),
+    )
+
+  private fun lv(side: LevelSide, edge: Double? = null, id: Int = 0) =
+    ColorLevel(id = id, side = side, edge = edge)
+
+  private val m = lv(LevelSide.MIDDLE)
+
+  private fun b(edge: Double?) = lv(LevelSide.BELOW, edge)
+
+  private fun a(edge: Double?) = lv(LevelSide.ABOVE, edge)
+
+  @Test
+  fun levels_defaults_areValid() {
+    for (value in LevelValue.entries) {
+      assertEquals(
+        emptyList<FieldError>(),
+        Validation.levels(value, DefaultLevels.of(value, LevelBasis(100.0, 16))),
+      )
+    }
+  }
+
+  @Test
+  fun levels_tooMany() {
+    val seven = listOf(m) + (1..6).map { a(it.toDouble()) }
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, TOO_MANY)),
+      Validation.levels(LevelValue.SOC, seven),
+    )
+  }
+
+  @Test
+  fun levels_middleCount_isInvalidWithoutIndex() {
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, INVALID)),
+      Validation.levels(LevelValue.SOC, listOf(m, m)),
+    )
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, INVALID)),
+      Validation.levels(LevelValue.SOC, listOf(b(20.0), a(50.0))),
+    )
+  }
+
+  @Test
+  fun levels_middleWithEdge_isInvalidAtIt() =
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, INVALID, 1)),
+      Validation.levels(LevelValue.SOC, listOf(b(20.0), lv(LevelSide.MIDDLE, 30.0))),
+    )
+
+  @Test
+  fun levels_sideWithoutEdge_isRequired() =
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, REQUIRED, 0)),
+      Validation.levels(LevelValue.SOC, listOf(b(null), m)),
+    )
+
+  @Test
+  fun levels_sameEdgeOnTheSameSide_isDuplicateAtTheLaterIndex() =
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, DUPLICATE, 2)),
+      Validation.levels(LevelValue.SOC, listOf(m, a(50.0), a(50.0))),
+    )
+
+  @Test
+  fun levels_noGap_isOverlapAtBoth() {
+    assertEquals(
+      setOf(FieldError(LEVEL_EDGE, OVERLAP, 0), FieldError(LEVEL_EDGE, OVERLAP, 2)),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(41.0))).toSet(),
+    )
+    assertEquals(
+      emptyList<FieldError>(),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(42.0))),
+    )
+  }
+
+  @Test
+  fun levels_duplicateBeatsOverlapAtOneIndex() =
+    assertEquals(
+      setOf(
+        FieldError(LEVEL_EDGE, OVERLAP, 0),
+        FieldError(LEVEL_EDGE, OVERLAP, 2),
+        FieldError(LEVEL_EDGE, DUPLICATE, 3),
+      ),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(41.0), a(41.0))).toSet(),
+    )
+
+  @Test
+  fun levels_overlapUsesTheValuesStep() {
+    assertEquals(
+      setOf(FieldError(LEVEL_EDGE, OVERLAP, 0), FieldError(LEVEL_EDGE, OVERLAP, 2)),
+      Validation.levels(LevelValue.VOLTAGE, listOf(b(51.2), m, a(51.21))).toSet(),
+    )
+    assertEquals(
+      emptyList<FieldError>(),
+      Validation.levels(LevelValue.VOLTAGE, listOf(b(51.2), m, a(51.22))),
+    )
+  }
+
+  @Test
+  fun levels_negativeEdges() =
+    assertEquals(
+      emptyList<FieldError>(),
+      Validation.levels(LevelValue.BATTERY_TEMPERATURE, listOf(b(-10.0), b(0.0), m, a(45.0))),
     )
 }

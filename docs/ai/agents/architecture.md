@@ -16,14 +16,14 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `FullChargeRule`, `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` (what the widget and its app preview show),
-  `WidgetLevels`, `ToggleAutoRefresh`.
+  `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value colours), `ToggleAutoRefresh`.
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
   template; `StatesSource`: User, states per entity and the sensor search;
   `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,
   `secure/` (Keystore crypto, `EncryptedTokenStore`: one slot per token type), `store/` (JSON DataStore
   records with `schemaVersion = 1`).
-- `format/`: `Formatters`, `Decimal`; one formatter for widget, screen and
-  notification.
+- `format/`: `Formatters`, `Decimal`, `LevelTagText` (the level tag text); one formatter for
+  widget, screen and notification.
 - `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`,
   `AppLanguage` (per-app language through `LocaleManager`, Android 13+ only; the system
   stores it), `ConfigWatcher` (`App` reports language and font-scale changes, and night mode
@@ -46,7 +46,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   font scale, and night mode below API 31) keys the composition.
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
-- `ui/`: Compose screen, `MainViewModel`, `PreviewTab` (size tabs, first-tab rule),
+- `ui/`: Compose screen, `MainViewModel`, `LevelDraft` (editor drafts and `middleSpan`),
+  `PreviewTab` (size tabs, first-tab rule),
   `SensorSearch` / `SensorFill` (Fill: what HA answered and the new Entities draft), `sections/`
   (`WidgetPreviewCard` hosts the preview), `theme/`.
 
@@ -84,4 +85,6 @@ when it has a second implementation or a test fake.
   (`NoHardcodedTextTest`); no logic on translated text.
 - Stored fields default only to `""`, empty list, `null` or `false`. Exception:
   display choices, font sizes, the home-screen scale and the theme default to the
-  design values (specs 0003, 0007, 0008).
+  design values (specs 0003, 0007, 0008), and a level's type defaults to `NORMAL`
+  and its side to `MIDDLE`, the level with no edge (`ColorLevel.type`, `ColorLevel.side`,
+  spec 0010).

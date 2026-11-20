@@ -6,7 +6,13 @@ import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelType
+import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.customLevels
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.DisplaySettings
@@ -518,5 +524,161 @@ class MainViewModelTest {
     vm.saveEntities(state.settings.entities.copy(prefix = "bms", temperatures = ids))
     advanceUntilIdle()
     assertEquals(ids, state.settings.entities.temperatures)
+  }
+
+  private fun draft(side: LevelSide, edge: String = "", id: Int = 0, name: String = "") =
+    LevelDraft(id, side, edge, LevelType.NORMAL, null, null, name, null)
+
+  private val mid = draft(LevelSide.MIDDLE, id = 2)
+
+  private fun edges(value: LevelValue) = state.settings.customLevels(value).levels.map { it.edge }
+
+  @Test fun saveLevels_ordersSides() = runTest(dispatcher) {
+    val vm = start()
+    val saved =
+      vm.saveLevels(
+        LevelValue.CHARGE_CURRENT,
+        listOf(
+          mid,
+          draft(LevelSide.ABOVE, "80", id = 3),
+          draft(LevelSide.BELOW, "20", id = 1),
+          draft(LevelSide.ABOVE, "50", id = 4, name = " Mid "),
+        ),
+        Locale.US,
+      )
+    advanceUntilIdle()
+    assertTrue(saved)
+    val levels = state.settings.customLevels(LevelValue.CHARGE_CURRENT)
+    assertTrue(levels.on)
+    assertEquals(listOf<Double?>(20.0, null, 50.0, 80.0), levels.levels.map { it.edge })
+    assertEquals(listOf(1, 2, 4, 3), levels.levels.map { it.id })
+    assertEquals("Mid", levels.levels[2].name)
+  }
+
+  @Test fun saveLevels_middleEdgeIsIgnored() = runTest(dispatcher) {
+    val vm = start()
+    val saved =
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(draft(LevelSide.MIDDLE, "junk", id = 1), draft(LevelSide.ABOVE, "50", id = 2)),
+        Locale.US,
+      )
+    advanceUntilIdle()
+    assertTrue(saved)
+    assertEquals(listOf<Double?>(null, 50.0), edges(LevelValue.SOC))
+  }
+
+  @Test fun saveLevels_blankEdge_isRequired() = runTest(dispatcher) {
+    val vm = start()
+    val saved =
+      vm.saveLevels(LevelValue.SOC, listOf(mid, draft(LevelSide.ABOVE, "  ", id = 1)), Locale.US)
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertEquals(listOf(FieldError(Field.LEVEL_EDGE, Problem.REQUIRED, 1)), state.errors)
+    assertTrue(state.settings.colorLevels.isEmpty())
+  }
+
+  @Test fun saveLevels_unparsableEdge_isInvalid_andReportsAllErrorsAtDraftPositions() =
+    runTest(dispatcher) {
+      val vm = start()
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(
+          mid,
+          draft(LevelSide.ABOVE, "40", id = 1),
+          draft(LevelSide.ABOVE, "x", id = 3),
+          draft(LevelSide.ABOVE, "40", id = 4),
+        ),
+        Locale.US,
+      )
+      advanceUntilIdle()
+      assertEquals(
+        setOf(
+          FieldError(Field.LEVEL_EDGE, Problem.INVALID, 2),
+          FieldError(Field.LEVEL_EDGE, Problem.DUPLICATE, 3),
+        ),
+        state.errors.toSet(),
+      )
+      assertTrue(state.settings.colorLevels.isEmpty())
+    }
+
+  @Test fun saveLevels_duplicate_returnsFalse() = runTest(dispatcher) {
+    val vm = start()
+    val before = state.settings
+    val saved =
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(mid, draft(LevelSide.ABOVE, "40", id = 1), draft(LevelSide.ABOVE, "40", id = 3)),
+        Locale.US,
+      )
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertEquals(listOf(FieldError(Field.LEVEL_EDGE, Problem.DUPLICATE, 2)), state.errors)
+    assertEquals(before, state.settings)
+  }
+
+  @Test fun saveLevels_overlap_returnsFalse() = runTest(dispatcher) {
+    val vm = start()
+    val before = state.settings
+    val saved =
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(draft(LevelSide.BELOW, "40", id = 1), mid, draft(LevelSide.ABOVE, "41", id = 3)),
+        Locale.US,
+      )
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertEquals(
+      setOf(FieldError(Field.LEVEL_EDGE, Problem.OVERLAP, 0), FieldError(Field.LEVEL_EDGE, Problem.OVERLAP, 2)),
+      state.errors.toSet(),
+    )
+    assertEquals(before, state.settings)
+  }
+
+  @Test fun saveLevels_gapOfOneNumber_saves() = runTest(dispatcher) {
+    val vm = start()
+    val saved =
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(draft(LevelSide.BELOW, "40", id = 1), mid, draft(LevelSide.ABOVE, "42", id = 3)),
+        Locale.US,
+      )
+    advanceUntilIdle()
+    assertTrue(saved)
+    assertEquals(listOf<Double?>(40.0, null, 42.0), edges(LevelValue.SOC))
+  }
+
+  @Test fun saveLevels_negativeAndUkrainian() = runTest(dispatcher) {
+    val uk = Locale.forLanguageTag("uk")
+    val vm = start()
+    vm.saveLevels(
+      LevelValue.BATTERY_TEMPERATURE,
+      listOf(draft(LevelSide.BELOW, "-10", id = 1), mid, draft(LevelSide.ABOVE, "45", id = 3)),
+      uk,
+    )
+    vm.saveLevels(
+      LevelValue.VOLTAGE,
+      listOf(draft(LevelSide.BELOW, "51,2", id = 1), mid, draft(LevelSide.ABOVE, "55,2", id = 3)),
+      uk,
+    )
+    advanceUntilIdle()
+    assertEquals(listOf<Double?>(-10.0, null, 45.0), edges(LevelValue.BATTERY_TEMPERATURE))
+    assertEquals(listOf<Double?>(51.2, null, 55.2), edges(LevelValue.VOLTAGE))
+  }
+
+  @Test fun saveLevels_roundsToShownPrecision() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.DELTA, listOf(mid, draft(LevelSide.ABOVE, "12.4", id = 1)), Locale.US)
+    advanceUntilIdle()
+    assertEquals(listOf<Double?>(null, 12.0), edges(LevelValue.DELTA))
+  }
+
+  @Test fun useDefaults_dropsOwnLevels() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(mid, draft(LevelSide.ABOVE, "30", id = 1)), Locale.US)
+    advanceUntilIdle()
+    vm.useDefaults(LevelValue.SOC)
+    advanceUntilIdle()
+    assertEquals(CustomLevels(), state.settings.customLevels(LevelValue.SOC))
   }
 }

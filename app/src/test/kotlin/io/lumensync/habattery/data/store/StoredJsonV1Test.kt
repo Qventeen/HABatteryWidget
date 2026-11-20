@@ -1,11 +1,20 @@
 package io.lumensync.habattery.data.store
 
+import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
+import io.lumensync.habattery.domain.model.LevelName
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelType
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.EntitySettings
@@ -14,9 +23,11 @@ import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.TokenType
+import io.lumensync.habattery.domain.model.customLevels
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
@@ -64,7 +75,8 @@ class StoredJsonV1Test {
           "display": { "underSoc": "AH", "mainValue": "POWER" },
           "fontPercents": { "soc": 45, "underSoc": 30, "main": 75, "cell": 60, "small": 100 },
           "homeScalePercent": 128,
-          "appearance": { "theme": "DARK" }
+          "appearance": { "theme": "DARK" },
+          "colorLevels": {}
         }
       }
       """
@@ -101,6 +113,72 @@ class StoredJsonV1Test {
           ),
       )
     assertV1(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun customLevels_v1() {
+    val json =
+      """
+      {
+        "on": true,
+        "levels": [
+          {"id": 1, "side": "MIDDLE", "edge": null, "type": "INFO", "color": null, "icon": null, "name": "", "defaultName": "BALANCED"},
+          {"id": 2, "side": "ABOVE", "edge": 12.0, "type": "WARNING", "color": "ORANGE", "icon": "FLAME", "name": "Drift", "defaultName": null}
+        ]
+      }
+      """
+    val expected =
+      CustomLevels(
+        true,
+        listOf(
+          ColorLevel(1, LevelSide.MIDDLE, null, LevelType.INFO, defaultName = LevelName.BALANCED),
+          ColorLevel(2, LevelSide.ABOVE, 12.0, LevelType.WARNING, LevelColor.ORANGE, LevelIcon.FLAME, "Drift"),
+        ),
+      )
+    assertV1(json, expected, CustomLevels.serializer())
+  }
+
+  @Test
+  fun oldSettings_withoutColorLevels_loadEmpty() {
+    val record =
+      StoreJson.decodeFromString(SettingsRecord.serializer(), """{"schemaVersion":1,"settings":{}}""")
+    assertEquals(emptyMap<String, CustomLevels>(), record.settings.colorLevels)
+  }
+
+  @Test
+  fun unknownColorLevelsKey_isKeptOutOfTheWay() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"colorLevels":{"INVERTER_VOLTAGE":{"on":true,"levels":[]},"DELTA":{"on":true,"levels":[]}}}}""",
+      )
+    assertEquals(true, record.settings.customLevels(LevelValue.DELTA).on)
+    assertEquals(CustomLevels(), record.settings.customLevels(LevelValue.SOC))
+  }
+
+  /** A later build may store enum values this one lacks (spec 0012): they read as defaults, the file survives. */
+  @Test
+  fun unknownEnumValuesInColorLevels_loadAsDefaults_andKeepTheRestOfTheSettings() {
+    val json =
+      """{"schemaVersion":1,"settings":{"connection":{"url":"http://ha.local:8123"},"colorLevels":{""" +
+        """"GRID_VOLTAGE":{"on":true,"levels":[{"defaultName":"NO_GRID"}]},""" +
+        """"DELTA":{"on":true,"levels":[{"id":3,"side":"ABOVE","edge":5.0,"icon":"BOLT","color":"PINK","type":"FATAL","name":"X"}]}}}}"""
+    val record = StoreJson.decodeFromString(SettingsRecord.serializer(), json)
+    assertEquals("http://ha.local:8123", record.settings.connection.url)
+    assertEquals(
+      listOf(ColorLevel(3, LevelSide.ABOVE, 5.0, LevelType.NORMAL, null, null, "X")),
+      record.settings.customLevels(LevelValue.DELTA).levels,
+    )
+  }
+
+  /** A list stored by a round-2 build has the key `from`; every level decodes as a middle level. */
+  @Test
+  fun roundTwoLevels_decode_andAreNotOwnLevels() {
+    val json =
+      """{"on":true,"levels":[{"id":1,"type":"CRITICAL"},{"id":2,"from":20.0,"type":"WARNING"}]}"""
+    val custom = StoreJson.decodeFromString(CustomLevels.serializer(), json)
+    assertEquals(2, custom.levels.size)
+    assertNull(LevelPicker.ownLevels(LevelValue.SOC, custom))
   }
 
   @Test

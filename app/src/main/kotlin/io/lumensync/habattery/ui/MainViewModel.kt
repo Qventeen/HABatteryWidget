@@ -5,20 +5,27 @@ import androidx.lifecycle.viewModelScope
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.roundTo
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.TokenType
+import io.lumensync.habattery.domain.model.withCustomLevels
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
@@ -40,7 +47,7 @@ import kotlinx.coroutines.launch
 class MainViewModel(
   private val settings: SettingsRepository,
   private val tokens: TokenStore,
-  cache: ReadingCache,
+  private val cache: ReadingCache,
   private val sync: SyncBattery,
   private val scheduler: SyncScheduler,
   private val widgets: WidgetRefresher,
@@ -228,6 +235,47 @@ class MainViewModel(
       return fail(FieldError(Field.CAPACITY, Problem.INVALID))
     }
     save(Validation.capacity(ah), syncAfter = false) { it.copy(capacityAh = ah) }
+  }
+
+  /**
+   * Saves [drafts] as the owner's levels of [value]. Edges are typed in [locale] and rounded to
+   * the precision the widget shows; the middle draft has no edge. Any error is reported at the
+   * draft's position in [drafts] and nothing is stored. The stored list is in shown order.
+   *
+   * @return `false` when an error was found, `true` when the save was started.
+   */
+  fun saveLevels(value: LevelValue, drafts: List<LevelDraft>, locale: Locale): Boolean {
+    val errors = mutableListOf<FieldError>()
+    val unparsed = mutableSetOf<Int>()
+    val built =
+      drafts.mapIndexed { i, d ->
+        var edge: Double? = null
+        if (d.side != LevelSide.MIDDLE) {
+          val text = d.edgeText.trim()
+          edge = if (text.isEmpty()) null else parseDecimal(text, locale)?.roundTo(value.decimals)
+          if (edge == null) {
+            unparsed += i
+            val problem = if (text.isEmpty()) Problem.REQUIRED else Problem.INVALID
+            errors += FieldError(Field.LEVEL_EDGE, problem, i)
+          }
+        }
+        ColorLevel(d.id, d.side, edge, d.type, d.color, d.icon, d.name.trim(), d.defaultName)
+      }
+    // A missing edge is already reported above, with the more precise problem.
+    errors += Validation.levels(value, built).filterNot { it.index in unparsed }
+    if (errors.isNotEmpty()) {
+      fail(*errors.toTypedArray())
+      return false
+    }
+    save(emptyList(), syncAfter = false) {
+      it.withCustomLevels(value, CustomLevels(on = true, LevelPicker.ordered(built)))
+    }
+    return true
+  }
+
+  /** Drops the owner's levels of [value]; the built-in ones apply again. */
+  fun useDefaults(value: LevelValue) {
+    save(emptyList(), syncAfter = false) { it.withCustomLevels(value, CustomLevels()) }
   }
 
   private fun fail(vararg errors: FieldError) {
