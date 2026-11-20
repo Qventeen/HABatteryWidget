@@ -290,7 +290,9 @@ private fun SideChoice(side: LevelSide, onSelect: (LevelSide) -> Unit) {
         selected = option == side,
         onClick = { onSelect(option) },
         shape = SegmentedButtonDefaults.itemShape(i, options.size),
-        modifier = Modifier.semantics { contentDescription = description },
+        // Material sets a 58 dp minimum width after this modifier; 48 dp, still the touch minimum,
+        // keeps the pair narrow enough for the type menu beside it.
+        modifier = Modifier.width(48.dp).semantics { contentDescription = description },
         // No check mark: the selected button is already filled.
         icon = {},
         label = { Text(option.mark()) },
