@@ -53,8 +53,8 @@ fun typeLabel(type: LevelType): Int =
   }
 
 /**
- * The level's own name, else its default name; `null` when it has neither. The Colours tag, the
- * editor and the notification title all read the name here.
+ * The level's own name, else its default name; `null` when it has neither. The tag in Levels and
+ * alerts, the editor and the notification title all read the name here.
  */
 fun ColorLevel.nameOrNull(resources: Resources): String? =
   name.ifBlank { defaultName?.let { resources.getString(levelNameRes(it)) }.orEmpty() }

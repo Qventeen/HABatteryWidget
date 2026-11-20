@@ -122,7 +122,7 @@
 
     <string name="notify_title">Notifications</string>
     <string name="notifications_switch">Notifications</string>
-    <string name="notifications_hint">Choose the levels with the bells in Colours.</string>
+    <string name="notifications_hint">Choose the levels with the bells in Levels and alerts.</string>
     <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual refresh.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
@@ -164,10 +164,10 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
-    <!-- Colours section (value levels). -->
-    <string name="colors_title">Colours</string>
-    <string name="colors_summary_default">Default colours</string>
-    <!-- %1$s lists the values with custom colours, comma-separated. -->
+    <!-- Levels and alerts section (value levels). -->
+    <string name="colors_title">Levels and alerts</string>
+    <string name="colors_summary_default">Default levels</string>
+    <!-- %1$s lists the values with custom levels, comma-separated. -->
     <string name="colors_summary_custom">Custom: %1$s</string>
     <string name="colors_value_soc">State of charge</string>
     <string name="colors_value_voltage">Voltage</string>
@@ -182,7 +182,7 @@
     <string name="colors_default">Default</string>
     <string name="colors_edit">Edit</string>
     <!-- %1$s is the value, such as Voltage. -->
-    <string name="colors_default_title">Use default colours for %1$s?</string>
+    <string name="colors_default_title">Use default levels for %1$s?</string>
     <string name="colors_default_text">Your levels for this value are deleted.</string>
     <string name="colors_default_confirm">Use defaults</string>
     <string name="colors_add_level">Add level</string>

@@ -115,7 +115,7 @@
 
     <string name="notify_title">Сповіщення</string>
     <string name="notifications_switch">Сповіщення</string>
-    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Кольори».</string>
+    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення».</string>
     <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення надходять лише після ручного оновлення.</string>
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
@@ -155,8 +155,8 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
 
-    <string name="colors_title">Кольори</string>
-    <string name="colors_summary_default">Типові кольори</string>
+    <string name="colors_title">Рівні та сповіщення</string>
+    <string name="colors_summary_default">Типові рівні</string>
     <string name="colors_summary_custom">Власні: %1$s</string>
     <string name="colors_value_soc">Рівень заряду</string>
     <string name="colors_value_voltage">Напруга</string>
@@ -170,7 +170,7 @@
     <string name="colors_unit_celsius">°C</string>
     <string name="colors_default">Типові</string>
     <string name="colors_edit">Змінити</string>
-    <string name="colors_default_title">Типові кольори для «%1$s»?</string>
+    <string name="colors_default_title">Типові рівні для «%1$s»?</string>
     <string name="colors_default_text">Ваші рівні для цього значення буде видалено.</string>
     <string name="colors_default_confirm">Повернути типові</string>
     <string name="colors_add_level">Додати рівень</string>
