@@ -142,7 +142,8 @@ class LevelDraftTest {
   @Test
   fun defaultMarginText_followsTheValue() {
     assertEquals("2", defaultMarginText(LevelValue.SOC, noBasis, Locale.US))
-    assertEquals("0,1", defaultMarginText(LevelValue.VOLTAGE, noBasis, uk))
+    assertEquals("0,4", defaultMarginText(LevelValue.VOLTAGE, noBasis, uk))
+    assertEquals("0,2", defaultMarginText(LevelValue.VOLTAGE, LevelBasis(null, 8), uk))
     assertEquals("5,3", defaultMarginText(LevelValue.CHARGE_CURRENT, LevelBasis(105.0, null), uk))
     assertEquals("1", defaultMarginText(LevelValue.DISCHARGE_CURRENT, noBasis, Locale.US))
   }

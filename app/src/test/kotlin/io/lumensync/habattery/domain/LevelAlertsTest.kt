@@ -159,25 +159,36 @@ class LevelAlertsTest {
 
   @Test
   fun margin_values() {
-    assertEquals(2.0, LevelAlerts.margin(LevelValue.SOC, null), 0.0)
-    assertEquals(0.1, LevelAlerts.margin(LevelValue.VOLTAGE, null), 0.0)
-    assertEquals(5.0, LevelAlerts.margin(LevelValue.CHARGE_CURRENT, 100.0), 0.0)
-    assertEquals(1.0, LevelAlerts.margin(LevelValue.DISCHARGE_CURRENT, null), 0.0)
-    assertEquals(3.0, LevelAlerts.margin(LevelValue.DELTA, null), 0.0)
-    assertEquals(2.0, LevelAlerts.margin(LevelValue.BATTERY_TEMPERATURE, null), 0.0)
-    assertEquals(2.0, LevelAlerts.margin(LevelValue.MOSFET_TEMPERATURE, null), 0.0)
+    assertEquals(2.0, LevelAlerts.margin(LevelValue.SOC, noBasis), 0.0)
+    assertEquals(5.0, LevelAlerts.margin(LevelValue.CHARGE_CURRENT, LevelBasis(100.0, null)), 0.0)
+    assertEquals(1.0, LevelAlerts.margin(LevelValue.DISCHARGE_CURRENT, noBasis), 0.0)
+    assertEquals(3.0, LevelAlerts.margin(LevelValue.DELTA, noBasis), 0.0)
+    assertEquals(2.0, LevelAlerts.margin(LevelValue.BATTERY_TEMPERATURE, noBasis), 0.0)
+    assertEquals(2.0, LevelAlerts.margin(LevelValue.MOSFET_TEMPERATURE, noBasis), 0.0)
+  }
+
+  @Test
+  fun margin_voltage_scalesWithTheCells() {
+    fun voltage(cells: Int?) = LevelAlerts.margin(LevelValue.VOLTAGE, LevelBasis(null, cells))
+    assertEquals(0.4, voltage(16), 0.0)
+    assertEquals(0.38, voltage(15), 0.0) // 0.375
+    assertEquals(0.2, voltage(8), 0.0)
+    assertEquals(0.1, voltage(4), 0.0)
+    assertEquals(0.4, voltage(null), 0.0)
   }
 
   @Test
   fun margin_current_roundsHalfUpToTheShownDecimals() {
-    assertEquals(5.3, LevelAlerts.margin(LevelValue.CHARGE_CURRENT, 105.0), 0.0) // 5.25
-    assertEquals(15.7, LevelAlerts.margin(LevelValue.DISCHARGE_CURRENT, 314.0), 0.0)
+    val charge = LevelAlerts.margin(LevelValue.CHARGE_CURRENT, LevelBasis(105.0, null))
+    val discharge = LevelAlerts.margin(LevelValue.DISCHARGE_CURRENT, LevelBasis(314.0, null))
+    assertEquals(5.3, charge, 0.0) // 5.25
+    assertEquals(15.7, discharge, 0.0)
   }
 
   @Test
   fun margin_custom() {
     val own = DefaultLevels.copyForCustom(LevelValue.SOC, noBasis)
-    fun margin(custom: CustomLevels) = LevelAlerts.margin(LevelValue.SOC, null, custom)
+    fun margin(custom: CustomLevels) = LevelAlerts.margin(LevelValue.SOC, noBasis, custom)
     assertEquals(5.0, margin(CustomLevels(on = true, levels = own, margin = 5.0)), 0.0)
     assertEquals(2.0, margin(CustomLevels(on = false, levels = own, margin = 5.0)), 0.0)
     assertEquals(2.0, margin(CustomLevels(on = true, levels = own, margin = null)), 0.0)
@@ -240,8 +251,8 @@ class LevelAlertsTest {
 
   @Test
   fun rearm_voltage_comparesWholeSteps() {
-    // 16 cells: Getting low ↓51.2 V and High ↑56.8 V. In doubles 51.2 + 0.1 is 51.300000000000004
-    // and 56.8 − 0.1 is 56.699999999999996, so a raw comparison would miss both.
+    // 16 cells: Getting low ↓51.2 V, High ↑56.8 V and a margin of 0.4 V. The edge plus or minus the
+    // margin must re-arm exactly, with no double rounding error in the way.
     val voltage = DefaultLevels.of(LevelValue.VOLTAGE, LevelBasis(null, 16))
     fun id(name: LevelName) = voltage.single { it.defaultName == name }.id
     fun disarmedAt(total: Double, current: LevelName, disarmed: LevelName) =
@@ -252,8 +263,8 @@ class LevelAlertsTest {
         .state
         .getValue("VOLTAGE")
         .disarmed
-    assertEquals(emptyList<Int>(), disarmedAt(51.3, LevelName.NORMAL, LevelName.GETTING_LOW))
-    assertEquals(emptyList<Int>(), disarmedAt(56.7, LevelName.FULL, LevelName.HIGH))
+    assertEquals(emptyList<Int>(), disarmedAt(51.6, LevelName.NORMAL, LevelName.GETTING_LOW))
+    assertEquals(emptyList<Int>(), disarmedAt(56.4, LevelName.FULL, LevelName.HIGH))
   }
 
   @Test

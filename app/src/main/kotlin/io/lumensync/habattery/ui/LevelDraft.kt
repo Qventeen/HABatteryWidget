@@ -93,7 +93,7 @@ fun editorMargin(value: LevelValue, custom: CustomLevels, locale: Locale): Strin
 
 /** The default margin of [value] as a number in [locale], such as "2" or "5,3". */
 fun defaultMarginText(value: LevelValue, basis: LevelBasis, locale: Locale): String =
-  value.formatEdge(LevelAlerts.margin(value, basis.capacityAh), locale)
+  value.formatEdge(LevelAlerts.margin(value, basis), locale)
 
 /**
  * What the middle level covers, from the rows whose limits are numbers, so a new empty row changes

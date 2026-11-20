@@ -33,6 +33,7 @@ data class AlertOutcome(val alerts: List<LevelAlert>, val state: Map<String, Lev
  */
 object LevelAlerts {
   private val C_RATE_MARGIN = BigDecimal("0.05")
+  private val VOLTAGE_MARGIN_PER_CELL = BigDecimal("0.025")
 
   /**
    * Checks every value of [reading] against its levels and [state]. A value without a number keeps
@@ -54,7 +55,7 @@ object LevelAlerts {
       val own = LevelPicker.ownLevels(value, custom)
       val levels = LevelPicker.effective(value, own, basis)
       val shown = ShownNumber.of(value, reading, levels) ?: continue
-      val margin = margin(value, basis.capacityAh, own, custom.margin)
+      val margin = margin(value, basis, own, custom.margin)
       val old = state[value.name] ?: LevelAlertState()
       // The ids of levels the owner has deleted drop out with the re-armed ones.
       val disarmed =
@@ -77,31 +78,37 @@ object LevelAlerts {
 
   /**
    * How far past a level's bounds [value] must move before the level can alert again: the owner's
-   * margin in [custom] when [custom] holds valid own levels, else the default. The default current
-   * margin is 0.05 C of [capacityAh], rounded half up to the shown decimals; 1 A without a
-   * capacity.
+   * margin in [custom] when [custom] holds valid own levels, else the default. The defaults come
+   * from [basis]: the current margin is 0.05 C of the capacity and the voltage margin 0.025 V per
+   * cell, both rounded half up to the shown decimals; 1 A without a capacity and 0.4 V without a
+   * cell count.
    */
   fun margin(
     value: LevelValue,
-    capacityAh: Double?,
+    basis: LevelBasis,
     custom: CustomLevels = CustomLevels(),
-  ): Double = margin(value, capacityAh, LevelPicker.ownLevels(value, custom), custom.margin)
+  ): Double = margin(value, basis, LevelPicker.ownLevels(value, custom), custom.margin)
 
   /** [margin] for a caller that already has the result of `LevelPicker.ownLevels` as [own]. */
   private fun margin(
     value: LevelValue,
-    capacityAh: Double?,
+    basis: LevelBasis,
     own: List<ColorLevel>?,
     ownMargin: Double?,
-  ): Double = ownMargin?.takeIf { own != null } ?: defaultMargin(value, capacityAh)
+  ): Double = ownMargin?.takeIf { own != null } ?: defaultMargin(value, basis)
 
-  private fun defaultMargin(value: LevelValue, capacityAh: Double?): Double =
+  private fun defaultMargin(value: LevelValue, basis: LevelBasis): Double =
     when (value) {
       LevelValue.SOC -> 2.0
-      LevelValue.VOLTAGE -> 0.1
+      LevelValue.VOLTAGE ->
+        basis.cells?.let {
+          VOLTAGE_MARGIN_PER_CELL.multiply(BigDecimal(it))
+            .setScale(value.decimals, RoundingMode.HALF_UP)
+            .toDouble()
+        } ?: 0.4
       LevelValue.CHARGE_CURRENT,
       LevelValue.DISCHARGE_CURRENT ->
-        capacityAh
+        basis.capacityAh
           ?.takeIf { it > 0.0 }
           ?.let {
             BigDecimal(it.toString())
