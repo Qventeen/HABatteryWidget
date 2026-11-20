@@ -3,6 +3,7 @@ package io.lumensync.habattery.ui
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.LevelBasis
+import io.lumensync.habattery.domain.LevelSpan
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
@@ -119,4 +120,61 @@ class LevelDraftTest {
     val drafts = defaultDrafts(LevelValue.VOLTAGE, LevelBasis(null, 16), Locale.US)
     assertEquals(listOf("48", "51.2", "", "55.2", "56.8", "58.4"), drafts.map { it.edgeText })
   }
+
+  private val below = LevelSide.BELOW
+  private val middle = LevelSide.MIDDLE
+
+  @Test
+  fun middleSpan_gapOfOneNumber_isBetweenTheSame() =
+    assertEquals(
+      LevelSpan.Between(41.0, 41.0),
+      middleSpan(
+        LevelValue.SOC,
+        listOf(draft(1, "40", below), draft(2, "", middle), draft(3, "42")),
+        Locale.US,
+      ),
+    )
+
+  @Test
+  fun middleSpan_emptyLimit_isLeftOut() =
+    assertEquals(
+      LevelSpan.AtOrAbove(21.0),
+      middleSpan(
+        LevelValue.SOC,
+        listOf(draft(1, "20", below), draft(2, "", middle), draft(3, "")),
+        Locale.US,
+      ),
+    )
+
+  @Test
+  fun middleSpan_breakingRule_isNull() =
+    assertNull(
+      middleSpan(
+        LevelValue.SOC,
+        listOf(draft(1, "40", below), draft(2, "", middle), draft(3, "41")),
+        Locale.US,
+      )
+    )
+
+  @Test
+  fun middleSpan_notANumber_isLeftOut() =
+    assertEquals(
+      LevelSpan.AtOrBelow(99.0),
+      middleSpan(
+        LevelValue.SOC,
+        listOf(draft(1, "4a", below), draft(2, "", middle), draft(3, "100")),
+        Locale.US,
+      ),
+    )
+
+  @Test
+  fun middleSpan_onlyTheMiddle_isAnythingWithoutAFloor() =
+    assertEquals(
+      LevelSpan.Anything,
+      middleSpan(
+        LevelValue.BATTERY_TEMPERATURE,
+        listOf(draft(1, "", middle)),
+        Locale.US,
+      ),
+    )
 }

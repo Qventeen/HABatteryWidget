@@ -3,6 +3,8 @@ package io.lumensync.habattery.ui
 import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.LevelPicker
+import io.lumensync.habattery.domain.LevelSpan
+import io.lumensync.habattery.domain.LevelSpans
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.LevelColor
@@ -11,6 +13,7 @@ import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.roundTo
 import io.lumensync.habattery.format.formatEdge
 import io.lumensync.habattery.format.parseDecimal
@@ -74,3 +77,23 @@ fun editorDrafts(
 ): List<LevelDraft> =
   LevelPicker.ownLevels(value, custom)?.map { it.toDraft(value, locale) }
     ?: defaultDrafts(value, basis, locale)
+
+/**
+ * What the middle level covers, from the rows whose limits are numbers, so a new empty row changes
+ * nothing. `null` while those rows break a rule. The middle row is always kept.
+ */
+fun middleSpan(value: LevelValue, drafts: List<LevelDraft>, locale: Locale): LevelSpan? {
+  val levels =
+    drafts.mapNotNull { draft ->
+      if (draft.side == LevelSide.MIDDLE) {
+        ColorLevel(id = draft.id, side = draft.side)
+      } else {
+        draft.edgeOrNull(value, locale)?.let {
+          ColorLevel(id = draft.id, side = draft.side, edge = it)
+        }
+      }
+    }
+  if (Validation.levels(value, levels).isNotEmpty()) return null
+  val middle = levels.single { it.side == LevelSide.MIDDLE }
+  return LevelSpans.of(levels, middle, value.decimals, value.floor)
+}
