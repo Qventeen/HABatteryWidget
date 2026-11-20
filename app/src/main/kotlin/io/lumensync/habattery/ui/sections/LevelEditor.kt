@@ -255,11 +255,7 @@ private fun LevelRow(
       SideChoice(draft.side) { side -> onUpdate { it.copy(side = side) } }
       Spacer(Modifier.width(8.dp))
     }
-    // Not filling: a narrow line cuts the type text and keeps the remove button.
-    TypeMenu(draft.type, Modifier.weight(1f, fill = false)) { type ->
-      onUpdate { it.copy(type = type) }
-    }
-    Spacer(Modifier.weight(1f))
+    TypeMenu(draft.type, Modifier.weight(1f)) { type -> onUpdate { it.copy(type = type) } }
     if (edged) {
       IconButton(onClick = onRemove) {
         Icon(
@@ -333,6 +329,10 @@ private fun LevelTextField(
   )
 }
 
+/**
+ * The type button. The [modifier] gives the menu its width: the button keeps its natural width at
+ * the start and cuts its text only when that width is smaller.
+ */
 @Composable
 private fun TypeMenu(type: LevelType, modifier: Modifier = Modifier, onSelect: (LevelType) -> Unit) {
   var expanded by remember { mutableStateOf(false) }
