@@ -123,7 +123,7 @@
     <string name="notify_title">Notifications</string>
     <string name="notifications_switch">Notifications</string>
     <string name="notifications_hint">Choose the levels with the bells in Colours.</string>
-    <string name="notifications_no_auto_refresh">Auto refresh is off, so no notifications can come.</string>
+    <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual refresh.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
 
