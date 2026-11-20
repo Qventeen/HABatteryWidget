@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.BatteryMath
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.AppearanceSettings
@@ -29,6 +28,7 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LanguageChoice
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged
@@ -128,9 +128,7 @@ private fun MainContent(
     val reading = overview.reading
     ColorsSection(
       settings.colorLevels,
-      capacityAh =
-        reading?.let { BatteryMath.fullCapacityAh(it, settings.capacityAh) } ?: settings.capacityAh,
-      cellCount = reading?.let(BatteryMath::cellCount),
+      LevelBasis.of(reading, settings),
       state.errors,
       actions.saveLevels,
       actions.useDefaults,

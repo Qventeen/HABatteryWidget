@@ -55,6 +55,7 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelType
@@ -94,7 +95,7 @@ internal fun LevelEditor(
   value: LevelValue,
   stored: CustomLevels,
   shown: List<ColorLevel>,
-  capacityAh: Double?,
+  basis: LevelBasis,
   ranges: RangeText,
   palette: WidgetPalette,
   errors: List<FieldError>,
@@ -102,10 +103,10 @@ internal fun LevelEditor(
   onClose: () -> Unit,
 ) {
   val locale = LocalConfiguration.current.locales[0]
-  // Plain remember: losing an unsaved draft on rotation is accepted. Not keyed by the capacity: a
+  // Plain remember: losing an unsaved draft on rotation is accepted. Not keyed by the basis: a
   // sync may bring a new one while the owner types.
   var drafts by
-    remember(value, stored) { mutableStateOf(editorDrafts(value, stored, capacityAh, locale)) }
+    remember(value, stored) { mutableStateOf(editorDrafts(value, stored, basis, locale)) }
   // The text fields keep their own text, and the built-in levels reuse ids, so a reset must build
   // new rows.
   var resets by remember { mutableIntStateOf(0) }
@@ -151,7 +152,7 @@ internal fun LevelEditor(
     }
     OutlinedButton(
       onClick = {
-        drafts = defaultDrafts(value, capacityAh, locale)
+        drafts = defaultDrafts(value, basis, locale)
         resets++
         ownErrors = false
       }

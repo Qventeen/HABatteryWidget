@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -10,19 +11,20 @@ import kotlin.math.floor
 
 /** The built-in levels of each value. Ids run 1..n in list order and names stay empty. */
 object DefaultLevels {
-  fun of(value: LevelValue, capacityAh: Double?): List<ColorLevel> =
-    build(value, capacityAh) { round1(it) }
+  fun of(value: LevelValue, basis: LevelBasis): List<ColorLevel> =
+    build(value, basis) { round1(it) }
 
   /** [of] with current edges in whole amps, as a start for the owner's own list. */
-  fun copyForCustom(value: LevelValue, capacityAh: Double?): List<ColorLevel> =
-    build(value, capacityAh) { roundHalfUp(it, 0) }
+  fun copyForCustom(value: LevelValue, basis: LevelBasis): List<ColorLevel> =
+    build(value, basis) { roundHalfUp(it, 0) }
 
   private fun build(
     value: LevelValue,
-    capacityAh: Double?,
+    basis: LevelBasis,
     roundEdge: (Double) -> Double,
   ): List<ColorLevel> {
-    val capacity = capacityAh?.takeIf { it > 0.0 }
+    val capacity = basis.capacityAh?.takeIf { it > 0.0 }
+    val cells = basis.cells?.takeIf { it >= 1 }
     val rows: List<Row> =
       when (value) {
         LevelValue.SOC ->
@@ -32,7 +34,20 @@ object DefaultLevels {
             Row(40.0, LevelType.NORMAL, LevelName.NORMAL),
             Row(100.0, LevelType.INFO, LevelName.FULL),
           )
-        LevelValue.VOLTAGE -> listOf(Row(null, LevelType.NORMAL, LevelName.NORMAL, LevelColor.PLAIN))
+        LevelValue.VOLTAGE ->
+          if (cells != null) {
+            // LiFePO4 volts per cell, scaled to the pack.
+            listOf(
+              Row(null, LevelType.CRITICAL, LevelName.LOW),
+              Row(packEdge(3.00, cells), LevelType.WARNING, LevelName.GETTING_LOW),
+              Row(packEdge(3.20, cells), LevelType.NORMAL, LevelName.NORMAL),
+              Row(packEdge(3.45, cells), LevelType.INFO, LevelName.FULL),
+              Row(packEdge(3.55, cells), LevelType.WARNING, LevelName.HIGH),
+              Row(packEdge(3.65, cells), LevelType.CRITICAL, LevelName.VERY_HIGH),
+            )
+          } else {
+            listOf(Row(null, LevelType.NORMAL, LevelName.NORMAL, LevelColor.PLAIN))
+          }
         LevelValue.CHARGE_CURRENT,
         LevelValue.DISCHARGE_CURRENT ->
           if (capacity != null) {
@@ -87,6 +102,9 @@ object DefaultLevels {
     val color: LevelColor? = null,
     val icon: LevelIcon? = null,
   )
+
+  /** 3.45 × 15 is 51.75000000000001, so the product is rounded to the 2 decimals of a voltage edge. */
+  private fun packEdge(perCell: Double, cells: Int): Double = roundHalfUp(perCell * cells, 2)
 
   private fun round1(x: Double): Double = roundHalfUp(x, 1)
 

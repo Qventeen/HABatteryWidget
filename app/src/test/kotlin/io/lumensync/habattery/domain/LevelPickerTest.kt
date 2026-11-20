@@ -2,6 +2,7 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
@@ -21,21 +22,21 @@ class LevelPickerTest {
   @Test
   fun `effective custom on uses own list`() {
     val result =
-      LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(true, own)), null)
+      LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(true, own)), LevelBasis(null, null))
     assertEquals(own, result)
   }
 
   @Test
   fun `effective custom on but empty uses defaults`() {
-    val result = LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(true)), null)
-    assertEquals(DefaultLevels.of(LevelValue.SOC, null), result)
+    val result = LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(true)), LevelBasis(null, null))
+    assertEquals(DefaultLevels.of(LevelValue.SOC, LevelBasis(null, null)), result)
   }
 
   @Test
   fun `effective custom off uses defaults`() {
     val result =
-      LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(false, own)), null)
-    assertEquals(DefaultLevels.of(LevelValue.SOC, null), result)
+      LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(false, own)), LevelBasis(null, null))
+    assertEquals(DefaultLevels.of(LevelValue.SOC, LevelBasis(null, null)), result)
   }
 
   @Test

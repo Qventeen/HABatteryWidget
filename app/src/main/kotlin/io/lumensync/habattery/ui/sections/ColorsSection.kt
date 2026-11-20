@@ -39,6 +39,7 @@ import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -55,14 +56,12 @@ import kotlin.math.roundToInt
 
 /**
  * The colour levels of every value as tags, with Default and Edit; one editor is open at a time.
- * [capacityAh] gives the built-in current edges; with [cellCount] each voltage edge also shows per
- * cell. [onSaveLevels] returns `false` when a field has an error, and the editor stays open.
+ * [basis] gives the built-in edges; with its cells each voltage edge also shows per cell. [onSaveLevels] returns `false` when a field has an error, and the editor stays open.
  */
 @Composable
 fun ColorsSection(
   colorLevels: Map<String, CustomLevels>,
-  capacityAh: Double?,
-  cellCount: Int?,
+  basis: LevelBasis,
   errors: List<FieldError>,
   onSaveLevels: (LevelValue, List<LevelDraft>, Locale) -> Boolean,
   onUseDefaults: (LevelValue) -> Unit,
@@ -89,15 +88,15 @@ fun ColorsSection(
       // take over the closed editor's draft and errors.
       key(value) {
         val stored = settings.customLevels(value)
-        val levels = LevelPicker.effective(value, settings, capacityAh)
-        val ranges = RangeText(value, cellCount, formatters)
+        val levels = LevelPicker.effective(value, settings, basis)
+        val ranges = RangeText(value, basis.cells, formatters)
         if (editing == value) {
           ValueRow(value)
           LevelEditor(
             value = value,
             stored = stored,
             shown = levels,
-            capacityAh = capacityAh,
+            basis = basis,
             ranges = ranges,
             palette = palette,
             errors = errors,

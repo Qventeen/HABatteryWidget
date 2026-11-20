@@ -216,7 +216,24 @@ class WidgetModelTest {
     assertEquals(LevelLook(LevelColor.GREEN), voltage(52.0))
     assertEquals(plain, voltage(51.99))
     assertEquals(LevelLook(LevelColor.GREEN), voltage(51.995)) // shown as 52.00 V
-    assertEquals(plain, voltage(52.0, settings()))
+    // Custom levels off: the LiFePO4 defaults of the reading's 16 cells (52.0 V is Normal).
+    assertEquals(LevelLook(LevelColor.GREEN), voltage(52.0, settings()))
+  }
+
+  @Test
+  fun voltage_defaults_16cells() {
+    fun looks(total: Double, average: Double?): Pair<LevelLook, LevelLook> =
+      data(sample.copy(totalVoltageV = total, averageCellVoltageV = average)).let {
+        it.voltageLook to it.averageCellLook
+      }
+    val green = LevelLook(LevelColor.GREEN)
+    assertEquals(green to green, looks(52.8, 3.300))
+    val blue = LevelLook(LevelColor.BLUE)
+    assertEquals(blue to blue, looks(55.5, 3.469))
+    val red = LevelLook(LevelColor.RED)
+    assertEquals(red to red, looks(47.9, 2.994))
+    // No average cell, no cell count: one plain level.
+    assertEquals(plain to plain, looks(52.8, null))
   }
 
   @Test

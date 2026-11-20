@@ -2,6 +2,7 @@ package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import java.util.Locale
@@ -69,7 +70,7 @@ class LevelDraftTest {
   @Test
   fun editorDrafts_ownLevels() {
     val custom = CustomLevels(true, listOf(level(1, null), level(7, 30.0)))
-    val drafts = editorDrafts(LevelValue.SOC, custom, null, Locale.US)
+    val drafts = editorDrafts(LevelValue.SOC, custom, LevelBasis(null, null), Locale.US)
     assertEquals(listOf(1, 7), drafts.ids())
     assertEquals(listOf("", "30"), drafts.map { it.edgeText })
   }
@@ -77,20 +78,26 @@ class LevelDraftTest {
   @Test
   fun editorDrafts_leftoverListWhenOff_usesDefaults() {
     val custom = CustomLevels(false, listOf(level(9, null)))
-    val drafts = editorDrafts(LevelValue.SOC, custom, null, Locale.US)
-    assertEquals(defaultDrafts(LevelValue.SOC, null, Locale.US), drafts)
+    val drafts = editorDrafts(LevelValue.SOC, custom, LevelBasis(null, null), Locale.US)
+    assertEquals(defaultDrafts(LevelValue.SOC, LevelBasis(null, null), Locale.US), drafts)
     assertEquals(listOf("", "20", "40", "100"), drafts.map { it.edgeText })
   }
 
   @Test
   fun editorDrafts_onButEmpty_usesDefaults() {
-    val drafts = editorDrafts(LevelValue.SOC, CustomLevels(true, emptyList()), null, Locale.US)
-    assertEquals(defaultDrafts(LevelValue.SOC, null, Locale.US), drafts)
+    val drafts = editorDrafts(LevelValue.SOC, CustomLevels(true, emptyList()), LevelBasis(null, null), Locale.US)
+    assertEquals(defaultDrafts(LevelValue.SOC, LevelBasis(null, null), Locale.US), drafts)
   }
 
   @Test
   fun defaultDrafts_current100Ah() {
-    val drafts = defaultDrafts(LevelValue.CHARGE_CURRENT, 100.0, Locale.US)
+    val drafts = defaultDrafts(LevelValue.CHARGE_CURRENT, LevelBasis(100.0, null), Locale.US)
     assertEquals(listOf("", "20", "50", "80"), drafts.map { it.edgeText })
+  }
+
+  @Test
+  fun defaultDrafts_voltage16cells() {
+    val drafts = defaultDrafts(LevelValue.VOLTAGE, LevelBasis(null, 16), Locale.US)
+    assertEquals(listOf("", "48", "51.2", "55.2", "56.8", "58.4"), drafts.map { it.edgeText })
   }
 }

@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.customLevels
@@ -22,12 +23,12 @@ object LevelPicker {
   }
 
   /** The owner's levels when switched on and not empty, else the built-in ones. */
-  fun effective(value: LevelValue, settings: Settings, capacityAh: Double?): List<ColorLevel> {
+  fun effective(value: LevelValue, settings: Settings, basis: LevelBasis): List<ColorLevel> {
     val custom = settings.customLevels(value)
     return if (custom.on && custom.levels.isNotEmpty()) {
       custom.levels
     } else {
-      DefaultLevels.of(value, capacityAh)
+      DefaultLevels.of(value, basis)
     }
   }
 

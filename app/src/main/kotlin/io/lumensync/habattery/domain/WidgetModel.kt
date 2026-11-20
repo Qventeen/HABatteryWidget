@@ -2,6 +2,7 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.LevelBasis
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelLook
 import io.lumensync.habattery.domain.model.LevelValue
@@ -80,8 +81,8 @@ sealed interface WidgetModel {
       val flow = flow(r.currentA)
       val deltaMv = BatteryMath.deltaMv(r)
       val display = settings.display
-      val capacity = BatteryMath.fullCapacityAh(r, settings.capacityAh)
-      fun levels(value: LevelValue) = LevelPicker.effective(value, settings, capacity)
+      val basis = LevelBasis.of(r, settings)
+      fun levels(value: LevelValue) = LevelPicker.effective(value, settings, basis)
       // Each value picks its level by the number as shown, so colour and number agree at an edge.
       fun look(value: LevelValue, shown: Double?): LevelLook =
         shown?.let { LevelPicker.pick(levels(value), it).toLook(value) } ?: PLAIN
