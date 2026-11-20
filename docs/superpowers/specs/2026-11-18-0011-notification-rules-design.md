@@ -150,7 +150,8 @@ The check runs inside `SyncBattery` after each successful reading, where
 ### 3.3 Re-arm margin
 
 - A level that has notified is disarmed. It re-arms when the number is
-  outside the level's range by at least the margin of its value. The
+  past one of the level's bounding edges by at least the margin of its
+  value (amended 2026-11-20, below: bounds are edges, not shown numbers). The
   defaults (owner, 2026-11-18) are below; since 2026-11-19 the owner can
   change them per value (next point):
 
@@ -171,12 +172,19 @@ The check runs inside `SyncBattery` after each successful reading, where
   default); Reset in the editor sets it back to blank. Without own levels
   (Default) the default applies. One field per value keeps the editor small (owner's worry
   about an overloaded screen).
-- **With two-sided levels** (0010 §3.1, 2026-11-20) a ↓ level's range ends
-  at its own edge and an ↑ level's range starts at its own edge, so the
-  margin counts from the number on the level's tag, away from the alarm
-  side: Low ↓20 % re-arms at 22 %, Freezing ↓0 °C at 2 °C, Hot ↑55 °C at
-  53 °C, Full ↑100 % at 98 %. An inner level (Getting low ↓40 %) also
-  re-arms when the value goes deeper by the margin (at 18 %), as before.
+- **With two-sided levels** (0010 §3.1, 2026-11-20) the bounds of a level
+  are edges: a ↓ level's upper bound is its own edge and its lower bound
+  the nearest lower ↓ edge; an ↑ level's lower bound is its own edge and
+  its upper bound the nearest higher ↑ edge; the middle level's bounds are
+  the highest ↓ edge and the lowest ↑ edge. An outer level has one bound.
+  A disarmed level re-arms when `x >= upper + margin` or `x <= lower −
+  margin`, on the bounds it has. So the margin counts from the number on
+  the level's tag, away from the alarm side: Low ↓20 % re-arms at 22 %,
+  Freezing ↓0 °C at 2 °C, Hot ↑55 °C at 53 °C, Full ↑100 % at 98 %. An
+  inner level also re-arms when the value goes deeper by the margin past
+  the next edge: Getting low ↓40 % at 42 % or at 18 %, Warm ↑45 °C at
+  43 °C or 57 °C; the SOC middle level (between ↓40 and ↑100) at 38 % or
+  102 %.
 - Example, SOC with the default bells, the charge moving 22 → 20 → 21 → 20
   → 21 %: "Charge: Low ↓20 %" is posted; "Getting low" has no bell; Low
   re-arms only at 22 % or more, so the jitter at 20–21 % posts nothing

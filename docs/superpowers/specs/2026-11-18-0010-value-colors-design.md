@@ -252,8 +252,10 @@ Rules:
   The MOSFET rows follow the battery picks (my call). Default names come
   from the app strings, so they are translated (proposal; 0011, question 9).
 - **Look changes from today:** a normal temperature turns from plain to
-  green with a leaf; 0–5 °C turns from amber to blue. Every temperature pill
-  now always shows two icons (§4).
+  green with a leaf. With the two-sided edges of round 3 (§3.1): 1–4 °C
+  turns from amber to blue and 5 °C from plain to blue; 45 °C turns amber
+  and 55 °C red (one level up from today); 0 °C stays red. Every
+  temperature pill now always shows two icons (§4).
 
 ### 3.4 Palette (owner, 2026-11-18)
 
@@ -482,10 +484,13 @@ Rules:
     row has a two-button ↓/↑ choice, a "Limit" field (the edge, bare
     number), then name, type, colour chip and icon. The middle row has no
     choice, no field and no delete; in their place it shows its range
-    with ↕ ("↕41–99 %"), worked out live from the other rows ("—" while
-    they are not valid).
-    The limit and name fields look the same: both have their label on the
-    border and a hint inside. Temperature limits take a minus sign.
+    with ↕ ("↕41–99 %"), worked out live from the limits typed so far: a
+    limit that is empty or not a number is left out (a just-added row does
+    not blank the range), and "—" shows while the others break a rule of
+    §3.1. The limit and name fields look the same: both have their label
+    on the border; the name shows its default name as a hint inside, the
+    limit its unit after the number. Temperature limits take a minus
+    sign.
   - The app preview (0006) at the top shows the saved result; it scrolls
     out of view while editing lower down (accepted: levels are set once
     and rarely changed).
@@ -493,7 +498,9 @@ Rules:
   needed for a new field (0001 §14). Round 3: a level stores its side
   (default: the middle, the one level with no edge) and its edge (`null`
   on the middle level); the round-2 key `from` is gone, so a round-2 list
-  reads as all-middle levels, breaks the rules and is ignored (§3.1).
+  reads as all-middle levels. With two or more levels it breaks the rules
+  and is ignored (§3.1); a one-level list is one valid middle level and
+  stays the value's own (it means the same: one band for every number).
 
 ## 4. Catches
 
