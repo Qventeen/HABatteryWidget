@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -53,6 +55,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
@@ -186,11 +189,12 @@ internal fun LevelEditor(
 }
 
 /**
- * One level in the editor. A ↓ or ↑ level starts with its side and its limit; the middle level has
- * neither and shows [middleRange] in their place, which TalkBack reads as [middleWords]. The limit
- * shows its [unit] after the number. Then come the name, the type, the remove button
- * (not on the middle level), the colour, and the icon if the value has one. [onUpdate] takes a
- * change to apply to the level's current draft.
+ * One level in the editor, in four parts. The first line holds the name and, on a ↓ or ↑ level, the
+ * limit with its [unit] after the number; the middle level has no limit and shows [middleRange]
+ * instead, which TalkBack reads as [middleWords]. A limit [error] shows under that line. The second
+ * line holds the ↓/↑ choice, the type and the remove button; the middle level has only its type.
+ * Last come the colour and, if the value has icons, the icon. [onUpdate] takes a change to apply to
+ * the level's current draft.
  */
 @Composable
 private fun LevelRow(
@@ -206,44 +210,57 @@ private fun LevelRow(
   onRemove: () -> Unit,
 ) {
   val shown = draft.color ?: draft.type.defaultColor
+  val edged = draft.side != LevelSide.MIDDLE
   HorizontalDivider()
-  if (draft.side == LevelSide.MIDDLE) {
-    Text(
-      middleRange,
-      Modifier.semantics { middleWords?.let { contentDescription = it } },
-      style = MaterialTheme.typography.bodyLarge,
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    LevelTextField(
+      text = draft.name,
+      onTextChange = { text -> onUpdate { it.copy(name = text) } },
+      label = stringResource(R.string.colors_name),
+      keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+      modifier = Modifier.weight(1f),
+      placeholder = draft.defaultName?.let { defaultNameText(it) },
     )
-  } else {
-    // On their own line: on a phone the ↓|↑ choice leaves too little room for a name beside them.
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      // Top, like the field's box: an error line under the field must not move the choice.
-      verticalAlignment = Alignment.Top,
-    ) {
-      SideChoice(draft.side) { side -> onUpdate { it.copy(side = side) } }
+    if (edged) {
       LevelTextField(
         text = draft.edgeText,
         onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
         label = stringResource(R.string.colors_edge),
         keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.width(120.dp),
         suffix = unit,
-        error = error,
+        isError = error != null,
+      )
+    } else {
+      Text(
+        middleRange,
+        Modifier.semantics { middleWords?.let { contentDescription = it } },
+        style = MaterialTheme.typography.bodyLarge,
       )
     }
   }
-  LevelTextField(
-    text = draft.name,
-    onTextChange = { text -> onUpdate { it.copy(name = text) } },
-    label = stringResource(R.string.colors_name),
-    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-    modifier = Modifier.fillMaxWidth(),
-    placeholder = draft.defaultName?.let { defaultNameText(it) },
-  )
+  error?.let {
+    Text(
+      fieldErrorText(it),
+      Modifier.padding(start = 16.dp),
+      color = MaterialTheme.colorScheme.error,
+      style = MaterialTheme.typography.bodySmall,
+    )
+  }
   Row(verticalAlignment = Alignment.CenterVertically) {
-    TypeMenu(draft.type) { type -> onUpdate { it.copy(type = type) } }
+    if (edged) {
+      SideChoice(draft.side) { side -> onUpdate { it.copy(side = side) } }
+      Spacer(Modifier.width(8.dp))
+    }
+    // Not filling: a narrow line cuts the type text and keeps the remove button.
+    TypeMenu(draft.type, Modifier.weight(1f, fill = false)) { type ->
+      onUpdate { it.copy(type = type) }
+    }
     Spacer(Modifier.weight(1f))
-    if (draft.side != LevelSide.MIDDLE) {
+    if (edged) {
       IconButton(onClick = onRemove) {
         Icon(
           painterResource(R.drawable.ic_close),
@@ -274,6 +291,8 @@ private fun SideChoice(side: LevelSide, onSelect: (LevelSide) -> Unit) {
         onClick = { onSelect(option) },
         shape = SegmentedButtonDefaults.itemShape(i, options.size),
         modifier = Modifier.semantics { contentDescription = description },
+        // No check mark: the selected button is already filled.
+        icon = {},
         label = { Text(option.mark()) },
       )
     }
@@ -295,7 +314,7 @@ private fun LevelTextField(
   modifier: Modifier = Modifier,
   placeholder: String? = null,
   suffix: String? = null,
-  error: FieldError? = null,
+  isError: Boolean = false,
 ) {
   // Plain remember, like the draft: an unsaved edit may be lost on rotation.
   val state = remember { TextFieldState(text) }
@@ -308,19 +327,21 @@ private fun LevelTextField(
     label = { Text(label) },
     placeholder = placeholder?.let { { Text(it) } },
     suffix = suffix?.let { { Text(it) } },
-    supportingText = error?.let { { Text(fieldErrorText(it)) } },
-    isError = error != null,
+    isError = isError,
     keyboardOptions = keyboardOptions,
     lineLimits = TextFieldLineLimits.SingleLine,
   )
 }
 
 @Composable
-private fun TypeMenu(type: LevelType, onSelect: (LevelType) -> Unit) {
+private fun TypeMenu(type: LevelType, modifier: Modifier = Modifier, onSelect: (LevelType) -> Unit) {
   var expanded by remember { mutableStateOf(false) }
-  Box {
-    OutlinedButton(onClick = { expanded = true }) {
-      Text(stringResource(typeLabel(type)))
+  Box(modifier) {
+    OutlinedButton(
+      onClick = { expanded = true },
+      contentPadding = PaddingValues(start = 16.dp, end = 12.dp),
+    ) {
+      Text(stringResource(typeLabel(type)), maxLines = 1, overflow = TextOverflow.Ellipsis)
       Icon(painterResource(R.drawable.ic_expand_more), contentDescription = null)
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
