@@ -158,14 +158,15 @@ The check runs inside `SyncBattery` after each successful reading, where
   | Value | Margin |
   |---|---|
   | SOC | 2 % |
-  | Voltage | 0.1 V |
+  | Voltage | 0.025 V per cell (0.4 V on 16S; 0.4 V when the cell count is unknown) (owner, 2026-11-20) |
   | Charge and discharge current | 0.05 C (5 A on 100 Ah; 1 A when the capacity is unknown) |
   | Cell delta | 3 mV |
   | Battery and MOSFET temperature | 2 °C |
 
 - **Editable margin** (owner, 2026-11-19, while detailing 0012): the
-  value's editor (Edit, 0010 §3.5) has one field, "Notify again
-  after it moves back by", in the value's unit (current in whole amps,
+  value's editor (Edit, 0010 §3.5) has one field, named
+  "Hysteresis" / "Гістерезис" with an ⓘ tip (owner, 2026-11-20) instead of
+  "Notify again after it moves back by", in the value's unit (current in whole amps,
   like the custom copy). Blank means the default above, shown as a hint.
   A number ≥ 0 at the value's shown precision; anything else is a field
   error and nothing is saved. Stored as `CustomLevels.margin` (null = the
@@ -345,3 +346,9 @@ The check runs inside `SyncBattery` after each successful reading, where
 - Default current and voltage lists reuse level ids when the capacity or
   cell count becomes known — harmless while those lists have no default
   bells; spec 0013 must re-check it when it changes `LevelBasis`.
+- Margin field (owner, 2026-11-20): named "Hysteresis" / "Гістерезис". An ⓘ
+  button inside the field opens a short tip on tap; the tip says what the
+  margin does.
+- Voltage default margin (owner, 2026-11-20): 0.025 V per cell, rounded to
+  0.01 V (16S 0.40, 15S 0.38, 8S 0.20, 4S 0.10), so it fits every pack size.
+  `LevelAlerts.margin` now takes the `LevelBasis`.
