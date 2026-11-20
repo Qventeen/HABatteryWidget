@@ -57,7 +57,10 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
     } ?: missing
 
   fun averageCell(m: WidgetModel.Data): String =
-    m.averageCellVoltage?.let(formatters::cellVoltage) ?: missing
+    context.getString(
+      R.string.average_cell_label,
+      m.averageCellVoltage?.let(formatters::cellVoltage) ?: missing,
+    )
 
   fun delta(m: WidgetModel.Data): String =
     context.getString(R.string.delta_label, m.deltaMv?.let(formatters::deltaMv) ?: missing)

@@ -39,7 +39,7 @@ class WidgetFontsTest {
       underSoc = "4.58 kWh",
       voltage = "26.50 V",
       main = main,
-      cells = listOf(CellPill("3.312 V", LevelColor.PLAIN), CellPill("Δ 12 mV", LevelColor.PLAIN), CellPill("27 °C", LevelColor.PLAIN, icon = 1)),
+      cells = listOf(CellPill("avg 3.312 V", LevelColor.PLAIN), CellPill("Δ 12 mV", LevelColor.PLAIN), CellPill("27 °C", LevelColor.PLAIN, icon = 1)),
     )
 
   private fun fonts(

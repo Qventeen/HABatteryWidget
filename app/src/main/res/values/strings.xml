@@ -27,6 +27,7 @@
     <string name="widget_error">Widget error. Open the app.</string>
     <string name="widget_refresh_action">Refresh</string>
     <string name="delta_label">Δ %1$s</string>
+    <string name="average_cell_label">avg %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
     <plurals name="widget_soc_description">
         <item quantity="one">State of charge %1$d percent</item>
@@ -265,7 +266,7 @@
     <string name="preview_kwh">4.58 kWh</string>
     <string name="preview_voltage">26.50 V</string>
     <string name="preview_current">10.0 A</string>
-    <string name="preview_cell">3.312 V</string>
+    <string name="preview_cell">avg 3.312 V</string>
     <string name="preview_delta">Δ 12 mV</string>
     <string name="preview_battery_temperature" translatable="false">25 °C</string>
     <string name="preview_mosfet_temperature" translatable="false">27 °C</string>
