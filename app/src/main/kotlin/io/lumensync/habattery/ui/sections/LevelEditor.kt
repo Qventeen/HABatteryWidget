@@ -51,7 +51,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -211,6 +213,7 @@ private fun LevelRow(
 ) {
   val shown = draft.color ?: draft.type.defaultColor
   val edged = draft.side != LevelSide.MIDDLE
+  val errorText = error?.let { fieldErrorText(it) }
   HorizontalDivider()
   Row(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -230,7 +233,8 @@ private fun LevelRow(
         onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
         label = stringResource(R.string.colors_edge),
         keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
-        modifier = Modifier.width(120.dp),
+        // The error text under the line is hidden from TalkBack, so the field carries it.
+        modifier = Modifier.width(120.dp).semantics { errorText?.let { error(it) } },
         suffix = unit,
         isError = error != null,
       )
@@ -242,10 +246,10 @@ private fun LevelRow(
       )
     }
   }
-  error?.let {
+  errorText?.let {
     Text(
-      fieldErrorText(it),
-      Modifier.padding(start = 16.dp),
+      it,
+      Modifier.padding(start = 16.dp).clearAndSetSemantics {},
       color = MaterialTheme.colorScheme.error,
       style = MaterialTheme.typography.bodySmall,
     )
