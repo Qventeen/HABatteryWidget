@@ -22,8 +22,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `TokenTypeSource`: picks one by `connection.tokenType`; response parsing), `settings/`, `cache/`,
   `secure/` (Keystore crypto, `EncryptedTokenStore`: one slot per token type), `store/` (JSON DataStore
   records with `schemaVersion = 1`).
-- `format/`: `Formatters`, `Decimal`; one formatter for widget, screen and
-  notification.
+- `format/`: `Formatters`, `Decimal`, `LevelTagText` (the level tag text); one formatter for
+  widget, screen and notification.
 - `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidFullChargeNotifier`,
   `AppLanguage` (per-app language through `LocaleManager`, Android 13+ only; the system
   stores it), `ConfigWatcher` (`App` reports language and font-scale changes, and night mode
@@ -46,7 +46,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   font scale, and night mode below API 31) keys the composition.
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
-- `ui/`: Compose screen, `MainViewModel`, `PreviewTab` (size tabs, first-tab rule),
+- `ui/`: Compose screen, `MainViewModel`, `LevelDraft` (editor drafts and `middleSpan`),
+  `PreviewTab` (size tabs, first-tab rule),
   `SensorSearch` / `SensorFill` (Fill: what HA answered and the new Entities draft), `sections/`
   (`WidgetPreviewCard` hosts the preview), `theme/`.
 
