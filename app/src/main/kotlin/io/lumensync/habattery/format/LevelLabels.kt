@@ -76,3 +76,16 @@ fun LevelSpan.placeWithUnit(
   resources: Resources,
 ): String? =
   placeText(decimals, locale, side)?.let { resources.getString(R.string.colors_place, it, unit) }
+
+/** The value's label in a notification title, such as "Charge". */
+@StringRes
+fun notificationValueRes(value: LevelValue): Int =
+  when (value) {
+    LevelValue.SOC -> R.string.notification_value_soc
+    LevelValue.VOLTAGE -> R.string.notification_value_voltage
+    LevelValue.CHARGE_CURRENT -> R.string.notification_value_charge_current
+    LevelValue.DISCHARGE_CURRENT -> R.string.notification_value_discharge_current
+    LevelValue.DELTA -> R.string.notification_value_delta
+    LevelValue.BATTERY_TEMPERATURE -> R.string.notification_value_battery_temperature
+    LevelValue.MOSFET_TEMPERATURE -> R.string.notification_value_mosfet_temperature
+  }

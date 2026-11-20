@@ -46,9 +46,20 @@
     <string name="widget_auto_off">Auto refresh off</string>
     <string name="widget_open_app">Open app</string>
 
-    <string name="notification_channel_full">Full charge</string>
-    <string name="notification_full_title">Battery full</string>
-    <string name="notification_full_text">The battery is fully charged.</string>
+    <string name="notification_channel_critical">Critical</string>
+    <string name="notification_channel_warning">Warning</string>
+    <string name="notification_channel_normal">Normal</string>
+    <string name="notification_channel_info">Info</string>
+    <string name="notification_value_soc">Charge</string>
+    <string name="notification_value_voltage">Voltage</string>
+    <string name="notification_value_charge_current">Charge current</string>
+    <string name="notification_value_discharge_current">Discharge current</string>
+    <string name="notification_value_delta">Cell delta</string>
+    <string name="notification_value_battery_temperature">Battery temperature</string>
+    <string name="notification_value_mosfet_temperature">MOSFET temperature</string>
+    <string name="notification_level_title">%1$s: %2$s %3$s</string>
+    <string name="notification_level_title_short">%1$s: %2$s</string>
+    <string name="notification_level_text">%1$s · measured at %2$s</string>
 
     <!-- Main screen. -->
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
