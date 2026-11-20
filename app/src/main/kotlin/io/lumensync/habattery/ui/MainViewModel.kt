@@ -238,13 +238,21 @@ class MainViewModel(
   }
 
   /**
-   * Saves [drafts] as the owner's levels of [value]. Edges are typed in [locale] and rounded to
-   * the precision the widget shows; the middle draft has no edge. Any error is reported at the
-   * draft's position in [drafts] and nothing is stored. The stored list is in shown order.
+   * Saves [drafts] as the owner's levels of [value], bells included, with [margin] as the value's
+   * re-arm margin. Edges and the margin are typed in [locale] and rounded to the precision the
+   * widget shows, a current margin to whole amps; the middle draft has no edge. A blank [margin]
+   * stores none, so the default applies. An edge error is reported at the draft's position in
+   * [drafts], a margin that is not a number of 0 or more without a position; with any error nothing
+   * is stored. The stored list is in shown order.
    *
    * @return `false` when an error was found, `true` when the save was started.
    */
-  fun saveLevels(value: LevelValue, drafts: List<LevelDraft>, locale: Locale): Boolean {
+  fun saveLevels(
+    value: LevelValue,
+    drafts: List<LevelDraft>,
+    margin: String,
+    locale: Locale,
+  ): Boolean {
     val errors = mutableListOf<FieldError>()
     val unparsed = mutableSetOf<Int>()
     val built =
@@ -259,19 +267,55 @@ class MainViewModel(
             errors += FieldError(Field.LEVEL_EDGE, problem, i)
           }
         }
-        ColorLevel(d.id, d.side, edge, d.type, d.color, d.icon, d.name.trim(), d.defaultName)
+        ColorLevel(
+          id = d.id,
+          side = d.side,
+          edge = edge,
+          type = d.type,
+          color = d.color,
+          icon = d.icon,
+          name = d.name.trim(),
+          defaultName = d.defaultName,
+          notify = d.notify,
+        )
       }
     // A missing edge is already reported above, with the more precise problem.
     errors += Validation.levels(value, built).filterNot { it.index in unparsed }
+    val marginText = margin.trim()
+    // Checked before rounding, so -0.4 % is not saved as 0 %.
+    val ownMargin =
+      if (marginText.isEmpty()) null else parseDecimal(marginText, locale)?.takeIf { it >= 0.0 }
+    if (marginText.isNotEmpty() && ownMargin == null) {
+      errors += FieldError(Field.LEVEL_MARGIN, Problem.INVALID)
+    }
     if (errors.isNotEmpty()) {
       fail(*errors.toTypedArray())
       return false
     }
     save(emptyList(), syncAfter = false) {
-      it.withCustomLevels(value, CustomLevels(on = true, LevelPicker.ordered(built)))
+      it.withCustomLevels(
+        value,
+        CustomLevels(
+          on = true,
+          levels = LevelPicker.ordered(built),
+          margin = ownMargin?.roundTo(marginDecimals(value)),
+        ),
+      )
     }
     return true
   }
+
+  // Current edges start in whole amps (the copy of the defaults), so the margin is typed the same.
+  private fun marginDecimals(value: LevelValue): Int =
+    when (value) {
+      LevelValue.CHARGE_CURRENT,
+      LevelValue.DISCHARGE_CURRENT -> 0
+      LevelValue.SOC,
+      LevelValue.VOLTAGE,
+      LevelValue.DELTA,
+      LevelValue.BATTERY_TEMPERATURE,
+      LevelValue.MOSFET_TEMPERATURE -> value.decimals
+    }
 
   /** Drops the owner's levels of [value]; the built-in ones apply again. */
   fun useDefaults(value: LevelValue) {

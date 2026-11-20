@@ -63,7 +63,7 @@ data class MainActions(
   val resetWidgetSettings: () -> Unit,
   val saveAppearance: (AppearanceSettings) -> Unit,
   val setLanguage: (LanguageChoice) -> Unit,
-  val saveLevels: (LevelValue, List<LevelDraft>, Locale) -> Boolean,
+  val saveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   val useDefaults: (LevelValue) -> Unit,
   val requestPinWidget: () -> Unit,
   val openNotificationSettings: () -> Unit,
@@ -159,6 +159,7 @@ private fun MainContent(
     RefreshSection(settings.refresh, state.errors, actions.saveRefresh)
     NotificationSection(
       settings.notificationsOn,
+      settings.refresh.auto,
       actions.setNotificationsOn,
       actions.openNotificationSettings,
     )

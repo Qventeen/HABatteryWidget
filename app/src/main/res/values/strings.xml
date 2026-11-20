@@ -121,7 +121,9 @@
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>
-    <string name="notify_on_full">Notify when the battery is full</string>
+    <string name="notifications_switch">Notifications</string>
+    <string name="notifications_hint">Choose the levels with the bells in Colours.</string>
+    <string name="notifications_no_auto_refresh">Auto refresh is off, so no notifications can come.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
 
@@ -207,6 +209,14 @@
     <string name="colors_two_parts">%1$s · %2$s</string>
     <!-- Joins the parts TalkBack reads for a level tag, such as 20 % and below, Low. -->
     <string name="colors_list_parts">%1$s, %2$s</string>
+    <!-- TalkBack's last part of a level tag whose level notifies. -->
+    <string name="colors_tag_bell">Bell on</string>
+    <!-- TalkBack's name for a level's bell in the editor; %1$s is the level's name, such as Low. -->
+    <string name="level_bell">Notify about %1$s</string>
+    <!-- The re-arm margin field, in the value's unit. -->
+    <string name="level_margin">Notify again after it moves back by</string>
+    <!-- %1$s is the default margin with its unit, such as 2 %. -->
+    <string name="level_margin_default">Default: %1$s</string>
     <string name="level_type_critical">Critical</string>
     <string name="level_type_warning">Warning</string>
     <string name="level_type_normal">Normal</string>
@@ -269,6 +279,7 @@
     <string name="field_level_edge_invalid">Enter a number</string>
     <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
     <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
+    <string name="field_level_margin_invalid">Enter a number of 0 or more</string>
 
     <!-- Sample values for the widget picker preview. -->
     <string name="preview_time_left">17h 16m</string>

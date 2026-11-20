@@ -55,4 +55,5 @@ private fun invalidMessage(field: Field): Int =
     Field.INTERVAL -> R.string.field_interval_invalid
     Field.CAPACITY -> R.string.field_capacity_invalid
     Field.LEVEL_EDGE -> R.string.field_level_edge_invalid
+    Field.LEVEL_MARGIN -> R.string.field_level_margin_invalid
   }

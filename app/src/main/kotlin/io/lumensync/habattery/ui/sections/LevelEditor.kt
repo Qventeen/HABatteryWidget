@@ -25,6 +25,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -75,11 +76,14 @@ import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
 import io.lumensync.habattery.format.mark
 import io.lumensync.habattery.format.placeWithUnit
+import io.lumensync.habattery.format.shownName
 import io.lumensync.habattery.format.typeLabel
 import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.ui.defaultDrafts
+import io.lumensync.habattery.ui.defaultMarginText
 import io.lumensync.habattery.ui.editorDrafts
+import io.lumensync.habattery.ui.editorMargin
 import io.lumensync.habattery.ui.middleSpan
 import io.lumensync.habattery.ui.withNewLevel
 import io.lumensync.habattery.ui.withoutLevel
@@ -101,8 +105,9 @@ private val PickerColors =
   )
 
 /**
- * The owner's levels of [value] as a draft: the [stored] own levels, or the built-in ones. Nothing
- * is stored before Save; [onSave] returns `false` when a field has an error, and the editor stays
+ * The owner's levels of [value] as a draft: the [stored] own levels, or the built-in ones, and the
+ * re-arm margin, blank for the default of [basis]. Nothing is stored before Save; [onSave] takes
+ * the drafts and the margin text and returns `false` when a field has an error, and the editor stays
  * open. The rows stay in draft order, so the index of an edge error still names its row. [shown]
  * are the levels the tags show; a new level's id stays above theirs.
  */
@@ -114,7 +119,7 @@ internal fun LevelEditor(
   basis: LevelBasis,
   palette: WidgetPalette,
   errors: List<FieldError>,
-  onSave: (List<LevelDraft>, Locale) -> Boolean,
+  onSave: (List<LevelDraft>, margin: String, Locale) -> Boolean,
   onClose: () -> Unit,
 ) {
   val locale = LocalConfiguration.current.locales[0]
@@ -122,9 +127,10 @@ internal fun LevelEditor(
   // sync may bring a new one while the owner types.
   var drafts by
     remember(value, stored) { mutableStateOf(editorDrafts(value, stored, basis, locale)) }
+  var margin by remember(value, stored) { mutableStateOf(editorMargin(value, stored, locale)) }
   var resets by remember { mutableIntStateOf(0) }
-  // The screen has one error list. Only this editor's own save gives its edge errors, and their
-  // indexes no longer match once a row is removed or the draft is reset.
+  // The screen has one error list. Only this editor's own save gives its edge and margin errors,
+  // and the edge indexes no longer match once a row is removed or the draft is reset.
   var ownErrors by remember(value) { mutableStateOf(false) }
   val unit = stringResource(unitLabel(value))
   val middle = middleSpan(value, drafts, locale)
@@ -174,12 +180,23 @@ internal fun LevelEditor(
     OutlinedButton(
       onClick = {
         drafts = defaultDrafts(value, basis, locale)
+        margin = ""
         resets++
         ownErrors = false
       }
     ) {
       Text(stringResource(R.string.colors_reset))
     }
+  }
+  // Rebuilt like the rows: the field keeps its own text and would not show the reset.
+  key(stored, resets) {
+    MarginField(
+      margin = margin,
+      error = if (ownErrors) errors.errorFor(Field.LEVEL_MARGIN) else null,
+      unit = unit,
+      defaultMargin = defaultMarginText(value, basis, locale),
+      onMarginChange = { margin = it },
+    )
   }
   FlowRow(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -188,18 +205,47 @@ internal fun LevelEditor(
     TextButton(onClick = onClose) { Text(stringResource(R.string.dialog_cancel)) }
     SaveButton {
       ownErrors = true
-      if (onSave(drafts, locale)) onClose()
+      if (onSave(drafts, margin, locale)) onClose()
     }
   }
 }
 
 /**
- * One level in the editor, in four parts. The first line holds the name and, on a ↓ or ↑ level, the
- * limit with its [unit] after the number; the middle level has no limit and shows [middleRange]
- * instead, which TalkBack reads as [middleWords]. A limit [error] shows under that line. The second
- * line holds the ↓/↑ choice, the type and the remove button; the middle level has only its type.
- * Last come the colour and, if the value has icons, the icon. [onUpdate] takes a change to apply to
- * the level's current draft.
+ * The value's re-arm margin, in its [unit]. Under it: the [error] of the last save, else the
+ * [defaultMargin] that a blank field keeps.
+ */
+@Composable
+private fun MarginField(
+  margin: String,
+  error: FieldError?,
+  unit: String,
+  defaultMargin: String,
+  onMarginChange: (String) -> Unit,
+) {
+  LevelTextField(
+    text = margin,
+    onTextChange = onMarginChange,
+    label = stringResource(R.string.level_margin),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+    modifier = Modifier.fillMaxWidth(),
+    suffix = unit,
+    isError = error != null,
+    supportingText =
+      error?.let { fieldErrorText(it) }
+        ?: stringResource(
+          R.string.level_margin_default,
+          stringResource(R.string.colors_place, defaultMargin, unit),
+        ),
+  )
+}
+
+/**
+ * One level in the editor, in four parts. The first line holds the name, on a ↓ or ↑ level the
+ * limit with its [unit] after the number, and the bell; the middle level has no limit and shows
+ * [middleRange] instead, which TalkBack reads as [middleWords]. A limit [error] shows under that
+ * line. The second line holds the ↓/↑ choice, the type and the remove button; the middle level has
+ * only its type. Last come the colour and, if the value has icons, the icon. [onUpdate] takes a
+ * change to apply to the level's current draft.
  */
 @Composable
 private fun LevelRow(
@@ -217,37 +263,46 @@ private fun LevelRow(
   val shown = draft.color ?: draft.type.defaultColor
   val edged = draft.side != LevelSide.MIDDLE
   val errorText = error?.let { fieldErrorText(it) }
+  // The bell reads the name the tag would show, also while the name field is empty.
+  val bellName =
+    ColorLevel(type = draft.type, name = draft.name, defaultName = draft.defaultName)
+      .shownName(LocalResources.current)
   HorizontalDivider()
-  Row(
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    LevelTextField(
-      text = draft.name,
-      onTextChange = { text -> onUpdate { it.copy(name = text) } },
-      label = stringResource(R.string.colors_name),
-      keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-      modifier = Modifier.weight(1f),
-      placeholder = draft.defaultName?.let { defaultNameText(it) },
-    )
-    if (edged) {
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    // No gap before the bell: its touch area already pads the icon, and the name needs the width.
+    Row(
+      Modifier.weight(1f),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
       LevelTextField(
-        text = draft.edgeText,
-        onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
-        label = stringResource(R.string.colors_edge),
-        keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
-        // The error text under the line is hidden from TalkBack, so the field carries it.
-        modifier = Modifier.width(120.dp).semantics { errorText?.let { error(it) } },
-        suffix = unit,
-        isError = error != null,
+        text = draft.name,
+        onTextChange = { text -> onUpdate { it.copy(name = text) } },
+        label = stringResource(R.string.colors_name),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        modifier = Modifier.weight(1f),
+        placeholder = draft.defaultName?.let { defaultNameText(it) },
       )
-    } else {
-      Text(
-        middleRange,
-        Modifier.semantics { middleWords?.let { contentDescription = it } },
-        style = MaterialTheme.typography.bodyLarge,
-      )
+      if (edged) {
+        LevelTextField(
+          text = draft.edgeText,
+          onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
+          label = stringResource(R.string.colors_edge),
+          keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
+          // The error text under the line is hidden from TalkBack, so the field carries it.
+          modifier = Modifier.width(120.dp).semantics { errorText?.let { error(it) } },
+          suffix = unit,
+          isError = error != null,
+        )
+      } else {
+        Text(
+          middleRange,
+          Modifier.semantics { middleWords?.let { contentDescription = it } },
+          style = MaterialTheme.typography.bodyLarge,
+        )
+      }
     }
+    BellToggle(draft.notify, bellName) { on -> onUpdate { it.copy(notify = on) } }
   }
   errorText?.let {
     Text(
@@ -304,11 +359,23 @@ private fun SideChoice(side: LevelSide, onSelect: (LevelSide) -> Unit) {
   }
 }
 
+/** A level's bell; TalkBack reads it as a checkbox named after the level's [name]. */
+@Composable
+private fun BellToggle(on: Boolean, name: String, onChange: (Boolean) -> Unit) {
+  IconToggleButton(checked = on, onCheckedChange = onChange) {
+    Icon(
+      painterResource(if (on) R.drawable.ic_bell else R.drawable.ic_bell_off),
+      contentDescription = stringResource(R.string.level_bell, name),
+    )
+  }
+}
+
 /**
  * An outlined field whose label stays on the border, so the [placeholder] shows inside while the
  * field is empty. In Material 3 1.4 only the state-based field takes a label position, so the field
  * keeps its own text: it starts from [text], reports each change to [onTextChange], and ignores a
- * later [text].
+ * later [text]. The label and the [placeholder] keep to one line and cut their end when the field
+ * is too narrow; TalkBack still reads them whole.
  */
 @Composable
 private fun LevelTextField(
@@ -320,6 +387,7 @@ private fun LevelTextField(
   placeholder: String? = null,
   suffix: String? = null,
   isError: Boolean = false,
+  supportingText: String? = null,
 ) {
   // Plain remember, like the draft: an unsaved edit may be lost on rotation.
   val state = remember { TextFieldState(text) }
@@ -329,9 +397,10 @@ private fun LevelTextField(
     state = state,
     modifier = modifier,
     labelPosition = TextFieldLabelPosition.Attached(alwaysMinimize = true),
-    label = { Text(label) },
-    placeholder = placeholder?.let { { Text(it) } },
+    label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+    placeholder = placeholder?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
     suffix = suffix?.let { { Text(it) } },
+    supportingText = supportingText?.let { { Text(it) } },
     isError = isError,
     keyboardOptions = keyboardOptions,
     lineLimits = TextFieldLineLimits.SingleLine,

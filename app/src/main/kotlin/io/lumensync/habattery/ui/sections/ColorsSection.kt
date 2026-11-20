@@ -74,7 +74,7 @@ fun ColorsSection(
   colorLevels: Map<String, CustomLevels>,
   basis: LevelBasis,
   errors: List<FieldError>,
-  onSaveLevels: (LevelValue, List<LevelDraft>, Locale) -> Boolean,
+  onSaveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   onUseDefaults: (LevelValue) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -109,7 +109,7 @@ fun ColorsSection(
             basis = basis,
             palette = palette,
             errors = errors,
-            onSave = { drafts, locale -> onSaveLevels(value, drafts, locale) },
+            onSave = { drafts, margin, locale -> onSaveLevels(value, drafts, margin, locale) },
             onClose = { editing = null },
           )
         } else {
@@ -182,9 +182,9 @@ private fun LevelTags(value: LevelValue, levels: List<ColorLevel>, palette: Widg
 }
 
 /**
- * One level: its icon and "place · name", such as "↓20 % · Low". The colour shows the type, so only
- * TalkBack says it, and TalkBack reads the place in words. A level with no name shows its type word
- * instead.
+ * One level: its icon, "place · name", such as "↓20 % · Low", and a bell when the level notifies.
+ * The colour shows the type, so only TalkBack says it, and TalkBack reads the place in words. A
+ * level with no name shows its type word instead.
  */
 @Composable
 private fun LevelTag(
@@ -202,7 +202,8 @@ private fun LevelTag(
   val place = span.placeWithUnit(value.decimals, unit, locale, level.side, resources)
   val text = joined(R.string.colors_two_parts, place, name ?: type)
   val words = spanWords(span, value.decimals, unit, locale)
-  val description = joined(R.string.colors_list_parts, words, name, type)
+  val bell = if (level.notify) stringResource(R.string.colors_tag_bell) else null
+  val description = joined(R.string.colors_list_parts, words, name, type, bell)
   Row(
     Modifier.background(shades.background, CircleShape)
       .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -219,6 +220,14 @@ private fun LevelTag(
       )
     }
     Text(text, color = shades.text, style = MaterialTheme.typography.labelLarge)
+    if (level.notify) {
+      Icon(
+        painterResource(R.drawable.ic_bell),
+        contentDescription = null,
+        modifier = Modifier.size(16.dp),
+        tint = shades.text,
+      )
+    }
   }
 }
 

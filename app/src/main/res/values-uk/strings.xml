@@ -114,7 +114,9 @@
     <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
 
     <string name="notify_title">Сповіщення</string>
-    <string name="notify_on_full">Сповіщати, коли батарея заряджена</string>
+    <string name="notifications_switch">Сповіщення</string>
+    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Кольори».</string>
+    <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення не надходитимуть.</string>
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
 
@@ -186,6 +188,10 @@
     <string name="colors_color_default">%1$s, типовий</string>
     <string name="colors_two_parts">%1$s · %2$s</string>
     <string name="colors_list_parts">%1$s, %2$s</string>
+    <string name="colors_tag_bell">Дзвіночок увімкнено</string>
+    <string name="level_bell">Сповіщати про «%1$s»</string>
+    <string name="level_margin">Сповіщати знову, коли значення відійде на</string>
+    <string name="level_margin_default">Типово: %1$s</string>
     <string name="level_type_critical">Критичний</string>
     <string name="level_type_warning">Попередження</string>
     <string name="level_type_normal">Норма</string>
@@ -246,6 +252,7 @@
     <string name="field_level_edge_invalid">Введіть число</string>
     <string name="field_level_edge_duplicate">Два рівні з одного боку не можуть мати однакову межу</string>
     <string name="field_level_edge_overlap">Залиште проміжок між рівнями ↓ і ↑</string>
+    <string name="field_level_margin_invalid">Введіть число, не менше 0</string>
 
     <string name="preview_time_left">17г і 16х</string>
     <string name="preview_kwh">4,58 кВт·год</string>

@@ -27,6 +27,7 @@ enum class Field {
   INTERVAL,
   CAPACITY,
   LEVEL_EDGE,
+  LEVEL_MARGIN,
 }
 
 enum class Problem {
