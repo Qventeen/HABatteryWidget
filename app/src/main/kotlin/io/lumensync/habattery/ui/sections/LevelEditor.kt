@@ -345,7 +345,12 @@ private fun TypeMenu(type: LevelType, modifier: Modifier = Modifier, onSelect: (
       onClick = { expanded = true },
       contentPadding = PaddingValues(start = 16.dp, end = 12.dp),
     ) {
-      Text(stringResource(typeLabel(type)), maxLines = 1, overflow = TextOverflow.Ellipsis)
+      Text(
+        stringResource(typeLabel(type)),
+        Modifier.weight(1f, fill = false),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
       Icon(painterResource(R.drawable.ic_expand_more), contentDescription = null)
     }
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
