@@ -770,7 +770,7 @@ class MainViewModelTest {
     )
   }
 
-  @Test fun saveLevels_marginRoundsToShownPrecision_currentInWholeAmps() = runTest(dispatcher) {
+  @Test fun saveLevels_marginRoundsToShownPrecision() = runTest(dispatcher) {
     val vm = start()
     vm.saveLevels(LevelValue.SOC, socDrafts, "2.4", Locale.US)
     vm.saveLevels(
@@ -788,7 +788,19 @@ class MainViewModelTest {
     advanceUntilIdle()
     assertEquals(2.0, margin(LevelValue.SOC))
     assertEquals(0.12, margin(LevelValue.VOLTAGE))
-    assertEquals(5.0, margin(LevelValue.CHARGE_CURRENT))
+    assertEquals(4.6, margin(LevelValue.CHARGE_CURRENT))
+  }
+
+  @Test fun saveLevels_currentMarginBelowOneAmp_isKept() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(
+      LevelValue.CHARGE_CURRENT,
+      listOf(mid, draft(LevelSide.ABOVE, "50", id = 1)),
+      "0.5",
+      Locale.US,
+    )
+    advanceUntilIdle()
+    assertEquals(0.5, margin(LevelValue.CHARGE_CURRENT))
   }
 
   @Test fun useDefaults_clearsMargin() = runTest(dispatcher) {

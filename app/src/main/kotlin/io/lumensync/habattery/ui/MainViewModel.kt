@@ -240,7 +240,7 @@ class MainViewModel(
   /**
    * Saves [drafts] as the owner's levels of [value], bells included, with [margin] as the value's
    * re-arm margin. Edges and the margin are typed in [locale] and rounded to the precision the
-   * widget shows, a current margin to whole amps; the middle draft has no edge. A blank [margin]
+   * widget shows; the middle draft has no edge. A blank [margin]
    * stores none, so the default applies. An edge error is reported at the draft's position in
    * [drafts], a margin that is not a number of 0 or more without a position; with any error nothing
    * is stored. The stored list is in shown order.
@@ -298,24 +298,12 @@ class MainViewModel(
         CustomLevels(
           on = true,
           levels = LevelPicker.ordered(built),
-          margin = ownMargin?.roundTo(marginDecimals(value)),
+          margin = ownMargin?.roundTo(value.decimals),
         ),
       )
     }
     return true
   }
-
-  // Current edges start in whole amps (the copy of the defaults), so the margin is typed the same.
-  private fun marginDecimals(value: LevelValue): Int =
-    when (value) {
-      LevelValue.CHARGE_CURRENT,
-      LevelValue.DISCHARGE_CURRENT -> 0
-      LevelValue.SOC,
-      LevelValue.VOLTAGE,
-      LevelValue.DELTA,
-      LevelValue.BATTERY_TEMPERATURE,
-      LevelValue.MOSFET_TEMPERATURE -> value.decimals
-    }
 
   /** Drops the owner's levels of [value]; the built-in ones apply again. */
   fun useDefaults(value: LevelValue) {
