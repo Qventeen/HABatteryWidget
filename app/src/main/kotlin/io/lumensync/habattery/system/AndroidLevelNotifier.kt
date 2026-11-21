@@ -56,7 +56,7 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
     val manager = NotificationManagerCompat.from(context)
     val notification =
       NotificationCompat.Builder(context, channelId(type))
-        .setSmallIcon(icon(type))
+        .setSmallIcon(smallIcon(alert.value))
         .setColor(WidgetPalette.Light.shades(type.defaultColor).ring.toArgb())
         .setContentTitle(title(alert))
         .setContentText(text(alert))
@@ -80,7 +80,7 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
     val word = modeWord(context.resources, alert.level, alert.text)
     val notification =
       NotificationCompat.Builder(context, channelId(type))
-        .setSmallIcon(icon(type))
+        .setSmallIcon(R.drawable.ic_notify_inverter)
         .setColor(WidgetPalette.Light.shades(alert.level.shownColor).ring.toArgb())
         .setContentTitle(context.getString(R.string.notification_mode_title, word))
         .setContentText(
@@ -235,14 +235,13 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       LevelType.INFO -> R.string.notification_channel_info
     }
 
+  /**
+   * The glyph names the widget, not the value: a battery temperature shows the battery glyph
+   * (spec 0015).
+   */
   @DrawableRes
-  private fun icon(type: LevelType): Int =
-    when (type) {
-      LevelType.CRITICAL -> R.drawable.ic_notify_critical
-      LevelType.WARNING -> R.drawable.ic_notify_warning
-      LevelType.NORMAL -> R.drawable.ic_notify_normal
-      LevelType.INFO -> R.drawable.ic_notify_info
-    }
+  private fun smallIcon(value: LevelValue): Int =
+    if (isInverterAlert(value)) R.drawable.ic_notify_inverter else R.drawable.ic_notify_battery
 
   private companion object {
     /**

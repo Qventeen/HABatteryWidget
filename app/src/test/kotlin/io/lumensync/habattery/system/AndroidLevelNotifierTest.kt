@@ -8,6 +8,7 @@ import android.media.AudioAttributes
 import android.provider.Settings
 import androidx.compose.ui.graphics.toArgb
 import androidx.test.core.app.ApplicationProvider
+import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.LevelBasis
@@ -146,6 +147,35 @@ class AndroidLevelNotifierTest {
     notifier.post(low())
 
     assertFalse(inverterAlertExtra(id(LevelValue.SOC)))
+  }
+
+  private fun smallIcon(id: Int): Int = shadowOf(manager).getNotification(id).smallIcon.resId
+
+  @Test
+  fun post_chargeAlert_showsBatteryGlyph() {
+    grant()
+    notifier.post(low())
+
+    assertEquals(R.drawable.ic_notify_battery, smallIcon(id(LevelValue.SOC)))
+  }
+
+  @Test
+  fun post_deltaAlert_showsBatteryGlyph() {
+    grant()
+    notifier.post(delta())
+
+    assertEquals(R.drawable.ic_notify_battery, smallIcon(id(LevelValue.DELTA)))
+  }
+
+  @Test
+  fun inverterAlerts_showInverterGlyph() {
+    grant()
+    val grid = DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, grid, LevelSpan.AtOrBelow(99.0), 0.0))
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    assertEquals(R.drawable.ic_notify_inverter, smallIcon(id(LevelValue.GRID_VOLTAGE)))
+    assertEquals(R.drawable.ic_notify_inverter, smallIcon(150))
   }
 
   /** The PendingIntent identity ignores extras: a shared code would let one notification overwrite another's. */
