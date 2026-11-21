@@ -47,6 +47,7 @@ import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
@@ -61,7 +62,7 @@ import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.AddWidgetRow
 import io.lumensync.habattery.ui.sections.AppearanceSection
-import io.lumensync.habattery.ui.sections.CapacitySection
+import io.lumensync.habattery.ui.sections.PackSection
 import io.lumensync.habattery.ui.sections.ColorsSection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
@@ -91,7 +92,8 @@ data class MainActions(
   val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
   val setNotificationsOn: (Boolean) -> Unit,
-  val saveCapacity: (text: String, locale: Locale) -> Unit,
+  val saveBatteryType: (BatteryType) -> Unit,
+  val savePack: (cells: String, capacity: String, locale: Locale) -> Unit,
   val saveDisplay: (DisplaySettings) -> Unit,
   val saveFontPercents: (FontPercents) -> Unit,
   val saveHomeScale: (Int) -> Unit,
@@ -289,7 +291,14 @@ private fun BatteryTab(
     actions.findTemperatureSensors,
     initiallyExpanded = overview.setupNeeded,
   )
-  CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)
+  PackSection(
+    settings.batteryType,
+    settings.cellCount,
+    settings.capacityAh,
+    state.errors,
+    actions.saveBatteryType,
+    actions.savePack,
+  )
 }
 
 /** The inverter strip: its preview, "Add to home screen", then its own sections. */

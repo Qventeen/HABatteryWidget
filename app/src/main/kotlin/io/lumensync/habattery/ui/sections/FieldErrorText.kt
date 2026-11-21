@@ -1,6 +1,5 @@
 package io.lumensync.habattery.ui.sections
 
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.lumensync.habattery.R
@@ -16,30 +15,31 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 internal fun fieldErrorText(error: FieldError): String =
   when (error.problem) {
     Problem.REQUIRED -> stringResource(R.string.field_required)
-    Problem.INVALID -> stringResource(invalidMessage(error.field))
+    Problem.INVALID -> invalidText(error.field)
     Problem.DUPLICATE -> stringResource(R.string.field_level_edge_duplicate)
     Problem.OVERLAP -> stringResource(R.string.field_level_edge_overlap)
     Problem.TOO_MANY ->
       stringResource(R.string.field_temperatures_too_many, EntitySettings.MAX_TEMPERATURES)
-    // Only the interval and the capacity have a range.
+    // Only the interval, the cells and the capacity have a range.
     Problem.OUT_OF_RANGE ->
-      if (error.field == Field.INTERVAL) {
-        stringResource(
-          R.string.refresh_interval_range,
-          RefreshSettings.MIN_INTERVAL,
-          RefreshSettings.MAX_INTERVAL,
-        )
-      } else {
-        stringResource(R.string.field_capacity_range, Validation.MAX_CAPACITY_AH.toInt())
+      when (error.field) {
+        Field.INTERVAL ->
+          stringResource(
+            R.string.refresh_interval_range,
+            RefreshSettings.MIN_INTERVAL,
+            RefreshSettings.MAX_INTERVAL,
+          )
+        Field.CELLS -> cellsText()
+        else -> stringResource(R.string.field_capacity_range, Validation.MAX_CAPACITY_AH.toInt())
       }
   }
 
-@StringRes
-private fun invalidMessage(field: Field): Int =
+@Composable
+private fun invalidText(field: Field): String =
   when (field) {
-    Field.URL -> R.string.field_url_invalid
+    Field.URL -> stringResource(R.string.field_url_invalid)
     // The token text is never checked; INVALID means the Keystore failed to store it.
-    Field.TOKEN -> R.string.field_token_not_saved
+    Field.TOKEN -> stringResource(R.string.field_token_not_saved)
     Field.CHARGE,
     Field.POWER,
     Field.CURRENT,
@@ -53,11 +53,16 @@ private fun invalidMessage(field: Field): Int =
     Field.BALANCING,
     Field.INVERTER_MODE,
     Field.INVERTER_GRID,
-    Field.INVERTER_OUTPUT -> R.string.field_entity_invalid
+    Field.INVERTER_OUTPUT -> stringResource(R.string.field_entity_invalid)
     Field.PREFIX,
-    Field.INVERTER_PREFIX -> R.string.field_prefix_invalid
-    Field.INTERVAL -> R.string.field_interval_invalid
-    Field.CAPACITY -> R.string.field_capacity_invalid
-    Field.LEVEL_EDGE -> R.string.field_level_edge_invalid
-    Field.LEVEL_MARGIN -> R.string.field_level_margin_invalid
+    Field.INVERTER_PREFIX -> stringResource(R.string.field_prefix_invalid)
+    Field.INTERVAL -> stringResource(R.string.field_interval_invalid)
+    Field.CAPACITY -> stringResource(R.string.field_capacity_invalid)
+    Field.CELLS -> cellsText()
+    Field.LEVEL_EDGE -> stringResource(R.string.field_level_edge_invalid)
+    Field.LEVEL_MARGIN -> stringResource(R.string.field_level_margin_invalid)
   }
+
+/** Not a whole number and out of range share one text: it names both rules. */
+@Composable
+private fun cellsText(): String = stringResource(R.string.field_cells_range, Validation.MAX_CELLS)

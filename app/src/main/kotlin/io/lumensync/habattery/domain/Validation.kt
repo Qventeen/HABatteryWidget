@@ -27,6 +27,7 @@ enum class Field {
   BALANCING,
   INTERVAL,
   CAPACITY,
+  CELLS,
   LEVEL_EDGE,
   LEVEL_MARGIN,
   INVERTER_PREFIX,
@@ -51,6 +52,9 @@ object Validation {
   private val PREFIX = Regex("^[a-z0-9_]+$")
   private val ENTITY_ID = Regex("^[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+$")
   const val MAX_CAPACITY_AH = 10_000.0
+
+  /** JK-BMS boards take up to 24 cells; 32 leaves room for other boards. */
+  const val MAX_CELLS = 32
 
   fun connection(c: ConnectionSettings): List<FieldError> =
     listOfNotNull(urlError(c.url))
@@ -107,6 +111,10 @@ object Validation {
     return if (ah > 0.0 && ah <= MAX_CAPACITY_AH) emptyList()
     else listOf(FieldError(Field.CAPACITY, Problem.OUT_OF_RANGE))
   }
+
+  fun cells(count: Int?): List<FieldError> =
+    if (count == null || count in 1..MAX_CELLS) emptyList()
+    else listOf(FieldError(Field.CELLS, Problem.OUT_OF_RANGE))
 
   /**
    * Checks the levels of one [value]. At most one error per index, the first found: a missing or

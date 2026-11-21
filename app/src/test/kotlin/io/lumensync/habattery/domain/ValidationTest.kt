@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.Field.CAPACITY
+import io.lumensync.habattery.domain.Field.CELLS
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.INTERVAL
 import io.lumensync.habattery.domain.Field.INVERTER_GRID
@@ -94,6 +95,15 @@ class ValidationTest {
     assertEquals(listOf(FieldError(CAPACITY, OUT_OF_RANGE)), Validation.capacity(0.0))
     assertEquals(listOf(FieldError(CAPACITY, OUT_OF_RANGE)), Validation.capacity(10_000.1))
     assertEquals(listOf(FieldError(CAPACITY, OUT_OF_RANGE)), Validation.capacity(Double.NaN))
+  }
+
+  @Test
+  fun cells_rules() {
+    assertEquals(emptyList<FieldError>(), Validation.cells(null))
+    assertEquals(emptyList<FieldError>(), Validation.cells(1))
+    assertEquals(emptyList<FieldError>(), Validation.cells(32))
+    assertEquals(listOf(FieldError(CELLS, OUT_OF_RANGE)), Validation.cells(0))
+    assertEquals(listOf(FieldError(CELLS, OUT_OF_RANGE)), Validation.cells(33))
   }
 
   @Test

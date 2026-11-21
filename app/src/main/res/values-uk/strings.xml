@@ -142,8 +142,12 @@
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
 
-    <string name="capacity_title">Ємність батареї</string>
-    <string name="capacity_label">Ємність батареї (А·год)</string>
+    <string name="pack_title">Збірка</string>
+    <string name="pack_type_label">Тип</string>
+    <string name="pack_type_hint">Задає типові рівні напруги та струму. Власні рівні не змінюються. Li-ion — це NMC.</string>
+    <string name="cells_label">Комірок послідовно</string>
+    <string name="cells_hint">Використовується, коли датчик загальної напруги або середньої комірки порожній.</string>
+    <string name="capacity_label">Ємність (А·год)</string>
     <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
 
     <string name="appearance_title">Вигляд</string>
@@ -297,6 +301,7 @@
     <string name="field_interval_invalid">Введіть ціле число хвилин</string>
     <string name="field_capacity_invalid">Введіть число</string>
     <string name="field_capacity_range">Введіть значення більше 0 і не більше %1$d А·год</string>
+    <string name="field_cells_range">Введіть ціле число від 1 до %1$d</string>
     <string name="field_level_edge_invalid">Введіть число</string>
     <string name="field_level_edge_duplicate">Два рівні з одного боку не можуть мати однакову межу</string>
     <string name="field_level_edge_overlap">Залиште проміжок між рівнями ↓ і ↑</string>

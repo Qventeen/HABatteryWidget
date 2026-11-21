@@ -151,8 +151,15 @@
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
 
-    <string name="capacity_title">Battery capacity</string>
-    <string name="capacity_label">Battery capacity (Ah)</string>
+    <string name="pack_title">Pack</string>
+    <string name="pack_type_label">Type</string>
+    <string name="pack_type_hint">Sets the default voltage and current levels. Own levels stay as they are. Li-ion means NMC.</string>
+    <string name="battery_type_lifepo4" translatable="false">LiFePO4</string>
+    <string name="battery_type_li_ion" translatable="false">Li-ion</string>
+    <string name="battery_type_lto" translatable="false">LTO</string>
+    <string name="cells_label">Cells in series</string>
+    <string name="cells_hint">Used when the total voltage or average cell sensor is empty.</string>
+    <string name="capacity_label">Capacity (Ah)</string>
     <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
 
     <string name="appearance_title">Appearance</string>
@@ -315,6 +322,8 @@
     <string name="notify_summary_on">On</string>
     <string name="notify_summary_off">Off</string>
     <string name="capacity_summary">%1$s Ah</string>
+    <string name="pack_summary_cells" translatable="false">%1$dS</string>
+    <string name="pack_summary_join" translatable="false">%1$s · %2$s</string>
     <string name="section_show">Show %1$s</string>
     <string name="section_expanded">Expanded</string>
     <string name="section_collapsed">Collapsed</string>
@@ -328,6 +337,7 @@
     <string name="field_interval_invalid">Enter a whole number of minutes</string>
     <string name="field_capacity_invalid">Enter a number</string>
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
+    <string name="field_cells_range">Enter a whole number from 1 to %1$d</string>
     <string name="field_level_edge_invalid">Enter a number</string>
     <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
     <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
