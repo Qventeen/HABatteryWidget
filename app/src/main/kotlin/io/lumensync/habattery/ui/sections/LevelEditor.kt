@@ -19,6 +19,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.DropdownMenu
@@ -93,14 +94,30 @@ import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
 
-/** The picker's colours. Teal is left out: 0012 keeps it for the inverter, a stored teal stays. */
-private val PickerColors =
+/** The level picker's colours. Teal is left out: the modes use it; a stored teal stays. */
+internal val PickerColors =
   listOf(
     LevelColor.PLAIN,
     LevelColor.RED,
     LevelColor.ORANGE,
     LevelColor.AMBER,
     LevelColor.GREEN,
+    LevelColor.BLUE,
+    LevelColor.VIOLET,
+    LevelColor.GREY,
+  )
+
+/**
+ * The mode picker's colours, one row like the levels'. Teal is the Standby colour; "plain" is left
+ * out, because grey is already the neutral mode colour.
+ */
+internal val ModeColors =
+  listOf(
+    LevelColor.RED,
+    LevelColor.ORANGE,
+    LevelColor.AMBER,
+    LevelColor.GREEN,
+    LevelColor.TEAL,
     LevelColor.BLUE,
     LevelColor.VIOLET,
     LevelColor.GREY,
@@ -380,7 +397,7 @@ private fun SideChoice(side: LevelSide, onSelect: (LevelSide) -> Unit) {
 
 /** A level's bell; TalkBack reads it as a checkbox named after the level's [name]. */
 @Composable
-private fun BellToggle(on: Boolean, name: String, onChange: (Boolean) -> Unit) {
+internal fun BellToggle(on: Boolean, name: String, onChange: (Boolean) -> Unit) {
   IconToggleButton(checked = on, onCheckedChange = onChange) {
     Icon(
       painterResource(if (on) R.drawable.ic_bell else R.drawable.ic_bell_off),
@@ -397,7 +414,7 @@ private fun BellToggle(on: Boolean, name: String, onChange: (Boolean) -> Unit) {
  * is too narrow; TalkBack still reads them whole.
  */
 @Composable
-private fun LevelTextField(
+internal fun LevelTextField(
   text: String,
   onTextChange: (String) -> Unit,
   label: String,
@@ -408,6 +425,7 @@ private fun LevelTextField(
   isError: Boolean = false,
   supportingText: String? = null,
   trailingIcon: (@Composable () -> Unit)? = null,
+  onKeyboardAction: KeyboardActionHandler? = null,
 ) {
   // Plain remember, like the draft: an unsaved edit may be lost on rotation.
   val state = remember { TextFieldState(text) }
@@ -424,6 +442,7 @@ private fun LevelTextField(
     trailingIcon = trailingIcon,
     isError = isError,
     keyboardOptions = keyboardOptions,
+    onKeyboardAction = onKeyboardAction,
     lineLimits = TextFieldLineLimits.SingleLine,
   )
 }
@@ -433,7 +452,7 @@ private fun LevelTextField(
  * the start and cuts its text only when that width is smaller.
  */
 @Composable
-private fun TypeMenu(type: LevelType, modifier: Modifier = Modifier, onSelect: (LevelType) -> Unit) {
+internal fun TypeMenu(type: LevelType, modifier: Modifier = Modifier, onSelect: (LevelType) -> Unit) {
   var expanded by remember { mutableStateOf(false) }
   Box(modifier) {
     OutlinedButton(
@@ -463,20 +482,21 @@ private fun TypeMenu(type: LevelType, modifier: Modifier = Modifier, onSelect: (
 }
 
 /**
- * Plain (an empty ring, like "no icon") and the colours. The [type]'s own colour carries a dot;
- * picking it stores no colour, so the level keeps following its type. A [shown] colour the picker
- * does not offer marks no chip.
+ * The [colors] as chips; plain is an empty ring, like "no icon". The [type]'s own colour carries a
+ * dot; picking it stores no colour, so the item keeps following its type. A [shown] colour the
+ * picker does not offer marks no chip.
  */
 @Composable
-private fun ColorChips(
+internal fun ColorChips(
   type: LevelType,
   shown: LevelColor,
   palette: WidgetPalette,
+  colors: List<LevelColor> = PickerColors,
   onSelect: (LevelColor?) -> Unit,
 ) {
   val outline = MaterialTheme.colorScheme.outlineVariant
   FlowRow(Modifier.fillMaxWidth().selectableGroup()) {
-    PickerColors.forEach { option ->
+    colors.forEach { option ->
       val name = stringResource(colorLabel(option))
       val isDefault = option == type.defaultColor
       ChoiceChip(

@@ -69,6 +69,22 @@
     <string name="mode_word_charging">заряд</string>
     <string name="mode_word_fault">аварія</string>
     <string name="mode_other_label">інший (текст HA)</string>
+    <string name="modes_title">Режими</string>
+    <string name="modes_summary_default">Стандартні режими</string>
+    <string name="modes_summary_custom">Власні режими</string>
+    <string name="mode_other_hint">текст Home Assistant як є</string>
+    <string name="mode_name_hint">Порожньо = %1$s</string>
+    <string name="mode_texts_label">Тексти Home Assistant</string>
+    <string name="mode_add_text_label">Додати текст</string>
+    <string name="mode_add_text_placeholder">Введіть текст, потім +</string>
+    <string name="mode_add_text_hint">Точно як у Home Assistant</string>
+    <string name="mode_remove_text">Видалити %1$s</string>
+    <string name="mode_icon_button">Іконка: %1$s</string>
+    <string name="mode_delete">Видалити режим</string>
+    <string name="mode_add">Додати режим</string>
+    <string name="mode_now">Зараз: «%1$s» → %2$s</string>
+    <string name="modes_default_title">Повернути стандартні режими?</string>
+    <string name="modes_default_text">Ваші режими, тексти й назви буде видалено.</string>
 
     <string name="inverter_widget_name">Інвертор</string>
     <string name="inverter_widget_description">Режим інвертора, напруга входу мережі та виходу з Home Assistant</string>

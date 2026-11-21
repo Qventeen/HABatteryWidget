@@ -71,6 +71,7 @@ import io.lumensync.habattery.ui.sections.HomeScaleSection
 import io.lumensync.habattery.ui.sections.InverterDisplaySection
 import io.lumensync.habattery.ui.sections.InverterEntitiesSection
 import io.lumensync.habattery.ui.sections.InverterIconsSection
+import io.lumensync.habattery.ui.sections.ModesSection
 import io.lumensync.habattery.ui.sections.InverterPreviewCard
 import io.lumensync.habattery.ui.sections.NotificationSection
 import io.lumensync.habattery.ui.sections.RefreshSection
@@ -329,6 +330,13 @@ private fun InverterTab(
     actions.resetInverterSizes,
   )
   InverterIconsSection(strip, actions.saveInverterIcon)
+  ModesSection(
+    settings.textLevels,
+    liveText = (inverter as? InverterWidgetModel.Data)?.mode?.text,
+    errors = state.errors,
+    onSave = actions.saveTextLevels,
+    onUseDefaults = actions.useTextDefaults,
+  )
   ColorsSection(
     settings.colorLevels,
     // The grid and output edges are fixed volts: no capacity or cell count.

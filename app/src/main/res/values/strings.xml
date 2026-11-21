@@ -72,6 +72,22 @@
     <string name="mode_word_charging">charging</string>
     <string name="mode_word_fault">fault</string>
     <string name="mode_other_label">other (HA text)</string>
+    <string name="modes_title">Modes</string>
+    <string name="modes_summary_default">Default modes</string>
+    <string name="modes_summary_custom">Custom modes</string>
+    <string name="mode_other_hint">the Home Assistant text as it is</string>
+    <string name="mode_name_hint">Blank = %1$s</string>
+    <string name="mode_texts_label">Home Assistant texts</string>
+    <string name="mode_add_text_label">Add text</string>
+    <string name="mode_add_text_placeholder">Type a text, then +</string>
+    <string name="mode_add_text_hint">Exactly as Home Assistant shows it</string>
+    <string name="mode_remove_text">Remove %1$s</string>
+    <string name="mode_icon_button">Icon of %1$s</string>
+    <string name="mode_delete">Delete mode</string>
+    <string name="mode_add">Add mode</string>
+    <string name="mode_now">Now: “%1$s” → %2$s</string>
+    <string name="modes_default_title">Use the default modes?</string>
+    <string name="modes_default_text">Your modes, texts and names are deleted.</string>
 
     <!-- Inverter strip widget. -->
     <string name="inverter_widget_name">Inverter</string>

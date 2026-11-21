@@ -72,11 +72,14 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `WidgetColors(theme)` is the only place where `ThemeChoice` becomes widget colours; layout
   code receives colours only (`WidgetLook.colors`).
 - `ui/`: Compose screen with a bottom bar of three tabs (`AppTab`: Battery, Inverter, Common),
-  `MainViewModel`, `LevelDraft` (editor drafts and `middleSpan`),
+  `MainViewModel`, `LevelDraft` (editor drafts and `middleSpan`), `TextLevelDraft` (the mode
+  editor's drafts: add / delete a mode, add / remove a text),
   `PreviewTab` (battery size tabs, first-tab rule),
   `SensorSearch` / `SensorFill` (Fill: what HA answered and the new Entities draft), `sections/`
   (`GlancePreview` hosts both previews; `WidgetPreviewCard`, `InverterPreviewCard`; the Inverter
-  sections `InverterEntitiesSection`, `InverterDisplaySection`, `InverterIconsSection`;
+  sections `InverterEntitiesSection`, `InverterDisplaySection`, `InverterIconsSection` (the two
+  voltage icons), `ModesSection` / `ModeEditor` (spec 0014: the modes' texts, words, colours,
+  icons, bells and types);
   `HomeScaleSection` on Common; `AddWidgetRow`), `theme/`.
 
 Dependency rule: `ui`, `widget`, `system`, `data` → `domain`. `domain` depends

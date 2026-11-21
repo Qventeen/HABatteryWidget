@@ -55,8 +55,9 @@ fun InverterIconsSection(
     IconSlot.entries.forEach { slot -> SlotRow(slot, inverter.icon(slot)) { picking = slot } }
     picking?.let { slot ->
       IconPicker(
-        slot = slot,
+        title = stringResource(iconSlotRes(slot)),
         selected = inverter.icon(slot),
+        default = slot.default,
         onPick = {
           picking = null
           onSave(slot, it)
@@ -84,11 +85,12 @@ private fun SlotRow(slot: IconSlot, icon: InverterIcon, onClick: () -> Unit) {
   }
 }
 
-/** Every inverter icon as the level icon picker's chips; a dot marks the place's default. */
+/** Every inverter icon as the level icon picker's chips; a dot marks the [default], if any. */
 @Composable
-private fun IconPicker(
-  slot: IconSlot,
+internal fun IconPicker(
+  title: String,
   selected: InverterIcon,
+  default: InverterIcon?,
   onPick: (InverterIcon) -> Unit,
   onDismiss: () -> Unit,
 ) {
@@ -97,12 +99,12 @@ private fun IconPicker(
     confirmButton = {
       TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
     },
-    title = { Text(stringResource(iconSlotRes(slot))) },
+    title = { Text(title) },
     text = {
       FlowRow(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).selectableGroup()) {
         InverterIcon.entries.forEach { option ->
           val name = stringResource(option.label())
-          val isDefault = option == slot.default
+          val isDefault = option == default
           val description =
             if (isDefault) stringResource(R.string.inverter_icon_default, name) else name
           ChoiceChip(
