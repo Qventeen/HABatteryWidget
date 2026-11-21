@@ -6,7 +6,6 @@ import io.lumensync.habattery.ui.AppTab.INVERTER
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.InverterWidgetReceiver
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 

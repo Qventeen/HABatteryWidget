@@ -34,13 +34,13 @@ import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.widget.WidgetPalette
 import kotlin.math.roundToInt
 
+/** The boolean intent extra of an inverter notification's tap; the app opens its Inverter tab. */
+const val EXTRA_INVERTER_ALERT = "io.lumensync.habattery.extra.INVERTER_ALERT"
+
 /**
  * Posts level and inverter mode notifications; the levels use one channel per level type. Never
  * asks for the permission; the screen does that.
  */
-/** The boolean intent extra of an inverter notification's tap; the app opens its Inverter tab. */
-const val EXTRA_INVERTER_ALERT = "io.lumensync.habattery.extra.INVERTER_ALERT"
-
 class AndroidLevelNotifier(context: Context) : LevelNotifier {
   private val context = context.applicationContext
   private val formatters = Formatters(this.context)
