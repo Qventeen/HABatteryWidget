@@ -379,17 +379,32 @@ class MainViewModelTest {
     assertEquals(1, source.calls)
   }
 
-  @Test fun resetWidgetSettings_setsFontsTo50AndScaleTo100() = runTest(dispatcher) {
+  @Test fun resetBatterySizes_setsFontsTo50_keepsTheScale() = runTest(dispatcher) {
     val vm = start()
     vm.saveFontPercents(FontPercents(soc = 90, small = 30))
     vm.saveHomeScale(128)
     advanceUntilIdle()
     val before = widgets.refreshes
-    vm.resetWidgetSettings()
+    vm.resetBatterySizes()
     advanceUntilIdle()
     assertEquals(FontPercents(), state.settings.fontPercents)
-    assertEquals(100, state.settings.homeScalePercent)
+    assertEquals(128, state.settings.homeScalePercent)
     assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun resetHomeScale_setsTheScaleTo100_keepsTheFonts() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveFontPercents(FontPercents(soc = 90, small = 30))
+    vm.saveHomeScale(128)
+    advanceUntilIdle()
+    val before = widgets.refreshes
+    vm.resetHomeScale()
+    advanceUntilIdle()
+    assertEquals(100, state.settings.homeScalePercent)
+    assertEquals(FontPercents(soc = 90, small = 30), state.settings.fontPercents)
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
   }
 
   @Test fun setNotificationsOn_saves() = runTest(dispatcher) {

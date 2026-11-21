@@ -86,9 +86,14 @@
     <string name="preview_size" translatable="false">%1$d×%2$d</string>
     <!-- TalkBack's name for the drawn widget; %1$s is the size tab, such as 4×2. -->
     <string name="preview_description">Widget preview, %1$s</string>
+    <!-- The bottom navigation bar's tabs. -->
+    <string name="tab_battery">Battery</string>
+    <string name="tab_inverter">Inverter</string>
+    <string name="tab_common">Common</string>
     <string name="action_refresh_now">Refresh now</string>
-    <string name="action_add_widget">Add widget</string>
+    <string name="action_add_widget">Add to home screen</string>
     <string name="action_add_widget_hint">The home screen adds it as 4×2. Resize it there.</string>
+    <string name="action_add_strip_hint">The home screen adds it as 3×1. Resize it there.</string>
     <string name="action_save">Save</string>
     <string name="dialog_cancel">Cancel</string>
 
@@ -180,6 +185,7 @@
     <string name="widget_scale_label">Home-screen scale</string>
     <string name="widget_scale_hint">Only if your home screen draws widgets smaller. Most phones: 100 %.</string>
     <string name="widget_reset_sizes">Reset sizes</string>
+    <string name="widget_reset_scale">Reset scale</string>
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 

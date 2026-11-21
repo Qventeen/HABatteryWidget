@@ -40,4 +40,22 @@ class MainUiStateTest {
     assertFalse(state(notConfigured, TokenType.USER, SyncError.Unauthorized).showTokenTypeHint)
     assertFalse(state(notConfigured, TokenType.ADMIN, SyncError.Unreachable).showTokenTypeHint)
   }
+
+  @Test
+  fun connectionMissing_noUrlOrNoToken() {
+    val settings = configuredSettings()
+    val noUrl = settings.copy(connection = settings.connection.copy(url = " "))
+
+    assertFalse(MainUiState(settings = settings, hasToken = true).connectionMissing)
+    assertTrue(MainUiState(settings = noUrl, hasToken = true).connectionMissing)
+    assertTrue(MainUiState(settings = settings, hasToken = false).connectionMissing)
+  }
+
+  /** Unlike the battery's setup rule, a blank charge entity leaves the connection set up. */
+  @Test
+  fun connectionMissing_ignoresTheEntities() {
+    val settings = configuredSettings(battery = false)
+
+    assertFalse(MainUiState(settings = settings, hasToken = true).connectionMissing)
+  }
 }

@@ -35,11 +35,12 @@ fun Settings.clamped(): Settings =
     inverter = inverter.copy(fontPercents = inverter.fontPercents.clamped()),
   )
 
-/** What the Widget section's text-size summary reports: any font off 50 % or the scale off 100 %. */
+/**
+ * What the battery Widget section's text-size summary reports: any battery font off 50 %. The
+ * home-screen scale has its own section.
+ */
 val Settings.textSizeChanged: Boolean
-  get() =
-    FontGroup.entries.any { fontPercents[it] != FontPercents.DEFAULT } ||
-      homeScalePercent != HomeScale.DEFAULT
+  get() = FontGroup.entries.any { fontPercents[it] != FontPercents.DEFAULT }
 
 /**
  * The home-screen scale in percent (spec 0007, §8): some launchers draw widgets smaller than their

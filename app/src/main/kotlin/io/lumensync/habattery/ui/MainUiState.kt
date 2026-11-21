@@ -28,4 +28,11 @@ data class MainUiState(
     get() =
       SyncError.Unauthorized in listOf(overview?.error, inverterError) &&
         settings.connection.tokenType == TokenType.ADMIN
+
+  /**
+   * No URL, or no token of the selected type: both widgets need these, so the app opens on Common
+   * and unfolds Connection and Token. The entities do not count; each widget tab has its own.
+   */
+  val connectionMissing: Boolean
+    get() = settings.connection.url.isBlank() || !hasToken
 }

@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.os.Bundle
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.LayoutSpec
 import kotlin.math.min
 
@@ -38,6 +39,12 @@ fun reportedWidgetSize(options: Bundle, portrait: Boolean): DpSize {
   }
 }
 
+/**
+ * The widget an intent names (placed, reconfigured or tapped): its provider class name (null when
+ * Android no longer knows the widget) and the size Android reports for it, 0 × 0 while it has none.
+ */
+data class NamedWidget(val provider: String?, val size: DpSize)
+
 /** The preview's size tabs (spec 0006, 5.2): each v5 layout with its home-screen cells. */
 enum class PreviewTab(val layout: LayoutSpec, val columns: Int, val rows: Int) {
   TAB_4X2(LayoutSpec.L4x2, 4, 2),
@@ -53,21 +60,20 @@ enum class PreviewTab(val layout: LayoutSpec, val columns: Int, val rows: Int) {
     }
 
     /**
-     * The tab of the widget the app was opened for (spec 0006, B1): [configured] (placement or
-     * reconfigure) before [tapped] (the widget the user tapped). Each is the size Android reports
-     * for it, 0 × 0 while it has none, or null when the intent names no such widget. Null when
-     * neither is named.
+     * The tab of the widget the app was opened for ([opened], or null when the intent names none).
+     * Only a battery widget names one: a strip's one-row size is no battery layout (spec 0012).
      */
-    fun named(configured: DpSize?, tapped: DpSize?): PreviewTab? = (configured ?: tapped)?.let(::forSize)
+    fun named(opened: NamedWidget?): PreviewTab? =
+      opened?.takeIf { it.provider == BatteryWidgetReceiver::class.java.name }?.size?.let(::forSize)
 
     /**
-     * The tab the preview opens on (spec 0006, B1): the configured widget, else the tapped one,
-     * else the first placed widget ([firstPlaced], same kind of size); none → 4×2. The first known
+     * The tab the preview opens on (spec 0006): the battery widget the app was opened for, else the
+     * first placed battery widget ([firstPlaced], its reported size); none → 4×2. The first known
      * size picks the layout the home screen shows at it ([LayoutSpec.forSize]). The choice is not
      * stored.
      */
-    fun first(configured: DpSize?, tapped: DpSize?, firstPlaced: DpSize?): PreviewTab =
-      named(configured, tapped) ?: firstPlaced?.let(::forSize) ?: TAB_4X2
+    fun first(opened: NamedWidget?, firstPlaced: DpSize?): PreviewTab =
+      named(opened) ?: firstPlaced?.let(::forSize) ?: TAB_4X2
 
     /**
      * How much a preview [designWidth] dp wide shrinks to fit [availableWidth] dp, keeping its
