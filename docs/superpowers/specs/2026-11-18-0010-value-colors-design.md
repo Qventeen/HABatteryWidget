@@ -210,7 +210,7 @@ Rules:
   | SOC ring | SOC levels; the SOC number stays plain |
   | Voltage pill | voltage levels (default: plain; LiFePO4 levels since 2026-11-20, §3.5), **plus a direction arrow** like the current pill (new): up while charging, down while discharging, from the same current sign as the main pill |
   | Current/power pill | levels by intensity, **one list for charge and one for discharge**, because a battery can have different limits each way; idle is grey; defaults in §3.5; the arrow stays. A high level can notify (0011), for example a very high discharge current |
-  | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list. Its text gets a label like "Δ 12 mV": "avg 3.312 V", Ukrainian "сер. 3,312 В" (owner, 2026-11-20, round 4) |
+  | Average cell pill | the voltage levels, each edge divided by the cell count (owner, 2026-11-18); no own list. A battery outline icon stands before the cell voltage, like the thermometer on the temperature pill; TalkBack reads "Average cell voltage" (owner, 2026-11-21; it replaced the label "avg 3.312 V" / "сер. 3,312 В" of 2026-11-20, round 4) |
   | Cell delta, battery temperature, MOSFET pills | levels (defaults §3.3 and §3.5; the worst battery sensor wins) |
   | Value under SOC (kWh or Ah) | plain (it repeats SOC) |
   | Inverter values | later (0012) |
