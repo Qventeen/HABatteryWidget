@@ -11,7 +11,7 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 
-/** A cell pill: its text, its level colour and, for a temperature, its icon and level icon. */
+/** A cell pill: text, level colour, an icon (average cell, temperatures) and a level icon. */
 internal data class CellPill(
   val text: String,
   val color: LevelColor,
@@ -67,7 +67,12 @@ internal data class DataTexts(
         main = texts.main(m),
         cells =
           listOf(
-            CellPill(texts.averageCell(m), m.averageCellLook.color),
+            CellPill(
+              texts.averageCell(m),
+              m.averageCellLook.color,
+              R.drawable.ic_battery,
+              R.string.widget_average_cell,
+            ),
             CellPill(texts.delta(m), m.deltaLook.color),
           ) +
             battery +

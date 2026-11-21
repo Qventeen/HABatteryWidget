@@ -205,9 +205,16 @@
                     android:gravity="center"
                     android:orientation="horizontal"
                     android:paddingHorizontal="4dp">
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_battery"
+                        android:tint="#1B1D1C" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
                         android:maxLines="1"
                         android:text="@string/preview_cell"
                         android:textColor="#1B1D1C"

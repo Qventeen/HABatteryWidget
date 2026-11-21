@@ -37,11 +37,11 @@
     <string name="widget_battery_temperature">Температура батареї</string>
     <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
+    <string name="widget_average_cell">Середня напруга комірки</string>
     <string name="widget_auto_on">Автооновлення увімкнено</string>
     <string name="widget_auto_off">Автооновлення вимкнено</string>
     <string name="widget_open_app">Відкрити застосунок</string>
     <string name="delta_label">Δ %1$s</string>
-    <string name="average_cell_label">сер. %1$s</string>
 
     <string name="notification_channel_critical">Критичні</string>
     <string name="notification_channel_warning">Попередження</string>
@@ -261,6 +261,6 @@
     <string name="preview_kwh">4,58 кВт·год</string>
     <string name="preview_voltage">26,50 В</string>
     <string name="preview_current">10,0 А</string>
-    <string name="preview_cell">сер. 3,312 В</string>
+    <string name="preview_cell">3,312 В</string>
     <string name="preview_delta">Δ 12 мВ</string>
 </resources>
