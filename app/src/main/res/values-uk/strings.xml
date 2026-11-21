@@ -76,7 +76,7 @@
     <string name="inverter_grid_voltage">Напруга входу мережі</string>
     <string name="inverter_output_voltage">Напруга виходу</string>
 
-    <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
+    <string name="overview_setup">Вкажіть URL Home Assistant і токен на вкладці «Загальні», а сутність заряду — нижче.</string>
     <string name="preview_description">Попередній перегляд віджета, %1$s</string>
     <string name="tab_battery">Батарея</string>
     <string name="tab_inverter">Інвертор</string>
