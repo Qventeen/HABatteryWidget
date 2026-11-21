@@ -2,53 +2,29 @@ package io.lumensync.habattery.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.glance.GlanceId
 import androidx.glance.LocalSize
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.provideContent
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
-import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.Settings
-import kotlinx.coroutines.flow.first
 
 /** The inverter strip. Renders from local data only (cache, settings, token presence). */
 class InverterWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
   override val sizeMode: SizeMode =
     SizeMode.Responsive(InverterLayoutSpec.entries.map { it.bucket }.toSet())
 
-  override suspend fun provideGlance(context: Context, id: GlanceId) {
-    val container = context.container
-    // First values are read up front, so the first frame shows real data, not empty defaults.
-    val initialCache = container.readingCache.state.first()
-    val initialSettings = container.settingsRepository.settings.first()
-    val initialSavedTypes = container.tokenStore.savedTypes.first()
-    val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-
-    provideContent {
-      val cache by container.readingCache.state.collectAsState(initialCache)
-      val settings by container.settingsRepository.settings.collectAsState(initialSettings)
-      val savedTypes by container.tokenStore.savedTypes.collectAsState(initialSavedTypes)
-      val config by container.configWatcher.config.collectAsState()
-      // A new key makes a new composition: the texts and their fitted sizes follow the language
-      // and the font scale, as in the battery widget.
-      key(config) {
-        val hasToken = settings.connection.tokenType in savedTypes
-        InverterStrip(cache, settings, hasToken, appWidgetId)
-      }
+  override suspend fun provideGlance(context: Context, id: GlanceId) =
+    provideStoredContent(context, id) { cache, settings, hasToken, appWidgetId ->
+      InverterStrip(cache, settings, hasToken, appWidgetId)
     }
-  }
 }
 
 /**
