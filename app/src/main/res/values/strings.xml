@@ -310,4 +310,51 @@
     <string name="preview_delta">Δ 12 mV</string>
     <string name="preview_battery_temperature" translatable="false">25 °C</string>
     <string name="preview_mosfet_temperature" translatable="false">27 °C</string>
+
+    <!-- Inverter icon names, read by screen readers and shown in the picker. -->
+    <string name="inv_icon_tower">Transmission tower</string>
+    <string name="inv_icon_location_city">City</string>
+    <string name="inv_icon_electrical_services">Electrical plug</string>
+    <string name="inv_icon_power_input">Power input</string>
+    <string name="inv_icon_electric_meter">Electric meter</string>
+    <string name="inv_icon_factory">Factory</string>
+    <string name="inv_icon_apartment">Apartment block</string>
+    <string name="inv_icon_offline_bolt">Bolt in a circle</string>
+    <string name="inv_icon_bolt">Bolt</string>
+    <string name="inv_icon_electric_bolt">Electric bolt</string>
+    <string name="inv_icon_battery_charging_full">Charging battery</string>
+    <string name="inv_icon_battery_full">Full battery</string>
+    <string name="inv_icon_battery_5_bar">Battery, five bars</string>
+    <string name="inv_icon_battery_android_full">Full phone battery</string>
+    <string name="inv_icon_battery_horiz_075">Battery, three quarters</string>
+    <string name="inv_icon_energy_savings_leaf">Energy-saving leaf</string>
+    <string name="inv_icon_nest_eco_leaf">Eco leaf</string>
+    <string name="inv_icon_energy_program_saving">Energy saving program</string>
+    <string name="inv_icon_solar_power">Solar power</string>
+    <string name="inv_icon_help">Help</string>
+    <string name="inv_icon_question_mark">Question mark</string>
+    <string name="inv_icon_device_unknown">Unknown device</string>
+    <string name="inv_icon_pending">Pending</string>
+    <string name="inv_icon_info">Information</string>
+    <string name="inv_icon_power">Power plug</string>
+    <string name="inv_icon_home">Home</string>
+    <string name="inv_icon_house">House</string>
+    <string name="inv_icon_cottage">Cottage</string>
+    <string name="inv_icon_home_work">Home and office</string>
+    <string name="inv_icon_home_lightning_bolt">House with a bolt</string>
+    <string name="inv_icon_outlet">Outlet</string>
+    <string name="inv_icon_power_settings_new">Power button</string>
+    <string name="inv_icon_restart_alt">Restart</string>
+    <string name="inv_icon_mode_standby">Standby</string>
+    <string name="inv_icon_bedtime">Moon</string>
+    <string name="inv_icon_alt_route">Alternative route</string>
+    <string name="inv_icon_call_split">Split</string>
+    <string name="inv_icon_swap_horiz">Swap</string>
+    <string name="inv_icon_charger">Charger</string>
+    <string name="inv_icon_battery_charging_90">Battery charging at 90 percent</string>
+    <string name="inv_icon_ev_charger">Electric vehicle charger</string>
+    <string name="inv_icon_error">Error</string>
+    <string name="inv_icon_report">Report</string>
+    <string name="inv_icon_warning">Warning</string>
+    <string name="inv_icon_dangerous">Danger</string>
 </resources>
