@@ -1,9 +1,9 @@
 # Battery profile (type and cells) — design
 
 - **Date:** 2026-11-20. Detailed 2026-11-21.
-- **Status:** detailed, waiting for the owner's approval. The owner let me
-  make the open calls (2026-11-21: "as you suggest"); each one is marked
-  "my call" below.
+- **Status:** approved by the owner (2026-11-21). The owner let me make the
+  open calls (2026-11-21: "as you suggest"); each one is marked "my call"
+  below.
 - **Set:** `0013`, epic `epic-widget-improvements`. Code on branch
   `0013-battery-profile`, from the epic. Build order (owner, 2026-11-21):
   next after 0012, before 0014.
