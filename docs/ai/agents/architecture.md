@@ -13,9 +13,9 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
 - `App`, `AppContainer` (builds and wires every object once; the only wiring
   place), `MainActivity` (launcher and configure activity of both widgets; `singleTop`; reads
   `EXTRA_TAPPED_WIDGET_ID`). The first tab is `AppTabs.first`: a widget opens its own tab,
-  else a missing connection opens Common, else Battery. The first battery preview tab
-  (`PreviewTab.first`) is battery-only: configured, tapped, first placed, 4×2; `StripRequest`
-  picks the strip size.
+  else the tab an alert asked for (`AppTab.EXTRA_OPEN_TAB`), else a missing connection opens
+  Common, else Battery. The first battery preview tab (`PreviewTab.first`) is configured, tapped,
+  first placed, 4×2; `StripRequest.first` does the same for the strip, ending on 3×1.
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
   the per-value alert state), `ModeAlerts` (the inverter mode change to post), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
@@ -37,7 +37,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   widget, screen and notification.
 - `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidLevelNotifier` (one channel per level
   type; also posts mode changes; notification ids: 100 + `LevelValue` ordinal, so 107 and 108 for
-  the grid and output voltage, and 150 for the mode),
+  the grid and output voltage, and 150 for the mode; each is also its content intent's request
+  code, and the inverter ones carry `AppTab.EXTRA_OPEN_TAB` to open the Inverter tab),
   `AppLanguage` (per-app language through `LocaleManager`, Android 13+ only; the system
   stores it), `ConfigWatcher` (`App` reports language and font-scale changes, and night mode
   below API 31; a real change redraws widgets) and `LocaleChangedReceiver` (redraws on

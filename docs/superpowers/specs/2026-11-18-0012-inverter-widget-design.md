@@ -246,11 +246,12 @@ EN 50160).
 | No grid / No power | 0 V | Info (blue) | Critical (red) |
 | Low | 100 V | Warning (amber) | Warning (amber) |
 | Normal | 207 V | Normal (green) | Normal (green) |
-| High | 254 V | Warning (amber) | Warning (amber) |
+| High | 254 V | Critical (red) | Critical (red) |
 
 Grid 0 V is blue, not red: an outage is normal for this system and the mode
 already says "Off-Grid"; red for hours would be alarm fatigue. Output 0 V
-is red: the house has no power.
+is red: the house has no power. Low voltage is a warning; high voltage is
+a danger (it can damage devices), so it is red for both.
 
 ### 3.5 Notifications
 
@@ -267,10 +268,12 @@ is red: the house has no power.
   text notifies; the first value after install is only stored (0011
   rule). A change to or from `unavailable` / `unknown` (the ESP32 is
   offline) is not a mode change.
-- **Voltage bells:** 0011 model. Default bell: grid input "Low"
-  (undervoltage, 100–206 V). The grid "No grid" level has no bell by
-  default, so a grid loss gives one notification (the mode change), not
-  two. Re-arm margin (0011 §3.3): default 5 V for both voltages (owner,
+- **Voltage bells:** 0011 model. Default bells: grid "Low"
+  (undervoltage, 100–206 V), grid "High" and output "High" (254 V and up,
+  Critical). The grid "No grid" level has no bell by default, so a grid
+  loss gives one notification (the mode change), not two. In grid mode
+  the output follows the grid, so one high-voltage event can ring both
+  "High" bells (owner accepted). Re-arm margin (0011 §3.3): default 5 V for both voltages (owner,
   2026-11-19; about 2 %): the grid often hovers near 207 V, so a smaller
   margin would ring the "Low" bell many times a day. Editable per value
   in the value's editor, like every 0011 value (owner made margins editable the
@@ -316,3 +319,21 @@ is red: the house has no power.
 
 - No change to the battery widget's layouts or its design boards.
 - No second app and no second sync schedule.
+
+## 7. Owner decisions while building (2026-11-21)
+
+- **Q1, edges:** ↓99 (No grid / No power), ↓206 (Low), ↕207–253 (Normal),
+  ↑254 (High).
+- **Q2:** a missing voltage shows "—" in the plain colour.
+- **Q3:** Battery "Reset sizes" resets the battery fonts only. Common has
+  its own scale reset.
+- **Q4:** mode alerts follow the main Notifications switch, and the hint
+  under it mentions them.
+- **High voltage:** ↑254 is Critical with a bell, for both voltages.
+- **Alert tap:** grid, output and mode notifications open the app on the
+  Inverter tab; battery notifications open it as before.
+- **Strip preview:** it starts at the size of the first placed strip
+  (3×1 when none is placed), like the battery preview.
+- **Fit check:** it ran after the Inverter tab existed (no entities could
+  be entered before). The owner confirmed the strip sizes on the phone
+  with no tuning.

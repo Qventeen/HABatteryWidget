@@ -240,6 +240,9 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 - No update time and no buttons on the strip; a tap opens the app on the
   Inverter tab.
 
+The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
+5×1) with no tuning.
+
 ### Icons and colours
 
 - Modes (spec 0012 mode table; text and soft background from the 0010
