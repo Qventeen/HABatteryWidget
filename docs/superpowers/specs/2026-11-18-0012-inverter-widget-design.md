@@ -2,6 +2,7 @@
 
 - **Date:** 2026-11-18. Detailing started 2026-11-19.
 - **Status:** approved by the owner (2026-11-19), after the builder check.
+  Built, and accepted by the owner after the phone check (2026-11-21).
   Plan: `docs/superpowers/plans/2026-11-19-0012-inverter-widget.md`.
 - **Set:** `0012`, epic `epic-widget-improvements`. Code later on branch
   `0012-inverter-widget`, from the epic.
@@ -319,6 +320,9 @@ a danger (it can damage devices), so it is red for both.
 
 - No change to the battery widget's layouts or its design boards.
 - No second app and no second sync schedule.
+- No editing of the mode table in the app: which ESP32 texts match a mode,
+  the shown mode names and the mode alerts stay fixed in code. Spec 0014
+  ("Mode editor", concept) takes this up after 0013 (owner, 2026-11-21).
 
 ## 7. Owner decisions while building (2026-11-21)
 
