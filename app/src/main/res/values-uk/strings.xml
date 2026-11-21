@@ -146,15 +146,12 @@
     <string name="pack_type_label">Тип</string>
     <string name="pack_type_hint">Задає типові рівні напруги та струму. Власні рівні не змінюються. Li-ion — це NMC.</string>
     <string name="cells_label">Комірок послідовно</string>
-    <string name="cells_hint">Використовується, коли датчик загальної напруги або середньої комірки порожній.</string>
-    <plurals name="cells_hint_counted">
-        <item quantity="one">За датчиками зараз %d комірка. Це число використовується, лише коли датчик загальної напруги або середньої комірки порожній.</item>
-        <item quantity="few">За датчиками зараз %d комірки. Це число використовується, лише коли датчик загальної напруги або середньої комірки порожній.</item>
-        <item quantity="many">За датчиками зараз %d комірок. Це число використовується, лише коли датчик загальної напруги або середньої комірки порожній.</item>
-        <item quantity="other">За датчиками зараз %d комірки. Це число використовується, лише коли датчик загальної напруги або середньої комірки порожній.</item>
-    </plurals>
+    <string name="cells_counted">За датчиками: %1$d</string>
+    <string name="cells_info">Про кількість комірок</string>
+    <string name="cells_tip">Використовується, лише коли датчик загальної напруги або середньої комірки порожній. Поки обидва працюють, застосунок рахує комірки за ними.</string>
     <string name="capacity_label">Ємність (А·год)</string>
-    <string name="capacity_hint">Використовується, коли датчик повної ємності порожній або недоступний.</string>
+    <string name="capacity_info">Про ємність</string>
+    <string name="capacity_tip">Використовується, коли датчик повної ємності порожній або недоступний.</string>
 
     <string name="appearance_title">Вигляд</string>
     <string name="appearance_theme">Тема</string>

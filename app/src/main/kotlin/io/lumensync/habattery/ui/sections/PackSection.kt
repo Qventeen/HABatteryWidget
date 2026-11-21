@@ -72,26 +72,27 @@ fun PackSection(
       error = errors.errorFor(Field.CELLS),
       hint = cellsHint(LocalResources.current, countedCells),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+      trailingIcon = { InfoTip(R.string.cells_tip, R.string.cells_info) },
     )
     SettingsTextField(
       value = capacityText,
       onValueChange = { capacityText = it },
       label = stringResource(R.string.capacity_label),
       error = errors.errorFor(Field.CAPACITY),
-      hint = stringResource(R.string.capacity_hint),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+      trailingIcon = { InfoTip(R.string.capacity_tip, R.string.capacity_info) },
     )
     SaveButton { onSave(cellsText, capacityText, locale) }
   }
 }
 
 /**
- * The hint under the cell count. While the reading counts the cells, the typed count is not used,
- * so the hint names the count that is: a typed number that differs looks ignored otherwise.
+ * The line under the cell count: the count the reading gives, which wins over a typed one. A typed
+ * number that differs looks ignored otherwise. No count, no line: the info tip says when the typed
+ * count is used.
  */
-internal fun cellsHint(resources: Resources, countedCells: Int?): String =
-  countedCells?.let { resources.getQuantityString(R.plurals.cells_hint_counted, it, it) }
-    ?: resources.getString(R.string.cells_hint)
+internal fun cellsHint(resources: Resources, countedCells: Int?): String? =
+  countedCells?.let { resources.getString(R.string.cells_counted, it) }
 
 @StringRes
 private fun batteryTypeLabel(type: BatteryType): Int =

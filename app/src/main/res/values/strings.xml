@@ -158,13 +158,12 @@
     <string name="battery_type_li_ion" translatable="false">Li-ion</string>
     <string name="battery_type_lto" translatable="false">LTO</string>
     <string name="cells_label">Cells in series</string>
-    <string name="cells_hint">Used when the total voltage or average cell sensor is empty.</string>
-    <plurals name="cells_hint_counted">
-        <item quantity="one">The sensors count %d cell now. This number is used only when the total voltage or average cell sensor is empty.</item>
-        <item quantity="other">The sensors count %d cells now. This number is used only when the total voltage or average cell sensor is empty.</item>
-    </plurals>
+    <string name="cells_counted">From sensors: %1$d</string>
+    <string name="cells_info">About the cell count</string>
+    <string name="cells_tip">Used only when the total voltage or average cell sensor is empty. While both work, the app counts the cells from them.</string>
     <string name="capacity_label">Capacity (Ah)</string>
-    <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
+    <string name="capacity_info">About the capacity</string>
+    <string name="capacity_tip">Used when the total capacity sensor is empty or unavailable.</string>
 
     <string name="appearance_title">Appearance</string>
     <string name="appearance_theme">Theme</string>

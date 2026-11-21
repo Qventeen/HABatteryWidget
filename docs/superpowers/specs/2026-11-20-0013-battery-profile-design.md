@@ -76,14 +76,13 @@ Type
 [ LiFePO4 ][  Li-ion  ][   LTO   ]
 Sets the default voltage and current levels. Own levels stay as they
 are. Li-ion means NMC.
-┌ Cells in series ─────────────────┐
+┌ Cells in series ───────────────ⓘ┐
 │ 16                               │
 └──────────────────────────────────┘
-Used when the total voltage or average cell sensor is empty.
-┌ Capacity (Ah) ───────────────────┐
+From sensors: 16
+┌ Capacity (Ah) ─────────────────ⓘ┐
 │ 100                              │
 └──────────────────────────────────┘
-Used when the total capacity sensor is empty or unavailable.
 [ Save ]
 ```
 
@@ -94,7 +93,12 @@ Used when the total capacity sensor is empty or unavailable.
 - **Cells in series** and **Capacity** are text fields with one Save for
   both. Save checks both fields; with any field error nothing is stored and
   each field shows its own error. A blank field stores `null`. The capacity
-  field keeps today's parsing, range and hint.
+  field keeps today's parsing and range.
+- **Hints** (owner, 2026-11-21: the hint lines cluttered the section): each
+  field's explanation sits behind an ⓘ button in the field, the same
+  persistent tip as the level editor's hysteresis field. Under the cells
+  field only the count from the reading shows ("From sensors: 16", §3.3);
+  with no count, nothing. Errors still show under the field.
 - **Summary:** the type (always), then the typed cell count as "16S" and
   the typed capacity as "100 Ah" when they are set, joined by " · ". "16S"
   is the usual pack notation and needs no plural forms in Ukrainian.
@@ -106,8 +110,11 @@ Used when the total capacity sensor is empty or unavailable.
   | type label | Type | Тип |
   | type hint | Sets the default voltage and current levels. Own levels stay as they are. Li-ion means NMC. | Задає типові рівні напруги та струму. Власні рівні не змінюються. Li-ion — це NMC. |
   | cells label | Cells in series | Комірок послідовно |
-  | cells hint (no count) | Used when the total voltage or average cell sensor is empty. | Використовується, коли датчик загальної напруги або середньої комірки порожній. |
-  | cells hint (counted, §3.3) | The sensors count 16 cells now. This number is used only when the total voltage or average cell sensor is empty. | За датчиками зараз 16 комірок. Це число використовується, лише коли датчик загальної напруги або середньої комірки порожній. |
+  | cells tip (ⓘ) | Used only when the total voltage or average cell sensor is empty. While both work, the app counts the cells from them. | Використовується, лише коли датчик загальної напруги або середньої комірки порожній. Поки обидва працюють, застосунок рахує комірки за ними. |
+  | cells ⓘ name (TalkBack) | About the cell count | Про кількість комірок |
+  | cells counted (§3.3) | From sensors: 16 | За датчиками: 16 |
+  | capacity tip (ⓘ) | Used when the total capacity sensor is empty or unavailable. | Використовується, коли датчик повної ємності порожній або недоступний. |
+  | capacity ⓘ name (TalkBack) | About the capacity | Про ємність |
   | cells error | Enter a whole number from 1 to 32 | Введіть ціле число від 1 до 32 |
   | capacity label | Capacity (Ah) | Ємність (А·год) |
 
@@ -216,10 +223,10 @@ Used when the total capacity sensor is empty or unavailable.
   simpler than "the setting overrides the reading".
 - **Mismatch:** no warning (my call). The reading wins, so a wrong typed
   number never changes what the widget shows while both sensors work.
-- **Counted hint** (owner, 2026-11-21: a changed typed count did not move
+- **Counted line** (owner, 2026-11-21: a changed typed count did not move
   the voltage levels and looked broken): while the reading counts the
-  cells, the cells hint names that count (plural forms in Ukrainian), so
-  the user sees which count is used. With no count it keeps the plain hint.
+  cells, the line under the cells field names that count ("From sensors:
+  16"), so the user sees which count is used. With no count, no line.
 - **Range:** a whole number from 1 to 32 (my call). JK-BMS boards go up to
   24 cells; 32 leaves room. Anything else (0, 33, "15.5", letters) is a
   field error.
