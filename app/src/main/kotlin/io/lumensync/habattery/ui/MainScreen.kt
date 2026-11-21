@@ -119,6 +119,7 @@ fun MainScreen(
   actions: MainActions,
   language: LanguageChoice?,
   previewRequest: PreviewRequest,
+  stripRequest: StripRequest,
   tabRequest: AppTabRequest,
 ) {
   val overview = state.overview
@@ -132,7 +133,7 @@ fun MainScreen(
       }
     }
   } else {
-    MainTabs(state, overview, widget, inverter, actions, language, previewRequest, tabRequest)
+    MainTabs(state, overview, widget, inverter, actions, language, previewRequest, stripRequest, tabRequest)
   }
 }
 
@@ -145,6 +146,7 @@ private fun MainTabs(
   actions: MainActions,
   language: LanguageChoice?,
   previewRequest: PreviewRequest,
+  stripRequest: StripRequest,
   tabRequest: AppTabRequest,
 ) {
   // Picked once from the first state: saving the URL and token on Common must not move the user.
@@ -174,7 +176,7 @@ private fun MainTabs(
       TabColumn(padding) {
         when (shown) {
           AppTab.BATTERY -> BatteryTab(state, overview, widget, actions, previewRequest)
-          AppTab.INVERTER -> InverterTab(state, inverter, actions)
+          AppTab.INVERTER -> InverterTab(state, inverter, actions, stripRequest)
           AppTab.COMMON -> CommonTab(state, actions, language)
         }
       }
@@ -292,10 +294,15 @@ private fun BatteryTab(
 
 /** The inverter strip: its preview, "Add to home screen", then its own sections. */
 @Composable
-private fun InverterTab(state: MainUiState, inverter: InverterWidgetModel, actions: MainActions) {
+private fun InverterTab(
+  state: MainUiState,
+  inverter: InverterWidgetModel,
+  actions: MainActions,
+  stripRequest: StripRequest,
+) {
   val settings = state.settings
   val strip = settings.inverter
-  InverterPreviewCard(inverter, strip.fontPercents, settings.appearance.theme)
+  InverterPreviewCard(inverter, strip.fontPercents, settings.appearance.theme, stripRequest)
   AddWidgetRow(
     R.string.action_add_strip_hint,
     onAddWidget = { actions.requestPinWidget(InverterWidgetReceiver::class.java) },

@@ -32,10 +32,12 @@ import io.lumensync.habattery.ui.MainViewModel
 import io.lumensync.habattery.ui.NamedWidget
 import io.lumensync.habattery.ui.PreviewRequest
 import io.lumensync.habattery.ui.PreviewTab
+import io.lumensync.habattery.ui.StripRequest
 import io.lumensync.habattery.ui.reportedWidgetSize
 import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.EXTRA_TAPPED_WIDGET_ID
+import io.lumensync.habattery.widget.InverterLayoutSpec
 import kotlinx.coroutines.launch
 
 /** The app screen. It is also both widgets' configure activity (see [confirmWidgetPlacement]). */
@@ -66,6 +68,9 @@ class MainActivity : ComponentActivity() {
    */
   private var previewRequest by mutableStateOf(PreviewRequest(PreviewTab.TAB_4X2))
 
+  /** The inverter card's counterpart of [previewRequest]. */
+  private var stripRequest by mutableStateOf(StripRequest(InverterLayoutSpec.S3X1))
+
   /** The app tab to show (spec 0012); like [previewRequest], made again by [onNewIntent]. */
   private var tabRequest by mutableStateOf(AppTabRequest(null))
 
@@ -78,6 +83,7 @@ class MainActivity : ComponentActivity() {
     val actions = mainActions(appLanguage)
     val opened = openedWidget()
     previewRequest = PreviewRequest(PreviewTab.first(opened, firstPlacedSize()))
+    stripRequest = StripRequest(StripRequest.named(opened) ?: InverterLayoutSpec.S3X1)
     tabRequest = AppTabRequest(opened?.provider)
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -90,14 +96,14 @@ class MainActivity : ComponentActivity() {
         )
         onDispose {}
       }
-      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language, previewRequest, tabRequest) }
+      HaBatteryTheme(darkTheme = dark) { MainScreen(state, actions, language, previewRequest, stripRequest, tabRequest) }
     }
   }
 
   /**
    * A widget tap (or the launcher) while the app is open (`singleTop`: one instance). A tap names
-   * its widget: the screen opens that widget's app tab, and a battery widget also sets the
-   * preview's size tab. Without a widget id (the launcher icon) both tabs stay.
+   * its widget: the screen opens that widget's app tab, and a battery or strip widget also sets
+   * that preview's size tab. Without a widget id (the launcher icon) both tabs stay.
    */
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
@@ -105,6 +111,7 @@ class MainActivity : ComponentActivity() {
     confirmWidgetPlacement()
     val opened = openedWidget()
     previewRequest = previewRequest.next(PreviewTab.named(opened))
+    stripRequest = stripRequest.next(StripRequest.named(opened))
     tabRequest = tabRequest.next(opened?.provider)
   }
 

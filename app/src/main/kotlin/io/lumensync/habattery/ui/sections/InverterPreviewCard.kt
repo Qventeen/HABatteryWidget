@@ -9,7 +9,9 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -23,6 +25,7 @@ import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.InverterFontPercents
 import io.lumensync.habattery.domain.model.ThemeChoice
+import io.lumensync.habattery.ui.StripRequest
 import io.lumensync.habattery.widget.InverterLayoutSpec
 import io.lumensync.habattery.widget.InverterWidgetContent
 import io.lumensync.habattery.widget.PreviewWidget
@@ -34,16 +37,22 @@ const val STRIP_PREVIEW_TAG = "strip-preview"
 /**
  * The real strip for one size tab, as [WidgetPreviewCard] shows the battery widget: the tabs, the
  * strip drawn by Glance at its design card size, and under it the full sync error or what to set
- * up. It opens on 3×1, the size "Add to home screen" places.
+ * up. It opens on the [request]'s size: 3×1, the size "Add to home screen" places, unless a tapped strip names another.
  */
 @Composable
 fun InverterPreviewCard(
   model: InverterWidgetModel,
   fonts: InverterFontPercents,
   theme: ThemeChoice,
+  request: StripRequest,
   modifier: Modifier = Modifier,
 ) {
-  var spec by rememberSaveable { mutableStateOf(InverterLayoutSpec.S3X1) }
+  var spec by rememberSaveable { mutableStateOf(request.spec) }
+  var seenCount by rememberSaveable { mutableIntStateOf(request.count) }
+  LaunchedEffect(request.count) {
+    spec = request.specFor(spec, seenCount)
+    seenCount = request.count
+  }
   Column(
     modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(12.dp),

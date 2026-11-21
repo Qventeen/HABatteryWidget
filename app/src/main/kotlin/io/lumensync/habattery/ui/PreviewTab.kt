@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
+import io.lumensync.habattery.widget.InverterLayoutSpec
+import io.lumensync.habattery.widget.InverterWidgetReceiver
 import io.lumensync.habattery.widget.LayoutSpec
 import kotlin.math.min
 
@@ -23,6 +25,25 @@ data class PreviewRequest(val tab: PreviewTab, val count: Int = 0) {
    */
   fun tabFor(current: PreviewTab, seenCount: Int): PreviewTab =
     if (count != seenCount && count > 0) tab else current
+}
+
+/** [PreviewRequest] for the inverter strip card: the size [spec] to show, applied once per [count]. */
+data class StripRequest(val spec: InverterLayoutSpec, val count: Int = 0) {
+  /** The request after an intent that names a strip's size ([named]); none named keeps this one. */
+  fun next(named: InverterLayoutSpec?): StripRequest = named?.let { StripRequest(it, count + 1) } ?: this
+
+  /** The card's size once this request reaches a card that shows [current]; see [PreviewRequest.tabFor]. */
+  fun specFor(current: InverterLayoutSpec, seenCount: Int): InverterLayoutSpec =
+    if (count != seenCount && count > 0) spec else current
+
+  companion object {
+    /** The strip size of the widget the app was opened for ([opened]); null unless it is a strip. */
+    fun named(opened: NamedWidget?): InverterLayoutSpec? =
+      opened
+        ?.takeIf { it.provider == InverterWidgetReceiver::class.java.name }
+        ?.size
+        ?.let { InverterLayoutSpec.forSize(it.width.value, it.height.value) }
+  }
 }
 
 /**
