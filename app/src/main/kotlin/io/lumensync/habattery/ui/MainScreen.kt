@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import io.lumensync.habattery.R
+import io.lumensync.habattery.domain.BatteryMath
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.LevelBasis
@@ -294,6 +295,7 @@ private fun BatteryTab(
   PackSection(
     settings.batteryType,
     settings.cellCount,
+    countedCells = overview.reading?.let(BatteryMath::cellCount),
     settings.capacityAh,
     state.errors,
     actions.saveBatteryType,

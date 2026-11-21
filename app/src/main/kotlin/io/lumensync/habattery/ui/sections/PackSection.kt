@@ -1,5 +1,6 @@
 package io.lumensync.habattery.ui.sections
 
+import android.content.res.Resources
 import androidx.annotation.StringRes
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import io.lumensync.habattery.R
@@ -23,12 +25,14 @@ import java.util.Locale
 /**
  * The pack the default levels are built for (spec 0013). The type stores at the tap; the cell
  * count and the capacity (typed with the user's decimal separator, 314,5 in Ukrainian) share one
- * Save. A `null` type shows as [BatteryType.DEFAULT].
+ * Save. A `null` type shows as [BatteryType.DEFAULT]. [countedCells] is the count the reading
+ * gives (`null` when it cannot count); it wins over the typed [cellCount].
  */
 @Composable
 fun PackSection(
   batteryType: BatteryType?,
   cellCount: Int?,
+  countedCells: Int?,
   capacityAh: Double?,
   errors: List<FieldError>,
   onTypeChange: (BatteryType) -> Unit,
@@ -66,7 +70,7 @@ fun PackSection(
       onValueChange = { cellsText = it },
       label = stringResource(R.string.cells_label),
       error = errors.errorFor(Field.CELLS),
-      hint = stringResource(R.string.cells_hint),
+      hint = cellsHint(LocalResources.current, countedCells),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
     )
     SettingsTextField(
@@ -80,6 +84,14 @@ fun PackSection(
     SaveButton { onSave(cellsText, capacityText, locale) }
   }
 }
+
+/**
+ * The hint under the cell count. While the reading counts the cells, the typed count is not used,
+ * so the hint names the count that is: a typed number that differs looks ignored otherwise.
+ */
+internal fun cellsHint(resources: Resources, countedCells: Int?): String =
+  countedCells?.let { resources.getQuantityString(R.plurals.cells_hint_counted, it, it) }
+    ?: resources.getString(R.string.cells_hint)
 
 @StringRes
 private fun batteryTypeLabel(type: BatteryType): Int =
