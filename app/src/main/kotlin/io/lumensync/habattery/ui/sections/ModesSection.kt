@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,16 +34,19 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.DefaultTextLevels
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.TextLevelPicker
 import io.lumensync.habattery.domain.model.CustomTextLevels
 import io.lumensync.habattery.domain.model.InverterIcon
+import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.TextLevel
 import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.format.modeWord
 import io.lumensync.habattery.format.typeLabel
+import io.lumensync.habattery.format.typeTagLabel
 import io.lumensync.habattery.ui.TextLevelDraft
 import io.lumensync.habattery.widget.Shades
 import io.lumensync.habattery.widget.WidgetPalette
@@ -115,8 +120,8 @@ internal fun ButtonRow(buttons: @Composable RowScope.() -> Unit) {
 }
 
 /**
- * One mode: its pill, its word with its texts under it, the bell and the type. TalkBack reads the
- * row as one item.
+ * One mode: its pill, its word with its texts under it, then the type tag and the bell at the far
+ * right, so the bells of all rows form one column. TalkBack reads the row as one item.
  */
 @Composable
 private fun ModeTag(level: TextLevel, palette: WidgetPalette) {
@@ -145,19 +150,58 @@ private fun ModeTag(level: TextLevel, palette: WidgetPalette) {
         overflow = TextOverflow.Ellipsis,
       )
     }
-    Icon(
-      painterResource(if (level.notify) R.drawable.ic_bell else R.drawable.ic_bell_off),
-      contentDescription = null,
-      modifier = Modifier.size(18.dp),
-      tint =
-        if (level.notify) MaterialTheme.colorScheme.onSurfaceVariant
-        else MaterialTheme.colorScheme.outline,
-    )
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      TypeTag(level.type, palette)
+      Icon(
+        painterResource(if (level.notify) R.drawable.ic_bell else R.drawable.ic_bell_off),
+        contentDescription = null,
+        modifier = Modifier.size(20.dp),
+        tint =
+          if (level.notify) MaterialTheme.colorScheme.onSurfaceVariant
+          else MaterialTheme.colorScheme.outline,
+      )
+    }
+  }
+}
+
+/**
+ * The [type] as a small tag in the type's own colour, in the style of the level tags. With [menu]
+ * it carries a ▾, for the editor's type menu.
+ */
+@Composable
+internal fun TypeTag(
+  type: LevelType,
+  palette: WidgetPalette,
+  modifier: Modifier = Modifier,
+  menu: Boolean = false,
+) {
+  val shades = palette.shades(type.defaultColor)
+  Row(
+    modifier
+      .background(shades.background, RoundedCornerShape(12.dp))
+      .padding(start = if (menu) 10.dp else 8.dp, end = if (menu) 4.dp else 8.dp)
+      .padding(vertical = if (menu) 4.dp else 2.dp),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
     Text(
-      type,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      style = MaterialTheme.typography.bodySmall,
+      stringResource(typeTagLabel(type)),
+      color = shades.text,
+      style =
+        if (menu) MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp)
+        else MaterialTheme.typography.labelMedium,
+      maxLines = 1,
     )
+    if (menu) {
+      Icon(
+        painterResource(R.drawable.ic_expand_more),
+        contentDescription = null,
+        modifier = Modifier.size(18.dp),
+        tint = shades.text,
+      )
+    }
   }
 }
 
@@ -206,7 +250,8 @@ internal fun nowLine(resources: Resources, levels: List<TextLevel>, liveText: St
 
 /** The line under a mode's word: its texts, or what "other" takes. */
 internal fun subLine(resources: Resources, level: TextLevel): String =
-  if (level.other) resources.getString(R.string.mode_other_hint) else listText(resources, level.texts)
+  if (level.other) resources.getString(R.string.mode_other_hint)
+  else listText(resources, level.texts)
 
 /** The [parts] joined by the translated list separator; empty for none. */
 internal fun listText(resources: Resources, parts: List<String>): String =

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.domain.DefaultTextLevels
+import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.TextLevel
 import io.lumensync.habattery.domain.model.TextValue
 import org.junit.Assert.assertEquals
@@ -56,4 +57,20 @@ class InverterLabelsTest {
     assertEquals("UTILITY", modeWord(resources, added, "UTILITY"))
     assertEquals("Utility", modeWord(resources, added, null))
   }
+
+  @Test
+  @Config(qualifiers = "en")
+  fun typeTag_en() =
+    assertEquals(
+      listOf("Critical", "Warning", "Normal", "Info"),
+      LevelType.entries.map { resources.getString(typeTagLabel(it)) },
+    )
+
+  @Test
+  @Config(qualifiers = "uk")
+  fun typeTag_uk_short() =
+    assertEquals(
+      listOf("Критично", "Увага", "Норма", "Інфо"),
+      LevelType.entries.map { resources.getString(typeTagLabel(it)) },
+    )
 }

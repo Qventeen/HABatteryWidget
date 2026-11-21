@@ -39,8 +39,10 @@ class ModesSectionTest {
     assertEquals(listOf(PLAIN, RED, ORANGE, AMBER, GREEN, BLUE, VIOLET, GREY), PickerColors)
 
   @Test
-  fun subLine_listsTexts() =
-    assertEquals("Mains, Line", subLine(resources, builtIn[2].copy(texts = listOf("Mains", "Line"))))
+  fun subLine_listsTexts() {
+    val main = builtIn[2].copy(texts = listOf("Mains", "Line"))
+    assertEquals("Mains, Line", subLine(resources, main))
+  }
 
   @Test
   fun subLine_other_en() = assertEquals("any other text", subLine(resources, builtIn.last()))

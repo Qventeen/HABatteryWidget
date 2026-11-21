@@ -298,6 +298,10 @@
     <string name="level_type_warning">Warning</string>
     <string name="level_type_normal">Normal</string>
     <string name="level_type_info">Info</string>
+    <string name="level_type_critical_short">Critical</string>
+    <string name="level_type_warning_short">Warning</string>
+    <string name="level_type_normal_short">Normal</string>
+    <string name="level_type_info_short">Info</string>
     <string name="level_color_plain">Plain</string>
     <string name="level_color_red">Red</string>
     <string name="level_color_orange">Orange</string>

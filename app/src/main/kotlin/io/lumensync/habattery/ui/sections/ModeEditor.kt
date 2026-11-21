@@ -2,6 +2,7 @@ package io.lumensync.habattery.ui.sections
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -13,12 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -46,9 +51,11 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.model.CustomTextLevels
+import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.MAX_TEXT_LEVELS
 import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.format.modeWord
+import io.lumensync.habattery.format.typeLabel
 import io.lumensync.habattery.ui.TextLevelDraft
 import io.lumensync.habattery.ui.saveErrors
 import io.lumensync.habattery.ui.textEditorDrafts
@@ -169,7 +176,8 @@ internal fun ModeEditor(
 }
 
 /**
- * One mode of the draft: its pill and word (a button that opens it), its bell and its type. Open,
+ * One mode of the draft: its pill and word (a button that opens it), its type tag menu and its bell
+ * at the far right. Open,
  * it shows the icon, the name, the texts as chips with an "Add text" field, the colours and Delete;
  * "other" has no name, texts or Delete. A save [error] shows under "Add text", or as a mark on the
  * closed row; [addProblem] is why the + button kept the typed text.
@@ -227,8 +235,8 @@ private fun ModeRow(
         contentDescription = null, // the row speaks for it
       )
     }
+    ModeTypeMenu(draft.type, palette) { type -> onUpdate { it.copy(type = type) } }
     BellToggle(draft.notify, word) { on -> onUpdate { it.copy(notify = on) } }
-    TypeMenu(draft.type) { type -> onUpdate { it.copy(type = type) } }
   }
   if (open) {
     Column(
@@ -267,6 +275,33 @@ private fun ModeRow(
             Text(stringResource(R.string.mode_delete))
           }
         }
+      }
+    }
+  }
+}
+
+/** The type tag as a button; its menu lists the full type words. */
+@Composable
+private fun ModeTypeMenu(type: LevelType, palette: WidgetPalette, onSelect: (LevelType) -> Unit) {
+  var expanded by remember { mutableStateOf(false) }
+  Box {
+    TypeTag(
+      type,
+      palette,
+      Modifier.minimumInteractiveComponentSize()
+        .clip(RoundedCornerShape(12.dp))
+        .clickable(role = Role.Button) { expanded = true },
+      menu = true,
+    )
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+      LevelType.entries.forEach { option ->
+        DropdownMenuItem(
+          text = { Text(stringResource(typeLabel(option))) },
+          onClick = {
+            expanded = false
+            onSelect(option)
+          },
+        )
       }
     }
   }

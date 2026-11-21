@@ -266,6 +266,10 @@
     <string name="level_type_warning">Попередження</string>
     <string name="level_type_normal">Норма</string>
     <string name="level_type_info">Інформація</string>
+    <string name="level_type_critical_short">Критично</string>
+    <string name="level_type_warning_short">Увага</string>
+    <string name="level_type_normal_short">Норма</string>
+    <string name="level_type_info_short">Інфо</string>
     <string name="level_color_plain">Без кольору</string>
     <string name="level_color_red">Червоний</string>
     <string name="level_color_orange">Помаранчевий</string>
