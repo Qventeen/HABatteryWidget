@@ -129,3 +129,6 @@ when it has a second implementation or a test fake.
   font sizes (spec 0012), and a level's type defaults to `NORMAL`
   and its side to `MIDDLE`, the level with no edge (`ColorLevel.type`, `ColorLevel.side`,
   spec 0010).
+- The pack fields (spec 0013): `Settings.batteryType` `null` reads as LiFePO4, and a type name
+  from a later build reads as `null`; `Settings.cellCount` is used only when the reading cannot
+  count the cells, like `capacityAh` for the capacity.
