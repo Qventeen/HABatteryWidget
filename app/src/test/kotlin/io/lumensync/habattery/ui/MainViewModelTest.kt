@@ -17,13 +17,14 @@ import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.testing.FakeBatterySource
 import io.lumensync.habattery.testing.FakeLevelNotifier
@@ -32,6 +33,7 @@ import io.lumensync.habattery.testing.FakeSettingsRepository
 import io.lumensync.habattery.testing.FakeSyncScheduler
 import io.lumensync.habattery.testing.FakeTokenStore
 import io.lumensync.habattery.testing.FakeWidgetRefresher
+import io.lumensync.habattery.testing.batteryOk
 import io.lumensync.habattery.testing.configuredSettings
 import io.lumensync.habattery.testing.reading
 import java.io.IOException
@@ -77,7 +79,7 @@ class MainViewModelTest {
   ): MainViewModel {
     settings = FakeSettingsRepository(initial)
     tokens = FakeTokenStore(token, user = userToken)
-    source = FakeBatterySource(SyncResult.Success(reading()))
+    source = FakeBatterySource(batteryOk(reading()))
     val cache = FakeReadingCache()
     val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeLevelNotifier(), widgets)
     val vm = MainViewModel(
@@ -395,11 +397,11 @@ class MainViewModelTest {
       object : BatterySource {
         override suspend fun fetch(
           connection: ConnectionSettings,
-          entities: EntitySettings,
+          request: FetchRequest,
           token: String,
-        ): SyncResult {
+        ): FetchResult {
           gate.await()
-          return SyncResult.Success(reading())
+          return batteryOk(reading())
         }
 
         override suspend fun listTemperatureSensors(

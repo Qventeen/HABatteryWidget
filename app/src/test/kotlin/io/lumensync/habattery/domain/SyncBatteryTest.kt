@@ -1,9 +1,12 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
@@ -14,6 +17,7 @@ import io.lumensync.habattery.testing.FakeReadingCache
 import io.lumensync.habattery.testing.FakeSettingsRepository
 import io.lumensync.habattery.testing.FakeTokenStore
 import io.lumensync.habattery.testing.FakeWidgetRefresher
+import io.lumensync.habattery.testing.batteryOk
 import io.lumensync.habattery.testing.configuredSettings
 import io.lumensync.habattery.testing.reading
 import kotlinx.coroutines.async
@@ -51,7 +55,7 @@ class SyncBatteryTest {
 
   @Test
   fun notConfigured_savesErrorAndEndsNormally() = runTest {
-    val source = FakeBatterySource(SyncResult.Success(reading()))
+    val source = FakeBatterySource(batteryOk(reading()))
     val cache = FakeReadingCache(CacheState(refreshingSinceMillis = 5L))
 
     val result = sync(source, cache, token = null)()
@@ -65,7 +69,7 @@ class SyncBatteryTest {
 
   @Test
   fun sendsActiveTypeToken() = runTest {
-    val source = FakeBatterySource(SyncResult.Success(reading()))
+    val source = FakeBatterySource(batteryOk(reading()))
     val user = configuredSettings(tokenType = TokenType.USER)
 
     sync(source, settings = user, token = "admin-t", userToken = "user-t")()
@@ -74,8 +78,18 @@ class SyncBatteryTest {
   }
 
   @Test
+  fun asksBatteryPartOnly() = runTest {
+    val source = FakeBatterySource(batteryOk(reading()))
+    val settings = configuredSettings()
+
+    sync(source, settings = settings)()
+
+    assertEquals(FetchRequest(settings.entities, inverter = null), source.lastRequest)
+  }
+
+  @Test
   fun emptyActiveSlot_isNotConfigured() = runTest {
-    val source = FakeBatterySource(SyncResult.Success(reading()))
+    val source = FakeBatterySource(batteryOk(reading()))
     val user = configuredSettings(tokenType = TokenType.USER)
 
     val result = sync(source, settings = user, token = "admin-t")()
@@ -89,7 +103,7 @@ class SyncBatteryTest {
     val r = reading(60.0)
     val cache = FakeReadingCache(CacheState(error = SyncError.Unreachable, refreshingSinceMillis = 5L))
 
-    val result = sync(FakeBatterySource(SyncResult.Success(r)), cache)()
+    val result = sync(FakeBatterySource(batteryOk(r)), cache)()
 
     assertEquals(SyncResult.Success(r), result)
     assertEquals(r, cache.current.reading)
@@ -103,7 +117,7 @@ class SyncBatteryTest {
     val old = reading(40.0)
     val cache = FakeReadingCache(CacheState(reading = old, refreshingSinceMillis = 5L))
 
-    sync(FakeBatterySource(SyncResult.Failure(SyncError.Unreachable)), cache)()
+    sync(FakeBatterySource(FetchResult(PartResult.Failed(SyncError.Unreachable), null)), cache)()
 
     assertEquals(old, cache.current.reading)
     assertEquals(SyncError.Unreachable, cache.current.error)
@@ -122,7 +136,7 @@ class SyncBatteryTest {
     val cache = enteringLowCache
     val useCase =
       sync(
-        FakeBatterySource(SyncResult.Success(reading(19.0))),
+        FakeBatterySource(batteryOk(reading(19.0))),
         cache,
         configuredSettings(notificationsOn = true),
       )
@@ -140,7 +154,7 @@ class SyncBatteryTest {
     val cache = enteringLowCache
 
     sync(
-      FakeBatterySource(SyncResult.Success(reading(19.0))),
+      FakeBatterySource(batteryOk(reading(19.0))),
       cache,
       configuredSettings(notificationsOn = true),
       notifier = notifier,
@@ -154,7 +168,7 @@ class SyncBatteryTest {
   fun notificationsOff_postsNothing() = runTest {
     val cache = enteringLowCache
 
-    sync(FakeBatterySource(SyncResult.Success(reading(19.0))), cache)()
+    sync(FakeBatterySource(batteryOk(reading(19.0))), cache)()
 
     assertEquals(emptyList<LevelAlert>(), notifier.posted)
     assertEquals(socId(LevelName.LOW), cache.current.levelAlerts["SOC"]?.current)
@@ -166,7 +180,7 @@ class SyncBatteryTest {
     val before = cache.current.levelAlerts
 
     sync(
-      FakeBatterySource(SyncResult.Failure(SyncError.Unreachable)),
+      FakeBatterySource(FetchResult(PartResult.Failed(SyncError.Unreachable), null)),
       cache,
       configuredSettings(notificationsOn = true),
     )()
@@ -179,7 +193,7 @@ class SyncBatteryTest {
   fun parallelRuns_postOnce() = runTest {
     val useCase =
       sync(
-        FakeBatterySource(SyncResult.Success(reading(19.0))),
+        FakeBatterySource(batteryOk(reading(19.0))),
         enteringLowCache,
         configuredSettings(notificationsOn = true),
       )
@@ -191,7 +205,7 @@ class SyncBatteryTest {
 
   @Test
   fun sourceThrows_rethrowsButStillClearsRefreshingAndRedraws() = runTest {
-    val source = FakeBatterySource(SyncResult.Success(reading())).apply { failWith = IOException("disk") }
+    val source = FakeBatterySource(batteryOk(reading())).apply { failWith = IOException("disk") }
     val cache = FakeReadingCache(CacheState(refreshingSinceMillis = 5L))
     val useCase = sync(source, cache, configuredSettings(notificationsOn = true))
 

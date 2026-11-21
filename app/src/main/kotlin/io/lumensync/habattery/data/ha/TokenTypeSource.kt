@@ -1,9 +1,9 @@
 package io.lumensync.habattery.data.ha
 
 import io.lumensync.habattery.domain.model.ConnectionSettings
-import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.SensorList
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.port.BatterySource
 
@@ -13,9 +13,9 @@ class TokenTypeSource(private val admin: BatterySource, private val user: Batter
 
   override suspend fun fetch(
     connection: ConnectionSettings,
-    entities: EntitySettings,
+    request: FetchRequest,
     token: String,
-  ): SyncResult = of(connection).fetch(connection, entities, token)
+  ): FetchResult = of(connection).fetch(connection, request, token)
 
   override suspend fun listTemperatureSensors(
     connection: ConnectionSettings,

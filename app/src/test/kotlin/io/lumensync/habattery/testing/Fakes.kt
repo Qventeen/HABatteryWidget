@@ -5,9 +5,11 @@ import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.LevelNotifier
@@ -70,7 +72,7 @@ class FakeTokenStore(initial: String? = null, user: String? = null) : TokenStore
 }
 
 /** Returns [results] in order; the last one repeats. Suspends once per call, so parallel runs interleave. */
-class FakeBatterySource(private vararg val results: SyncResult) : BatterySource {
+class FakeBatterySource(private vararg val results: FetchResult) : BatterySource {
   var calls = 0
     private set
 
@@ -78,17 +80,21 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
   var lastToken: String? = null
     private set
 
+  var lastRequest: FetchRequest? = null
+    private set
+
   /** When set, [fetch] throws it instead of returning a result. */
   var failWith: Throwable? = null
 
   override suspend fun fetch(
     connection: ConnectionSettings,
-    entities: EntitySettings,
+    request: FetchRequest,
     token: String,
-  ): SyncResult {
+  ): FetchResult {
     val result = results[minOf(calls, results.lastIndex)]
     calls++
     lastToken = token
+    lastRequest = request
     yield()
     failWith?.let { throw it }
     return result
@@ -175,3 +181,5 @@ fun configuredSettings(
 
 fun reading(charge: Double = 50.0, current: Double? = 0.0): BatteryReading =
   BatteryReading(chargePercent = charge, currentA = current, updatedAtMillis = 1_000L)
+
+fun batteryOk(r: BatteryReading): FetchResult = FetchResult(PartResult.Ok(r), null)

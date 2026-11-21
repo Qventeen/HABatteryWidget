@@ -1,5 +1,7 @@
 package io.lumensync.habattery.domain
 
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
@@ -35,7 +37,14 @@ class SyncBattery(
           if (token == null || !Validation.isBatteryConfigured(current, hasToken = true)) {
             SyncResult.Failure(SyncError.NotConfigured)
           } else {
-            source.fetch(current.connection, current.entities, token)
+            // The cache holds the battery part only, so the inverter is not asked.
+            val request = FetchRequest(current.entities, inverter = null)
+            when (val battery = source.fetch(current.connection, request, token).battery) {
+              is PartResult.Ok -> SyncResult.Success(battery.reading)
+              is PartResult.Failed -> SyncResult.Failure(battery.error)
+              // A source answers every asked part; a missing one is no usable answer.
+              null -> SyncResult.Failure(SyncError.BadResponse)
+            }
           }
 
         // Read once, before the write, so tracking and posting agree on the same answer.

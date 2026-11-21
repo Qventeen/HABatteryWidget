@@ -2,10 +2,10 @@ package io.lumensync.habattery.data.ha
 
 import io.lumensync.habattery.data.store.StoreJson
 import io.lumensync.habattery.domain.model.ConnectionSettings
-import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.SerializationException
@@ -31,12 +31,12 @@ class HomeAssistantSource(
 
   override suspend fun fetch(
     connection: ConnectionSettings,
-    entities: EntitySettings,
+    request: FetchRequest,
     token: String,
-  ): SyncResult =
-    when (val reply = send(connection, TemplateBuilder.build(entities), token)) {
-      is HaReply.Failure -> SyncResult.Failure(reply.error)
-      is HaReply.Body -> parse(reply.text)
+  ): FetchResult =
+    when (val reply = send(connection, TemplateBuilder.build(request), token)) {
+      is HaReply.Failure -> FetchResult.failed(request, reply.error)
+      is HaReply.Body -> parse(reply.text, request)
     }
 
   override suspend fun listTemperatureSensors(
@@ -63,16 +63,15 @@ class HomeAssistantSource(
       token,
     )
 
-  private fun parse(text: String): SyncResult {
-    val reading =
+  private fun parse(text: String, request: FetchRequest): FetchResult {
+    val response =
       try {
-        StoreJson.decodeFromString<TemplateResponse>(text).toReading(clock())
+        StoreJson.decodeFromString<TemplateResponse>(text)
       } catch (_: SerializationException) {
-        null
+        return FetchResult.failed(request, SyncError.BadResponse)
       } catch (_: IllegalArgumentException) {
-        null
+        return FetchResult.failed(request, SyncError.BadResponse)
       }
-    return if (reading == null) SyncResult.Failure(SyncError.BadResponse)
-    else SyncResult.Success(reading)
+    return response.toFetchResult(request, clock())
   }
 }
