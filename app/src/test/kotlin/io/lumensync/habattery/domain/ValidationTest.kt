@@ -14,6 +14,7 @@ import io.lumensync.habattery.domain.Field.POWER
 import io.lumensync.habattery.domain.Field.PREFIX
 import io.lumensync.habattery.domain.Field.URL
 import io.lumensync.habattery.domain.Field.TEMPERATURES
+import io.lumensync.habattery.domain.Field.TEXT_LEVEL_TEXTS
 import io.lumensync.habattery.domain.Field.TOTAL_CAPACITY
 import io.lumensync.habattery.domain.Problem.DUPLICATE
 import io.lumensync.habattery.domain.Problem.INVALID
@@ -31,6 +32,8 @@ import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TextLevel
+import io.lumensync.habattery.domain.model.TextValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -291,4 +294,60 @@ class ValidationTest {
       emptyList<FieldError>(),
       Validation.levels(LevelValue.BATTERY_TEMPERATURE, listOf(b(-10.0), b(0.0), m, a(45.0))),
     )
+
+  private val modes = DefaultTextLevels.of(TextValue.MODE)
+
+  private fun modesWith(index: Int, vararg texts: String): List<TextLevel> =
+    modes.mapIndexed { i, level -> if (i == index) level.copy(texts = texts.toList()) else level }
+
+  @Test
+  fun textLevels_tooMany() {
+    val many = (1..12).map { TextLevel(id = it, texts = listOf("Mode $it")) } + modes.last()
+
+    assertTrue(FieldError(TEXT_LEVEL_TEXTS, TOO_MANY) in Validation.textLevels(many))
+  }
+
+  @Test
+  fun textLevels_noTexts_required() =
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, REQUIRED, 4)),
+      Validation.textLevels(modesWith(4)),
+    )
+
+  @Test
+  fun textLevels_noValueText_invalid() {
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, INVALID, 1)),
+      Validation.textLevels(modesWith(1, "unknown")),
+    )
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, INVALID, 1)),
+      Validation.textLevels(modesWith(1, " ")),
+    )
+  }
+
+  @Test
+  fun textLevels_duplicate_atTheRepeatingRow() {
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, DUPLICATE, 4)),
+      Validation.textLevels(modesWith(4, "mains")),
+    )
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, DUPLICATE, 2)),
+      Validation.textLevels(modesWith(2, "Line", "line")),
+    )
+  }
+
+  @Test
+  fun textLevels_otherMissingOrTwice_invalidWithoutIndex() {
+    val broken =
+      listOf(
+        modes.dropLast(1),
+        modes + modes.last().copy(id = 9),
+        modes.dropLast(1) + modes.last().copy(texts = listOf("Eco")),
+      )
+    broken.forEach {
+      assertTrue(FieldError(TEXT_LEVEL_TEXTS, INVALID) in Validation.textLevels(it))
+    }
+  }
 }

@@ -8,11 +8,11 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.InverterFontPercents
 import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.format.Formatters
-import io.lumensync.habattery.format.modeWordRes
+import io.lumensync.habattery.format.modeWord
 
 /** Every text of a strip with data, resolved once per drawing. */
 internal data class StripTexts(
-  /** The mode word, the Home Assistant text of a mode the table does not know, or "—". */
+  /** The mode word (`modeWord`), or "—" when there is no value. */
   val word: String,
   val grid: String,
   val output: String,
@@ -24,7 +24,7 @@ internal data class StripTexts(
       val missing = context.getString(R.string.value_missing)
       fun volts(v: VoltageLook) = v.volts?.let(formatters::wholeVolts) ?: missing
       return StripTexts(
-        word = m.mode.mode?.let { context.getString(modeWordRes(it)) } ?: m.mode.text ?: missing,
+        word = m.mode.level?.let { modeWord(context.resources, it, m.mode.text) } ?: missing,
         grid = volts(m.grid),
         output = volts(m.output),
         error =

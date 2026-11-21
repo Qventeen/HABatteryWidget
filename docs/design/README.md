@@ -273,33 +273,52 @@ The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
 | Unknown mode text | `help` icon, grey; with "icon + word" the HA text as it is |
 | No data yet / setup needed | The tower icon and one line: "No data" or "Set up in the app"; no button |
 
-## Mode editor — Modes section of the Inverter tab (v8)
+## Mode editor — Modes section of the Inverter tab (v9)
 
-Status: approved by the owner (2026-11-21), for spec 0014; not built yet.
-An app screen, not a widget: the Modes section on the Inverter tab, below
-Icons. On the canvas the v8 row ("Mode editor · v8") also shows the option
-the owner did not pick (2a: the texts in one comma-separated field).
+Status: approved by the owner (2026-11-21), for spec 0014. v9 reworks v8
+after the owner's phone check: the right side of the rows, type tags, the
+current mode, shorter "other" words. An app screen, not a widget: the
+Modes section on the Inverter tab, below Icons. On the canvas the v9 row
+("Mode editor · v9") also shows the option the owner did not pick (B: only
+the "now" badge, no ring). Git keeps v8 (three light frames) in the older
+`mode-editor.png`.
 
 | File | What it is |
 |---|---|
-| `mode-editor.png` | Three frames, light theme: 1 view, 2 editor with one mode open, 3 a new mode just added |
+| `mode-editor.png` | Six frames: view and editor in dark, light and Ukrainian (dark) |
 
-Rendered at 2× scale from an HTML mockup with the app's own drawables and
-the 0010 palette (light shades). The spec decides the behaviour; this
-picture shows the layout.
+Rendered at 2× scale from the canvas boards (the app's own drawables, the
+0010 palette, the app theme colours); 1 px of the design = 1 dp, on the
+owner's 390 dp screen (card content 326 dp). The spec decides the
+behaviour; this picture shows the layout.
 
 ![Mode editor](mode-editor.png)
 
-- **View:** one row per mode, "other" last: the mode pill (icon in the
-  mode colour), the shown word, its texts in small grey, the bell mark
-  (crossed out when off), the type word. "Default" and "Edit" on the
-  section header; the "Now" line at the end.
-- **Editor:** Cancel and Save on the section header. A closed mode row:
-  pill, word, bell toggle, type menu, expand arrow. One open mode: icon
-  button (opens the icon grid), "Name" field (placeholder = the default
-  word, "Blank = …" under it), "Home Assistant texts" as chips with ✕, an
-  "Add text" field with a round + button, eight colour chips (red, orange,
-  amber, green, teal, blue, violet, grey; the type's colour carries a white
-  dot), "✕ Delete mode". "+ Add mode" under the last row.
+- **View row** (min 56 dp, padding 8 × 4, radius 14): the mode pill
+  (36 × 28, icon in the mode colour, ring 1.5), 12 dp, the word in the
+  mode colour with its texts under it (12 sp, grey), then on the right the
+  **type tag** and the **bell at the far right**, so the bells form one
+  column. "Default" and "Edit" above the rows.
+- **Type tag:** the level tags' style, smaller: 12 sp medium, padding
+  8 × 2, the type colour's background and text (Info blue, Warning amber,
+  Critical red, Normal green). Short words: Info, Warning, Critical,
+  Normal; UK Інфо, Увага, Критично, Норма.
+- **Current mode:** the row of the mode Home Assistant sends now gets a
+  1.5 dp ring in the mode's ring colour and a "now" badge (11 sp bold,
+  the ring colour as background) after the word. A text no mode lists
+  marks "other", whose second line then shows the text in quotes. No text:
+  no row is marked. There is no "Now:" text line.
+- **"other":** the word "other" (UK "інший"), the line "any other text"
+  (UK "будь-який інший текст").
+- **Editor:** Cancel and Save above and below the rows, a divider between
+  rows. A closed row: pill, word, "now" badge, expand arrow; on the right
+  the type tag with ▾ (13 sp; it opens the type menu with the full type
+  words), then the bell toggle at the far right. The ring follows the
+  draft. One open mode: icon button (opens the icon grid), "Name" field
+  (placeholder = the default word, "Blank = …" under it), "Home Assistant
+  texts" as chips with ✕, an "Add text" field with a round + button, eight
+  colour chips (red, orange, amber, green, teal, blue, violet, grey; the
+  type's colour carries a dot), "✕ Delete mode". "+ Add mode" under the
+  last row.
 - **New mode:** bell off, type Info, `help` icon, grey; a blank name shows
   its first text ("Utility").

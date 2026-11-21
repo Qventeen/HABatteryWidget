@@ -7,8 +7,12 @@ import io.lumensync.habattery.domain.model.InverterEntitySettings
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
+import io.lumensync.habattery.domain.model.MAX_TEXT_LEVELS
+import io.lumensync.habattery.domain.model.ModeText
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TextLevel
+import java.util.Locale
 
 enum class Field {
   URL,
@@ -34,6 +38,7 @@ enum class Field {
   INVERTER_MODE,
   INVERTER_GRID,
   INVERTER_OUTPUT,
+  TEXT_LEVEL_TEXTS,
 }
 
 enum class Problem {
@@ -151,6 +156,38 @@ object Validation {
     }
     return errors + atIndex.toSortedMap().map { (i, problem) -> FieldError(Field.LEVEL_EDGE, problem, i) }
   }
+
+  /**
+   * Checks the items of one text value. At most one error per index, the first found: an item
+   * with no texts, a blank or no-value text (`unavailable`, `unknown`), or a text an earlier item
+   * or the same item already has (trimmed, ignoring case). Errors with no index: more than
+   * [MAX_TEXT_LEVELS] items, and a list without exactly one "other" item that has no texts.
+   */
+  fun textLevels(levels: List<TextLevel>): List<FieldError> {
+    val errors = mutableListOf<FieldError>()
+    if (levels.size > MAX_TEXT_LEVELS) errors += FieldError(Field.TEXT_LEVEL_TEXTS, Problem.TOO_MANY)
+    val others = levels.filter { it.other }
+    if (others.size != 1 || others.single().texts.isNotEmpty()) {
+      errors += FieldError(Field.TEXT_LEVEL_TEXTS, Problem.INVALID)
+    }
+    val seen = mutableSetOf<String>()
+    levels.forEachIndexed { i, level ->
+      if (level.other) return@forEachIndexed
+      val keys = level.texts.map(::textKey)
+      val problem =
+        when {
+          keys.isEmpty() -> Problem.REQUIRED
+          keys.any { it.isEmpty() || ModeText.isNoValue(it) } -> Problem.INVALID
+          !keys.all(seen::add) -> Problem.DUPLICATE
+          else -> null
+        }
+      if (problem != null) errors += FieldError(Field.TEXT_LEVEL_TEXTS, problem, i)
+    }
+    return errors
+  }
+
+  /** The form in which two texts of the items are the same: trimmed, case ignored. */
+  fun textKey(text: String): String = text.trim().lowercase(Locale.ROOT)
 
   fun isBatteryConfigured(s: Settings, hasToken: Boolean): Boolean =
     hasToken && s.connection.url.isNotBlank() && s.entities.charge.isNotBlank()

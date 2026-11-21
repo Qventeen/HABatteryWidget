@@ -71,6 +71,24 @@
     <string name="mode_word_bypass">bypass</string>
     <string name="mode_word_charging">charging</string>
     <string name="mode_word_fault">fault</string>
+    <string name="mode_other_label">other</string>
+    <string name="modes_title">Modes</string>
+    <string name="modes_summary_default">Default modes</string>
+    <string name="modes_summary_custom">Custom modes</string>
+    <string name="mode_other_hint">any other text</string>
+    <string name="mode_name_hint">Blank = %1$s</string>
+    <string name="mode_texts_label">Home Assistant texts</string>
+    <string name="mode_add_text_label">Add text</string>
+    <string name="mode_add_text_placeholder">Type a text, then +</string>
+    <string name="mode_add_text_hint">Exactly as Home Assistant shows it</string>
+    <string name="mode_remove_text">Remove %1$s</string>
+    <string name="mode_icon_button">Icon of %1$s</string>
+    <string name="mode_delete">Delete mode</string>
+    <string name="mode_add">Add mode</string>
+    <string name="mode_now">now</string>
+    <string name="mode_live_text">“%1$s”</string>
+    <string name="modes_default_title">Use the default modes?</string>
+    <string name="modes_default_text">Your modes, texts and names are deleted.</string>
 
     <!-- Inverter strip widget. -->
     <string name="inverter_widget_name">Inverter</string>
@@ -281,6 +299,10 @@
     <string name="level_type_warning">Warning</string>
     <string name="level_type_normal">Normal</string>
     <string name="level_type_info">Info</string>
+    <string name="level_type_critical_short">Critical</string>
+    <string name="level_type_warning_short">Warning</string>
+    <string name="level_type_normal_short">Normal</string>
+    <string name="level_type_info_short">Info</string>
     <string name="level_color_plain">Plain</string>
     <string name="level_color_red">Red</string>
     <string name="level_color_orange">Orange</string>
@@ -343,6 +365,10 @@
     <string name="field_cells_range">Enter a whole number from 1 to %1$d</string>
     <string name="field_level_edge_invalid">Enter a number</string>
     <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
+    <string name="field_mode_texts_required">Add at least one text</string>
+    <string name="field_mode_text_invalid">“unavailable” and “unknown” mean no value</string>
+    <string name="field_mode_text_duplicate">This text is already in a mode</string>
+    <string name="field_modes_too_many">Maximum number of modes: %1$d</string>
     <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
     <string name="field_level_margin_invalid">Enter a number of 0 or more</string>
 
@@ -407,14 +433,6 @@
     <string name="inv_icon_dangerous">Danger</string>
 
     <!-- The strip's places with their own icon, in the Icons section. -->
-    <string name="inv_slot_mode_power_on">Mode: power on</string>
-    <string name="inv_slot_mode_standby">Mode: standby</string>
-    <string name="inv_slot_mode_mains">Mode: main</string>
-    <string name="inv_slot_mode_off_grid">Mode: battery</string>
-    <string name="inv_slot_mode_bypass">Mode: bypass</string>
-    <string name="inv_slot_mode_charging">Mode: charging</string>
-    <string name="inv_slot_mode_fault">Mode: fault</string>
-    <string name="inv_slot_mode_other">Mode: other</string>
     <string name="inv_slot_grid_voltage">Grid input voltage</string>
     <string name="inv_slot_output_voltage">Output voltage</string>
 </resources>

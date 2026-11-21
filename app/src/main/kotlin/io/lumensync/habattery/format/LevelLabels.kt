@@ -57,6 +57,19 @@ fun typeLabel(type: LevelType): Int =
   }
 
 /**
+ * The type word on a mode's type tag. It is short, so the tag leaves room for the mode word on a
+ * narrow screen; the type menu shows [typeLabel].
+ */
+@StringRes
+fun typeTagLabel(type: LevelType): Int =
+  when (type) {
+    LevelType.CRITICAL -> R.string.level_type_critical_short
+    LevelType.WARNING -> R.string.level_type_warning_short
+    LevelType.NORMAL -> R.string.level_type_normal_short
+    LevelType.INFO -> R.string.level_type_info_short
+  }
+
+/**
  * The level's own name, else its default name; `null` when it has neither. The tag in Levels and
  * alerts, the editor and the notification title all read the name here.
  */

@@ -71,6 +71,7 @@ import io.lumensync.habattery.ui.sections.HomeScaleSection
 import io.lumensync.habattery.ui.sections.InverterDisplaySection
 import io.lumensync.habattery.ui.sections.InverterEntitiesSection
 import io.lumensync.habattery.ui.sections.InverterIconsSection
+import io.lumensync.habattery.ui.sections.ModesSection
 import io.lumensync.habattery.ui.sections.InverterPreviewCard
 import io.lumensync.habattery.ui.sections.NotificationSection
 import io.lumensync.habattery.ui.sections.RefreshSection
@@ -79,6 +80,7 @@ import io.lumensync.habattery.ui.sections.WidgetPreviewCard
 import io.lumensync.habattery.ui.sections.WidgetSection
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.InverterWidgetReceiver
+import io.lumensync.habattery.domain.model.TextValue
 import java.util.Locale
 
 /** What the screen can ask for: the ViewModel's functions plus the system actions. */
@@ -108,6 +110,8 @@ data class MainActions(
   val setLanguage: (LanguageChoice) -> Unit,
   val saveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   val useDefaults: (LevelValue) -> Unit,
+  val saveTextLevels: (TextValue, List<TextLevelDraft>) -> Boolean,
+  val useTextDefaults: (TextValue) -> Unit,
   val clearErrors: () -> Unit,
   val requestPinWidget: (receiver: Class<out GlanceAppWidgetReceiver>) -> Unit,
   val openNotificationSettings: () -> Unit,
@@ -326,6 +330,13 @@ private fun InverterTab(
     actions.resetInverterSizes,
   )
   InverterIconsSection(strip, actions.saveInverterIcon)
+  ModesSection(
+    settings.textLevels,
+    liveText = (inverter as? InverterWidgetModel.Data)?.mode?.text,
+    errors = state.errors,
+    onSave = actions.saveTextLevels,
+    onUseDefaults = actions.useTextDefaults,
+  )
   ColorsSection(
     settings.colorLevels,
     // The grid and output edges are fixed volts: no capacity or cell count.

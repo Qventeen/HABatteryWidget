@@ -12,8 +12,10 @@ import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.LevelSpan
+import io.lumensync.habattery.domain.DefaultTextLevels
 import io.lumensync.habattery.domain.ModeAlert
-import io.lumensync.habattery.domain.model.InverterMode
+import io.lumensync.habattery.domain.TextLevelPicker
+import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelName
@@ -85,7 +87,25 @@ class AndroidLevelNotifierTest {
   }
 
   private fun modeAlert(text: String) =
-    ModeAlert(text, InverterMode.of(text), measuredAtMillis = System.currentTimeMillis())
+    ModeAlert(
+      text,
+      TextLevelPicker.match(DefaultTextLevels.of(TextValue.MODE), text)!!,
+      measuredAtMillis = System.currentTimeMillis(),
+    )
+
+  @Test
+  fun postMode_ownNameTypeAndColour() {
+    grant()
+    val main =
+      DefaultTextLevels.of(TextValue.MODE)[2]
+        .copy(name = "Grid", type = LevelType.CRITICAL, color = LevelColor.VIOLET)
+    notifier.postMode(ModeAlert("Mains", main, measuredAtMillis = System.currentTimeMillis()))
+
+    val posted = shadowOf(manager).getNotification(150)
+    assertEquals("level_critical_2", posted.channelId)
+    assertEquals(WidgetPalette.Light.shades(LevelColor.VIOLET).ring.toArgb(), posted.color)
+    assertEquals("Inverter: Grid", posted.extras.getString("android.title"))
+  }
 
   @Test
   fun postMode_offGrid() {

@@ -68,6 +68,24 @@
     <string name="mode_word_bypass">байпас</string>
     <string name="mode_word_charging">заряд</string>
     <string name="mode_word_fault">аварія</string>
+    <string name="mode_other_label">інший</string>
+    <string name="modes_title">Режими</string>
+    <string name="modes_summary_default">Стандартні режими</string>
+    <string name="modes_summary_custom">Власні режими</string>
+    <string name="mode_other_hint">будь-який інший текст</string>
+    <string name="mode_name_hint">Порожньо = %1$s</string>
+    <string name="mode_texts_label">Тексти Home Assistant</string>
+    <string name="mode_add_text_label">Додати текст</string>
+    <string name="mode_add_text_placeholder">Введіть текст, потім +</string>
+    <string name="mode_add_text_hint">Точно як у Home Assistant</string>
+    <string name="mode_remove_text">Видалити %1$s</string>
+    <string name="mode_icon_button">Іконка: %1$s</string>
+    <string name="mode_delete">Видалити режим</string>
+    <string name="mode_add">Додати режим</string>
+    <string name="mode_now">зараз</string>
+    <string name="mode_live_text">«%1$s»</string>
+    <string name="modes_default_title">Повернути стандартні режими?</string>
+    <string name="modes_default_text">Ваші режими, тексти й назви буде видалено.</string>
 
     <string name="inverter_widget_name">Інвертор</string>
     <string name="inverter_widget_description">Режим інвертора, напруга входу мережі та виходу з Home Assistant</string>
@@ -249,6 +267,10 @@
     <string name="level_type_warning">Попередження</string>
     <string name="level_type_normal">Норма</string>
     <string name="level_type_info">Інформація</string>
+    <string name="level_type_critical_short">Критично</string>
+    <string name="level_type_warning_short">Увага</string>
+    <string name="level_type_normal_short">Норма</string>
+    <string name="level_type_info_short">Інфо</string>
     <string name="level_color_plain">Без кольору</string>
     <string name="level_color_red">Червоний</string>
     <string name="level_color_orange">Помаранчевий</string>
@@ -307,6 +329,10 @@
     <string name="field_cells_range">Введіть ціле число від 1 до %1$d</string>
     <string name="field_level_edge_invalid">Введіть число</string>
     <string name="field_level_edge_duplicate">Два рівні з одного боку не можуть мати однакову межу</string>
+    <string name="field_mode_texts_required">Додайте хоча б один текст</string>
+    <string name="field_mode_text_invalid">«unavailable» і «unknown» означають, що значення немає</string>
+    <string name="field_mode_text_duplicate">Цей текст уже є в одному з режимів</string>
+    <string name="field_modes_too_many">Максимум режимів: %1$d</string>
     <string name="field_level_edge_overlap">Залиште проміжок між рівнями ↓ і ↑</string>
     <string name="field_level_margin_invalid">Введіть число, не менше 0</string>
 
@@ -364,15 +390,6 @@
     <string name="inv_icon_report">Звіт</string>
     <string name="inv_icon_warning">Попередження</string>
     <string name="inv_icon_dangerous">Небезпека</string>
-
-    <string name="inv_slot_mode_power_on">Режим: запуск</string>
-    <string name="inv_slot_mode_standby">Режим: пауза</string>
-    <string name="inv_slot_mode_mains">Режим: мережа</string>
-    <string name="inv_slot_mode_off_grid">Режим: батарея</string>
-    <string name="inv_slot_mode_bypass">Режим: байпас</string>
-    <string name="inv_slot_mode_charging">Режим: заряд</string>
-    <string name="inv_slot_mode_fault">Режим: аварія</string>
-    <string name="inv_slot_mode_other">Режим: інший</string>
     <string name="inv_slot_grid_voltage">Напруга входу мережі</string>
     <string name="inv_slot_output_voltage">Напруга виходу</string>
 </resources>

@@ -28,6 +28,8 @@ data class Settings(
   val appearance: AppearanceSettings = AppearanceSettings(),
   /** Keyed by [LevelValue.name]: a key written by a later version cannot break the file. */
   val colorLevels: Map<String, CustomLevels> = emptyMap(),
+  /** Keyed by [TextValue.name], like [colorLevels]. */
+  val textLevels: Map<String, CustomTextLevels> = emptyMap(),
   val inverter: InverterSettings = InverterSettings(),
 )
 

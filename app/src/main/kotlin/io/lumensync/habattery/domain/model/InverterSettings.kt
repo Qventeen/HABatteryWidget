@@ -67,16 +67,11 @@ enum class InverterIcon {
   DANGEROUS,
 }
 
-/** A place on the strip with its own icon choice. Qualified names: a bare one is the slot itself. */
+/**
+ * A place on the strip with its own icon choice. Qualified names: a bare one is the slot itself.
+ * The mode icons are stored with the modes (`TextLevel.icon`).
+ */
 enum class IconSlot(val default: InverterIcon) {
-  MODE_POWER_ON(InverterIcon.POWER_SETTINGS_NEW),
-  MODE_STANDBY(InverterIcon.MODE_STANDBY),
-  MODE_MAINS(InverterIcon.TOWER),
-  MODE_OFF_GRID(InverterIcon.BATTERY_CHARGING_FULL),
-  MODE_BYPASS(InverterIcon.ALT_ROUTE),
-  MODE_CHARGING(InverterIcon.CHARGER),
-  MODE_FAULT(InverterIcon.ERROR),
-  MODE_OTHER(InverterIcon.HELP),
   GRID_VOLTAGE(InverterIcon.TOWER),
   OUTPUT_VOLTAGE(InverterIcon.HOME),
 }

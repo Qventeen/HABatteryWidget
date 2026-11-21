@@ -8,12 +8,14 @@ import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.MAX_TEXT_LEVELS
 import io.lumensync.habattery.domain.model.RefreshSettings
 
 /** The text shown under an input for a validation error. */
 @Composable
-internal fun fieldErrorText(error: FieldError): String =
-  when (error.problem) {
+internal fun fieldErrorText(error: FieldError): String {
+  if (error.field == Field.TEXT_LEVEL_TEXTS) return textLevelText(error.problem)
+  return when (error.problem) {
     Problem.REQUIRED -> stringResource(R.string.field_required)
     Problem.INVALID -> invalidText(error.field)
     Problem.DUPLICATE -> stringResource(R.string.field_level_edge_duplicate)
@@ -33,6 +35,7 @@ internal fun fieldErrorText(error: FieldError): String =
         else -> stringResource(R.string.field_capacity_range, Validation.MAX_CAPACITY_AH.toInt())
       }
   }
+}
 
 @Composable
 private fun invalidText(field: Field): String =
@@ -61,6 +64,17 @@ private fun invalidText(field: Field): String =
     Field.CELLS -> cellsText()
     Field.LEVEL_EDGE -> stringResource(R.string.field_level_edge_invalid)
     Field.LEVEL_MARGIN -> stringResource(R.string.field_level_margin_invalid)
+    Field.TEXT_LEVEL_TEXTS -> stringResource(R.string.field_mode_text_invalid)
+  }
+
+/** A mode's texts: the messages name texts and modes, not levels or sensors. */
+@Composable
+private fun textLevelText(problem: Problem): String =
+  when (problem) {
+    Problem.REQUIRED -> stringResource(R.string.field_mode_texts_required)
+    Problem.DUPLICATE -> stringResource(R.string.field_mode_text_duplicate)
+    Problem.TOO_MANY -> stringResource(R.string.field_modes_too_many, MAX_TEXT_LEVELS)
+    else -> stringResource(R.string.field_mode_text_invalid)
   }
 
 /** Not a whole number and out of range share one text: it names both rules. */

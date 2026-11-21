@@ -41,6 +41,10 @@ import io.lumensync.habattery.domain.port.SyncScheduler
 import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
 import io.lumensync.habattery.format.parseDecimal
+import io.lumensync.habattery.domain.model.withCustomTextLevels
+import io.lumensync.habattery.domain.model.TextValue
+import io.lumensync.habattery.domain.model.CustomTextLevels
+import io.lumensync.habattery.domain.TextLevelPicker
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -373,6 +377,34 @@ class MainViewModel(
   /** Drops the owner's levels of [value]; the built-in ones apply again. */
   fun useDefaults(value: LevelValue) {
     save(emptyList(), syncAfter = false) { it.withCustomLevels(value, CustomLevels()) }
+  }
+
+  /**
+   * Saves [drafts] as the owner's items of [value], a text still typed in a mode's "Add text"
+   * field included. An error is reported at the draft's position in [drafts]; with any error
+   * nothing is stored. The stored list has "other" last.
+   *
+   * @return `false` when an error was found, `true` when the save was started.
+   */
+  fun saveTextLevels(value: TextValue, drafts: List<TextLevelDraft>): Boolean {
+    val errors = drafts.saveErrors()
+    if (errors.isNotEmpty()) {
+      fail(*errors.toTypedArray())
+      return false
+    }
+    val built = drafts.map { it.toLevel() }
+    save(emptyList(), syncAfter = false) {
+      it.withCustomTextLevels(
+        value,
+        CustomTextLevels(on = true, levels = TextLevelPicker.ordered(built)),
+      )
+    }
+    return true
+  }
+
+  /** Drops the owner's items of [value]; the built-in ones apply again. */
+  fun useTextDefaults(value: TextValue) {
+    save(emptyList(), syncAfter = false) { it.withCustomTextLevels(value, CustomTextLevels()) }
   }
 
   /** Drops the last save's errors. The screen keeps one list, so another tab must not show them. */
