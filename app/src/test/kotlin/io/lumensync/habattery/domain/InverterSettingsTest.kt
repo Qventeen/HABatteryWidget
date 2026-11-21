@@ -25,9 +25,14 @@ class InverterSettingsTest {
 
   @Test
   fun unknownIconName_fallsBack() {
-    val s = InverterSettings(icons = mapOf("MODE_MAINS" to "NOT_AN_ICON", "NO_SUCH_SLOT" to "HOME"))
-    assertEquals(InverterIcon.TOWER, s.icon(IconSlot.MODE_MAINS))
+    val s = InverterSettings(icons = mapOf("GRID_VOLTAGE" to "NOT_AN_ICON", "NO_SUCH_SLOT" to "HOME"))
+    assertEquals(InverterIcon.TOWER, s.icon(IconSlot.GRID_VOLTAGE))
   }
+
+  /** The mode icons live in the mode list; only the two voltages keep a slot. */
+  @Test
+  fun slots_areTheVoltages() =
+    assertEquals(listOf(IconSlot.GRID_VOLTAGE, IconSlot.OUTPUT_VOLTAGE), IconSlot.entries)
 
   @Test
   fun withIcon_roundTrips() {

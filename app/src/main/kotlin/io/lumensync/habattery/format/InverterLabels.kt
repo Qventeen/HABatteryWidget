@@ -1,35 +1,43 @@
 package io.lumensync.habattery.format
 
+import android.content.res.Resources
 import androidx.annotation.StringRes
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.IconSlot
-import io.lumensync.habattery.domain.model.InverterMode
+import io.lumensync.habattery.domain.model.TextLevel
+import io.lumensync.habattery.domain.model.TextLevelName
 
-/** The word for a mode in the notification and the strip. */
+/** The translated default word of a mode. */
 @StringRes
-fun modeWordRes(mode: InverterMode): Int =
-  when (mode) {
-    InverterMode.POWER_ON -> R.string.mode_word_power_on
-    InverterMode.STANDBY -> R.string.mode_word_standby
-    InverterMode.MAINS -> R.string.mode_word_mains
-    InverterMode.OFF_GRID -> R.string.mode_word_off_grid
-    InverterMode.BYPASS -> R.string.mode_word_bypass
-    InverterMode.CHARGING -> R.string.mode_word_charging
-    InverterMode.FAULT -> R.string.mode_word_fault
+fun textLevelNameRes(name: TextLevelName): Int =
+  when (name) {
+    TextLevelName.POWER_ON -> R.string.mode_word_power_on
+    TextLevelName.STANDBY -> R.string.mode_word_standby
+    TextLevelName.MAINS -> R.string.mode_word_mains
+    TextLevelName.OFF_GRID -> R.string.mode_word_off_grid
+    TextLevelName.BYPASS -> R.string.mode_word_bypass
+    TextLevelName.CHARGING -> R.string.mode_word_charging
+    TextLevelName.FAULT -> R.string.mode_word_fault
+  }
+
+/**
+ * The word for a mode on the strip, in the notification and in the app. "Other" shows the Home
+ * Assistant text, which tells the user which text to map, or its label where there is none. Any
+ * other mode shows the user's own name as typed, else its translated default word, else the text
+ * it was matched by. [liveText] is the Home Assistant text, `null` in the app's lists.
+ */
+fun modeWord(resources: Resources, level: TextLevel, liveText: String?): String =
+  when {
+    level.other -> liveText ?: resources.getString(R.string.mode_other_label)
+    level.name.isNotBlank() -> level.name
+    level.defaultName != null -> resources.getString(textLevelNameRes(level.defaultName))
+    else -> liveText ?: level.texts.firstOrNull().orEmpty()
   }
 
 /** The name of a strip place in the Icons section. */
 @StringRes
 fun iconSlotRes(slot: IconSlot): Int =
   when (slot) {
-    IconSlot.MODE_POWER_ON -> R.string.inv_slot_mode_power_on
-    IconSlot.MODE_STANDBY -> R.string.inv_slot_mode_standby
-    IconSlot.MODE_MAINS -> R.string.inv_slot_mode_mains
-    IconSlot.MODE_OFF_GRID -> R.string.inv_slot_mode_off_grid
-    IconSlot.MODE_BYPASS -> R.string.inv_slot_mode_bypass
-    IconSlot.MODE_CHARGING -> R.string.inv_slot_mode_charging
-    IconSlot.MODE_FAULT -> R.string.inv_slot_mode_fault
-    IconSlot.MODE_OTHER -> R.string.inv_slot_mode_other
     IconSlot.GRID_VOLTAGE -> R.string.inv_slot_grid_voltage
     IconSlot.OUTPUT_VOLTAGE -> R.string.inv_slot_output_voltage
   }

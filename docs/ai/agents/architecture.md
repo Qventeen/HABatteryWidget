@@ -18,13 +18,15 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   first placed, 4×2; `StripRequest.first` does the same for the strip, ending on 3×1.
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
-  the per-value alert state), `ModeAlerts` (the inverter mode change to post), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
+  the per-value alert state), `ModeAlerts` (the inverter mode change to post: compares the modes of the new and the stored text), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` and `InverterWidgetModel` (what each widget and its app preview show),
   `DefaultLevels`, `LevelBasis` (capacity, cells and battery type), `BatteryPreset` (volts per
   cell and charge / discharge C-rates per `BatteryType`), `LevelPicker` and `LevelSpans` (value
-  levels and alerts), `ToggleAutoRefresh`. `model/` holds `BatteryType`, `InverterSettings`, `InverterReading`, `InverterMode` /
-  `ModeText` (the mode table), and `FetchRequest` / `PartResult` / `FetchResult` (what a sync
-  asks and gets back, one result per part).
+  levels and alerts), `DefaultTextLevels` and `TextLevelPicker` (text levels, spec 0014: the
+  built-in mode list, the match of a text to its mode, and the one own-list check),
+  `ToggleAutoRefresh`. `model/` holds `BatteryType`, `InverterSettings`, `InverterReading`,
+  `TextLevels` (`TextValue`, `TextLevel`, `CustomTextLevels`, `ModeText`), and `FetchRequest` /
+  `PartResult` / `FetchResult` (what a sync asks and gets back, one result per part).
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
   template; `StatesSource`: User, states per entity and the sensor search; both read the two
   parts and build the answer with `toFetchResult`;
@@ -34,7 +36,7 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `settingsDataStore`; cache and token `schemaVersion = 1`).
 - `format/`: `Formatters`, `Decimal`, `LevelTagText` (the level tag text),
   `LevelLabels` (level name, type word, unit and notification value labels), `InverterLabels`
-  (mode word and icon slot names); one formatter for
+  (`modeWord`: the one mode word for strip, notification and app; icon slot names); one formatter for
   widget, screen and notification.
 - `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidLevelNotifier` (one channel per level
   type; also posts mode changes; notification ids: 100 + `LevelValue` ordinal, so 107 and 108 for
@@ -105,8 +107,8 @@ when it has a second implementation or a test fake.
   - Each part's reading or error goes into `ReadingCache` (a failed part keeps its last good
     reading). In the same write `LevelAlerts.evaluate` (battery) and `LevelAlerts.evaluateInverter`
     run on a fresh reading, one after the other on the same alert map
-    (`CacheState.levelAlerts`), and `ModeAlerts.evaluate` compares the mode text with
-    `CacheState.inverterMode`.
+    (`CacheState.levelAlerts`), and `ModeAlerts.evaluate` matches the new mode text and
+    `CacheState.inverterMode` with the current mode list and compares the two modes.
   - Then `LevelNotifier.post` for each level alert, `LevelNotifier.postMode` for a mode change,
     and `WidgetRefresher.refreshAll()`.
 - Widget ↻ only marks "refreshing" and enqueues unique one-time work.
@@ -126,7 +128,7 @@ when it has a second implementation or a test fake.
 - Stored fields default only to `""`, empty list, `null` or `false`. Exception:
   display choices, font sizes, the home-screen scale and the theme default to the
   design values (specs 0003, 0007, 0008), and so do the inverter mode style, icons and strip
-  font sizes (spec 0012), and a level's type defaults to `NORMAL`
+  font sizes (spec 0012), and a level's or a text level's type defaults to `NORMAL`
   and its side to `MIDDLE`, the level with no edge (`ColorLevel.type`, `ColorLevel.side`,
   spec 0010).
 - The pack fields (spec 0013): `Settings.batteryType` `null` reads as LiFePO4, and a type name

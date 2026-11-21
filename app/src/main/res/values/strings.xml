@@ -71,6 +71,7 @@
     <string name="mode_word_bypass">bypass</string>
     <string name="mode_word_charging">charging</string>
     <string name="mode_word_fault">fault</string>
+    <string name="mode_other_label">other (HA text)</string>
 
     <!-- Inverter strip widget. -->
     <string name="inverter_widget_name">Inverter</string>
@@ -411,14 +412,6 @@
     <string name="inv_icon_dangerous">Danger</string>
 
     <!-- The strip's places with their own icon, in the Icons section. -->
-    <string name="inv_slot_mode_power_on">Mode: power on</string>
-    <string name="inv_slot_mode_standby">Mode: standby</string>
-    <string name="inv_slot_mode_mains">Mode: main</string>
-    <string name="inv_slot_mode_off_grid">Mode: battery</string>
-    <string name="inv_slot_mode_bypass">Mode: bypass</string>
-    <string name="inv_slot_mode_charging">Mode: charging</string>
-    <string name="inv_slot_mode_fault">Mode: fault</string>
-    <string name="inv_slot_mode_other">Mode: other</string>
     <string name="inv_slot_grid_voltage">Grid input voltage</string>
     <string name="inv_slot_output_voltage">Output voltage</string>
 </resources>

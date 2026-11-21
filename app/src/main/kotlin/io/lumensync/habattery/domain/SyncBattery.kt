@@ -4,6 +4,7 @@ import io.lumensync.habattery.domain.model.FetchRequest
 import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
@@ -57,6 +58,7 @@ class SyncBattery(
 
         // Read once, before the write, so tracking and posting agree on the same answer.
         val enabled = current.notificationsOn && notifier.canPost()
+        val modes = TextLevelPicker.effective(TextValue.MODE, current)
         var alerts = emptyList<LevelAlert>()
         var modeAlert: ModeAlert? = null
         cache.update { state ->
@@ -76,7 +78,7 @@ class SyncBattery(
             }
           val modeOutcome =
             if (inverter is PartResult.Ok) {
-              ModeAlerts.evaluate(inverter.reading, enabled, state.inverterMode)
+              ModeAlerts.evaluate(inverter.reading, modes, enabled, state.inverterMode)
             } else {
               null
             }

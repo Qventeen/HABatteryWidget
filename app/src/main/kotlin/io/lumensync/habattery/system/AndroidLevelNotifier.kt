@@ -21,12 +21,11 @@ import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.ModeAlert
-import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.format.Formatters
-import io.lumensync.habattery.format.modeWordRes
+import io.lumensync.habattery.format.modeWord
 import io.lumensync.habattery.format.notificationValueRes
 import io.lumensync.habattery.format.placeWithUnit
 import io.lumensync.habattery.format.shownName
@@ -76,13 +75,13 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
 
   override fun postMode(alert: ModeAlert) {
     if (!canPost()) return
-    val type = alert.mode?.type ?: LevelType.INFO
+    val type = alert.level.type
     val manager = NotificationManagerCompat.from(context)
-    val word = alert.mode?.let { context.getString(modeWordRes(it)) } ?: alert.text
+    val word = modeWord(context.resources, alert.level, alert.text)
     val notification =
       NotificationCompat.Builder(context, channelId(type))
         .setSmallIcon(icon(type))
-        .setColor(WidgetPalette.Light.shades(alert.mode?.color ?: LevelColor.GREY).ring.toArgb())
+        .setColor(WidgetPalette.Light.shades(alert.level.shownColor).ring.toArgb())
         .setContentTitle(context.getString(R.string.notification_mode_title, word))
         .setContentText(
           context.getString(

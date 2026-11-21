@@ -14,7 +14,8 @@ import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.InverterEntitySettings
 import io.lumensync.habattery.domain.model.InverterFontPercents
-import io.lumensync.habattery.domain.model.InverterMode
+import io.lumensync.habattery.domain.DefaultTextLevels
+import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.InverterSettings
 import io.lumensync.habattery.domain.model.ModeStyle
@@ -96,8 +97,8 @@ class InverterWidgetFitTest {
     for (lang in listOf("en", "uk")) {
       val context = context(lang, 1f)
       val measurer = PaintTextMeasurer(context)
-      for (mode in InverterMode.entries) {
-        val m = model(reading(mode.text, 228.0, 228.0), ModeStyle.ICON_WORD) as InverterWidgetModel.Data
+      for (mode in MODES) {
+        val m = model(reading(mode.texts.first(), 228.0, 228.0), ModeStyle.ICON_WORD) as InverterWidgetModel.Data
         val texts = StripTexts.of(m, context, Formatters(context))
         for (spec in listOf(InverterLayoutSpec.S4X1, InverterLayoutSpec.S5X1)) {
           val fonts = InverterFonts.data(m.style, texts, spec, 1f, InverterFontPercents(), 1f, measurer)
@@ -153,7 +154,7 @@ class InverterWidgetFitTest {
         "offgrid-$s" to model(reading("Off-Grid", 0.0, 230.0), style),
         "worst-$s" to model(reading(LONG_MODE, 288.0, 300.0), style, SyncError.HttpError(503)),
         "missing-$s" to model(reading(null, null, null), style, SyncError.Unreachable),
-      ) + InverterMode.entries.map { mode -> "${mode.name.lowercase()}-$s" to model(reading(mode.text, 228.0, 0.0), style) }
+      ) + MODES.map { mode -> "${mode.defaultName!!.name.lowercase()}-$s" to model(reading(mode.texts.first(), 228.0, 0.0), style) }
     }.toMap() +
       mapOf(
         "nodata" to model(null, ModeStyle.BIG_ICON, SyncError.Unreachable),
@@ -191,5 +192,8 @@ class InverterWidgetFitTest {
 
   private companion object {
     const val LONG_MODE = "Battery discharge"
+
+    /** The built-in modes with their words; "other" shows the raw text and has its own cases. */
+    val MODES = DefaultTextLevels.of(TextValue.MODE).filterNot { it.other }
   }
 }

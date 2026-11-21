@@ -63,3 +63,12 @@ fun Settings.customTextLevels(value: TextValue): CustomTextLevels =
 
 fun Settings.withCustomTextLevels(value: TextValue, levels: CustomTextLevels): Settings =
   copy(textLevels = textLevels + (value.name to levels))
+
+/** Texts Home Assistant gives when a sensor has no reading. */
+object ModeText {
+  fun isNoValue(text: String?): Boolean =
+    text == null ||
+      text.isBlank() ||
+      text.trim().equals("unavailable", ignoreCase = true) ||
+      text.trim().equals("unknown", ignoreCase = true)
+}

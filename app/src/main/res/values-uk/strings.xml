@@ -68,6 +68,7 @@
     <string name="mode_word_bypass">байпас</string>
     <string name="mode_word_charging">заряд</string>
     <string name="mode_word_fault">аварія</string>
+    <string name="mode_other_label">інший (текст HA)</string>
 
     <string name="inverter_widget_name">Інвертор</string>
     <string name="inverter_widget_description">Режим інвертора, напруга входу мережі та виходу з Home Assistant</string>
@@ -368,15 +369,6 @@
     <string name="inv_icon_report">Звіт</string>
     <string name="inv_icon_warning">Попередження</string>
     <string name="inv_icon_dangerous">Небезпека</string>
-
-    <string name="inv_slot_mode_power_on">Режим: запуск</string>
-    <string name="inv_slot_mode_standby">Режим: пауза</string>
-    <string name="inv_slot_mode_mains">Режим: мережа</string>
-    <string name="inv_slot_mode_off_grid">Режим: батарея</string>
-    <string name="inv_slot_mode_bypass">Режим: байпас</string>
-    <string name="inv_slot_mode_charging">Режим: заряд</string>
-    <string name="inv_slot_mode_fault">Режим: аварія</string>
-    <string name="inv_slot_mode_other">Режим: інший</string>
     <string name="inv_slot_grid_voltage">Напруга входу мережі</string>
     <string name="inv_slot_output_voltage">Напруга виходу</string>
 </resources>

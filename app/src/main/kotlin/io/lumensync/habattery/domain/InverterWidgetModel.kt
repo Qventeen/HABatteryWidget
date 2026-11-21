@@ -4,7 +4,6 @@ import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.IconSlot
 import io.lumensync.habattery.domain.model.InverterIcon
-import io.lumensync.habattery.domain.model.InverterMode
 import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelValue
@@ -12,6 +11,8 @@ import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.ModeText
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.domain.model.TextLevel
+import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.domain.model.icon
 
 /** What the inverter strip shows; the drawing only reads it. A missing value stays null. */
@@ -43,13 +44,12 @@ sealed interface InverterWidgetModel {
     }
 
     private fun modeLook(r: InverterReading, settings: Settings): ModeLook {
-      val mode = InverterMode.of(r.mode)
+      val levels = TextLevelPicker.effective(TextValue.MODE, settings)
+      val level = TextLevelPicker.match(levels, r.mode)
       val text = r.mode?.takeUnless { ModeText.isNoValue(it) }
-      return if (mode != null) {
-        ModeLook(mode, text, mode.color, settings.inverter.icon(mode.slot))
-      } else {
-        ModeLook(null, text, LevelColor.GREY, settings.inverter.icon(IconSlot.MODE_OTHER))
-      }
+      // No value shows "—" with the "other" icon: the ESP32 is offline, no mode is known.
+      val icon = (level ?: levels.first { it.other }).shownIcon
+      return ModeLook(level, text, level?.shownColor ?: LevelColor.GREY, icon)
     }
 
     private fun voltageLook(
@@ -70,11 +70,11 @@ sealed interface InverterWidgetModel {
 }
 
 /**
- * The mode word: [mode] is the known row, `null` for other text; [text] is the Home Assistant text
- * as it is, `null` when there is no value.
+ * The mode: [level] is the matched item, `null` when there is no value; [text] is the Home
+ * Assistant text as it is, `null` when there is no value.
  */
 data class ModeLook(
-  val mode: InverterMode?,
+  val level: TextLevel?,
   val text: String?,
   val color: LevelColor,
   val icon: InverterIcon,

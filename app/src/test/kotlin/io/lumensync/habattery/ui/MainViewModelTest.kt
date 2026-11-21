@@ -475,9 +475,9 @@ class MainViewModelTest {
   @Test fun saveInverterIcon_storesName() = runTest(dispatcher) {
     val vm = start()
     val before = widgets.refreshes
-    vm.saveInverterIcon(IconSlot.MODE_MAINS, InverterIcon.LOCATION_CITY)
+    vm.saveInverterIcon(IconSlot.GRID_VOLTAGE, InverterIcon.LOCATION_CITY)
     advanceUntilIdle()
-    assertEquals("LOCATION_CITY", state.settings.inverter.icons["MODE_MAINS"])
+    assertEquals("LOCATION_CITY", state.settings.inverter.icons["GRID_VOLTAGE"])
     assertTrue(widgets.refreshes > before)
     assertEquals(1, source.calls)
   }

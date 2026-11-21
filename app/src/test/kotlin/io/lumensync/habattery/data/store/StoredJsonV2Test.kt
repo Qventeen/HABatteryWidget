@@ -13,7 +13,9 @@ import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.IconSlot
 import io.lumensync.habattery.domain.model.InverterIcon
+import io.lumensync.habattery.domain.model.icon
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.domain.model.customTextLevels
@@ -184,5 +186,14 @@ class StoredJsonV2Test {
     assertNull(level.defaultName)
     assertEquals(InverterIcon.HELP, level.shownIcon)
     assertEquals(LevelType.NORMAL, level.type)
+  }
+
+  @Test
+  fun settingsWithOldModeIconKeys_load() {
+    val json =
+      """{"schemaVersion":2,"settings":{"inverter":""" +
+        """{"icons":{"MODE_MAINS":"FACTORY","GRID_VOLTAGE":"HOME"}}}}"""
+    val inverter = StoreJson.decodeFromString(SettingsRecord.serializer(), json).settings.inverter
+    assertEquals(InverterIcon.HOME, inverter.icon(IconSlot.GRID_VOLTAGE))
   }
 }
