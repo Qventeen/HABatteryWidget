@@ -108,6 +108,8 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       LevelValue.DELTA -> formatters.deltaMv(shown.roundToInt())
       LevelValue.BATTERY_TEMPERATURE,
       LevelValue.MOSFET_TEMPERATURE -> formatters.temperature(shown)
+      LevelValue.GRID_VOLTAGE,
+      LevelValue.OUTPUT_VOLTAGE -> formatters.wholeVolts(shown)
     }
 
   private fun openApp(): PendingIntent =

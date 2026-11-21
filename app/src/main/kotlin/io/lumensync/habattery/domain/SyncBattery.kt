@@ -65,14 +65,22 @@ class SyncBattery(
             } else {
               null
             }
-          alerts = batteryOutcome?.alerts.orEmpty()
+          // The inverter check starts from the battery's new states, so the write keeps both.
+          val batteryStates = batteryOutcome?.state ?: state.levelAlerts
+          val inverterOutcome =
+            if (inverter is PartResult.Ok) {
+              LevelAlerts.evaluateInverter(inverter.reading, current, enabled, batteryStates)
+            } else {
+              null
+            }
+          alerts = batteryOutcome?.alerts.orEmpty() + inverterOutcome?.alerts.orEmpty()
           state.copy(
             reading = battery.readingOr(state.reading),
             error = battery.errorOrNull(),
             inverterReading = inverter.readingOr(state.inverterReading),
             inverterError = inverter.errorOrNull(),
             refreshingSinceMillis = null,
-            levelAlerts = batteryOutcome?.state ?: state.levelAlerts,
+            levelAlerts = inverterOutcome?.state ?: batteryStates,
           )
         }
         refreshingCleared = true

@@ -2,6 +2,7 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelValue
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -14,10 +15,10 @@ import kotlin.math.roundToInt
  */
 object ShownNumber {
   /**
-   * The number [value]'s level is picked by in [reading], or `null` when the reading lacks it.
-   * [levels] are the value's levels; only the battery temperature needs them, as its number is
-   * that of the sensor whose level ranks worst (the first one on a tie). Each current counts as
-   * 0 A while the battery is idle or the current flows the other way.
+   * The number [value]'s level is picked by in [reading], or `null` when the reading lacks it; an
+   * inverter value is never in it. [levels] are the value's levels; only the battery temperature
+   * needs them, as its number is that of the sensor whose level ranks worst (the first one on a
+   * tie). Each current counts as 0 A while the battery is idle or the current flows the other way.
    */
   fun of(value: LevelValue, reading: BatteryReading, levels: List<ColorLevel>): Double? =
     when (value) {
@@ -30,7 +31,21 @@ object ShownNumber {
       LevelValue.DELTA -> BatteryMath.deltaMv(reading)?.toDouble()
       LevelValue.BATTERY_TEMPERATURE -> worstSensor(reading.temperaturesC, levels)
       LevelValue.MOSFET_TEMPERATURE -> reading.mosfetTemperatureC?.let(::wholeDegrees)
+      LevelValue.GRID_VOLTAGE,
+      LevelValue.OUTPUT_VOLTAGE -> null
     }
+
+  /**
+   * The inverter voltage [value] in whole volts, or `null` when [reading] lacks it; a battery value
+   * is never in it. Half-even, as the number text rounds, not half up like `roundToInt`: 206.5 V
+   * shows as "206 V", so its level must be picked by 206.
+   */
+  fun of(value: LevelValue, reading: InverterReading): Double? =
+    when (value) {
+      LevelValue.GRID_VOLTAGE -> reading.gridVoltageV
+      LevelValue.OUTPUT_VOLTAGE -> reading.outputVoltageV
+      else -> null
+    }?.roundTo(value.decimals)
 
   /** The charge in whole percent, as the widget shows it. */
   fun soc(reading: BatteryReading): Int = reading.chargePercent.roundToInt()

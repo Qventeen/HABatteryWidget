@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
+import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.testing.reading
 import org.junit.Assert.assertEquals
@@ -59,5 +60,25 @@ class ShownNumberTest {
     assertEquals(-1.0, temperature(-1.0, 60.0)!!, 0.0) // Freezing and Hot rank the same
     assertNull(temperature(null))
     assertNull(temperature())
+  }
+
+  @Test
+  fun inverter_wholeVolts_halfEven() {
+    fun grid(volts: Double?) =
+      ShownNumber.of(
+        LevelValue.GRID_VOLTAGE,
+        InverterReading(gridVoltageV = volts, updatedAtMillis = 0L),
+      )
+    assertEquals(206.0, grid(206.5)!!, 0.0) // half-even, not "207 V" in the Low colour
+    assertEquals(207.0, grid(206.6)!!, 0.0)
+    assertNull(grid(null))
+    val output = InverterReading(outputVoltageV = 229.6, updatedAtMillis = 0L)
+    assertEquals(230.0, ShownNumber.of(LevelValue.OUTPUT_VOLTAGE, output)!!, 0.0)
+    assertNull(ShownNumber.of(LevelValue.SOC, output))
+  }
+
+  @Test
+  fun inverterValues_notInABatteryReading() {
+    for (value in LevelValue.INVERTER) assertNull(shown(value, reading()))
   }
 }

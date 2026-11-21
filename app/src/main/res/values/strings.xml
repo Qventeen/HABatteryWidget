@@ -57,6 +57,8 @@
     <string name="notification_value_delta">Cell delta</string>
     <string name="notification_value_battery_temperature">Battery temperature</string>
     <string name="notification_value_mosfet_temperature">MOSFET temperature</string>
+    <string name="notification_value_grid_voltage">Grid input</string>
+    <string name="notification_value_output_voltage">Output</string>
     <string name="notification_level_title">%1$s: %2$s %3$s</string>
     <string name="notification_level_title_short">%1$s: %2$s</string>
     <string name="notification_level_text">%1$s · measured at %2$s</string>
@@ -174,6 +176,8 @@
     <string name="colors_value_charge_current">Charge current</string>
     <string name="colors_value_discharge_current">Discharge current</string>
     <string name="colors_value_delta">Cell delta</string>
+    <string name="colors_value_grid_voltage">Grid input</string>
+    <string name="colors_value_output_voltage">Output</string>
     <string name="colors_unit_percent">%</string>
     <string name="colors_unit_volts">V</string>
     <string name="colors_unit_amps">A</string>
@@ -251,6 +255,8 @@
     <string name="level_name_high">High</string>
     <string name="level_name_very_high">Very high</string>
     <string name="level_name_light">Light</string>
+    <string name="level_name_no_grid">No grid</string>
+    <string name="level_name_no_power">No power</string>
 
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>

@@ -313,6 +313,57 @@ class SyncBatteryTest {
     assertEquals(emptyList<LevelAlert>(), notifier.posted)
   }
 
+  private fun defaultId(value: LevelValue, name: LevelName) =
+    DefaultLevels.of(value, LevelBasis(null, null)).single { it.defaultName == name }.id
+
+  private fun gridId(name: LevelName) = defaultId(LevelValue.GRID_VOLTAGE, name)
+
+  private val gridNormal
+    get() = mapOf("GRID_VOLTAGE" to LevelAlertState(current = gridId(LevelName.NORMAL)))
+
+  private val gridLow = inverterReading().copy(gridVoltageV = 205.0)
+
+  @Test
+  fun bothParts_postLevelAlerts_andKeepBothStates() = runTest {
+    val cache = FakeReadingCache(CacheState(levelAlerts = enteringLow + gridNormal))
+
+    sync(
+      FakeBatterySource(FetchResult(PartResult.Ok(reading(19.0)), PartResult.Ok(gridLow))),
+      cache,
+      configuredSettings(notificationsOn = true, inverter = true),
+    )()
+
+    assertEquals(
+      listOf(LevelValue.SOC to LevelName.LOW, LevelValue.GRID_VOLTAGE to LevelName.LOW),
+      notifier.posted.map { it.value to it.level.defaultName },
+    )
+    val stored = cache.current.levelAlerts
+    assertEquals(socId(LevelName.LOW), stored["SOC"]?.current)
+    assertEquals(
+      LevelAlertState(gridId(LevelName.LOW), listOf(gridId(LevelName.LOW))),
+      stored["GRID_VOLTAGE"],
+    )
+    assertEquals(
+      LevelAlertState(defaultId(LevelValue.OUTPUT_VOLTAGE, LevelName.NORMAL)),
+      stored["OUTPUT_VOLTAGE"],
+    )
+  }
+
+  @Test
+  fun batteryFails_inverterLevelStillPosts() = runTest {
+    val cache = FakeReadingCache(CacheState(levelAlerts = enteringLow + gridNormal))
+
+    sync(
+      FakeBatterySource(FetchResult(badResponse, PartResult.Ok(gridLow))),
+      cache,
+      configuredSettings(notificationsOn = true, inverter = true),
+    )()
+
+    assertEquals(listOf(LevelValue.GRID_VOLTAGE), notifier.posted.map { it.value })
+    assertEquals(enteringLow["SOC"], cache.current.levelAlerts["SOC"])
+    assertEquals(gridId(LevelName.LOW), cache.current.levelAlerts["GRID_VOLTAGE"]?.current)
+  }
+
   @Test
   fun parallelRuns_postOnce() = runTest {
     val useCase =

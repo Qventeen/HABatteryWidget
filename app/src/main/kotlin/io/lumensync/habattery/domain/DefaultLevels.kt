@@ -11,7 +11,8 @@ import kotlin.math.floor
 
 /**
  * The built-in levels of each value, in shown order. Ids run 1..n and names stay empty. Bells are on
- * for the levels that mean act now: SOC Low and Full, Freezing and Hot battery, Hot MOSFET.
+ * for the levels that mean act now: SOC Low and Full, Freezing and Hot battery, Hot MOSFET, Low grid
+ * input.
  */
 object DefaultLevels {
   private val BELOW = LevelSide.BELOW
@@ -89,6 +90,23 @@ object DefaultLevels {
             Row(ABOVE, 65.0, LevelType.WARNING, LevelName.WARM, icon = LevelIcon.FLAME),
             Row(ABOVE, 80.0, LevelType.CRITICAL, LevelName.HOT, icon = LevelIcon.FLAME_ALERT),
           )
+        LevelValue.GRID_VOLTAGE,
+        LevelValue.OUTPUT_VOLTAGE -> {
+          // Normal is 230 V ±10 % (EN 50160). A grid outage is normal for this system and the mode
+          // already shows it, so no grid is only Info; no output means the house has no power.
+          val none =
+            if (value == LevelValue.GRID_VOLTAGE) {
+              Row(BELOW, 99.0, LevelType.INFO, LevelName.NO_GRID)
+            } else {
+              Row(BELOW, 99.0, LevelType.CRITICAL, LevelName.NO_POWER)
+            }
+          listOf(
+            none,
+            Row(BELOW, 206.0, LevelType.WARNING, LevelName.LOW),
+            Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
+            Row(ABOVE, 254.0, LevelType.WARNING, LevelName.HIGH),
+          )
+        }
       }
     return rows.mapIndexed { index, row ->
       ColorLevel(
@@ -109,6 +127,9 @@ object DefaultLevels {
       LevelValue.SOC -> name == LevelName.LOW || name == LevelName.FULL
       LevelValue.BATTERY_TEMPERATURE -> name == LevelName.FREEZING || name == LevelName.HOT
       LevelValue.MOSFET_TEMPERATURE -> name == LevelName.HOT
+      // No grid has no bell: a grid loss also changes the inverter mode, and one notification is
+      // enough.
+      LevelValue.GRID_VOLTAGE -> name == LevelName.LOW
       else -> false
     }
 

@@ -583,7 +583,9 @@ private fun edgeKeyboard(value: LevelValue): KeyboardType =
     LevelValue.VOLTAGE,
     LevelValue.CHARGE_CURRENT,
     LevelValue.DISCHARGE_CURRENT,
-    LevelValue.DELTA -> KeyboardType.Decimal
+    LevelValue.DELTA,
+    LevelValue.GRID_VOLTAGE,
+    LevelValue.OUTPUT_VOLTAGE -> KeyboardType.Decimal
   }
 
 /**

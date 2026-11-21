@@ -52,6 +52,8 @@ enum class LevelName {
   HIGH,
   VERY_HIGH,
   LIGHT,
+  NO_GRID,
+  NO_POWER,
 }
 
 /**
@@ -68,6 +70,7 @@ enum class LevelSide {
 /**
  * The values that have levels. [decimals] is the precision of an edge; only temperatures have
  * icons. [floor] is the lowest number the value can show, or `null` when it can go negative.
+ * Append only: the ordinals are notification ids.
  */
 enum class LevelValue(val decimals: Int, val hasIcons: Boolean, val floor: Double?) {
   SOC(0, false, 0.0),
@@ -77,6 +80,16 @@ enum class LevelValue(val decimals: Int, val hasIcons: Boolean, val floor: Doubl
   DELTA(0, false, 0.0),
   BATTERY_TEMPERATURE(0, true, null),
   MOSFET_TEMPERATURE(0, true, null),
+  GRID_VOLTAGE(0, false, 0.0),
+  OUTPUT_VOLTAGE(0, false, 0.0);
+
+  companion object {
+    /** The values of the inverter strip, read from an `InverterReading`. */
+    val INVERTER: List<LevelValue> = listOf(GRID_VOLTAGE, OUTPUT_VOLTAGE)
+
+    /** The values of the battery widget, read from a `BatteryReading`: all the others. */
+    val BATTERY: List<LevelValue> = entries - INVERTER.toSet()
+  }
 }
 
 /**

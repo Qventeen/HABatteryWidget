@@ -54,6 +54,8 @@
     <string name="notification_value_delta">Різниця комірок</string>
     <string name="notification_value_battery_temperature">Температура батареї</string>
     <string name="notification_value_mosfet_temperature">Температура MOSFET</string>
+    <string name="notification_value_grid_voltage">Вхід мережі</string>
+    <string name="notification_value_output_voltage">Вихід</string>
     <string name="notification_level_title">%1$s: %2$s %3$s</string>
     <string name="notification_level_title_short">%1$s: %2$s</string>
     <string name="notification_level_text">%1$s · виміряно о %2$s</string>
@@ -163,6 +165,8 @@
     <string name="colors_value_charge_current">Струм заряду</string>
     <string name="colors_value_discharge_current">Струм розряду</string>
     <string name="colors_value_delta">Різниця комірок</string>
+    <string name="colors_value_grid_voltage">Вхід мережі</string>
+    <string name="colors_value_output_voltage">Вихід</string>
     <string name="colors_unit_percent">%</string>
     <string name="colors_unit_volts">В</string>
     <string name="colors_unit_amps">А</string>
@@ -225,6 +229,8 @@
     <string name="level_name_high">Високий</string>
     <string name="level_name_very_high">Дуже високий</string>
     <string name="level_name_light">Слабкий</string>
+    <string name="level_name_no_grid">Немає мережі</string>
+    <string name="level_name_no_power">Немає живлення</string>
 
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>

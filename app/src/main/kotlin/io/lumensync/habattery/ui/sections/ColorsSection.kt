@@ -69,7 +69,7 @@ import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
 
 /**
- * The levels of every value as tags, with Default and Edit; one editor is open at a time.
+ * The levels of each of [values] as tags, with Default and Edit; one editor is open at a time.
  * [basis] gives the built-in edges.
  * [onSaveLevels] returns `false` when a field has an error, and the editor stays open.
  */
@@ -80,17 +80,17 @@ fun ColorsSection(
   errors: List<FieldError>,
   onSaveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   onUseDefaults: (LevelValue) -> Unit,
+  values: List<LevelValue>,
   modifier: Modifier = Modifier,
 ) {
   // The level helpers take Settings; they read only the level lists.
   val settings = remember(colorLevels) { Settings(colorLevels = colorLevels) }
   // The one own-levels check per value; the summary, the Default button and the tags share it.
   val own =
-    remember(settings) {
-      LevelValue.entries.associateWith { LevelPicker.ownLevels(it, settings.customLevels(it)) }
+    remember(settings, values) {
+      values.associateWith { LevelPicker.ownLevels(it, settings.customLevels(it)) }
     }
-  val customNames =
-    LevelValue.entries.filter { own[it] != null }.map { stringResource(valueLabel(it)) }
+  val customNames = values.filter { own[it] != null }.map { stringResource(valueLabel(it)) }
   val summary =
     if (customNames.isEmpty()) stringResource(R.string.colors_summary_default)
     else stringResource(R.string.colors_summary_custom, customNames.joinToString(", "))
@@ -99,7 +99,7 @@ fun ColorsSection(
     var editing by rememberSaveable { mutableStateOf<LevelValue?>(null) }
     var confirmDefault by rememberSaveable { mutableStateOf<LevelValue?>(null) }
     val palette = appPalette()
-    LevelValue.entries.forEach { value ->
+    values.forEach { value ->
       // Keyed by value: by call order, an editor opened in the same tap that closes another would
       // take over the closed editor's draft and errors.
       key(value) {
@@ -330,6 +330,8 @@ private fun valueLabel(value: LevelValue): Int =
     LevelValue.DELTA -> R.string.colors_value_delta
     LevelValue.BATTERY_TEMPERATURE -> R.string.widget_battery_temperature
     LevelValue.MOSFET_TEMPERATURE -> R.string.widget_mosfet_temperature
+    LevelValue.GRID_VOLTAGE -> R.string.colors_value_grid_voltage
+    LevelValue.OUTPUT_VOLTAGE -> R.string.colors_value_output_voltage
   }
 
 @StringRes

@@ -132,6 +132,7 @@ private fun MainContent(
       state.errors,
       actions.saveLevels,
       actions.useDefaults,
+      values = LevelValue.BATTERY,
     )
     ConnectionSection(
       settings.connection,

@@ -176,6 +176,33 @@ class DefaultLevelsTest {
   }
 
   @Test
+  fun inverterDefaults() {
+    val grid = of(LevelValue.GRID_VOLTAGE)
+    assertEquals(listOf(BELOW, BELOW, MIDDLE, ABOVE), grid.sides())
+    assertEquals(listOf(99.0, 206.0, null, 254.0), grid.edges())
+    assertEquals(
+      listOf(LevelName.NO_GRID, LevelName.LOW, LevelName.NORMAL, LevelName.HIGH),
+      grid.names(),
+    )
+    assertEquals(listOf(INFO, WARNING, NORMAL, WARNING), grid.types())
+    assertEquals(listOf(false, true, false, false), grid.map { it.notify })
+    assertEquals(listOf(1, 2, 3, 4), grid.map { it.id })
+
+    val output = of(LevelValue.OUTPUT_VOLTAGE)
+    assertEquals(grid.sides(), output.sides())
+    assertEquals(grid.edges(), output.edges())
+    assertEquals(LevelName.NO_POWER, output.first().defaultName)
+    assertEquals(listOf(CRITICAL, WARNING, NORMAL, WARNING), output.types())
+    assertTrue(output.none { it.notify })
+  }
+
+  @Test
+  fun valueGroups_holdEveryValueOnce() {
+    assertEquals(LevelValue.entries, LevelValue.BATTERY + LevelValue.INVERTER)
+    assertEquals(listOf(LevelValue.GRID_VOLTAGE, LevelValue.OUTPUT_VOLTAGE), LevelValue.INVERTER)
+  }
+
+  @Test
   fun defaults_areValid() {
     for (value in LevelValue.entries) {
       for (basis in
@@ -215,6 +242,7 @@ class DefaultLevelsTest {
         LevelValue.SOC to listOf(LevelName.LOW, LevelName.FULL),
         LevelValue.BATTERY_TEMPERATURE to listOf(LevelName.FREEZING, LevelName.HOT),
         LevelValue.MOSFET_TEMPERATURE to listOf(LevelName.HOT),
+        LevelValue.GRID_VOLTAGE to listOf(LevelName.LOW),
       )
     for (value in LevelValue.entries) {
       for (basis in listOf(LevelBasis(100.0, 16), LevelBasis(null, null))) {

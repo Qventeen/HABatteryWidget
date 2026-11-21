@@ -229,6 +229,19 @@ class AndroidLevelNotifierTest {
   }
 
   @Test
+  fun gridVoltage_wholeVolts_ownSlot() {
+    grant()
+    val low =
+      DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null))
+        .single { it.defaultName == LevelName.LOW }
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, low, LevelSpan.AtOrBelow(206.0), 205.0))
+
+    val posted = shadowOf(manager).getNotification(107)
+    assertEquals("Grid input: Low ↓206 V", posted.extras.getString("android.title"))
+    assertTrue(posted.extras.getString("android.text")!!.startsWith("205 V · measured at "))
+  }
+
+  @Test
   @Config(qualifiers = "uk")
   fun ukrainian_titleAndBody() {
     grant()

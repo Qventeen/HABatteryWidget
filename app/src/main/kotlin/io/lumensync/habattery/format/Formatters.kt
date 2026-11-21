@@ -41,6 +41,10 @@ class Formatters(private val context: Context) {
     fun voltage(volts: Double): String =
         context.getString(R.string.unit_volts, number(volts, 2, 2))
 
+    /** The inverter voltages: whole volts, half-even like their `ShownNumber`. */
+    fun wholeVolts(volts: Double): String =
+        context.getString(R.string.unit_volts, number(volts, 0, 0))
+
     fun current(amps: Double): String =
         context.getString(R.string.unit_amps, number(amps, 1, 1))
 

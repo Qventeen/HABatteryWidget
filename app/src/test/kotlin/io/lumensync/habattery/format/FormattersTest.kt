@@ -59,6 +59,14 @@ class FormattersTest {
     }
 
     @Test
+    fun wholeVolts() {
+        val f = Formatters(context)
+        assertEquals("230 V", f.wholeVolts(230.0))
+        // Half-even, as ShownNumber rounds the inverter voltages.
+        assertEquals("206 V", f.wholeVolts(206.5))
+    }
+
+    @Test
     fun power_roundsBeforePickingUnit() {
         val f = Formatters(context)
         assertEquals("999 W", f.power(999.4))
@@ -71,6 +79,7 @@ class FormattersTest {
     fun numbers_uk() {
         val f = Formatters(context)
         assertEquals("26,46 В", f.voltage(26.456))
+        assertEquals("230 В", f.wholeVolts(230.0))
         assertEquals("1,23 кВт", f.power(1234.0))
     }
 
