@@ -79,6 +79,7 @@ import io.lumensync.habattery.ui.sections.WidgetPreviewCard
 import io.lumensync.habattery.ui.sections.WidgetSection
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.InverterWidgetReceiver
+import io.lumensync.habattery.domain.model.TextValue
 import java.util.Locale
 
 /** What the screen can ask for: the ViewModel's functions plus the system actions. */
@@ -108,6 +109,8 @@ data class MainActions(
   val setLanguage: (LanguageChoice) -> Unit,
   val saveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   val useDefaults: (LevelValue) -> Unit,
+  val saveTextLevels: (TextValue, List<TextLevelDraft>) -> Boolean,
+  val useTextDefaults: (TextValue) -> Unit,
   val clearErrors: () -> Unit,
   val requestPinWidget: (receiver: Class<out GlanceAppWidgetReceiver>) -> Unit,
   val openNotificationSettings: () -> Unit,

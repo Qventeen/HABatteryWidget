@@ -199,6 +199,8 @@ class MainActivity : ComponentActivity() {
       },
       saveLevels = viewModel::saveLevels,
       useDefaults = viewModel::useDefaults,
+      saveTextLevels = viewModel::saveTextLevels,
+      useTextDefaults = viewModel::useTextDefaults,
       clearErrors = viewModel::clearErrors,
       requestPinWidget = { receiver ->
         lifecycleScope.launch {

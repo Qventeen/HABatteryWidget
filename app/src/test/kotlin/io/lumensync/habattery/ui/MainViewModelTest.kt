@@ -47,6 +47,10 @@ import io.lumensync.habattery.testing.configuredSettings
 import io.lumensync.habattery.testing.inverterEntities
 import io.lumensync.habattery.testing.inverterReading
 import io.lumensync.habattery.testing.reading
+import io.lumensync.habattery.domain.model.customTextLevels
+import io.lumensync.habattery.domain.model.TextValue
+import io.lumensync.habattery.domain.model.CustomTextLevels
+import io.lumensync.habattery.domain.DefaultTextLevels
 import java.io.IOException
 import java.security.ProviderException
 import java.util.Locale
@@ -877,6 +881,38 @@ class MainViewModelTest {
     )
     advanceUntilIdle()
     assertEquals(listOf<Double?>(null, 12.0), edges(LevelValue.DELTA))
+  }
+
+  private val modeDrafts = DefaultTextLevels.of(TextValue.MODE).map { it.toDraft() }
+
+  @Test fun saveTextLevels_storesOwnList_otherLast() = runTest(dispatcher) {
+    val vm = start()
+    val saved = vm.saveTextLevels(TextValue.MODE, listOf(modeDrafts.last()) + modeDrafts.dropLast(1))
+    advanceUntilIdle()
+    assertTrue(saved)
+    val own = state.settings.customTextLevels(TextValue.MODE)
+    assertTrue(own.on)
+    assertEquals(DefaultTextLevels.of(TextValue.MODE), own.levels)
+  }
+
+  @Test fun saveTextLevels_typedDuplicate_failsAtRow() = runTest(dispatcher) {
+    val vm = start()
+    val before = state.settings
+    val drafts = modeDrafts.mapIndexed { i, d -> if (i == 3) d.copy(typed = "Mains") else d }
+    val saved = vm.saveTextLevels(TextValue.MODE, drafts)
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertEquals(listOf(FieldError(Field.TEXT_LEVEL_TEXTS, Problem.DUPLICATE, 3)), state.errors)
+    assertEquals(before, state.settings)
+  }
+
+  @Test fun useTextDefaults_dropsOwnList() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveTextLevels(TextValue.MODE, modeDrafts)
+    advanceUntilIdle()
+    vm.useTextDefaults(TextValue.MODE)
+    advanceUntilIdle()
+    assertEquals(CustomTextLevels(), state.settings.customTextLevels(TextValue.MODE))
   }
 
   @Test fun useDefaults_dropsOwnLevels() = runTest(dispatcher) {
