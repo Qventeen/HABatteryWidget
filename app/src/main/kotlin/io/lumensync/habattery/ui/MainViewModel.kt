@@ -387,12 +387,12 @@ class MainViewModel(
    * @return `false` when an error was found, `true` when the save was started.
    */
   fun saveTextLevels(value: TextValue, drafts: List<TextLevelDraft>): Boolean {
-    val built = drafts.map { it.toLevel() }
-    val errors = Validation.textLevels(built)
+    val errors = drafts.saveErrors()
     if (errors.isNotEmpty()) {
       fail(*errors.toTypedArray())
       return false
     }
+    val built = drafts.map { it.toLevel() }
     save(emptyList(), syncAfter = false) {
       it.withCustomTextLevels(
         value,

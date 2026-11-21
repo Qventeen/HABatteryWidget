@@ -1,6 +1,8 @@
 package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.DefaultTextLevels
+import io.lumensync.habattery.domain.Field
+import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.model.CustomTextLevels
 import io.lumensync.habattery.domain.model.InverterIcon
@@ -96,6 +98,28 @@ class TextLevelDraftTest {
   @Test
   fun withoutText_removes() =
     assertEquals(emptyList<String>(), drafts.withoutText(3, "Mains").byId(3).texts)
+
+  @Test
+  fun saveErrors_typedAboveItsChip_atTypedRow() =
+    assertEquals(
+      listOf(FieldError(Field.TEXT_LEVEL_TEXTS, Problem.DUPLICATE, 1)),
+      drafts.typed(2, "Mains").saveErrors(),
+    )
+
+  @Test
+  fun saveErrors_typedThenAddedBelow_atTypedRow() {
+    val added = drafts.withNewMode(builtIn).typed(1, "Line").typed(9, "Line").withTypedText(9)
+
+    assertNull(added.problem)
+    assertEquals(
+      listOf(FieldError(Field.TEXT_LEVEL_TEXTS, Problem.DUPLICATE, 0)),
+      added.drafts.saveErrors(),
+    )
+  }
+
+  @Test
+  fun saveErrors_valid_isEmpty() =
+    assertEquals(emptyList<FieldError>(), drafts.typed(3, "Line").saveErrors())
 
   @Test
   fun toLevel_includesTypedText() {

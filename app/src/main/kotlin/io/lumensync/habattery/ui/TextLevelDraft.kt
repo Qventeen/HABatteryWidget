@@ -1,8 +1,11 @@
 package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.DefaultTextLevels
+import io.lumensync.habattery.domain.Field
+import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.TextLevelPicker
+import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.CustomTextLevels
 import io.lumensync.habattery.domain.model.InverterIcon
 import io.lumensync.habattery.domain.model.LevelColor
@@ -107,3 +110,19 @@ fun List<TextLevelDraft>.withTypedText(id: Int): TextAdd {
 
 fun List<TextLevelDraft>.withoutText(id: Int, text: String): List<TextLevelDraft> =
   map { if (it.id == id) it.copy(texts = it.texts - text) else it }
+
+/**
+ * Why the drafts cannot be saved; empty when they can. A text still typed in an "Add text" field
+ * that repeats a chip or a text typed above it is reported at its own mode, even when the chip sits
+ * lower: that mode is the one to fix. With such an error the rest of the list is not checked.
+ */
+fun List<TextLevelDraft>.saveErrors(): List<FieldError> {
+  val seen = flatMap { it.texts }.mapTo(mutableSetOf(), Validation::textKey)
+  val typed =
+    mapIndexedNotNull { i, draft ->
+      val key = Validation.textKey(draft.typed)
+      FieldError(Field.TEXT_LEVEL_TEXTS, Problem.DUPLICATE, i)
+        .takeIf { key.isNotEmpty() && !seen.add(key) }
+    }
+  return typed.ifEmpty { Validation.textLevels(map { it.toLevel() }) }
+}

@@ -45,12 +45,12 @@ import io.lumensync.habattery.domain.DefaultTextLevels
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
-import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.CustomTextLevels
 import io.lumensync.habattery.domain.model.MAX_TEXT_LEVELS
 import io.lumensync.habattery.domain.model.TextValue
 import io.lumensync.habattery.format.modeWord
 import io.lumensync.habattery.ui.TextLevelDraft
+import io.lumensync.habattery.ui.saveErrors
 import io.lumensync.habattery.ui.textEditorDrafts
 import io.lumensync.habattery.ui.toLevel
 import io.lumensync.habattery.ui.withNewMode
@@ -91,7 +91,7 @@ internal fun ModeEditor(
       onClose()
     } else {
       // The same check the save ran: its errors reach the screen only on the next frame.
-      Validation.textLevels(drafts.map { it.toLevel() })
+      drafts.saveErrors()
         .mapNotNull { it.index }
         .minOrNull()
         ?.let { openId = drafts[it].id }

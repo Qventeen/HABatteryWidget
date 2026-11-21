@@ -906,6 +906,15 @@ class MainViewModelTest {
     assertEquals(before, state.settings)
   }
 
+  @Test fun saveTextLevels_typedAboveItsChip_failsAtTypedRow() = runTest(dispatcher) {
+    val vm = start()
+    val drafts = modeDrafts.mapIndexed { i, d -> if (i == 1) d.copy(typed = "Mains") else d }
+    val saved = vm.saveTextLevels(TextValue.MODE, drafts)
+    advanceUntilIdle()
+    assertFalse(saved)
+    assertEquals(listOf(FieldError(Field.TEXT_LEVEL_TEXTS, Problem.DUPLICATE, 1)), state.errors)
+  }
+
   @Test fun useTextDefaults_dropsOwnList() = runTest(dispatcher) {
     val vm = start()
     vm.saveTextLevels(TextValue.MODE, modeDrafts)

@@ -173,7 +173,7 @@ object Validation {
     val seen = mutableSetOf<String>()
     levels.forEachIndexed { i, level ->
       if (level.other) return@forEachIndexed
-      val keys = level.texts.map { it.trim().lowercase(Locale.ROOT) }
+      val keys = level.texts.map(::textKey)
       val problem =
         when {
           keys.isEmpty() -> Problem.REQUIRED
@@ -185,6 +185,9 @@ object Validation {
     }
     return errors
   }
+
+  /** The form in which two texts of the items are the same: trimmed, case ignored. */
+  fun textKey(text: String): String = text.trim().lowercase(Locale.ROOT)
 
   fun isBatteryConfigured(s: Settings, hasToken: Boolean): Boolean =
     hasToken && s.connection.url.isNotBlank() && s.entities.charge.isNotBlank()
