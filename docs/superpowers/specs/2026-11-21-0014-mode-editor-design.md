@@ -107,9 +107,10 @@ shape, same rules:
 - **No value:** the word is "—", the colour grey, the icon the "other"
   item's icon (as today).
 - **No live text** in the section and the editor rows: the "other" row
-  shows its label "other (HA text)", and an added item with a blank name
-  shows its first text (my call). In the "Now" line an unmapped text shows
-  the "other" label after the arrow, not the same text again (my call).
+  shows its label "other" / "інший" with "any other text" / "будь-який
+  інший текст" under it (owner, v9: short words), and an added item with a
+  blank name shows its first text (my call). When "other" is the current
+  mode (§3.7), its row shows the live text in quotes under the label.
 - **"Other"** (owner, Q7): bell, type, colour and icon are editable. Its
   name is not: it always shows the Home Assistant text, which tells the
   user which text to map. It has no texts and cannot be deleted. It is
@@ -186,18 +187,28 @@ level editor (`onSave` returns `false`).
 
 Placed between Icons and "Levels and alerts" (my call). Same pattern as one
 value of "Levels and alerts". Layout: `docs/design/mode-editor.png`
-(owner picked, 2026-11-21).
+(design v9, owner approved 2026-11-21 after the phone check; its README
+section holds the sizes).
 
 - **Card:** title "Modes" / "Режими"; summary "Default" / "Custom" (my
   call, like the levels summary). Folded by default.
 - **View:** one row per item, in list order, "other" last: icon and shown
-  word in the item's colour, its texts, a bell mark when on, the type
-  word. Buttons "Default" (confirm dialog; drops the own list, like the
-  levels' `useDefaults`) and "Edit".
+  word in the item's colour, its texts under the word, then on the right
+  the type tag and the bell mark at the far right, so the bells form one
+  column (owner, v9). Buttons "Default" (confirm dialog; drops the own
+  list, like the levels' `useDefaults`) and "Edit".
+- **Type tag** (owner, v9): the type as a small tag in the level tags'
+  style, coloured by the type's own colour (`LevelType.defaultColor`:
+  Info blue, Warning amber, Critical red, Normal green). Tags use short
+  words: EN the type words, UK "Інфо", "Увага", "Критично", "Норма" (my
+  call: the full UK words cut the mode word in the editor on a 390 dp
+  screen). The type menu and the levels keep the full words.
 - **Editor** (a draft with Save / Cancel, like the level editor; my call,
   shown in the sketch the owner saw):
-  - Closed item row: icon, shown word, bell toggle, type menu (reuse
-    `BellToggle` and `TypeMenu`, made `internal`).
+  - Closed item row: icon, shown word, expand arrow; on the right the
+    type tag with ▾ (it opens the type menu), then the bell toggle at the
+    far right (owner, v9). Reuse `BellToggle`; the tag menu is the
+    modes' own, so the level editor keeps its `TypeMenu` (my call).
   - Open item (one open at a time, tap the row): icon button → icon grid;
     "Name" field (placeholder: the default word; hidden for "other");
     "Home Assistant texts" as chips (owner, Q11): each text is one chip
@@ -220,22 +231,27 @@ value of "Levels and alerts". Layout: `docs/design/mode-editor.png`
   - Errors show under the field of their row. Only one item is open, so
     a failed Save opens the first row with an error, and a closed row
     with an error shows an error mark (my call).
-- **"Now" line (owner, Q8):** `Now: "Off-Grid" → battery` under the rows,
-  from the cached mode text (`inverterReading.mode`). In the view it
-  matches the saved list; in the editor it matches the draft, so the
-  effect shows before Save (my call). Hidden when there is no mode text.
+- **Current mode (owner, Q8; v9 replaces the "Now" text line):** the row
+  of the item the cached mode text (`inverterReading.mode`) matches gets a
+  ring in the item's colour and a "now" / "зараз" badge after its word;
+  TalkBack adds "now" to the row. In the view it matches the saved list;
+  in the editor it matches the draft, so the effect shows before Save (my
+  call). A text no item lists marks "other" (its row shows the text in
+  quotes). No mode text, or a no-value text: no row is marked.
 
 ```
 Modes                                       Custom ⌄
- 🗼  main      Mains, Line           🔔 Info
- 🔋  battery   Off-Grid               🔔 Warning
- …
- ?   other (HA text)                  🔔 Info
- Now: "Line" → main
                               [Default]  [Edit]
+ 🗼  main  (now)               [Info]  🔔      ← ring: HA sends "Line"
+     Mains, Line
+ 🔋  battery                 [Warning]  🔔
+     Off-Grid
+ …
+ ?   other                     [Info]  🔔
+     any other text
 
 Editor:
- 🗼  main                     🔔  [Info ▾]
+ 🗼  main (now) ⌃            [Info ▾]  🔔
  ┌──────────────────────────────────────────┐
  │ [🗼 ▾]  Name [          ]  blank = main   │
  │ Home Assistant texts  [Mains ✕] [Line ✕] │
@@ -243,9 +259,8 @@ Editor:
  │ Colour  ● ● ● ● ● ● ● ●                  │
  │                               ✕ Delete   │
  └──────────────────────────────────────────┘
- ?   other (HA text)          🔔  [Info ▾]
+ ?   other ⌄                  [Info ▾]  🔔
  + Add mode
- Now: "Line" → main
                               [Cancel] [Save]
 ```
 
@@ -254,8 +269,9 @@ Editor:
 New EN + UK strings in the same commit (0001 §12): the section title and
 summaries, "Name", "Home Assistant texts", the "Add text" field with a
 hint "Exactly as Home Assistant shows it", TalkBack labels of the + button
-and of a chip's ✕ ("Remove Line"), "Add mode", "Delete", the "Now" line (`Now: “%1$s” → %2$s`), the
-"other" row label, the confirm dialog, the four errors, TalkBack labels of
+and of a chip's ✕ ("Remove Line"), "Add mode", "Delete", the "now" badge, the quoted live text
+(`“%1$s”`), the short type words of the tags, the "other" row label and
+line, the confirm dialog, the four errors, TalkBack labels of
 the icon button and the item row. The default words stay the `mode_word_*`
 strings. The builder writes the Ukrainian texts; the owner reviews them.
 
@@ -286,7 +302,9 @@ strings. The builder writes the Ukrainian texts; the owner reviews them.
    (owner picked B over A after Q6 and the reuse question).
 7. "Other": **bell, type, colour and icon editable; the name is the HA
    text** (owner).
-8. The "Now" line: **yes** (owner).
+8. The "Now" line: **yes** (owner). v9 (owner, after the phone check):
+   shown as a ring and a "now" badge on the current row instead of a text
+   line.
 9. Mode icons: **in the open item; Icons keeps the two voltage slots**
    (owner, option 1 over a dynamic Icons section).
 10. Teal in the mode colour chips (found by the builder check: the 0010
