@@ -42,14 +42,21 @@ import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.IconSlot
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterFontPercents
+import io.lumensync.habattery.domain.model.InverterIcon
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.textSizeChanged
 import io.lumensync.habattery.ui.sections.AddWidgetRow
@@ -59,6 +66,10 @@ import io.lumensync.habattery.ui.sections.ColorsSection
 import io.lumensync.habattery.ui.sections.ConnectionSection
 import io.lumensync.habattery.ui.sections.EntitiesSection
 import io.lumensync.habattery.ui.sections.HomeScaleSection
+import io.lumensync.habattery.ui.sections.InverterDisplaySection
+import io.lumensync.habattery.ui.sections.InverterEntitiesSection
+import io.lumensync.habattery.ui.sections.InverterIconsSection
+import io.lumensync.habattery.ui.sections.InverterPreviewCard
 import io.lumensync.habattery.ui.sections.NotificationSection
 import io.lumensync.habattery.ui.sections.RefreshSection
 import io.lumensync.habattery.ui.sections.TokenSection
@@ -76,6 +87,7 @@ data class MainActions(
   val saveTokenType: (TokenType) -> Unit,
   val removeToken: () -> Unit,
   val saveEntities: (EntitySettings) -> Unit,
+  val saveInverterEntities: (InverterEntitySettings) -> Unit,
   val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
   val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
   val setNotificationsOn: (Boolean) -> Unit,
@@ -85,10 +97,15 @@ data class MainActions(
   val saveHomeScale: (Int) -> Unit,
   val resetBatterySizes: () -> Unit,
   val resetHomeScale: () -> Unit,
+  val saveModeStyle: (ModeStyle) -> Unit,
+  val saveInverterFonts: (InverterFontPercents) -> Unit,
+  val resetInverterSizes: () -> Unit,
+  val saveInverterIcon: (IconSlot, InverterIcon) -> Unit,
   val saveAppearance: (AppearanceSettings) -> Unit,
   val setLanguage: (LanguageChoice) -> Unit,
   val saveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   val useDefaults: (LevelValue) -> Unit,
+  val clearErrors: () -> Unit,
   val requestPinWidget: (receiver: Class<out GlanceAppWidgetReceiver>) -> Unit,
   val openNotificationSettings: () -> Unit,
 )
@@ -106,7 +123,8 @@ fun MainScreen(
 ) {
   val overview = state.overview
   val widget = state.widget
-  if (overview == null || widget == null) {
+  val inverter = state.inverter
+  if (overview == null || widget == null || inverter == null) {
     // The first state from storage has not arrived yet; drafts and the first tab need real settings.
     MainScaffold(state.syncing, actions.refreshNow) { padding ->
       Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -114,7 +132,7 @@ fun MainScreen(
       }
     }
   } else {
-    MainTabs(state, overview, widget, actions, language, previewRequest, tabRequest)
+    MainTabs(state, overview, widget, inverter, actions, language, previewRequest, tabRequest)
   }
 }
 
@@ -123,6 +141,7 @@ private fun MainTabs(
   state: MainUiState,
   overview: BatteryOverview,
   widget: WidgetModel,
+  inverter: InverterWidgetModel,
   actions: MainActions,
   language: LanguageChoice?,
   previewRequest: PreviewRequest,
@@ -132,9 +151,15 @@ private fun MainTabs(
   var tab by rememberSaveable {
     mutableStateOf(AppTabs.first(tabRequest.provider, state.connectionMissing))
   }
+  // The errors are one list for all tabs: a level editor's errors must not show in the other
+  // widget tab's editor.
+  fun show(next: AppTab) {
+    if (next != tab) actions.clearErrors()
+    tab = next
+  }
   var seenCount by rememberSaveable { mutableIntStateOf(tabRequest.count) }
   LaunchedEffect(tabRequest.count) {
-    tab = tabRequest.tabFor(tab, seenCount, state.connectionMissing)
+    show(tabRequest.tabFor(tab, seenCount, state.connectionMissing))
     seenCount = tabRequest.count
   }
   // Each tab keeps its scroll, folds and drafts while another tab is shown, and across rotation.
@@ -142,14 +167,14 @@ private fun MainTabs(
   MainScaffold(
     state.syncing,
     actions.refreshNow,
-    bottomBar = { AppTabBar(tab) { tab = it } },
+    bottomBar = { AppTabBar(tab, ::show) },
   ) { padding ->
     val shown = tab
     tabStates.SaveableStateProvider(shown) {
       TabColumn(padding) {
         when (shown) {
           AppTab.BATTERY -> BatteryTab(state, overview, widget, actions, previewRequest)
-          AppTab.INVERTER -> InverterTab(actions)
+          AppTab.INVERTER -> InverterTab(state, inverter, actions)
           AppTab.COMMON -> CommonTab(state, actions, language)
         }
       }
@@ -265,12 +290,38 @@ private fun BatteryTab(
   CapacitySection(settings.capacityAh, state.errors, actions.saveCapacity)
 }
 
-/** The strip's tab: "Add to home screen" only; its preview and sections are not built yet. */
+/** The inverter strip: its preview, "Add to home screen", then its own sections. */
 @Composable
-private fun InverterTab(actions: MainActions) {
+private fun InverterTab(state: MainUiState, inverter: InverterWidgetModel, actions: MainActions) {
+  val settings = state.settings
+  val strip = settings.inverter
+  InverterPreviewCard(inverter, strip.fontPercents, settings.appearance.theme)
   AddWidgetRow(
     R.string.action_add_strip_hint,
     onAddWidget = { actions.requestPinWidget(InverterWidgetReceiver::class.java) },
+  )
+  InverterDisplaySection(
+    strip.modeStyle,
+    strip.fontPercents,
+    actions.saveModeStyle,
+    actions.saveInverterFonts,
+    actions.resetInverterSizes,
+  )
+  InverterIconsSection(strip, actions.saveInverterIcon)
+  ColorsSection(
+    settings.colorLevels,
+    // The grid and output edges are fixed volts: no capacity or cell count.
+    LevelBasis(null, null),
+    state.errors,
+    actions.saveLevels,
+    actions.useDefaults,
+    values = LevelValue.INVERTER,
+  )
+  InverterEntitiesSection(
+    strip.entities,
+    state.errors,
+    actions.saveInverterEntities,
+    initiallyExpanded = inverter is InverterWidgetModel.Empty && inverter.kind == EmptyKind.SETUP,
   )
 }
 

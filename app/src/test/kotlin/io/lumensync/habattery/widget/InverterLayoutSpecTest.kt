@@ -19,6 +19,13 @@ class InverterLayoutSpecTest {
     )
 
   @Test
+  fun designSizes_areTheReadmeCards() =
+    assertEquals(
+      listOf(194f to 59f, 267f to 59f, 340f to 59f),
+      InverterLayoutSpec.entries.map { it.designSize.width.value to it.designSize.height.value },
+    )
+
+  @Test
   fun forSize_eachBucketAndCard_picksItsStrip() =
     InverterLayoutSpec.entries.forEach {
       assertSame(it, InverterLayoutSpec.forSize(it.bucketWidthDp, it.bucketHeightDp))

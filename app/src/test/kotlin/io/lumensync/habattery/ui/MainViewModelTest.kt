@@ -4,11 +4,17 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
+import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.IconSlot
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterFontPercents
+import io.lumensync.habattery.domain.model.InverterIcon
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
@@ -21,6 +27,7 @@ import io.lumensync.habattery.domain.model.FetchRequest
 import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.SensorList
@@ -36,6 +43,8 @@ import io.lumensync.habattery.testing.FakeTokenStore
 import io.lumensync.habattery.testing.FakeWidgetRefresher
 import io.lumensync.habattery.testing.batteryOk
 import io.lumensync.habattery.testing.configuredSettings
+import io.lumensync.habattery.testing.inverterEntities
+import io.lumensync.habattery.testing.inverterReading
 import io.lumensync.habattery.testing.reading
 import java.io.IOException
 import java.security.ProviderException
@@ -110,11 +119,19 @@ class MainViewModelTest {
     assertEquals(50, (widget as WidgetModel.Data).socPercent)
   }
 
-  @Test fun uiState_carriesTheInverterError() = runTest(dispatcher) {
+  @Test fun uiState_carriesTheInverterModel() = runTest(dispatcher) {
+    val inverterOnly = configuredSettings(battery = false, inverter = true)
+    start(inverterOnly, source = FakeBatterySource(FetchResult(null, PartResult.Ok(inverterReading()))))
+    val inverter = state.inverter
+    assertTrue("$inverter", inverter is InverterWidgetModel.Data)
+    assertEquals(230.0, (inverter as InverterWidgetModel.Data).grid.volts)
+  }
+
+  @Test fun uiState_inverterUnauthorized_showsTheTokenTypeHint() = runTest(dispatcher) {
     val inverterOnly = configuredSettings(battery = false, inverter = true)
     val unauthorized = FetchResult(null, PartResult.Failed(SyncError.Unauthorized))
     start(inverterOnly, source = FakeBatterySource(unauthorized))
-    assertEquals(SyncError.Unauthorized, state.inverterError)
+    assertEquals(InverterWidgetModel.Empty(EmptyKind.NO_DATA, SyncError.Unauthorized), state.inverter)
     assertTrue(state.showTokenTypeHint)
   }
 
@@ -334,6 +351,93 @@ class MainViewModelTest {
       ),
       state.settings.entities,
     )
+  }
+
+  @Test fun saveInverterEntities_partial_isRequired() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveInverterEntities(InverterEntitySettings(mode = "sensor.inv_operation_mode"))
+    advanceUntilIdle()
+    assertEquals(
+      listOf(
+        FieldError(Field.INVERTER_GRID, Problem.REQUIRED),
+        FieldError(Field.INVERTER_OUTPUT, Problem.REQUIRED),
+      ),
+      state.errors,
+    )
+    assertEquals(InverterEntitySettings(), state.settings.inverter.entities)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveInverterEntities_savesAndSyncs() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveModeStyle(ModeStyle.ICON_WORD)
+    vm.saveInverterEntities(
+      InverterEntitySettings(
+        prefix = " inv ",
+        mode = " sensor.inv_operation_mode ",
+        gridVoltage = " sensor.inv_main_voltage",
+        outputVoltage = "sensor.inv_output_voltage ",
+      )
+    )
+    advanceUntilIdle()
+    assertTrue(state.errors.isEmpty())
+    assertEquals(inverterEntities.copy(prefix = "inv"), state.settings.inverter.entities)
+    assertEquals(ModeStyle.ICON_WORD, state.settings.inverter.modeStyle)
+    assertTrue(scheduler.applied.last().second)
+    assertEquals(2, source.calls)
+  }
+
+  @Test fun saveModeStyle_storesAndRedrawsWithoutSync() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveModeStyle(ModeStyle.ICON_WORD)
+    advanceUntilIdle()
+    assertEquals(ModeStyle.ICON_WORD, state.settings.inverter.modeStyle)
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveInverterFonts_clamps() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveInverterFonts(InverterFontPercents(word = 120, value = 5))
+    advanceUntilIdle()
+    assertEquals(InverterFontPercents(word = 100, value = 10), state.settings.inverter.fontPercents)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun resetInverterSizes_setsFontsTo50_keepsTheModeStyle() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveModeStyle(ModeStyle.ICON_WORD)
+    vm.saveInverterFonts(InverterFontPercents(word = 80, value = 30))
+    vm.saveFontPercents(FontPercents(soc = 90))
+    advanceUntilIdle()
+    vm.resetInverterSizes()
+    advanceUntilIdle()
+    assertEquals(InverterFontPercents(50, 50), state.settings.inverter.fontPercents)
+    assertEquals(ModeStyle.ICON_WORD, state.settings.inverter.modeStyle)
+    assertEquals(FontPercents(soc = 90), state.settings.fontPercents)
+    assertEquals(1, source.calls)
+  }
+
+  @Test fun saveInverterIcon_storesName() = runTest(dispatcher) {
+    val vm = start()
+    val before = widgets.refreshes
+    vm.saveInverterIcon(IconSlot.MODE_MAINS, InverterIcon.LOCATION_CITY)
+    advanceUntilIdle()
+    assertEquals("LOCATION_CITY", state.settings.inverter.icons["MODE_MAINS"])
+    assertTrue(widgets.refreshes > before)
+    assertEquals(1, source.calls)
+  }
+
+  /** The screen keeps one error list, so a tab switch must not carry one tab's errors to another. */
+  @Test fun clearErrors_dropsTheLastErrors() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveInverterEntities(InverterEntitySettings(mode = "sensor.inv_operation_mode"))
+    advanceUntilIdle()
+    assertTrue(state.errors.isNotEmpty())
+    vm.clearErrors()
+    advanceUntilIdle()
+    assertTrue(state.errors.isEmpty())
   }
 
   @Test fun saveDisplay_storesAndRedraws() = runTest(dispatcher) {

@@ -1,28 +1,17 @@
 package io.lumensync.habattery.ui.sections
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontGroup
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
-import kotlin.math.roundToInt
 
 /**
  * What the battery widget shows and its font sizes as percents (50 % is the design size, 1.5 × it
@@ -56,38 +45,12 @@ fun WidgetSection(
       onSaveDisplay(display.copy(mainValue = it))
     }
     FontGroup.entries.forEach { group ->
-      FontSlider(group, fontPercents[group]) { onSaveFontPercents(fontPercents.with(group, it)) }
+      FontSlider(fontLabel(group), fontPercents[group]) {
+        onSaveFontPercents(fontPercents.with(group, it))
+      }
     }
     OutlinedButton(onClick = onReset) { Text(stringResource(R.string.widget_reset_sizes)) }
   }
-}
-
-/** One font group: its name, the percent, and a slider from 10 to 100 % in steps of 5. */
-@Composable
-private fun FontSlider(group: FontGroup, stored: Int, onSave: (Int) -> Unit) {
-  var dragValue by rememberSaveable { mutableStateOf<Int?>(null) }
-  val value = dragValue ?: stored
-  val name = stringResource(fontLabel(group))
-  val shown = stringResource(R.string.widget_font_value, value)
-  Row(Modifier.fillMaxWidth()) {
-    Text(name, Modifier.weight(1f))
-    Text(shown)
-  }
-  Slider(
-    value = value.toFloat(),
-    onValueChange = { dragValue = it.roundToInt() },
-    onValueChangeFinished = {
-      onSave(dragValue ?: stored)
-      dragValue = null
-    },
-    valueRange = FontPercents.MIN.toFloat()..FontPercents.MAX.toFloat(),
-    steps = (FontPercents.MAX - FontPercents.MIN) / FontPercents.STEP - 1,
-    modifier =
-      Modifier.semantics {
-        contentDescription = name
-        stateDescription = shown
-      },
-  )
 }
 
 @StringRes

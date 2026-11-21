@@ -162,6 +162,7 @@ class MainActivity : ComponentActivity() {
       saveTokenType = viewModel::saveTokenType,
       removeToken = viewModel::removeToken,
       saveEntities = viewModel::saveEntities,
+      saveInverterEntities = viewModel::saveInverterEntities,
       findTemperatureSensors = viewModel::findTemperatureSensors,
       saveRefresh = viewModel::saveRefresh,
       setNotificationsOn = viewModel::setNotificationsOn,
@@ -171,6 +172,10 @@ class MainActivity : ComponentActivity() {
       saveHomeScale = viewModel::saveHomeScale,
       resetBatterySizes = viewModel::resetBatterySizes,
       resetHomeScale = viewModel::resetHomeScale,
+      saveModeStyle = viewModel::saveModeStyle,
+      saveInverterFonts = viewModel::saveInverterFonts,
+      resetInverterSizes = viewModel::resetInverterSizes,
+      saveInverterIcon = viewModel::saveInverterIcon,
       saveAppearance = viewModel::saveAppearance,
       setLanguage = {
         language = it
@@ -179,6 +184,7 @@ class MainActivity : ComponentActivity() {
       },
       saveLevels = viewModel::saveLevels,
       useDefaults = viewModel::useDefaults,
+      clearErrors = viewModel::clearErrors,
       requestPinWidget = { receiver ->
         lifecycleScope.launch {
           GlanceAppWidgetManager(this@MainActivity).requestPinGlanceAppWidget(receiver)

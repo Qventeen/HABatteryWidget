@@ -554,7 +554,7 @@ private fun IconChips(selected: LevelIcon?, tint: Color, onSelect: (LevelIcon?) 
 
 /** A round radio chip: a ring when [selected], a dot below when [marked]. */
 @Composable
-private fun ChoiceChip(
+internal fun ChoiceChip(
   selected: Boolean,
   description: String,
   onClick: () -> Unit,

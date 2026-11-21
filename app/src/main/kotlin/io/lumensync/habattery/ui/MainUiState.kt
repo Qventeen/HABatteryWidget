@@ -2,6 +2,7 @@ package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
@@ -13,9 +14,10 @@ data class MainUiState(
   /** The selected token type's slot holds a token; the other slot does not count. */
   val hasToken: Boolean = false,
   val overview: BatteryOverview? = null,
-  val inverterError: SyncError? = null,
   /** What the widget preview draws; built with [overview], null until the first state. */
   val widget: WidgetModel? = null,
+  /** What the strip preview draws; null until the first state. */
+  val inverter: InverterWidgetModel? = null,
   val syncing: Boolean = false,
   val errors: List<FieldError> = emptyList(),
 ) {
@@ -26,7 +28,7 @@ data class MainUiState(
    */
   val showTokenTypeHint: Boolean
     get() =
-      SyncError.Unauthorized in listOf(overview?.error, inverterError) &&
+      SyncError.Unauthorized in listOf(overview?.error, inverter?.error) &&
         settings.connection.tokenType == TokenType.ADMIN
 
   /**
@@ -36,3 +38,4 @@ data class MainUiState(
   val connectionMissing: Boolean
     get() = settings.connection.url.isBlank() || !hasToken
 }
+

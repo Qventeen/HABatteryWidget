@@ -16,14 +16,17 @@ import io.lumensync.habattery.domain.model.icon
 
 /** What the inverter strip shows; the drawing only reads it. A missing value stays null. */
 sealed interface InverterWidgetModel {
-  data class Empty(val kind: EmptyKind, val error: SyncError?) : InverterWidgetModel
+  /** The inverter part's last sync error; a strip that needs setup carries none. */
+  val error: SyncError?
+
+  data class Empty(val kind: EmptyKind, override val error: SyncError?) : InverterWidgetModel
 
   data class Data(
     val mode: ModeLook,
     val grid: VoltageLook,
     val output: VoltageLook,
     val style: ModeStyle,
-    val error: SyncError?,
+    override val error: SyncError?,
   ) : InverterWidgetModel
 
   companion object {

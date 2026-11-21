@@ -130,6 +130,14 @@ enum class InverterLayoutSpec(
   val bucket: DpSize
     get() = DpSize(bucketWidthDp.dp, bucketHeightDp.dp)
 
+  /** The design card: the bucket + [LayoutSpec.BUCKET_MARGIN_DP] each way. */
+  val designSize: DpSize
+    get() =
+      DpSize(
+        (bucketWidthDp + LayoutSpec.BUCKET_MARGIN_DP).dp,
+        (bucketHeightDp + LayoutSpec.BUCKET_MARGIN_DP).dp,
+      )
+
   /**
    * The card's inner box the texts are fitted to, at home-screen scale [k]: the bucket less the
    * platform rounding, the smallest space this strip is shown in (see [LayoutSpec.fitBoxes]).

@@ -40,6 +40,7 @@ import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
+import io.lumensync.habattery.ui.sections.STRIP_PREVIEW_TAG
 import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.ui.sections.CONNECTION_SECTION_TAG
@@ -233,11 +234,23 @@ class MainScreenTest {
     compose.onNodeWithTag(WIDGET_PREVIEW_TAG).assertDoesNotExist()
   }
 
-  /** The strip's tab holds no battery or shared section yet. */
+  /**
+   * Inverter: preview, "Add to home screen" (when the launcher can pin), Display, Icons, Levels and
+   * alerts, Entities; no battery or shared section.
+   */
   @Test
-  fun inverterTab_holdsNoOtherTabsSections() {
+  fun inverterTab_order() {
     waitForContent()
     openTab(AppTab.INVERTER)
+    val preview = top(compose.onNodeWithTag(STRIP_PREVIEW_TAG))
+    val add =
+      compose.onAllNodesWithText(text(R.string.action_add_widget)).fetchSemanticsNodes().firstOrNull()
+    val display = top(compose.onNodeWithText(text(R.string.inverter_display_title)))
+    val icons = top(compose.onNodeWithText(text(R.string.inverter_icons_title)))
+    val colors = top(compose.onNodeWithText(text(R.string.colors_title)))
+    val entities = top(compose.onNodeWithText(text(R.string.entities_title)))
+    add?.positionInRoot?.y?.let { assertTrue(preview < it && it < display) }
+    assertTrue(preview < display && display < icons && icons < colors && colors < entities)
     compose.onNodeWithTag(WIDGET_PREVIEW_TAG).assertDoesNotExist()
     compose.onNodeWithText(text(R.string.widget_settings_title)).assertDoesNotExist()
     compose.onNodeWithTag(CONNECTION_SECTION_TAG).assertDoesNotExist()

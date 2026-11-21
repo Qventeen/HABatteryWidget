@@ -189,6 +189,26 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
+    <!-- Inverter tab: the strip's preview note and its sections. -->
+    <string name="inverter_preview_setup">Enter the Home Assistant URL and the token on the Common tab, and the inverter entities below.</string>
+    <string name="inverter_display_title">Display</string>
+    <string name="inverter_mode_style">Mode style</string>
+    <string name="inverter_style_big_icon">Big icon</string>
+    <string name="inverter_style_icon_word">Icon + word</string>
+    <string name="inverter_font_word">Mode word</string>
+    <string name="inverter_font_value">Values</string>
+    <string name="inverter_display_summary_changed">%1$s · text size changed</string>
+    <string name="inverter_icons_title">Icons</string>
+    <string name="inverter_icons_summary_default">Default icons</string>
+    <string name="inverter_icons_summary_custom">Custom icons</string>
+    <string name="inverter_icon_change">Change icon</string>
+    <!-- TalkBack's name for the picker chip of the place's own icon. -->
+    <string name="inverter_icon_default">%1$s, default</string>
+    <string name="inverter_entities_prefix">Prefix, like bps_inverter</string>
+    <string name="inverter_entity_mode">Operation mode</string>
+    <string name="inverter_entity_grid_voltage">Grid input voltage (V)</string>
+    <string name="inverter_entity_output_voltage">Output voltage (V)</string>
+
     <!-- Levels and alerts section (value levels). -->
     <string name="colors_title">Levels and alerts</string>
     <string name="colors_summary_default">Default levels</string>
@@ -372,4 +392,16 @@
     <string name="inv_icon_report">Report</string>
     <string name="inv_icon_warning">Warning</string>
     <string name="inv_icon_dangerous">Danger</string>
+
+    <!-- The strip's places with their own icon, in the Icons section. -->
+    <string name="inv_slot_mode_power_on">Mode: power on</string>
+    <string name="inv_slot_mode_standby">Mode: standby</string>
+    <string name="inv_slot_mode_mains">Mode: main</string>
+    <string name="inv_slot_mode_off_grid">Mode: battery</string>
+    <string name="inv_slot_mode_bypass">Mode: bypass</string>
+    <string name="inv_slot_mode_charging">Mode: charging</string>
+    <string name="inv_slot_mode_fault">Mode: fault</string>
+    <string name="inv_slot_mode_other">Mode: other</string>
+    <string name="inv_slot_grid_voltage">Grid input voltage</string>
+    <string name="inv_slot_output_voltage">Output voltage</string>
 </resources>

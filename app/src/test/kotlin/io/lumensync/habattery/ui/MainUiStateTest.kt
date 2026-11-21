@@ -1,6 +1,8 @@
 package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.InverterWidgetModel
+import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.TokenType
@@ -20,7 +22,7 @@ class MainUiStateTest {
       settings = settings,
       hasToken = true,
       overview = BatteryOverview.build(CacheState(error = error), settings, true, 0L),
-      inverterError = inverterError,
+      inverter = InverterWidgetModel.Empty(EmptyKind.NO_DATA, inverterError),
     )
   }
 

@@ -178,6 +178,24 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
 
+    <string name="inverter_preview_setup">Вкажіть URL Home Assistant і токен на вкладці «Загальні», а сутності інвертора — нижче.</string>
+    <string name="inverter_display_title">Відображення</string>
+    <string name="inverter_mode_style">Вигляд режиму</string>
+    <string name="inverter_style_big_icon">Велика іконка</string>
+    <string name="inverter_style_icon_word">Іконка + слово</string>
+    <string name="inverter_font_word">Слово режиму</string>
+    <string name="inverter_font_value">Значення</string>
+    <string name="inverter_display_summary_changed">%1$s · розмір тексту змінено</string>
+    <string name="inverter_icons_title">Іконки</string>
+    <string name="inverter_icons_summary_default">Типові іконки</string>
+    <string name="inverter_icons_summary_custom">Власні іконки</string>
+    <string name="inverter_icon_change">Змінити іконку</string>
+    <string name="inverter_icon_default">%1$s, типова</string>
+    <string name="inverter_entities_prefix">Префікс, наприклад bps_inverter</string>
+    <string name="inverter_entity_mode">Режим роботи</string>
+    <string name="inverter_entity_grid_voltage">Напруга входу мережі (В)</string>
+    <string name="inverter_entity_output_voltage">Напруга виходу (В)</string>
+
     <string name="colors_title">Рівні та сповіщення</string>
     <string name="colors_summary_default">Типові рівні</string>
     <string name="colors_summary_custom">Власні: %1$s</string>
@@ -338,4 +356,15 @@
     <string name="inv_icon_report">Звіт</string>
     <string name="inv_icon_warning">Попередження</string>
     <string name="inv_icon_dangerous">Небезпека</string>
+
+    <string name="inv_slot_mode_power_on">Режим: запуск</string>
+    <string name="inv_slot_mode_standby">Режим: пауза</string>
+    <string name="inv_slot_mode_mains">Режим: мережа</string>
+    <string name="inv_slot_mode_off_grid">Режим: батарея</string>
+    <string name="inv_slot_mode_bypass">Режим: байпас</string>
+    <string name="inv_slot_mode_charging">Режим: заряд</string>
+    <string name="inv_slot_mode_fault">Режим: аварія</string>
+    <string name="inv_slot_mode_other">Режим: інший</string>
+    <string name="inv_slot_grid_voltage">Напруга входу мережі</string>
+    <string name="inv_slot_output_voltage">Напруга виходу</string>
 </resources>
