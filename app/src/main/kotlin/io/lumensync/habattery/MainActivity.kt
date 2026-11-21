@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.system.AppLanguage
+import io.lumensync.habattery.ui.AppTab
 import io.lumensync.habattery.ui.AppTabRequest
 import io.lumensync.habattery.ui.MainActions
 import io.lumensync.habattery.ui.MainScreen
@@ -84,7 +85,7 @@ class MainActivity : ComponentActivity() {
     val opened = openedWidget()
     previewRequest = PreviewRequest(PreviewTab.first(opened, firstPlacedSize()))
     stripRequest = StripRequest(StripRequest.named(opened) ?: InverterLayoutSpec.S3X1)
-    tabRequest = AppTabRequest(opened?.provider)
+    tabRequest = AppTabRequest(opened?.provider, requested = requestedTab())
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
       val dark = state.settings.appearance.theme.isDark(isSystemInDarkTheme())
@@ -112,7 +113,7 @@ class MainActivity : ComponentActivity() {
     val opened = openedWidget()
     previewRequest = previewRequest.next(PreviewTab.named(opened))
     stripRequest = stripRequest.next(StripRequest.named(opened))
-    tabRequest = tabRequest.next(opened?.provider)
+    tabRequest = tabRequest.next(opened?.provider, requestedTab())
   }
 
   /**
@@ -129,6 +130,9 @@ class MainActivity : ComponentActivity() {
 
   /** The widget the user tapped to open the app (see [EXTRA_TAPPED_WIDGET_ID]). */
   private fun tappedWidgetId(): Int? = widgetIdExtra(EXTRA_TAPPED_WIDGET_ID)
+
+  /** The tab an alert notification asks for (see [AppTab.EXTRA_OPEN_TAB]); null for none. */
+  private fun requestedTab(): AppTab? = AppTab.named(intent.getStringExtra(AppTab.EXTRA_OPEN_TAB))
 
   private fun widgetIdExtra(name: String): Int? =
     intent.getIntExtra(name, AppWidgetManager.INVALID_APPWIDGET_ID).takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }

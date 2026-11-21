@@ -6,6 +6,7 @@ import io.lumensync.habattery.ui.AppTab.INVERTER
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.InverterWidgetReceiver
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 
@@ -43,6 +44,50 @@ class AppTabTest {
     assertEquals(COMMON, AppTabs.first("com.example.OtherReceiver", connectionMissing = true))
     assertEquals(BATTERY, AppTabs.first("com.example.OtherReceiver", connectionMissing = false))
   }
+
+  /** An inverter alert asks for its tab (spec 0012); with no request the old rule stays. */
+  @Test
+  fun first_requestedTab_winsOverTheConnectionRule() {
+    assertEquals(INVERTER, AppTabs.first(null, connectionMissing = true, requested = INVERTER))
+    assertEquals(INVERTER, AppTabs.first(null, connectionMissing = false, requested = INVERTER))
+  }
+
+  @Test
+  fun first_noRequestedTab_keepsTheOldRule() =
+    assertEquals(COMMON, AppTabs.first(null, connectionMissing = true, requested = null))
+
+  /** A widget id names the tab of its widget; an alert extra cannot come with it, but the widget wins. */
+  @Test
+  fun first_widgetWinsOverTheRequestedTab() =
+    assertEquals(BATTERY, AppTabs.first(battery, connectionMissing = false, requested = INVERTER))
+
+  @Test
+  fun named_readsTheEnumName() {
+    assertEquals(INVERTER, AppTab.named("INVERTER"))
+    assertEquals(COMMON, AppTab.named("COMMON"))
+  }
+
+  @Test
+  fun named_missingOrUnknown_isNull() {
+    assertNull(AppTab.named(null))
+    assertNull(AppTab.named("inverter"))
+    assertNull(AppTab.named("Settings"))
+  }
+
+  /** An alert tap while the app is open: a new request, even with no widget named. */
+  @Test
+  fun next_requestedTab_isANewRequest() =
+    assertEquals(AppTabRequest(null, 3, INVERTER), AppTabRequest(battery, 2).next(null, INVERTER))
+
+  @Test
+  fun next_nothingNamedOrRequested_keepsTheRequest() {
+    val request = AppTabRequest(null, 2, INVERTER)
+    assertSame(request, request.next(null, null))
+  }
+
+  @Test
+  fun tabFor_newRequestedTab_switchesToIt() =
+    assertEquals(INVERTER, AppTabRequest(null, 1, INVERTER).tabFor(COMMON, seenCount = 0, connectionMissing = false))
 
   /** A widget tap while the app is open: a new request with a higher count. */
   @Test

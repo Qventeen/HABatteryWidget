@@ -31,6 +31,7 @@ import io.lumensync.habattery.format.notificationValueRes
 import io.lumensync.habattery.format.placeWithUnit
 import io.lumensync.habattery.format.shownName
 import io.lumensync.habattery.format.unitLabel
+import io.lumensync.habattery.ui.AppTab
 import io.lumensync.habattery.widget.WidgetPalette
 import kotlin.math.roundToInt
 
@@ -58,7 +59,7 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
         .setColor(WidgetPalette.Light.shades(type.defaultColor).ring.toArgb())
         .setContentTitle(title(alert))
         .setContentText(text(alert))
-        .setContentIntent(openApp())
+        .setContentIntent(openApp(BASE_ID + alert.value.ordinal, tabOf(alert.value)))
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_STATUS)
         .build()
@@ -87,7 +88,7 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
             formatters.updatedAt(alert.measuredAtMillis),
           )
         )
-        .setContentIntent(openApp())
+        .setContentIntent(openApp(MODE_NOTIFICATION_ID, AppTab.INVERTER))
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_STATUS)
         .build()
@@ -150,12 +151,22 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       LevelValue.OUTPUT_VOLTAGE -> formatters.wholeVolts(shown)
     }
 
-  private fun openApp(): PendingIntent =
+  /** The inverter values open the Inverter tab; the battery values open the app's usual first tab. */
+  private fun tabOf(value: LevelValue): AppTab? =
+    if (value in LevelValue.INVERTER) AppTab.INVERTER else null
+
+  /**
+   * Opens the app, on [tab] when given. A PendingIntent is told apart by its request code and not
+   * by its extras, so each notification passes its own id: a shared code would let the newest
+   * notification's tab overwrite the older one's.
+   */
+  private fun openApp(requestCode: Int, tab: AppTab?): PendingIntent =
     PendingIntent.getActivity(
       context,
-      0,
+      requestCode,
       Intent(context, MainActivity::class.java)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        .apply { tab?.let { putExtra(AppTab.EXTRA_OPEN_TAB, it.name) } },
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 

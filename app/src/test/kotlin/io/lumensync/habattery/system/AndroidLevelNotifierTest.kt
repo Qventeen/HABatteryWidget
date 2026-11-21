@@ -20,6 +20,7 @@ import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.ui.AppTab
 import io.lumensync.habattery.widget.WidgetPalette
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -29,6 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
@@ -96,6 +98,50 @@ class AndroidLevelNotifierTest {
     assertEquals(WidgetPalette.Light.shades(LevelColor.GREEN).ring.toArgb(), posted.color)
     assertEquals("Inverter: battery", posted.extras.getString("android.title"))
     assertTrue(posted.extras.getString("android.text")!!.startsWith("Measured at "))
+  }
+
+  private fun openTab(id: Int): String? =
+    Shadows.shadowOf(shadowOf(manager).getNotification(id).contentIntent).savedIntent
+      .getStringExtra(AppTab.EXTRA_OPEN_TAB)
+
+  private fun requestCode(id: Int): Int =
+    Shadows.shadowOf(shadowOf(manager).getNotification(id).contentIntent).requestCode
+
+  @Test
+  fun inverterAlerts_openTheInverterTab() {
+    grant()
+    val grid = DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, grid, LevelSpan.AtOrBelow(99.0), 0.0))
+    val output = DefaultLevels.of(LevelValue.OUTPUT_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.OUTPUT_VOLTAGE, output, LevelSpan.AtOrBelow(99.0), 0.0))
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    assertEquals("INVERTER", openTab(107))
+    assertEquals("INVERTER", openTab(108))
+    assertEquals("INVERTER", openTab(150))
+  }
+
+  @Test
+  fun batteryAlert_opensNoNamedTab() {
+    grant()
+    notifier.post(low())
+
+    assertNull(openTab(id(LevelValue.SOC)))
+  }
+
+  /** The PendingIntent identity ignores extras: a shared code would let one notification overwrite another's. */
+  @Test
+  fun everyNotification_hasItsOwnRequestCode() {
+    grant()
+    notifier.post(low())
+    val grid = DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, grid, LevelSpan.AtOrBelow(99.0), 0.0))
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    val ids = listOf(id(LevelValue.SOC), 107, 150)
+    assertEquals(ids, ids.map(::requestCode))
+    assertNull(openTab(id(LevelValue.SOC)))
+    assertEquals("INVERTER", openTab(107))
   }
 
   @Test

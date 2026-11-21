@@ -151,7 +151,7 @@ private fun MainTabs(
 ) {
   // Picked once from the first state: saving the URL and token on Common must not move the user.
   var tab by rememberSaveable {
-    mutableStateOf(AppTabs.first(tabRequest.provider, state.connectionMissing))
+    mutableStateOf(AppTabs.first(tabRequest.provider, state.connectionMissing, tabRequest.requested))
   }
   // The errors are one list for all tabs: a level editor's errors must not show in the other
   // widget tab's editor.
