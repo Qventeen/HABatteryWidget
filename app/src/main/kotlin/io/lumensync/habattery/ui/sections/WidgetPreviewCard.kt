@@ -44,6 +44,7 @@ import io.lumensync.habattery.ui.PreviewTab
 import io.lumensync.habattery.widget.LayoutSpec
 import io.lumensync.habattery.widget.PreviewWidget
 import io.lumensync.habattery.widget.WidgetColors
+import io.lumensync.habattery.widget.WidgetContent
 import io.lumensync.habattery.widget.previewOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -112,7 +113,8 @@ private fun WidgetPreview(
   LaunchedEffect(context, model, fontPercents, theme, layout) {
     val views =
       withContext(Dispatchers.Default) {
-        PreviewWidget(model, fontPercents, WidgetColors(theme)).views(context, layout)
+        PreviewWidget { WidgetContent(model, fontPercents, WidgetColors(theme), actions = null) }
+          .views(context, layout.bucket)
       }
     drawn = Drawn(layout, views)
   }

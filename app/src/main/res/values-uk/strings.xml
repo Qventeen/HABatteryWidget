@@ -69,6 +69,13 @@
     <string name="mode_word_charging">заряд</string>
     <string name="mode_word_fault">аварія</string>
 
+    <string name="inverter_widget_name">Інвертор</string>
+    <string name="inverter_widget_description">Режим інвертора, напруга входу мережі та виходу з Home Assistant</string>
+    <string name="inverter_setup">Налаштуйте в застосунку</string>
+    <string name="inverter_no_data">Немає даних</string>
+    <string name="inverter_grid_voltage">Напруга входу мережі</string>
+    <string name="inverter_output_voltage">Напруга виходу</string>
+
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
     <string name="preview_description">Попередній перегляд віджета, %1$s</string>
     <string name="action_refresh_now">Оновити зараз</string>
@@ -278,6 +285,7 @@
     <string name="preview_current">10,0 А</string>
     <string name="preview_cell">3,312 В</string>
     <string name="preview_delta">Δ 12 мВ</string>
+    <string name="preview_inverter_volts">228 В</string>
 
     <!-- Inverter icon names, read by screen readers and shown in the picker. -->
     <string name="inv_icon_tower">Опора ЛЕП</string>

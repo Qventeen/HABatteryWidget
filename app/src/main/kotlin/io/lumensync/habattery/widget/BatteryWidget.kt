@@ -92,4 +92,4 @@ internal fun BatteryWidgetContent(
  */
 const val EXTRA_TAPPED_WIDGET_ID = "io.lumensync.habattery.extra.TAPPED_WIDGET_ID"
 
-private val TappedWidgetKey = ActionParameters.Key<Int>(EXTRA_TAPPED_WIDGET_ID)
+internal val TappedWidgetKey = ActionParameters.Key<Int>(EXTRA_TAPPED_WIDGET_ID)

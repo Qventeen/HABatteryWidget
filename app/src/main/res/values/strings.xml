@@ -72,6 +72,14 @@
     <string name="mode_word_charging">charging</string>
     <string name="mode_word_fault">fault</string>
 
+    <!-- Inverter strip widget. -->
+    <string name="inverter_widget_name">Inverter</string>
+    <string name="inverter_widget_description">Inverter mode, grid input and output voltage from Home Assistant</string>
+    <string name="inverter_setup">Set up in the app</string>
+    <string name="inverter_no_data">No data</string>
+    <string name="inverter_grid_voltage">Grid input voltage</string>
+    <string name="inverter_output_voltage">Output voltage</string>
+
     <!-- Main screen. -->
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
     <!-- A size tab of the widget preview: columns × rows of home-screen cells. -->
@@ -310,6 +318,7 @@
     <string name="preview_delta">Δ 12 mV</string>
     <string name="preview_battery_temperature" translatable="false">25 °C</string>
     <string name="preview_mosfet_temperature" translatable="false">27 °C</string>
+    <string name="preview_inverter_volts">228 V</string>
 
     <!-- Inverter icon names, read by screen readers and shown in the picker. -->
     <string name="inv_icon_tower">Transmission tower</string>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimum = the 3x1 bucket: the 3x1 design card (194 x 59 dp) minus 6 dp each way. One row, so
+     only the width resizes. No target cells: the launcher picks the cells, as for the battery widget. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:configure="io.lumensync.habattery.MainActivity"
+    android:description="@string/inverter_widget_description"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:maxResizeWidth="460dp"
+    android:minHeight="53dp"
+    android:minResizeHeight="53dp"
+    android:minResizeWidth="188dp"
+    android:minWidth="188dp"
+    android:previewLayout="@layout/inverter_widget_preview"
+    android:resizeMode="horizontal"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable|configuration_optional" />
