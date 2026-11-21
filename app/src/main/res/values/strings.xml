@@ -71,11 +71,11 @@
     <string name="mode_word_bypass">bypass</string>
     <string name="mode_word_charging">charging</string>
     <string name="mode_word_fault">fault</string>
-    <string name="mode_other_label">other (HA text)</string>
+    <string name="mode_other_label">other</string>
     <string name="modes_title">Modes</string>
     <string name="modes_summary_default">Default modes</string>
     <string name="modes_summary_custom">Custom modes</string>
-    <string name="mode_other_hint">the Home Assistant text as it is</string>
+    <string name="mode_other_hint">any other text</string>
     <string name="mode_name_hint">Blank = %1$s</string>
     <string name="mode_texts_label">Home Assistant texts</string>
     <string name="mode_add_text_label">Add text</string>

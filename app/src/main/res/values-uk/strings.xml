@@ -68,11 +68,11 @@
     <string name="mode_word_bypass">байпас</string>
     <string name="mode_word_charging">заряд</string>
     <string name="mode_word_fault">аварія</string>
-    <string name="mode_other_label">інший (текст HA)</string>
+    <string name="mode_other_label">інший</string>
     <string name="modes_title">Режими</string>
     <string name="modes_summary_default">Стандартні режими</string>
     <string name="modes_summary_custom">Власні режими</string>
-    <string name="mode_other_hint">текст Home Assistant як є</string>
+    <string name="mode_other_hint">будь-який інший текст</string>
     <string name="mode_name_hint">Порожньо = %1$s</string>
     <string name="mode_texts_label">Тексти Home Assistant</string>
     <string name="mode_add_text_label">Додати текст</string>

@@ -39,12 +39,23 @@ class ModesSectionTest {
     assertEquals(listOf(PLAIN, RED, ORANGE, AMBER, GREEN, BLUE, VIOLET, GREY), PickerColors)
 
   @Test
+  fun subLine_listsTexts() =
+    assertEquals("Mains, Line", subLine(resources, builtIn[2].copy(texts = listOf("Mains", "Line"))))
+
+  @Test
+  fun subLine_other_en() = assertEquals("any other text", subLine(resources, builtIn.last()))
+
+  @Test
+  @Config(qualifiers = "uk")
+  fun subLine_other_uk() = assertEquals("будь-який інший текст", subLine(resources, builtIn.last()))
+
+  @Test
   fun nowLine_mapped() =
     assertEquals("Now: “Mains” → main", nowLine(resources, builtIn, "Mains"))
 
   @Test
   fun nowLine_unmapped_showsOtherLabel() =
-    assertEquals("Now: “Line” → other (HA text)", nowLine(resources, builtIn, "Line"))
+    assertEquals("Now: “Line” → other", nowLine(resources, builtIn, "Line"))
 
   @Test
   fun nowLine_noText_isNull() = assertNull(nowLine(resources, builtIn, null))

@@ -123,8 +123,7 @@ private fun ModeTag(level: TextLevel, palette: WidgetPalette) {
   val resources = LocalResources.current
   val shades = palette.shades(level.shownColor)
   val word = modeWord(resources, level, liveText = null)
-  val texts =
-    if (level.other) stringResource(R.string.mode_other_hint) else listText(resources, level.texts)
+  val texts = subLine(resources, level)
   val type = stringResource(typeLabel(level.type))
   val bell = if (level.notify) stringResource(R.string.colors_tag_bell) else null
   val description = listText(resources, listOfNotNull(word, texts, type, bell))
@@ -204,6 +203,10 @@ internal fun nowLine(resources: Resources, levels: List<TextLevel>, liveText: St
     else modeWord(resources, level, text)
   return resources.getString(R.string.mode_now, text, target)
 }
+
+/** The line under a mode's word: its texts, or what "other" takes. */
+internal fun subLine(resources: Resources, level: TextLevel): String =
+  if (level.other) resources.getString(R.string.mode_other_hint) else listText(resources, level.texts)
 
 /** The [parts] joined by the translated list separator; empty for none. */
 internal fun listText(resources: Resources, parts: List<String>): String =

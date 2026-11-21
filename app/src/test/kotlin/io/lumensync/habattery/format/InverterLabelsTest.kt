@@ -42,8 +42,12 @@ class InverterLabelsTest {
   @Config(qualifiers = "en")
   fun other_showsLiveTextElseLabel() {
     assertEquals("Eco", modeWord(resources, other, "Eco"))
-    assertEquals("other (HA text)", modeWord(resources, other, null))
+    assertEquals("other", modeWord(resources, other, null))
   }
+
+  @Test
+  @Config(qualifiers = "uk")
+  fun other_label_uk() = assertEquals("інший", modeWord(resources, other, null))
 
   @Test
   @Config(qualifiers = "en")
