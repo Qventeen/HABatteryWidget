@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain.port
 
 import io.lumensync.habattery.domain.LevelAlert
+import io.lumensync.habattery.domain.ModeAlert
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.FetchRequest
@@ -68,6 +69,8 @@ interface LevelNotifier {
   fun canPost(): Boolean
 
   fun post(alert: LevelAlert)
+
+  fun postMode(alert: ModeAlert)
 }
 
 interface SyncScheduler {

@@ -2,7 +2,10 @@ package io.lumensync.habattery.domain.model
 
 import kotlinx.serialization.Serializable
 
-/** [reading] and [error] are the battery part's; each part keeps its last good reading. */
+/**
+ * [reading] and [error] are the battery part's; each part keeps its last good reading.
+ * [inverterMode] is the last mode text seen, to tell a change.
+ */
 @Serializable
 data class CacheState(
   val reading: BatteryReading? = null,
@@ -11,4 +14,5 @@ data class CacheState(
   val levelAlerts: Map<String, LevelAlertState> = emptyMap(),
   val inverterReading: InverterReading? = null,
   val inverterError: SyncError? = null,
+  val inverterMode: String? = null,
 )

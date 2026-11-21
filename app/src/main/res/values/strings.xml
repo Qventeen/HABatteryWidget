@@ -62,6 +62,15 @@
     <string name="notification_level_title">%1$s: %2$s %3$s</string>
     <string name="notification_level_title_short">%1$s: %2$s</string>
     <string name="notification_level_text">%1$s · measured at %2$s</string>
+    <string name="notification_mode_title">Inverter: %1$s</string>
+    <string name="notification_mode_text">Measured at %1$s</string>
+    <string name="mode_word_power_on">power on</string>
+    <string name="mode_word_standby">standby</string>
+    <string name="mode_word_mains">main</string>
+    <string name="mode_word_off_grid">battery</string>
+    <string name="mode_word_bypass">bypass</string>
+    <string name="mode_word_charging">charging</string>
+    <string name="mode_word_fault">fault</string>
 
     <!-- Main screen. -->
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
@@ -124,7 +133,7 @@
 
     <string name="notify_title">Notifications</string>
     <string name="notifications_switch">Notifications</string>
-    <string name="notifications_hint">Choose the levels with the bells in Levels and alerts.</string>
+    <string name="notifications_hint">Choose the levels with the bells in Levels and alerts. Inverter mode changes are notified too.</string>
     <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual refresh.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>

@@ -11,6 +11,8 @@ import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.LevelSpan
+import io.lumensync.habattery.domain.ModeAlert
+import io.lumensync.habattery.domain.model.InverterMode
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
@@ -76,6 +78,49 @@ class AndroidLevelNotifierTest {
       manager.getNotificationChannel("level_critical_2").importance,
     )
     assertEquals(1, shadowOf(manager).size())
+  }
+
+  private fun modeAlert(text: String) =
+    ModeAlert(text, InverterMode.of(text), measuredAtMillis = System.currentTimeMillis())
+
+  @Test
+  fun postMode_offGrid() {
+    grant()
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    val posted = shadowOf(manager).getNotification(150)
+    assertEquals("level_warning_2", posted.channelId)
+    assertEquals("Inverter: battery", posted.extras.getString("android.title"))
+    assertTrue(posted.extras.getString("android.text")!!.startsWith("Measured at "))
+  }
+
+  @Test
+  fun postMode_unknown() {
+    grant()
+    notifier.postMode(modeAlert("Eco"))
+
+    val posted = shadowOf(manager).getNotification(150)
+    assertEquals("level_info", posted.channelId)
+    assertEquals("Inverter: Eco", posted.extras.getString("android.title"))
+  }
+
+  @Test
+  fun postMode_fault() {
+    grant()
+    notifier.postMode(modeAlert("Fault"))
+
+    assertEquals("level_critical_2", shadowOf(manager).getNotification(150).channelId)
+  }
+
+  @Test
+  fun postMode_createsEveryLevelChannel() {
+    grant()
+    notifier.postMode(modeAlert("Mains"))
+
+    assertEquals(
+      NotificationManager.IMPORTANCE_HIGH,
+      manager.getNotificationChannel("level_critical_2").importance,
+    )
   }
 
   @Test

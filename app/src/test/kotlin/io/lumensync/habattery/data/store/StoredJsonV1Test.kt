@@ -306,7 +306,8 @@ class StoredJsonV1Test {
             "outputVoltageV": 230.5,
             "updatedAtMillis": 1800000000000
           },
-          "inverterError": { "type": "bad_response" }
+          "inverterError": { "type": "bad_response" },
+          "inverterMode": "Off-Grid"
         }
       }
       """
@@ -342,6 +343,7 @@ class StoredJsonV1Test {
                 updatedAtMillis = 1_800_000_000_000L,
               ),
             inverterError = SyncError.BadResponse,
+            inverterMode = "Off-Grid",
           ),
       )
     assertV1(json, expected, CacheRecord.serializer())

@@ -1,6 +1,7 @@
 package io.lumensync.habattery.testing
 
 import io.lumensync.habattery.domain.LevelAlert
+import io.lumensync.habattery.domain.ModeAlert
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
@@ -142,10 +143,18 @@ class FakeLevelNotifier(private val canPost: Boolean = true) : LevelNotifier {
   val posted: List<LevelAlert>
     get() = _posted
 
+  private val _postedModes = mutableListOf<ModeAlert>()
+  val postedModes: List<ModeAlert>
+    get() = _postedModes
+
   override fun canPost(): Boolean = canPost
 
   override fun post(alert: LevelAlert) {
     _posted += alert
+  }
+
+  override fun postMode(alert: ModeAlert) {
+    _postedModes += alert
   }
 }
 

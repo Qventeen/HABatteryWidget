@@ -365,6 +365,58 @@ class SyncBatteryTest {
   }
 
   @Test
+  fun batteryFails_modeStillPosts() = runTest {
+    val cache = FakeReadingCache(CacheState(inverterMode = "Mains"))
+
+    sync(
+      FakeBatterySource(
+        FetchResult(badResponse, PartResult.Ok(inverterReading().copy(mode = "Off-Grid")))
+      ),
+      cache,
+      configuredSettings(notificationsOn = true, inverter = true),
+    )()
+
+    assertEquals(listOf("Off-Grid"), notifier.postedModes.map { it.text })
+    assertEquals("Off-Grid", cache.current.inverterMode)
+  }
+
+  @Test
+  fun modeChange_postsAfterLevelAlerts_andOnlyOnce() = runTest {
+    val cache =
+      FakeReadingCache(CacheState(levelAlerts = enteringLow + gridNormal, inverterMode = "Mains"))
+    val source =
+      FakeBatterySource(
+        FetchResult(
+          PartResult.Ok(reading(19.0)),
+          PartResult.Ok(gridLow.copy(mode = "Fault")),
+        )
+      )
+    val useCase = sync(source, cache, configuredSettings(notificationsOn = true, inverter = true))
+
+    useCase()
+    useCase()
+
+    assertEquals(listOf("Fault"), notifier.postedModes.map { it.text })
+    assertEquals(2, notifier.posted.size)
+  }
+
+  @Test
+  fun modeChange_notificationsOff_tracksOnly() = runTest {
+    val cache = FakeReadingCache(CacheState(inverterMode = "Mains"))
+
+    sync(
+      FakeBatterySource(
+        FetchResult(null, PartResult.Ok(inverterReading().copy(mode = "Fault")))
+      ),
+      cache,
+      configuredSettings(notificationsOn = false, inverter = true),
+    )()
+
+    assertEquals(emptyList<ModeAlert>(), notifier.postedModes)
+    assertEquals("Fault", cache.current.inverterMode)
+  }
+
+  @Test
   fun parallelRuns_postOnce() = runTest {
     val useCase =
       sync(

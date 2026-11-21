@@ -58,6 +58,7 @@ class SyncBattery(
         // Read once, before the write, so tracking and posting agree on the same answer.
         val enabled = current.notificationsOn && notifier.canPost()
         var alerts = emptyList<LevelAlert>()
+        var modeAlert: ModeAlert? = null
         cache.update { state ->
           val batteryOutcome =
             if (battery is PartResult.Ok) {
@@ -73,6 +74,13 @@ class SyncBattery(
             } else {
               null
             }
+          val modeOutcome =
+            if (inverter is PartResult.Ok) {
+              ModeAlerts.evaluate(inverter.reading, enabled, state.inverterMode)
+            } else {
+              null
+            }
+          modeAlert = modeOutcome?.alert
           alerts = batteryOutcome?.alerts.orEmpty() + inverterOutcome?.alerts.orEmpty()
           state.copy(
             reading = battery.readingOr(state.reading),
@@ -81,10 +89,12 @@ class SyncBattery(
             inverterError = inverter.errorOrNull(),
             refreshingSinceMillis = null,
             levelAlerts = inverterOutcome?.state ?: batteryStates,
+            inverterMode = modeOutcome?.last ?: state.inverterMode,
           )
         }
         refreshingCleared = true
         alerts.forEach(notifier::post)
+        modeAlert?.let(notifier::postMode)
         FetchResult(battery, inverter)
       } finally {
         withContext(NonCancellable) {
