@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.media.AudioAttributes
+import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelAlert
@@ -14,6 +16,7 @@ import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -65,12 +68,12 @@ class AndroidLevelNotifierTest {
     notifier.post(low())
 
     val posted = shadowOf(manager).getNotification(id(LevelValue.SOC))
-    assertEquals("level_critical", posted.channelId)
+    assertEquals("level_critical_2", posted.channelId)
     assertEquals("Charge: Low ↓20 %", posted.extras.getString("android.title"))
     assertTrue(posted.extras.getString("android.text")!!.startsWith("20% · measured at "))
     assertEquals(
       NotificationManager.IMPORTANCE_HIGH,
-      manager.getNotificationChannel("level_critical").importance,
+      manager.getNotificationChannel("level_critical_2").importance,
     )
     assertEquals(1, shadowOf(manager).size())
   }
@@ -96,10 +99,49 @@ class AndroidLevelNotifierTest {
 
     val high = NotificationManager.IMPORTANCE_HIGH
     val default = NotificationManager.IMPORTANCE_DEFAULT
-    assertEquals(high, manager.getNotificationChannel("level_critical").importance)
-    assertEquals(high, manager.getNotificationChannel("level_warning").importance)
+    assertEquals(high, manager.getNotificationChannel("level_critical_2").importance)
+    assertEquals(high, manager.getNotificationChannel("level_warning_2").importance)
     assertEquals(default, manager.getNotificationChannel("level_normal").importance)
     assertEquals(default, manager.getNotificationChannel("level_info").importance)
+  }
+
+  @Test
+  fun critical_ownToneAndThreeLongBuzzes() {
+    grant()
+    notifier.post(full())
+
+    val channel = manager.getNotificationChannel("level_critical_2")
+    assertEquals(
+      "android.resource://${app.packageName}/raw/level_critical",
+      channel.sound.toString(),
+    )
+    assertEquals(AudioAttributes.USAGE_NOTIFICATION, channel.audioAttributes.usage)
+    assertTrue(channel.shouldVibrate())
+    assertArrayEquals(longArrayOf(0, 500, 200, 500, 200, 500), channel.vibrationPattern)
+  }
+
+  @Test
+  fun warning_phoneSoundAndTwoShortBuzzes() {
+    grant()
+    notifier.post(full())
+
+    val channel = manager.getNotificationChannel("level_warning_2")
+    assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, channel.sound)
+    assertTrue(channel.shouldVibrate())
+    assertArrayEquals(longArrayOf(0, 150, 150, 150), channel.vibrationPattern)
+  }
+
+  @Test
+  fun normalAndInfo_keepThePhoneWay() {
+    grant()
+    notifier.post(full())
+
+    for (id in listOf("level_normal", "level_info")) {
+      val channel = manager.getNotificationChannel(id)
+      assertEquals(id, Settings.System.DEFAULT_NOTIFICATION_URI, channel.sound)
+      assertFalse(id, channel.shouldVibrate())
+      assertNull(id, channel.vibrationPattern)
+    }
   }
 
   @Test
@@ -114,15 +156,18 @@ class AndroidLevelNotifierTest {
   }
 
   @Test
-  fun oldChannel_deleted() {
+  fun oldChannels_deleted() {
     grant()
-    manager.createNotificationChannel(
-      NotificationChannel("full_charge", "Full charge", NotificationManager.IMPORTANCE_HIGH)
-    )
+    val old = listOf("full_charge", "level_critical", "level_warning")
+    old.forEach {
+      manager.createNotificationChannel(
+        NotificationChannel(it, it, NotificationManager.IMPORTANCE_HIGH)
+      )
+    }
 
     notifier.post(low())
 
-    assertNull(manager.getNotificationChannel("full_charge"))
+    old.forEach { assertNull(it, manager.getNotificationChannel(it)) }
   }
 
   @Test

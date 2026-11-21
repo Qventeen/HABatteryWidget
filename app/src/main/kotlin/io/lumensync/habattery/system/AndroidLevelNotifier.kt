@@ -2,11 +2,15 @@ package io.lumensync.habattery.system
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.DrawableRes
+import androidx.annotation.RawRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationChannelCompat
@@ -58,14 +62,8 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
     try {
       // All four are created again before each post: the owner can set every type's sound at
       // once, and the names follow the current language.
-      manager.deleteNotificationChannel(OLD_CHANNEL_ID)
-      manager.createNotificationChannelsCompat(
-        LevelType.entries.map {
-          NotificationChannelCompat.Builder(channelId(it), importance(it))
-            .setName(context.getString(channelName(it)))
-            .build()
-        }
-      )
+      OLD_CHANNEL_IDS.forEach(manager::deleteNotificationChannel)
+      manager.createNotificationChannelsCompat(LevelType.entries.map(::channel))
       // One notification per value: a newer level of the same value replaces the older one.
       manager.notify(BASE_ID + alert.value.ordinal, notification)
     } catch (_: SecurityException) {
@@ -121,10 +119,31 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
+  private fun channel(type: LevelType): NotificationChannelCompat {
+    val builder =
+      NotificationChannelCompat.Builder(channelId(type), importance(type))
+        .setName(context.getString(channelName(type)))
+    vibration(type)?.let { builder.setVibrationEnabled(true).setVibrationPattern(it) }
+    sound(type)?.let { builder.setSound(resourceUri(it), SOUND_ATTRIBUTES) }
+    return builder.build()
+  }
+
+  /**
+   * By name, not by number: the channel keeps this address after app updates, and a resource
+   * number can change between builds.
+   */
+  private fun resourceUri(@RawRes id: Int): Uri =
+    Uri.Builder()
+      .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+      .authority(context.packageName)
+      .appendPath(context.resources.getResourceTypeName(id))
+      .appendPath(context.resources.getResourceEntryName(id))
+      .build()
+
   private fun channelId(type: LevelType): String =
     when (type) {
-      LevelType.CRITICAL -> "level_critical"
-      LevelType.WARNING -> "level_warning"
+      LevelType.CRITICAL -> "level_critical_2"
+      LevelType.WARNING -> "level_warning_2"
       LevelType.NORMAL -> "level_normal"
       LevelType.INFO -> "level_info"
     }
@@ -135,6 +154,25 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       LevelType.WARNING -> NotificationManagerCompat.IMPORTANCE_HIGH
       LevelType.NORMAL,
       LevelType.INFO -> NotificationManagerCompat.IMPORTANCE_DEFAULT
+    }
+
+  /** Critical and Warning can be told apart in a pocket; Normal and Info buzz as the phone does. */
+  private fun vibration(type: LevelType): LongArray? =
+    when (type) {
+      LevelType.CRITICAL -> longArrayOf(0, 500, 200, 500, 200, 500)
+      LevelType.WARNING -> longArrayOf(0, 150, 150, 150)
+      LevelType.NORMAL,
+      LevelType.INFO -> null
+    }
+
+  /** Only Critical has its own tone, so it stands out unseen; the others play the phone's. */
+  @RawRes
+  private fun sound(type: LevelType): Int? =
+    when (type) {
+      LevelType.CRITICAL -> R.raw.level_critical
+      LevelType.WARNING,
+      LevelType.NORMAL,
+      LevelType.INFO -> null
     }
 
   @StringRes
@@ -156,8 +194,18 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
     }
 
   private companion object {
-    /** The channel of the old full-charge notification. */
-    const val OLD_CHANNEL_ID = "full_charge"
+    /**
+     * Android keeps a channel's sound and vibration once it exists, so a new default needs a new
+     * id; these retired ids are deleted.
+     */
+    val OLD_CHANNEL_IDS = listOf("full_charge", "level_critical", "level_warning")
+
+    val SOUND_ATTRIBUTES: AudioAttributes =
+      AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
+
     const val BASE_ID = 100
   }
 }
