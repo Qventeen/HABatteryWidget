@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A small icon is a mask: Android keeps only the alpha, so every colour stays white. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M9,4.3H15A2.2,2.2 0,0 1,17.2 6.5V19A2.2,2.2 0,0 1,15 21.2H9A2.2,2.2 0,0 1,6.8 19V6.5A2.2,2.2 0,0 1,9 4.3Z"
+        android:strokeWidth="1.6"
+        android:strokeColor="#FFFFFFFF" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.3,2.2H13.7A0.8,0.8 0,0 1,14.5 3V3.8A0.8,0.8 0,0 1,13.7 4.6H10.3A0.8,0.8 0,0 1,9.5 3.8V3A0.8,0.8 0,0 1,10.3 2.2Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9.4,16.6H14.6A0.6,0.6 0,0 1,15.2 17.2V18.6A0.6,0.6 0,0 1,14.6 19.2H9.4A0.6,0.6 0,0 1,8.8 18.6V17.2A0.6,0.6 0,0 1,9.4 16.6Z M9.4,13.17H14.6A0.6,0.6 0,0 1,15.2 13.77V15.17A0.6,0.6 0,0 1,14.6 15.77H9.4A0.6,0.6 0,0 1,8.8 15.17V13.77A0.6,0.6 0,0 1,9.4 13.17Z M9.4,9.74H14.6A0.6,0.6 0,0 1,15.2 10.34V11.74A0.6,0.6 0,0 1,14.6 12.34H9.4A0.6,0.6 0,0 1,8.8 11.74V10.34A0.6,0.6 0,0 1,9.4 9.74Z" />
+</vector>
