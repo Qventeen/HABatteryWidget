@@ -82,7 +82,8 @@
     <string name="mode_icon_button">Іконка: %1$s</string>
     <string name="mode_delete">Видалити режим</string>
     <string name="mode_add">Додати режим</string>
-    <string name="mode_now">Зараз: «%1$s» → %2$s</string>
+    <string name="mode_now">зараз</string>
+    <string name="mode_live_text">«%1$s»</string>
     <string name="modes_default_title">Повернути стандартні режими?</string>
     <string name="modes_default_text">Ваші режими, тексти й назви буде видалено.</string>
 

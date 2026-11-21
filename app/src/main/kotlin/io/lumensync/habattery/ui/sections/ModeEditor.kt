@@ -70,7 +70,8 @@ import io.lumensync.habattery.widget.drawable
 /**
  * The modes as a draft: the [stored] own modes, or a copy of the built-in ones. Nothing is stored
  * before Save; [onSave] returns `false` when a mode has an error, and the editor stays open with
- * the first mode in error opened. One mode is open at a time.
+ * the first mode in error opened. One mode is open at a time. The mode the draft gives [liveText]
+ * has the "now" ring.
  */
 @Composable
 internal fun ModeEditor(
@@ -114,6 +115,8 @@ internal fun ModeEditor(
   }
   // The text fields keep their own text, so the rows are built again when the stored modes change
   // under the open editor.
+  // The ring follows the draft, so a text added to a mode moves it before the save.
+  val now = nowIndex(drafts.map { it.toLevel() }, liveText)
   key(stored) {
     drafts.forEachIndexed { index, draft ->
       key(draft.id) {
@@ -121,6 +124,7 @@ internal fun ModeEditor(
           value = value,
           draft = draft,
           open = openId == draft.id,
+          now = index == now,
           error = if (ownErrors) errors.errorFor(Field.TEXT_LEVEL_TEXTS, index) else null,
           addProblem = addProblems[draft.id],
           palette = palette,
@@ -168,7 +172,6 @@ internal fun ModeEditor(
       )
     }
   }
-  NowLine(drafts.map { it.toLevel() }, liveText)
   ButtonRow {
     TextButton(onClick = onClose) { Text(stringResource(R.string.dialog_cancel)) }
     SaveButton(onClick = save)
@@ -177,16 +180,17 @@ internal fun ModeEditor(
 
 /**
  * One mode of the draft: its pill and word (a button that opens it), its type tag menu and its bell
- * at the far right. Open,
- * it shows the icon, the name, the texts as chips with an "Add text" field, the colours and Delete;
- * "other" has no name, texts or Delete. A save [error] shows under "Add text", or as a mark on the
- * closed row; [addProblem] is why the + button kept the typed text.
+ * at the far right; [now] adds the ring and the "now" badge. Open, it shows the icon, the name, the
+ * texts as chips with an "Add text" field, the colours and Delete; "other" has no name, texts or
+ * Delete. A save [error] shows under "Add text", or as a mark on the closed row; [addProblem] is
+ * why the + button kept the typed text.
  */
 @Composable
 private fun ModeRow(
   value: TextValue,
   draft: TextLevelDraft,
   open: Boolean,
+  now: Boolean,
   error: FieldError?,
   addProblem: Problem?,
   palette: WidgetPalette,
@@ -204,7 +208,7 @@ private fun ModeRow(
     .ifEmpty { stringResource(R.string.value_missing) }
   val errorText = error?.let { fieldErrorText(it) }
   HorizontalDivider()
-  Row(verticalAlignment = Alignment.CenterVertically) {
+  Row(Modifier.nowRing(shades, now), verticalAlignment = Alignment.CenterVertically) {
     val action = stringResource(if (open) R.string.section_hide else R.string.section_show, word)
     Row(
       Modifier.weight(1f)
@@ -222,6 +226,7 @@ private fun ModeRow(
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
+      if (now) NowBadge(shades)
       if (errorText != null && !open) {
         Icon(
           painterResource(R.drawable.ic_alert),

@@ -51,14 +51,26 @@ class ModesSectionTest {
   @Config(qualifiers = "uk")
   fun subLine_other_uk() = assertEquals("будь-який інший текст", subLine(resources, builtIn.last()))
 
-  @Test
-  fun nowLine_mapped() =
-    assertEquals("Now: “Mains” → main", nowLine(resources, builtIn, "Mains"))
+  @Test fun nowIndex_mapped() = assertEquals(3, nowIndex(builtIn, "Off-Grid"))
+
+  @Test fun nowIndex_caseAndSpaces() = assertEquals(2, nowIndex(builtIn, " mains "))
+
+  @Test fun nowIndex_unmapped_isOther() = assertEquals(7, nowIndex(builtIn, "Line"))
+
+  @Test fun nowIndex_noText_isNull() = assertNull(nowIndex(builtIn, null))
+
+  @Test fun nowIndex_noValue_isNull() = assertNull(nowIndex(builtIn, "unavailable"))
 
   @Test
-  fun nowLine_unmapped_showsOtherLabel() =
-    assertEquals("Now: “Line” → other", nowLine(resources, builtIn, "Line"))
+  fun subLine_otherNow_showsLiveText_en() =
+    assertEquals("“Line”", subLine(resources, builtIn.last(), nowText = "Line"))
 
   @Test
-  fun nowLine_noText_isNull() = assertNull(nowLine(resources, builtIn, null))
+  @Config(qualifiers = "uk")
+  fun subLine_otherNow_showsLiveText_uk() =
+    assertEquals("«Line»", subLine(resources, builtIn.last(), nowText = "Line"))
+
+  @Test
+  fun subLine_mappedNow_keepsTexts() =
+    assertEquals("Off-Grid", subLine(resources, builtIn[3], nowText = "Off-Grid"))
 }

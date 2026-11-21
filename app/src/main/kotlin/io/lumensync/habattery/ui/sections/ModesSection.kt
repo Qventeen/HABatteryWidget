@@ -27,11 +27,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,8 +95,10 @@ fun ModesSection(
         ValueButton(R.string.colors_default, enabled = own != null) { confirmDefault = true }
         ValueButton(R.string.colors_edit) { editing = true }
       }
-      levels.forEach { ModeTag(it, palette) }
-      NowLine(levels, liveText)
+      val now = nowIndex(levels, liveText)
+      levels.forEachIndexed { index, level ->
+        ModeTag(level, palette, nowText = liveText.takeIf { index == now })
+      }
     }
     if (confirmDefault) {
       DefaultModesDialog(
@@ -121,27 +125,44 @@ internal fun ButtonRow(buttons: @Composable RowScope.() -> Unit) {
 
 /**
  * One mode: its pill, its word with its texts under it, then the type tag and the bell at the far
- * right, so the bells of all rows form one column. TalkBack reads the row as one item.
+ * right, so the bells of all rows form one column. [nowText] is the text Home Assistant sends now
+ * when this is its mode: the row then has a ring and a "now" badge. TalkBack reads the row as one
+ * item.
  */
 @Composable
-private fun ModeTag(level: TextLevel, palette: WidgetPalette) {
+private fun ModeTag(level: TextLevel, palette: WidgetPalette, nowText: String?) {
   val resources = LocalResources.current
   val shades = palette.shades(level.shownColor)
   val word = modeWord(resources, level, liveText = null)
-  val texts = subLine(resources, level)
+  val texts = subLine(resources, level, nowText)
   val type = stringResource(typeLabel(level.type))
   val bell = if (level.notify) stringResource(R.string.colors_tag_bell) else null
-  val description = listText(resources, listOfNotNull(word, texts, type, bell))
+  val now = nowText?.let { stringResource(R.string.mode_now) }
+  val description = listText(resources, listOfNotNull(word, texts, type, bell, now))
   Row(
-    Modifier.fillMaxWidth().heightIn(min = 48.dp).clearAndSetSemantics {
-      contentDescription = description
-    },
+    Modifier.fillMaxWidth()
+      .clearAndSetSemantics { contentDescription = description }
+      .nowRing(shades, nowText != null)
+      .heightIn(min = 48.dp),
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     ModePill(level.shownIcon, shades)
     Column(Modifier.weight(1f)) {
-      Text(word, color = shades.text, style = MaterialTheme.typography.titleSmall)
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          word,
+          Modifier.weight(1f, fill = false),
+          color = shades.text,
+          style = MaterialTheme.typography.titleSmall,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+        if (nowText != null) NowBadge(shades)
+      }
       Text(
         texts,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -205,6 +226,26 @@ internal fun TypeTag(
   }
 }
 
+/**
+ * The row's inner padding and, for the mode Home Assistant sends [now], a ring in the mode's
+ * colour. Every row has the padding, so the rows stay aligned.
+ */
+internal fun Modifier.nowRing(shades: Shades, now: Boolean): Modifier =
+  border(1.5.dp, if (now) shades.ring else Color.Transparent, RoundedCornerShape(14.dp))
+    .padding(horizontal = 8.dp, vertical = 4.dp)
+
+/** The "now" badge after the word of the mode Home Assistant sends now. */
+@Composable
+internal fun NowBadge(shades: Shades) {
+  Text(
+    stringResource(R.string.mode_now),
+    Modifier.background(shades.ring, RoundedCornerShape(8.dp)).padding(horizontal = 6.dp),
+    color = MaterialTheme.colorScheme.surface,
+    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+    maxLines = 1,
+  )
+}
+
 /** A mode's icon in a pill of its colour, like the strip's mode pill. */
 @Composable
 internal fun ModePill(icon: InverterIcon, shades: Shades) {
@@ -223,35 +264,26 @@ internal fun ModePill(icon: InverterIcon, shades: Shades) {
   }
 }
 
-/** The "Now" line for the text Home Assistant sends now; nothing when there is none. */
-@Composable
-internal fun NowLine(levels: List<TextLevel>, liveText: String?) {
-  nowLine(LocalResources.current, levels, liveText)?.let {
-    Text(
-      it,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      style = MaterialTheme.typography.bodySmall,
-    )
-  }
+/** The line under a mode's word: its texts, or what "other" takes. */
+/**
+ * The position in [levels] of the mode [liveText] picks; `null` for no text or a no-value text. A
+ * text no mode lists picks "other".
+ */
+internal fun nowIndex(levels: List<TextLevel>, liveText: String?): Int? {
+  val now = liveText?.let { TextLevelPicker.match(levels, it) } ?: return null
+  return levels.indexOfFirst { it === now }.takeIf { it >= 0 }
 }
 
 /**
- * "Now: “Line” → main": the text Home Assistant sends now and the mode of [levels] it picks. A text
- * no mode lists names the "other" label, not the same text again.
+ * The line under a mode's word: its texts, or what "other" takes. When "other" is the current
+ * mode, [nowText] replaces that, since its word does not say which text came.
  */
-internal fun nowLine(resources: Resources, levels: List<TextLevel>, liveText: String?): String? {
-  val text = liveText ?: return null
-  val level = TextLevelPicker.match(levels, text) ?: return null
-  val target =
-    if (level.other) resources.getString(R.string.mode_other_label)
-    else modeWord(resources, level, text)
-  return resources.getString(R.string.mode_now, text, target)
-}
-
-/** The line under a mode's word: its texts, or what "other" takes. */
-internal fun subLine(resources: Resources, level: TextLevel): String =
-  if (level.other) resources.getString(R.string.mode_other_hint)
-  else listText(resources, level.texts)
+internal fun subLine(resources: Resources, level: TextLevel, nowText: String? = null): String =
+  when {
+    !level.other -> listText(resources, level.texts)
+    nowText != null -> resources.getString(R.string.mode_live_text, nowText)
+    else -> resources.getString(R.string.mode_other_hint)
+  }
 
 /** The [parts] joined by the translated list separator; empty for none. */
 internal fun listText(resources: Resources, parts: List<String>): String =

@@ -85,7 +85,8 @@
     <string name="mode_icon_button">Icon of %1$s</string>
     <string name="mode_delete">Delete mode</string>
     <string name="mode_add">Add mode</string>
-    <string name="mode_now">Now: “%1$s” → %2$s</string>
+    <string name="mode_now">now</string>
+    <string name="mode_live_text">“%1$s”</string>
     <string name="modes_default_title">Use the default modes?</string>
     <string name="modes_default_text">Your modes, texts and names are deleted.</string>
 
