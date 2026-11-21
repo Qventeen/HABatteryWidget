@@ -1,26 +1,18 @@
 package io.lumensync.habattery.widget
 
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.RectF
 import android.os.Build
-import android.text.Layout
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.glance.GlanceId
 import androidx.glance.action.actionStartActivity
-import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.compose
-import androidx.glance.appwidget.provideContent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.lumensync.habattery.MainActivity
@@ -40,7 +32,6 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.UnderSoc
 import java.io.File
-import java.util.Locale
 import kotlin.math.roundToInt
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -72,12 +63,6 @@ class WidgetFitTest {
       LayoutSpec.L4x3 to listOf(267f to 205f),
       LayoutSpec.L5x3 to listOf(340f to 205f, 340f to 278f),
     )
-
-  private class FitWidget(private val content: @Composable () -> Unit) : GlanceAppWidget() {
-    override val sizeMode: SizeMode = SizeMode.Exact
-
-    override suspend fun provideGlance(context: Context, id: GlanceId) = provideContent { content() }
-  }
 
   /**
    * The sizes each layout is drawn at here: just under its bucket (Android still shows the bucket
@@ -222,10 +207,6 @@ class WidgetFitTest {
     }
   }
 
-  private fun descriptions(view: View): List<String> =
-    listOfNotNull(view.contentDescription?.toString()) +
-      if (view is ViewGroup) (0 until view.childCount).flatMap { descriptions(view.getChildAt(it)) } else emptyList()
-
   /**
    * At 50 % the design PNGs' values show at their 50 % size: the design size × the group's base.
    * The pills match the PNGs; the small texts are 1.5 × theirs. The ring lines may give up to
@@ -302,12 +283,7 @@ class WidgetFitTest {
     }
   }
 
-  private fun context(lang: String, fontScale: Float): Context {
-    val config = Configuration(target.resources.configuration)
-    config.setLocale(Locale.forLanguageTag(lang))
-    config.fontScale = fontScale
-    return target.createConfigurationContext(config)
-  }
+  private fun context(lang: String, fontScale: Float): Context = fitContext(target, lang, fontScale)
 
   private fun settings(sensors: Int, display: DisplaySettings = DisplaySettings()) =
     Settings(
@@ -392,40 +368,6 @@ class WidgetFitTest {
     return view
   }
 
-  /** Every text that does not show whole: wrapped, too narrow, or cut by a view around it. */
-  private fun clipped(root: View): List<String> {
-    val found = mutableListOf<String>()
-    fun visit(view: View, ancestors: List<View>) {
-      if (view.visibility != View.VISIBLE) return
-      if (view is TextView && view.text.isNotEmpty()) {
-        val text = view.text.toString()
-        val layout = view.layout
-        val needed = Layout.getDesiredWidth(view.text, view.paint)
-        val room = view.width - view.totalPaddingLeft - view.totalPaddingRight
-        if (layout == null || layout.getLineEnd(0) < text.length) found += "'$text' wraps"
-        else if (needed > room + 0.5f) found += "'$text' needs $needed px, has $room"
-        else {
-          val box = contentBox(view, root)
-          ancestors.forEach { a ->
-            val clip = rectIn(a, root).apply {
-              if (a is ViewGroup && a.clipToPadding) {
-                left += a.paddingLeft; top += a.paddingTop; right -= a.paddingRight; bottom -= a.paddingBottom
-              }
-            }
-            // Views are laid out in whole pixels: 1 px of rounding is not a cut.
-            if (box.left < clip.left - 1f || box.right > clip.right + 1f || box.top < clip.top - 1f || box.bottom > clip.bottom + 1f) {
-              found += "'$text' cut: $box outside $clip"
-              return
-            }
-          }
-        }
-      }
-      if (view is ViewGroup) for (i in 0 until view.childCount) visit(view.getChildAt(i), ancestors + view)
-    }
-    visit(root, emptyList())
-    return found
-  }
-
   /**
    * At the design size the ring's text ink stays inside the ring's inner circle (1 dp tolerance,
    * spec 0005, 5.5). The ring is the view with the ring's description; its track image is drawn
@@ -462,36 +404,6 @@ class WidgetFitTest {
     if (match(view)) return view
     if (view is ViewGroup) for (i in 0 until view.childCount) find(view.getChildAt(i), match)?.let { return it }
     return null
-  }
-
-  /**
-   * The ink of the line: from the line's left to its right, from the glyphs' top to their bottom
-   * (the font's padding and an empty descent may be cut; nothing shows there).
-   */
-  private fun contentBox(view: TextView, root: View): RectF {
-    val at = rectIn(view, root)
-    val layout = view.layout
-    val baseline = at.top + view.baseline
-    val ink = android.graphics.Rect()
-    view.paint.getTextBounds(view.text.toString(), 0, view.text.length, ink)
-    return RectF(
-      at.left + view.totalPaddingLeft + layout.getLineLeft(0),
-      baseline + ink.top,
-      at.left + view.totalPaddingLeft + layout.getLineRight(0),
-      baseline + ink.bottom,
-    )
-  }
-
-  private fun rectIn(view: View, root: View): RectF {
-    var x = 0f
-    var y = 0f
-    var v: View = view
-    while (v !== root) {
-      x += v.left - v.scrollX
-      y += v.top - v.scrollY
-      v = v.parent as View
-    }
-    return RectF(x, y, x + view.width, y + view.height)
   }
 
   private fun save(view: View, file: File) {
