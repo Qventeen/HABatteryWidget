@@ -1,0 +1,210 @@
+package io.lumensync.habattery.widget
+
+import android.content.ComponentName
+import android.content.Context
+import androidx.annotation.DrawableRes
+import androidx.glance.AndroidResourceImageProvider
+import androidx.glance.EmittableImage
+import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
+import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
+import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
+import androidx.glance.layout.EmittableColumn
+import androidx.glance.layout.EmittableRow
+import androidx.glance.testing.GlanceNodeMatcher
+import androidx.glance.testing.unit.MappedNode
+import androidx.glance.testing.unit.hasClickAction
+import androidx.glance.testing.unit.hasContentDescription
+import androidx.glance.testing.unit.hasContentDescriptionEqualTo
+import androidx.glance.testing.unit.hasStartActivityClickAction
+import androidx.glance.testing.unit.hasTestTag
+import androidx.glance.testing.unit.hasTextEqualTo
+import androidx.test.core.app.ApplicationProvider
+import io.lumensync.habattery.MainActivity
+import io.lumensync.habattery.R
+import io.lumensync.habattery.domain.InverterWidgetModel
+import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.InverterFontPercents
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.ModeStyle
+import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.domain.model.ThemeChoice
+import io.lumensync.habattery.format.Formatters
+import io.lumensync.habattery.testing.configuredSettings
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "en")
+class InverterWidgetContentTest {
+  private val context: Context
+    get() = ApplicationProvider.getApplicationContext()
+
+  private val formatters: Formatters
+    get() = Formatters(context)
+
+  private fun text(id: Int, vararg args: Any): String = context.getString(id, *args)
+
+  private val openAppComponent = ComponentName("io.lumensync.habattery", "OpenApp")
+
+  private val settings = configuredSettings(battery = false, inverter = true)
+
+  private val iconWord = settings.copy(inverter = settings.inverter.copy(modeStyle = ModeStyle.ICON_WORD))
+
+  /** Big icon: the mode is the icon alone, described by its word. */
+  @Test
+  fun offGrid_bigIcon_4x1() =
+    render(model(), InverterLayoutSpec.S4X1) {
+      val word = text(R.string.mode_word_off_grid)
+      val icon = hasImage(R.drawable.ic_inv_battery_charging_full)
+      onNode(hasContentDescriptionEqualTo(word) and icon).assertExists()
+      onAllNodes(hasTextEqualTo(word)).assertCountEquals(0)
+      onNode(hasTextEqualTo(formatters.wholeVolts(0.0))).assertExists()
+      onNode(hasTextEqualTo(formatters.wholeVolts(230.0))).assertExists()
+      onAllNodes(hasImage(R.drawable.ic_alert)).assertCountEquals(0)
+      onAllNodes(hasContentDescription("Sync error")).assertCountEquals(0)
+    }
+
+  @Test
+  fun iconWord_3x1_wordUnderIcon() =
+    render(model(settings = iconWord), InverterLayoutSpec.S3X1) {
+      val word = hasTextEqualTo(text(R.string.mode_word_off_grid))
+      val icon = hasImage(R.drawable.ic_inv_battery_charging_full)
+      onNode(isColumn() and hasChild(icon) and hasChild(word)).assertExists()
+    }
+
+  @Test
+  fun iconWord_4x1_wordBesideIcon() =
+    render(model(settings = iconWord), InverterLayoutSpec.S4X1) {
+      val word = hasTextEqualTo(text(R.string.mode_word_off_grid))
+      val icon = hasImage(R.drawable.ic_inv_battery_charging_full)
+      onNode(isRow() and hasChild(icon) and hasChild(word)).assertExists()
+      onAllNodes(isColumn() and hasChild(word)).assertCountEquals(0)
+    }
+
+  /** A text the mode table does not know: the "other" icon and the Home Assistant text as it is. */
+  @Test
+  fun unknownMode_iconWord_showsTheTextAsItIs() =
+    render(model(cache(mode = "Eco"), iconWord), InverterLayoutSpec.S4X1) {
+      onNode(hasTextEqualTo("Eco")).assertExists()
+      onNode(hasImage(R.drawable.ic_inv_help)).assertExists()
+    }
+
+  /** The last values stay; a red icon at the end tells the reason. */
+  @Test
+  fun error_showsWarningIcon() =
+    InverterLayoutSpec.entries.forEach { spec ->
+      render(model(cache(error = SyncError.Unreachable)), spec) {
+        onNode(
+            hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable") and
+              hasImage(R.drawable.ic_alert)
+          )
+          .assertExists()
+        onNode(hasTextEqualTo(formatters.wholeVolts(230.0))).assertExists()
+      }
+    }
+
+  @Test
+  fun setup_showsSetupText() =
+    render(model(settings = configuredSettings())) {
+      onNode(hasTextEqualTo(text(R.string.inverter_setup))).assertExists()
+      onNode(hasImage(R.drawable.ic_inv_tower)).assertExists()
+      onAllNodes(hasTextEqualTo(text(R.string.widget_open_app))).assertCountEquals(0)
+      // The card is the only tap target: no button.
+      onAllNodes(hasStartActivityClickAction(openAppComponent)).assertCountEquals(1)
+    }
+
+  @Test
+  fun noReading_showsNoDataText() =
+    render(model(CacheState(inverterError = SyncError.Unreachable))) {
+      onNode(hasTextEqualTo(text(R.string.inverter_no_data))).assertExists()
+      onNode(hasImage(R.drawable.ic_inv_tower)).assertExists()
+    }
+
+  @Test
+  fun noVolts_showsDash() =
+    render(model(cache(grid = null, output = null))) {
+      onAllNodes(hasTextEqualTo(text(R.string.value_missing))).assertCountEquals(2)
+    }
+
+  /** The app's preview: nothing takes taps. */
+  @Test
+  fun noAction_nothingTakesTaps() =
+    render(model(), openApp = false) { onAllNodes(hasClickAction()).assertCountEquals(0) }
+
+  /** The app opens on the tapped widget: the tap carries the widget's id. */
+  @Test
+  fun tap_carriesTheTappedWidgetId() =
+    runGlanceAppWidgetUnitTest {
+      setContext(context)
+      setAppWidgetSize(InverterLayoutSpec.S4X1.bucket)
+      provideComposable { InverterStrip(cache(), settings, hasToken = true, appWidgetId = 42, FakeMeasurer) }
+      val tap = actionParametersOf(TappedWidgetKey to 42)
+      onNode(hasStartActivityClickAction<MainActivity>(tap)).assertExists()
+    }
+
+  /** The widget draws the strip made for its bucket. */
+  @Test
+  fun eachBucket_drawsItsStrip() =
+    InverterLayoutSpec.entries.forEach { spec ->
+      runGlanceAppWidgetUnitTest {
+        setContext(context)
+        setAppWidgetSize(spec.bucket)
+        provideComposable { InverterStrip(cache(), settings, hasToken = true, appWidgetId = 1, FakeMeasurer) }
+        onNode(hasTestTag("strip_${spec.name}")).assertExists()
+      }
+    }
+
+  private fun hasImage(@DrawableRes id: Int) =
+    GlanceNodeMatcher<MappedNode>("shows drawable $id") { node ->
+      ((node.value.emittable as? EmittableImage)?.provider as? AndroidResourceImageProvider)?.resId == id
+    }
+
+  private fun isRow() = GlanceNodeMatcher<MappedNode>("is a Row") { it.value.emittable is EmittableRow }
+
+  private fun isColumn() =
+    GlanceNodeMatcher<MappedNode>("is a Column") { it.value.emittable is EmittableColumn }
+
+  private fun hasChild(matcher: GlanceNodeMatcher<MappedNode>) =
+    GlanceNodeMatcher<MappedNode>("has a matching child") { node -> node.children().any(matcher::matches) }
+
+  private fun render(
+    model: InverterWidgetModel,
+    spec: InverterLayoutSpec = InverterLayoutSpec.S4X1,
+    openApp: Boolean = true,
+    assertions: GlanceAppWidgetUnitTest.() -> Unit,
+  ) = runGlanceAppWidgetUnitTest {
+    setContext(context)
+    setAppWidgetSize(spec.bucket)
+    val action = actionStartActivity(openAppComponent).takeIf { openApp }
+    provideComposable {
+      InverterWidgetContent(
+        model,
+        spec,
+        WidgetColors(ThemeChoice.SYSTEM),
+        InverterFontPercents(),
+        hostScale = 1f,
+        openApp = action,
+        measurer = FakeMeasurer,
+      )
+    }
+    assertions()
+  }
+
+  private fun cache(
+    mode: String? = "Off-Grid",
+    grid: Double? = 0.0,
+    output: Double? = 230.0,
+    error: SyncError? = null,
+  ) =
+    CacheState(
+      inverterReading = InverterReading(mode, grid, output, updatedAtMillis = 5L),
+      inverterError = error,
+    )
+
+  private fun model(cache: CacheState = cache(), settings: Settings = this.settings) =
+    InverterWidgetModel.from(cache, settings, hasToken = true)
+}

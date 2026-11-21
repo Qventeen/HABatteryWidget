@@ -554,7 +554,7 @@ private fun IconChips(selected: LevelIcon?, tint: Color, onSelect: (LevelIcon?) 
 
 /** A round radio chip: a ring when [selected], a dot below when [marked]. */
 @Composable
-private fun ChoiceChip(
+internal fun ChoiceChip(
   selected: Boolean,
   description: String,
   onClick: () -> Unit,
@@ -583,7 +583,9 @@ private fun edgeKeyboard(value: LevelValue): KeyboardType =
     LevelValue.VOLTAGE,
     LevelValue.CHARGE_CURRENT,
     LevelValue.DISCHARGE_CURRENT,
-    LevelValue.DELTA -> KeyboardType.Decimal
+    LevelValue.DELTA,
+    LevelValue.GRID_VOLTAGE,
+    LevelValue.OUTPUT_VOLTAGE -> KeyboardType.Decimal
   }
 
 /**

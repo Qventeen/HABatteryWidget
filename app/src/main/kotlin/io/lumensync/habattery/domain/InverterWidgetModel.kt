@@ -1,0 +1,84 @@
+package io.lumensync.habattery.domain
+
+import io.lumensync.habattery.domain.WidgetModel.EmptyKind
+import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.IconSlot
+import io.lumensync.habattery.domain.model.InverterIcon
+import io.lumensync.habattery.domain.model.InverterMode
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.ModeStyle
+import io.lumensync.habattery.domain.model.ModeText
+import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.domain.model.icon
+
+/** What the inverter strip shows; the drawing only reads it. A missing value stays null. */
+sealed interface InverterWidgetModel {
+  /** The inverter part's last sync error; a strip that needs setup carries none. */
+  val error: SyncError?
+
+  data class Empty(val kind: EmptyKind, override val error: SyncError?) : InverterWidgetModel
+
+  data class Data(
+    val mode: ModeLook,
+    val grid: VoltageLook,
+    val output: VoltageLook,
+    val style: ModeStyle,
+    override val error: SyncError?,
+  ) : InverterWidgetModel
+
+  companion object {
+    fun from(cache: CacheState, settings: Settings, hasToken: Boolean): InverterWidgetModel {
+      if (!Validation.isInverterConfigured(settings, hasToken)) return Empty(EmptyKind.SETUP, null)
+      val r = cache.inverterReading ?: return Empty(EmptyKind.NO_DATA, cache.inverterError)
+      return Data(
+        mode = modeLook(r, settings),
+        grid = voltageLook(LevelValue.GRID_VOLTAGE, r, settings, IconSlot.GRID_VOLTAGE),
+        output = voltageLook(LevelValue.OUTPUT_VOLTAGE, r, settings, IconSlot.OUTPUT_VOLTAGE),
+        style = settings.inverter.modeStyle,
+        error = cache.inverterError,
+      )
+    }
+
+    private fun modeLook(r: InverterReading, settings: Settings): ModeLook {
+      val mode = InverterMode.of(r.mode)
+      val text = r.mode?.takeUnless { ModeText.isNoValue(it) }
+      return if (mode != null) {
+        ModeLook(mode, text, mode.color, settings.inverter.icon(mode.slot))
+      } else {
+        ModeLook(null, text, LevelColor.GREY, settings.inverter.icon(IconSlot.MODE_OTHER))
+      }
+    }
+
+    private fun voltageLook(
+      value: LevelValue,
+      r: InverterReading,
+      settings: Settings,
+      slot: IconSlot,
+    ): VoltageLook {
+      val volts = ShownNumber.of(value, r)
+      val color =
+        volts?.let {
+          LevelPicker.pick(LevelPicker.effective(value, settings, LevelBasis(null, null)), it)
+            .shownColor
+        } ?: LevelColor.PLAIN
+      return VoltageLook(volts, color, settings.inverter.icon(slot))
+    }
+  }
+}
+
+/**
+ * The mode word: [mode] is the known row, `null` for other text; [text] is the Home Assistant text
+ * as it is, `null` when there is no value.
+ */
+data class ModeLook(
+  val mode: InverterMode?,
+  val text: String?,
+  val color: LevelColor,
+  val icon: InverterIcon,
+)
+
+/** [volts] is whole volts as shown, picked by that same number; `null` is drawn "—" in PLAIN. */
+data class VoltageLook(val volts: Double?, val color: LevelColor, val icon: InverterIcon)

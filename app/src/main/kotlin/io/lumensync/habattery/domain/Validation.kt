@@ -3,6 +3,7 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.InverterEntitySettings
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
@@ -28,6 +29,10 @@ enum class Field {
   CAPACITY,
   LEVEL_EDGE,
   LEVEL_MARGIN,
+  INVERTER_PREFIX,
+  INVERTER_MODE,
+  INVERTER_GRID,
+  INVERTER_OUTPUT,
 }
 
 enum class Problem {
@@ -78,6 +83,18 @@ object Validation {
         entityError(Field.BALANCING, e.balancing, required = false),
       )
 
+  /** All three ids blank is "no inverter" (no error); a partly filled set needs the blank ones. */
+  fun inverterEntities(e: InverterEntitySettings): List<FieldError> {
+    val noneSet = e.mode.isBlank() && e.gridVoltage.isBlank() && e.outputVoltage.isBlank()
+    return listOfNotNull(
+      if (e.prefix.isNotBlank() && !isPrefixValid(e.prefix)) FieldError(Field.INVERTER_PREFIX, Problem.INVALID)
+      else null,
+      entityError(Field.INVERTER_MODE, e.mode, required = !noneSet),
+      entityError(Field.INVERTER_GRID, e.gridVoltage, required = !noneSet),
+      entityError(Field.INVERTER_OUTPUT, e.outputVoltage, required = !noneSet),
+    )
+  }
+
   fun refresh(r: RefreshSettings): List<FieldError> {
     if (!r.auto) return emptyList()
     val minutes = r.intervalMinutes ?: return listOf(FieldError(Field.INTERVAL, Problem.REQUIRED))
@@ -127,8 +144,15 @@ object Validation {
     return errors + atIndex.toSortedMap().map { (i, problem) -> FieldError(Field.LEVEL_EDGE, problem, i) }
   }
 
-  fun isConfigured(s: Settings, hasToken: Boolean): Boolean =
+  fun isBatteryConfigured(s: Settings, hasToken: Boolean): Boolean =
     hasToken && s.connection.url.isNotBlank() && s.entities.charge.isNotBlank()
+
+  fun isInverterConfigured(s: Settings, hasToken: Boolean): Boolean =
+    hasToken &&
+      s.connection.url.isNotBlank() &&
+      s.inverter.entities.let {
+        it.mode.isNotBlank() && it.gridVoltage.isNotBlank() && it.outputVoltage.isNotBlank()
+      }
 
   private fun urlError(url: String): FieldError? =
     when {

@@ -3,9 +3,14 @@ package io.lumensync.habattery.data.ha
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.SyncResult
+import io.lumensync.habattery.testing.inverterEntities
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -63,6 +68,13 @@ class StatesSourceTest {
       "binary_sensor.balancing" to state("on"),
     ) + (1..8).associate { "sensor.t$it" to state("2$it") }
 
+  private val inverterStates =
+    mapOf(
+      "sensor.inv_operation_mode" to state(" Off-Grid "),
+      "sensor.inv_main_voltage" to state("0"),
+      "sensor.inv_output_voltage" to state("230.5"),
+    )
+
   /** Answers `/api/states/<id>` from [answers]; an id it does not know gets 404, as in HA. */
   private class StatesDispatcher(
     private val answers: Map<String, MockResponse>,
@@ -102,11 +114,12 @@ class StatesSourceTest {
     url: String,
     entities: EntitySettings = all,
     token: String = "t0ken",
-  ): SyncResult = source.fetch(ConnectionSettings(url), entities, token)
+    inverter: InverterEntitySettings? = null,
+  ): FetchResult = source.fetch(ConnectionSettings(url), FetchRequest(entities, inverter), token)
 
-  private fun SyncResult.error(): SyncError = (this as SyncResult.Failure).error
+  private fun FetchResult.error(): SyncError = (battery as PartResult.Failed).error
 
-  private fun SyncResult.reading(): BatteryReading = (this as SyncResult.Success).reading
+  private fun FetchResult.reading(): BatteryReading = (battery as PartResult.Ok).reading
 
   private fun MockWebServer.paths(): List<String> =
     List(requestCount) { takeRequest().url.encodedPath }
@@ -128,7 +141,7 @@ class StatesSourceTest {
           balancing = "on",
         )
         .toReading(1234L)
-    assertEquals(SyncResult.Success(expected!!), fetch(server(allStates).base()))
+    assertEquals(FetchResult(PartResult.Ok(expected!!), null), fetch(server(allStates).base()))
   }
 
   @Test
@@ -263,7 +276,7 @@ class StatesSourceTest {
     val s = server(dispatcher)
     val entities = EntitySettings(charge = "sensor.soc", power = "sensor.watts")
     val started = System.nanoTime()
-    val result = patient.fetch(ConnectionSettings(s.base()), entities, "t0ken")
+    val result = patient.fetch(ConnectionSettings(s.base()), FetchRequest(entities, null), "t0ken")
     val millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
     assertEquals(SyncError.Unauthorized, result.error())
     assertEquals(2, s.requestCount)
@@ -274,9 +287,51 @@ class StatesSourceTest {
   fun atMostFourOpen() = runTest {
     val dispatcher = StatesDispatcher(allStates, delayMillis = 100)
     val s = server(dispatcher)
-    assertTrue(fetch(s.base()) is SyncResult.Success)
+    assertTrue(fetch(s.base()).battery is PartResult.Ok)
     assertEquals(18, s.requestCount)
     assertTrue("max open: ${dispatcher.maxOpen}", dispatcher.maxOpen.get() in 2..4)
+  }
+
+  @Test
+  fun inverterIds_threeMoreRequests() = runTest {
+    val s = server(allStates + inverterStates)
+    val result = fetch(s.base(), inverter = inverterEntities)
+    assertEquals(PartResult.Ok(InverterReading("Off-Grid", 0.0, 230.5, 1234L)), result.inverter)
+    assertTrue(result.battery is PartResult.Ok)
+    assertEquals(21, s.requestCount)
+    assertTrue(s.paths().containsAll(inverterStates.keys.map { "/api/states/$it" }))
+  }
+
+  @Test
+  fun batteryChargeMissing_inverterOk() = runTest {
+    val result = fetch(server(allStates - "sensor.soc" + inverterStates).base(), inverter = inverterEntities)
+    assertEquals(PartResult.Failed(SyncError.BadResponse), result.battery)
+    assertEquals(PartResult.Ok(InverterReading("Off-Grid", 0.0, 230.5, 1234L)), result.inverter)
+  }
+
+  @Test
+  fun inverterIdUnauthorized_failsBoth() = runTest {
+    val states = allStates + inverterStates + ("sensor.inv_main_voltage" to reply(401))
+    val failed = PartResult.Failed(SyncError.Unauthorized)
+    assertEquals(FetchResult(failed, failed), fetch(server(states).base(), inverter = inverterEntities))
+  }
+
+  @Test
+  fun onlyInverterAsked_threeRequests_batteryNull() = runTest {
+    val s = server(inverterStates)
+    val result = source.fetch(ConnectionSettings(s.base()), FetchRequest(null, inverterEntities), "t0ken")
+    assertNull(result.battery)
+    assertTrue(result.inverter is PartResult.Ok)
+    assertEquals(3, s.requestCount)
+    assertTrue(s.paths().all { it.startsWith("/api/states/sensor.inv_") })
+  }
+
+  @Test
+  fun inverterAllUnavailable_isBadResponse() = runTest {
+    val unavailable = inverterStates.mapValues { state("unavailable") }
+    val result = fetch(server(allStates + unavailable).base(), inverter = inverterEntities)
+    assertEquals(PartResult.Failed(SyncError.BadResponse), result.inverter)
+    assertTrue(result.battery is PartResult.Ok)
   }
 
   @Test

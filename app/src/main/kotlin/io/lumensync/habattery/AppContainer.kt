@@ -34,6 +34,7 @@ import io.lumensync.habattery.system.TextConfig
 import io.lumensync.habattery.system.WorkManagerSyncScheduler
 import io.lumensync.habattery.widget.BatteryWidget
 import io.lumensync.habattery.widget.GlanceWidgetRefresher
+import io.lumensync.habattery.widget.InverterWidget
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -81,7 +82,10 @@ class AppContainer(context: Context) {
 
   val syncScheduler: SyncScheduler =
     WorkManagerSyncScheduler(appContext) {
-      GlanceAppWidgetManager(appContext).getGlanceIds(BatteryWidget::class.java).isNotEmpty()
+      val manager = GlanceAppWidgetManager(appContext)
+      listOf(BatteryWidget::class.java, InverterWidget::class.java).any {
+        manager.getGlanceIds(it).isNotEmpty()
+      }
     }
 
   val batterySource: BatterySource = defaultHttpClient().let { TokenTypeSource(HomeAssistantSource(it), StatesSource(it)) }

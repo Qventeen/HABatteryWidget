@@ -5,27 +5,38 @@ a JK-BMS battery read from Home Assistant (HA): state of charge, total voltage, 
 voltage, cell delta, MOSFET temperature, battery temperatures, balancing. The
 app reads HA with a long-lived HA token (see "Token type"). The widget draws from the local cache only.
 
-The widget follows design v5 (`docs/design/`): a SOC ring, two big pack values,
-cell and temperature pills, time left, and an auto-refresh toggle. The app
-shows a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3). The
-"Widget" settings section picks kWh or Ah under SOC, current or power, the
-home-screen scale and the font sizes.
-The "Appearance" section sets the theme (system, light, dark) and, on
-Android 13+, the app language.
+The battery widget follows design v5 (`docs/design/`): a SOC ring, two big pack
+values, cell and temperature pills, time left, and an auto-refresh toggle. A second
+widget, the inverter strip, is a one-row strip with the inverter mode, the grid input
+voltage and the output voltage, read from the same HA. The app has three tabs:
 
-## The widget on the home screen
+- **Battery**: a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3),
+  "Add to home screen", the "Widget" settings (kWh or Ah under SOC, current or
+  power, font sizes), colour levels and alerts, entities and capacity.
+- **Inverter**: a preview of the strip for each size (3×1, 4×1, 5×1), "Add to home
+  screen", the display (mode as a big icon or icon + word, font sizes), the icons,
+  colour levels and alerts for the two voltages, and the inverter entities. Blank
+  entities mean the strip is not used.
+- **Common**: the theme (system, light, dark), on Android 13+ the app language, the
+  HA address and token, auto-refresh, notifications and the home-screen scale.
 
-- Add it from the launcher's widget list or with "Add widget" in the app. The
-  home screen adds it as 4×2; resize it there to 5×2, 4×3 or 5×3. Each size has
-  its own layout.
-- Tap the widget to open the app on that widget's size tab. ↻ syncs now; the
-  toggle turns auto refresh on or off.
+## The widgets on the home screen
+
+- Add a widget from the launcher's widget list or with "Add to home screen" on its
+  tab. The battery widget is added as 4×2; resize it there to 5×2, 4×3 or 5×3. Each
+  size has its own layout. The strip is added at 3×1; resize it to 4×1 or 5×1.
+- Tap a widget to open the app on its own tab. On the battery widget, ↻ syncs now and
+  the toggle turns auto refresh on or off. The strip has neither.
+- One sync reads both widgets. Each one is judged alone: when one fails, the other
+  still updates. A widget with no entities set shows "set up".
+- Inverter mode changes send a notification, like the colour levels with a bell, when
+  notifications are on in Common.
 - Some launchers draw widgets smaller than their size (HyperOS: about 78 %).
-  Set "Home-screen scale" (80–200 %, default 100) to make up for it; about
-  128 % on HyperOS. The app preview always shows 100 %.
+  Set "Home-screen scale" on Common (80–200 %, default 100) to make up for it; about
+  128 % on HyperOS. It has its own "Reset scale". The app preview always shows 100 %.
 - Font sizes are set per group from 10 to 100 %; 50 % is the design size. A
   text that does not fit its box at the chosen size is shown smaller. "Reset
-  sizes" restores the font sizes and the scale.
+  sizes" on the Battery tab restores the battery font sizes only, not the scale.
 
 ## Requirements
 

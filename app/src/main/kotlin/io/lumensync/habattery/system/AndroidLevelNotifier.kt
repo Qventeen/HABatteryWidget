@@ -20,10 +20,13 @@ import androidx.core.content.ContextCompat
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.LevelAlert
+import io.lumensync.habattery.domain.ModeAlert
+import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.format.Formatters
+import io.lumensync.habattery.format.modeWordRes
 import io.lumensync.habattery.format.notificationValueRes
 import io.lumensync.habattery.format.placeWithUnit
 import io.lumensync.habattery.format.shownName
@@ -31,9 +34,12 @@ import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.widget.WidgetPalette
 import kotlin.math.roundToInt
 
+/** The boolean intent extra of an inverter notification's tap; the app opens its Inverter tab. */
+const val EXTRA_INVERTER_ALERT = "io.lumensync.habattery.extra.INVERTER_ALERT"
+
 /**
- * Posts level notifications on one channel per level type. Never asks for the permission; the
- * screen does that.
+ * Posts level and inverter mode notifications; the levels use one channel per level type. Never
+ * asks for the permission; the screen does that.
  */
 class AndroidLevelNotifier(context: Context) : LevelNotifier {
   private val context = context.applicationContext
@@ -55,20 +61,55 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
         .setColor(WidgetPalette.Light.shades(type.defaultColor).ring.toArgb())
         .setContentTitle(title(alert))
         .setContentText(text(alert))
-        .setContentIntent(openApp())
+        .setContentIntent(openApp(BASE_ID + alert.value.ordinal, isInverterAlert(alert.value)))
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_STATUS)
         .build()
     try {
-      // All four are created again before each post: the owner can set every type's sound at
-      // once, and the names follow the current language.
-      OLD_CHANNEL_IDS.forEach(manager::deleteNotificationChannel)
-      manager.createNotificationChannelsCompat(LevelType.entries.map(::channel))
+      createChannels(manager)
       // One notification per value: a newer level of the same value replaces the older one.
       manager.notify(BASE_ID + alert.value.ordinal, notification)
     } catch (_: SecurityException) {
       // The permission was revoked between the check and the post; nothing to show.
     }
+  }
+
+  override fun postMode(alert: ModeAlert) {
+    if (!canPost()) return
+    val type = alert.mode?.type ?: LevelType.INFO
+    val manager = NotificationManagerCompat.from(context)
+    val word = alert.mode?.let { context.getString(modeWordRes(it)) } ?: alert.text
+    val notification =
+      NotificationCompat.Builder(context, channelId(type))
+        .setSmallIcon(icon(type))
+        .setColor(WidgetPalette.Light.shades(alert.mode?.color ?: LevelColor.GREY).ring.toArgb())
+        .setContentTitle(context.getString(R.string.notification_mode_title, word))
+        .setContentText(
+          context.getString(
+            R.string.notification_mode_text,
+            formatters.updatedAt(alert.measuredAtMillis),
+          )
+        )
+        .setContentIntent(openApp(MODE_NOTIFICATION_ID, inverterAlert = true))
+        .setAutoCancel(true)
+        .setCategory(NotificationCompat.CATEGORY_STATUS)
+        .build()
+    try {
+      createChannels(manager)
+      // One slot: a newer mode replaces the older notification.
+      manager.notify(MODE_NOTIFICATION_ID, notification)
+    } catch (_: SecurityException) {
+      // The permission was revoked between the check and the post; nothing to show.
+    }
+  }
+
+  /**
+   * All four level channels are created again before each post: the owner can set every type's
+   * sound at once, and the names follow the current language.
+   */
+  private fun createChannels(manager: NotificationManagerCompat) {
+    OLD_CHANNEL_IDS.forEach(manager::deleteNotificationChannel)
+    manager.createNotificationChannelsCompat(LevelType.entries.map(::channel))
   }
 
   private fun title(alert: LevelAlert): String {
@@ -108,14 +149,25 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       LevelValue.DELTA -> formatters.deltaMv(shown.roundToInt())
       LevelValue.BATTERY_TEMPERATURE,
       LevelValue.MOSFET_TEMPERATURE -> formatters.temperature(shown)
+      LevelValue.GRID_VOLTAGE,
+      LevelValue.OUTPUT_VOLTAGE -> formatters.wholeVolts(shown)
     }
 
-  private fun openApp(): PendingIntent =
+  /** The inverter values are the ones the app shows on its Inverter tab. */
+  private fun isInverterAlert(value: LevelValue): Boolean = value in LevelValue.INVERTER
+
+  /**
+   * Opens the app; [inverterAlert] sets [EXTRA_INVERTER_ALERT]. A PendingIntent is told apart by
+   * its request code and not by its extras, so each notification passes its own id: a shared code
+   * would let the newest notification's extra overwrite the older one's.
+   */
+  private fun openApp(requestCode: Int, inverterAlert: Boolean): PendingIntent =
     PendingIntent.getActivity(
       context,
-      0,
+      requestCode,
       Intent(context, MainActivity::class.java)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        .putExtra(EXTRA_INVERTER_ALERT, inverterAlert),
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
@@ -207,5 +259,8 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
         .build()
 
     const val BASE_ID = 100
+
+    /** Above every level value's id (`BASE_ID` + ordinal); the mode has one slot. */
+    const val MODE_NOTIFICATION_ID = 150
   }
 }

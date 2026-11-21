@@ -240,6 +240,9 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 - No update time and no buttons on the strip; a tap opens the app on the
   Inverter tab.
 
+The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
+5×1) with no tuning.
+
 ### Icons and colours
 
 - Modes (spec 0012 mode table; text and soft background from the 0010
@@ -258,7 +261,7 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 
 - Voltage icons: grid input = tower, output = `home`.
 - Voltage pills by the 0012 default levels: below 100 V grid blue / output
-  red, from 100 amber, from 207 green, from 254 amber.
+  red, from 100 amber, from 207 green, from 254 red.
 
 ### Strip states
 

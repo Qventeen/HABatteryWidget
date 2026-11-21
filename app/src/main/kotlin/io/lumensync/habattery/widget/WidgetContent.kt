@@ -103,9 +103,12 @@ fun WidgetContent(
   if (layout == LayoutSpec.L4x3) Column(card) { content() } else Box(card) { content() }
 }
 
-/** The layout and the colours of one drawing, and the font size Glance needs. */
-internal class WidgetLook(
-  val spec: LayoutSpec,
+/**
+ * The sizes and the colours of one drawing, and the font size Glance needs. [S] holds the sizes:
+ * a [LayoutSpec] for the battery widget, [StripSizes] for the inverter strip.
+ */
+internal class WidgetLook<S>(
+  val spec: S,
   val colors: WidgetColors,
   private val metrics: DisplayMetrics,
   private val fontScale: Float,
@@ -137,7 +140,7 @@ internal class WidgetLook(
 /** Everything the parts of a widget with data draw from. */
 internal class DataLook(
   val model: WidgetModel.Data,
-  val look: WidgetLook,
+  val look: WidgetLook<LayoutSpec>,
   val texts: DataTexts,
   val fonts: DataFonts,
 ) {
@@ -155,7 +158,7 @@ internal class DataLook(
 @Composable
 private fun EmptyContent(
   model: WidgetModel.Empty,
-  look: WidgetLook,
+  look: WidgetLook<LayoutSpec>,
   texts: WidgetTexts,
   percents: FontPercents,
   measurer: TextMeasurer,

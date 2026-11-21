@@ -27,6 +27,8 @@ fun levelNameRes(name: LevelName): Int =
     LevelName.HIGH -> R.string.level_name_high
     LevelName.VERY_HIGH -> R.string.level_name_very_high
     LevelName.LIGHT -> R.string.level_name_light
+    LevelName.NO_GRID -> R.string.level_name_no_grid
+    LevelName.NO_POWER -> R.string.level_name_no_power
   }
 
 /** The short unit of a value in a level's place, such as "%". */
@@ -34,7 +36,9 @@ fun levelNameRes(name: LevelName): Int =
 fun unitLabel(value: LevelValue): Int =
   when (value) {
     LevelValue.SOC -> R.string.colors_unit_percent
-    LevelValue.VOLTAGE -> R.string.colors_unit_volts
+    LevelValue.VOLTAGE,
+    LevelValue.GRID_VOLTAGE,
+    LevelValue.OUTPUT_VOLTAGE -> R.string.colors_unit_volts
     LevelValue.CHARGE_CURRENT,
     LevelValue.DISCHARGE_CURRENT -> R.string.colors_unit_amps
     LevelValue.DELTA -> R.string.colors_unit_millivolts
@@ -88,4 +92,6 @@ fun notificationValueRes(value: LevelValue): Int =
     LevelValue.DELTA -> R.string.notification_value_delta
     LevelValue.BATTERY_TEMPERATURE -> R.string.notification_value_battery_temperature
     LevelValue.MOSFET_TEMPERATURE -> R.string.notification_value_mosfet_temperature
+    LevelValue.GRID_VOLTAGE -> R.string.notification_value_grid_voltage
+    LevelValue.OUTPUT_VOLTAGE -> R.string.notification_value_output_voltage
   }

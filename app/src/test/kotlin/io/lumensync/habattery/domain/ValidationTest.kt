@@ -3,6 +3,10 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.Field.CAPACITY
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.INTERVAL
+import io.lumensync.habattery.domain.Field.INVERTER_GRID
+import io.lumensync.habattery.domain.Field.INVERTER_MODE
+import io.lumensync.habattery.domain.Field.INVERTER_OUTPUT
+import io.lumensync.habattery.domain.Field.INVERTER_PREFIX
 import io.lumensync.habattery.domain.Field.LEVEL_EDGE
 import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
@@ -20,6 +24,8 @@ import io.lumensync.habattery.domain.Validation.isPrefixValid
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterSettings
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.RefreshSettings
@@ -91,11 +97,40 @@ class ValidationTest {
   }
 
   @Test
-  fun isConfigured_needsUrlChargeAndToken() {
+  fun isBatteryConfigured_needsUrlChargeAndToken() {
     val s = Settings(ConnectionSettings("http://ha.local:8123"), EntitySettings(charge = "sensor.soc"))
-    assertTrue(Validation.isConfigured(s, hasToken = true))
-    assertFalse(Validation.isConfigured(s, hasToken = false))
-    assertFalse(Validation.isConfigured(Settings(), hasToken = true))
+    assertTrue(Validation.isBatteryConfigured(s, hasToken = true))
+    assertFalse(Validation.isBatteryConfigured(s, hasToken = false))
+    assertFalse(Validation.isBatteryConfigured(Settings(), hasToken = true))
+  }
+
+  @Test
+  fun inverterEntities() {
+    assertEquals(emptyList<FieldError>(), Validation.inverterEntities(InverterEntitySettings()))
+    assertEquals(
+      listOf(FieldError(INVERTER_GRID, REQUIRED), FieldError(INVERTER_OUTPUT, REQUIRED)),
+      Validation.inverterEntities(InverterEntitySettings(mode = "sensor.mode")),
+    )
+    assertEquals(
+      listOf(FieldError(INVERTER_MODE, INVALID)),
+      Validation.inverterEntities(
+        InverterEntitySettings(mode = "sensor.a b", gridVoltage = "sensor.g", outputVoltage = "sensor.o")
+      ),
+    )
+    assertEquals(
+      listOf(FieldError(INVERTER_PREFIX, INVALID)),
+      Validation.inverterEntities(InverterEntitySettings(prefix = "Bad-Prefix")),
+    )
+  }
+
+  @Test
+  fun isInverterConfigured_needsUrlThreeIdsAndToken() {
+    val full = InverterEntitySettings(mode = "sensor.m", gridVoltage = "sensor.g", outputVoltage = "sensor.o")
+    val s = Settings(ConnectionSettings("http://ha.local:8123"), inverter = InverterSettings(full))
+    assertTrue(Validation.isInverterConfigured(s, hasToken = true))
+    assertFalse(Validation.isInverterConfigured(s, hasToken = false))
+    val blank = s.copy(inverter = InverterSettings(full.copy(gridVoltage = "")))
+    assertFalse(Validation.isInverterConfigured(blank, hasToken = true))
   }
 
   private fun entities(e: EntitySettings) = Validation.entities(e)

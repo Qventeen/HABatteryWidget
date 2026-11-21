@@ -1,12 +1,13 @@
 package io.lumensync.habattery.domain.port
 
 import io.lumensync.habattery.domain.LevelAlert
+import io.lumensync.habattery.domain.ModeAlert
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
-import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.model.TokenType
 import kotlinx.coroutines.flow.Flow
 
@@ -35,12 +36,18 @@ interface TokenStore {
   suspend fun clear(type: TokenType)
 }
 
+/** Reads Home Assistant for both widgets: the battery part and the inverter part of a sync. */
 interface BatterySource {
+  /**
+   * Judges each asked part on its own (spec 0012): a part without a usable reading fails with
+   * `BadResponse` and the other part still reads. A failure of the whole request (`Unreachable`,
+   * `Unauthorized`, `HttpError`, a body that is not JSON) fails every asked part.
+   */
   suspend fun fetch(
     connection: ConnectionSettings,
-    entities: EntitySettings,
+    request: FetchRequest,
     token: String,
-  ): SyncResult
+  ): FetchResult
 
   /** Asks HA for every `sensor.<prefix>_temperature_sensor_N`; only the Fill action calls it. */
   suspend fun listTemperatureSensors(
@@ -62,6 +69,8 @@ interface LevelNotifier {
   fun canPost(): Boolean
 
   fun post(alert: LevelAlert)
+
+  fun postMode(alert: ModeAlert)
 }
 
 interface SyncScheduler {

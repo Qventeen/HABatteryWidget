@@ -4,9 +4,11 @@ import io.lumensync.habattery.data.store.StoreJson
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
+import io.lumensync.habattery.domain.model.InverterEntitySettings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,9 +23,10 @@ import kotlinx.serialization.SerializationException
 import okhttp3.OkHttpClient
 
 /**
- * Reads the battery with a non-admin token (spec 0009): HA refuses `POST /api/template` to it, so
- * each configured entity is one `GET /api/states/<id>`. The reading follows the template path's
- * rules: a missing entity or a state that is not a number gives no value.
+ * Reads the battery and the inverter with a non-admin token (spec 0009): HA refuses
+ * `POST /api/template` to it, so each configured entity is one `GET /api/states/<id>`. The
+ * readings follow the template path's rules: a missing entity gives no value, and a numeric key
+ * needs a number.
  */
 class StatesSource(
   client: OkHttpClient,
@@ -33,33 +36,36 @@ class StatesSource(
 
   override suspend fun fetch(
     connection: ConnectionSettings,
-    entities: EntitySettings,
+    request: FetchRequest,
     token: String,
-  ): SyncResult {
+  ): FetchResult {
+    // A part not asked reads like one with blank ids: no request and no value.
+    val battery = request.battery ?: EntitySettings()
+    val inverter = request.inverter ?: InverterEntitySettings()
     val states =
       try {
-        readStates(connection, entities.ids(), token)
+        readStates(connection, ids(battery, inverter), token)
       } catch (e: StateFailure) {
-        return SyncResult.Failure(e.error)
+        return FetchResult.failed(request, e.error)
       }
     fun number(id: String) = states[id]?.trim()?.toDoubleOrNull()
-    val reading =
-      TemplateResponse(
-          soc = number(entities.charge),
-          power = number(entities.power),
-          current = number(entities.current),
-          totalV = number(entities.totalVoltage),
-          ahLeft = number(entities.capacityRemaining),
-          capacity = number(entities.totalCapacity),
-          avgCell = number(entities.averageCellVoltage),
-          delta = number(entities.deltaCellVoltage),
-          mosfet = number(entities.mosfetTemperature),
-          temps = entities.temperatures.map(::number),
-          balancing = states[entities.balancing],
-        )
-        .toReading(clock())
-    return if (reading == null) SyncResult.Failure(SyncError.BadResponse)
-    else SyncResult.Success(reading)
+    return TemplateResponse(
+        soc = number(battery.charge),
+        power = number(battery.power),
+        current = number(battery.current),
+        totalV = number(battery.totalVoltage),
+        ahLeft = number(battery.capacityRemaining),
+        capacity = number(battery.totalCapacity),
+        avgCell = number(battery.averageCellVoltage),
+        delta = number(battery.deltaCellVoltage),
+        mosfet = number(battery.mosfetTemperature),
+        temps = battery.temperatures.map(::number),
+        balancing = states[battery.balancing],
+        invMode = states[inverter.mode],
+        invGridV = number(inverter.gridVoltage),
+        invOutV = number(inverter.outputVoltage),
+      )
+      .toFetchResult(request, clock())
   }
 
   override suspend fun listTemperatureSensors(
@@ -93,19 +99,21 @@ class StatesSource(
    * Blank and malformed ids get no request and so no value, as on the template path. The check also
    * keeps `.` and `..` out of the URL path.
    */
-  private fun EntitySettings.ids(): List<String> =
+  private fun ids(battery: EntitySettings, inverter: InverterEntitySettings): List<String> =
     (listOf(
-        charge,
-        totalVoltage,
-        current,
-        power,
-        capacityRemaining,
-        totalCapacity,
-        averageCellVoltage,
-        deltaCellVoltage,
-        mosfetTemperature,
-        balancing,
-      ) + temperatures)
+        battery.charge,
+        battery.totalVoltage,
+        battery.current,
+        battery.power,
+        battery.capacityRemaining,
+        battery.totalCapacity,
+        battery.averageCellVoltage,
+        battery.deltaCellVoltage,
+        battery.mosfetTemperature,
+        battery.balancing,
+      ) +
+      battery.temperatures +
+      listOf(inverter.mode, inverter.gridVoltage, inverter.outputVoltage))
       .filter(Validation::isEntityId)
       .distinct()
 

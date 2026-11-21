@@ -3,6 +3,7 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
@@ -36,25 +37,65 @@ object LevelAlerts {
   private val VOLTAGE_MARGIN_PER_CELL = BigDecimal("0.025")
 
   /**
-   * Checks every value of [reading] against its levels and [state]. A value without a number keeps
-   * its state as it is, also when it has none. The first check of a value, or one whose stored
-   * level is gone from the list, only stores the level. With [enabled] off the levels are still
-   * tracked, so turning it on does not post the level the value is already in.
+   * Checks every battery value of [reading] against its levels and [state]. A value without a
+   * number keeps its state as it is, also when it has none. The first check of a value, or one
+   * whose stored level is gone from the list, only stores the level. With [enabled] off the levels
+   * are still tracked, so turning it on does not post the level the value is already in. The states
+   * of the other values in [state] pass through, so the battery and inverter checks can chain.
    */
   fun evaluate(
     reading: BatteryReading,
     settings: Settings,
     enabled: Boolean,
     state: Map<String, LevelAlertState>,
+  ): AlertOutcome =
+    evaluateValues(
+      LevelValue.BATTERY,
+      settings,
+      LevelBasis.of(reading, settings),
+      enabled,
+      state,
+      reading.updatedAtMillis,
+    ) { value, levels ->
+      ShownNumber.of(value, reading, levels)
+    }
+
+  /** [evaluate] for the inverter voltages of [reading], in whole volts. */
+  fun evaluateInverter(
+    reading: InverterReading,
+    settings: Settings,
+    enabled: Boolean,
+    state: Map<String, LevelAlertState>,
+  ): AlertOutcome =
+    // The inverter levels and margins do not depend on the battery.
+    evaluateValues(
+      LevelValue.INVERTER,
+      settings,
+      LevelBasis(null, null),
+      enabled,
+      state,
+      reading.updatedAtMillis,
+    ) { value, _ ->
+      ShownNumber.of(value, reading)
+    }
+
+  /** Checks [values]; [shownOf] gives a value's number from its levels, `null` when it has none. */
+  private fun evaluateValues(
+    values: List<LevelValue>,
+    settings: Settings,
+    basis: LevelBasis,
+    enabled: Boolean,
+    state: Map<String, LevelAlertState>,
+    measuredAtMillis: Long,
+    shownOf: (LevelValue, List<ColorLevel>) -> Double?,
   ): AlertOutcome {
-    val basis = LevelBasis.of(reading, settings)
     val alerts = mutableListOf<LevelAlert>()
     val next = state.toMutableMap()
-    for (value in LevelValue.entries) {
+    for (value in values) {
       val custom = settings.customLevels(value)
       val own = LevelPicker.ownLevels(value, custom)
       val levels = LevelPicker.effective(value, own, basis)
-      val shown = ShownNumber.of(value, reading, levels) ?: continue
+      val shown = shownOf(value, levels) ?: continue
       val margin = margin(value, basis, own, custom.margin)
       val old = state[value.name] ?: LevelAlertState()
       // The ids of levels the owner has deleted drop out with the re-armed ones.
@@ -69,7 +110,7 @@ object LevelAlerts {
       val posts = entered && enabled && pick.notify && pick.id !in disarmed
       if (posts) {
         val span = LevelSpans.of(levels, pick, value.decimals, value.floor)
-        alerts += LevelAlert(value, pick, span, shown, reading.updatedAtMillis)
+        alerts += LevelAlert(value, pick, span, shown, measuredAtMillis)
       }
       next[value.name] = LevelAlertState(pick.id, if (posts) disarmed + pick.id else disarmed)
     }
@@ -119,6 +160,9 @@ object LevelAlerts {
       LevelValue.DELTA -> 3.0
       LevelValue.BATTERY_TEMPERATURE,
       LevelValue.MOSFET_TEMPERATURE -> 2.0
+      // The grid often hovers near 207 V; a smaller margin would ring Low many times a day.
+      LevelValue.GRID_VOLTAGE,
+      LevelValue.OUTPUT_VOLTAGE -> 5.0
     }
 
   /**

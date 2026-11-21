@@ -3,12 +3,15 @@ package io.lumensync.habattery.widget
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.domain.BatteryOverview
+import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.InverterFontPercents
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.testing.configuredSettings
+import io.lumensync.habattery.testing.inverterReading
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -41,15 +44,41 @@ class PreviewWidgetTest {
       settings,
     )
 
-  private fun widget() = PreviewWidget(model, FontPercents(), WidgetColors(ThemeChoice.SYSTEM))
+  private fun widget() =
+    PreviewWidget { WidgetContent(model, FontPercents(), WidgetColors(ThemeChoice.SYSTEM), actions = null) }
+
+  private fun strip() =
+    PreviewWidget {
+      InverterWidgetContent(
+        InverterWidgetModel.from(
+          CacheState(inverterReading = inverterReading()),
+          configuredSettings(inverter = true),
+          hasToken = true,
+        ),
+        InverterLayoutSpec.S3X1,
+        WidgetColors(ThemeChoice.SYSTEM),
+        InverterFontPercents(),
+        hostScale = 1f,
+        openApp = null,
+      )
+    }
 
   /** All drawings share one widget id: overlapping ones wait for each other, so neither fails. */
   @Test
   fun overlappingDrawings_bothFinish() = runBlocking {
-    val first = async(Dispatchers.Default) { widget().views(context, LayoutSpec.L4x2) }
-    val second = async(Dispatchers.Default) { widget().views(context, LayoutSpec.L5x3) }
+    val first = async(Dispatchers.Default) { widget().views(context, LayoutSpec.L4x2.bucket) }
+    val second = async(Dispatchers.Default) { widget().views(context, LayoutSpec.L5x3.bucket) }
     assertNotNull(first.await())
     assertNotNull(second.await())
+  }
+
+  /** The strip's preview shares that id and waits for a battery drawing, too. */
+  @Test
+  fun overlappingBatteryAndStrip_bothFinish() = runBlocking {
+    val battery = async(Dispatchers.Default) { widget().views(context, LayoutSpec.L4x2.bucket) }
+    val inverter = async(Dispatchers.Default) { strip().views(context, InverterLayoutSpec.S3X1.bucket) }
+    assertNotNull(battery.await())
+    assertNotNull(inverter.await())
   }
 
   @Test

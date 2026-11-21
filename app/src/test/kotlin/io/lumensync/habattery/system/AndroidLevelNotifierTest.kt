@@ -6,16 +6,21 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.media.AudioAttributes
 import android.provider.Settings
+import androidx.compose.ui.graphics.toArgb
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.LevelSpan
+import io.lumensync.habattery.domain.ModeAlert
+import io.lumensync.habattery.domain.model.InverterMode
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.widget.WidgetPalette
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,6 +29,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
@@ -76,6 +82,94 @@ class AndroidLevelNotifierTest {
       manager.getNotificationChannel("level_critical_2").importance,
     )
     assertEquals(1, shadowOf(manager).size())
+  }
+
+  private fun modeAlert(text: String) =
+    ModeAlert(text, InverterMode.of(text), measuredAtMillis = System.currentTimeMillis())
+
+  @Test
+  fun postMode_offGrid() {
+    grant()
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    val posted = shadowOf(manager).getNotification(150)
+    assertEquals("level_warning_2", posted.channelId)
+    assertEquals(WidgetPalette.Light.shades(LevelColor.GREEN).ring.toArgb(), posted.color)
+    assertEquals("Inverter: battery", posted.extras.getString("android.title"))
+    assertTrue(posted.extras.getString("android.text")!!.startsWith("Measured at "))
+  }
+
+  private fun inverterAlertExtra(id: Int): Boolean =
+    Shadows.shadowOf(shadowOf(manager).getNotification(id).contentIntent).savedIntent
+      .getBooleanExtra(EXTRA_INVERTER_ALERT, false)
+
+  private fun requestCode(id: Int): Int =
+    Shadows.shadowOf(shadowOf(manager).getNotification(id).contentIntent).requestCode
+
+  @Test
+  fun inverterAlerts_carryTheInverterAlertExtra() {
+    grant()
+    val grid = DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, grid, LevelSpan.AtOrBelow(99.0), 0.0))
+    val output = DefaultLevels.of(LevelValue.OUTPUT_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.OUTPUT_VOLTAGE, output, LevelSpan.AtOrBelow(99.0), 0.0))
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    assertTrue(inverterAlertExtra(107))
+    assertTrue(inverterAlertExtra(108))
+    assertTrue(inverterAlertExtra(150))
+  }
+
+  @Test
+  fun batteryAlert_isNotAnInverterAlert() {
+    grant()
+    notifier.post(low())
+
+    assertFalse(inverterAlertExtra(id(LevelValue.SOC)))
+  }
+
+  /** The PendingIntent identity ignores extras: a shared code would let one notification overwrite another's. */
+  @Test
+  fun everyNotification_hasItsOwnRequestCode() {
+    grant()
+    notifier.post(low())
+    val grid = DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null)).first()
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, grid, LevelSpan.AtOrBelow(99.0), 0.0))
+    notifier.postMode(modeAlert("Off-Grid"))
+
+    val ids = listOf(id(LevelValue.SOC), 107, 150)
+    assertEquals(ids, ids.map(::requestCode))
+    assertFalse(inverterAlertExtra(id(LevelValue.SOC)))
+    assertTrue(inverterAlertExtra(107))
+  }
+
+  @Test
+  fun postMode_unknown() {
+    grant()
+    notifier.postMode(modeAlert("Eco"))
+
+    val posted = shadowOf(manager).getNotification(150)
+    assertEquals("level_info", posted.channelId)
+    assertEquals("Inverter: Eco", posted.extras.getString("android.title"))
+  }
+
+  @Test
+  fun postMode_fault() {
+    grant()
+    notifier.postMode(modeAlert("Fault"))
+
+    assertEquals("level_critical_2", shadowOf(manager).getNotification(150).channelId)
+  }
+
+  @Test
+  fun postMode_createsEveryLevelChannel() {
+    grant()
+    notifier.postMode(modeAlert("Mains"))
+
+    assertEquals(
+      NotificationManager.IMPORTANCE_HIGH,
+      manager.getNotificationChannel("level_critical_2").importance,
+    )
   }
 
   @Test
@@ -226,6 +320,19 @@ class AndroidLevelNotifierTest {
     notifier.post(alert(LevelValue.SOC, normal, LevelSpan.Between(41.0, 99.0), 60.0))
 
     assertEquals("Charge: Normal ↕41–99 %", titleOf(LevelValue.SOC))
+  }
+
+  @Test
+  fun gridVoltage_wholeVolts_ownSlot() {
+    grant()
+    val low =
+      DefaultLevels.of(LevelValue.GRID_VOLTAGE, LevelBasis(null, null))
+        .single { it.defaultName == LevelName.LOW }
+    notifier.post(alert(LevelValue.GRID_VOLTAGE, low, LevelSpan.AtOrBelow(206.0), 205.0))
+
+    val posted = shadowOf(manager).getNotification(107)
+    assertEquals("Grid input: Low ↓206 V", posted.extras.getString("android.title"))
+    assertTrue(posted.extras.getString("android.text")!!.startsWith("205 V · measured at "))
   }
 
   @Test

@@ -36,11 +36,12 @@ class HomeScaleTest {
     assertEquals(200, c.homeScalePercent)
   }
 
+  /** The scale has its own section and reset, so only the battery fonts count. */
   @Test
-  fun textSizeChanged_whenAFontIsNot50OrTheScaleIsNot100() {
+  fun textSizeChanged_whenABatteryFontIsNot50() {
     assertFalse(Settings().textSizeChanged)
     assertTrue(Settings(fontPercents = FontPercents(small = 55)).textSizeChanged)
-    assertTrue(Settings(homeScalePercent = 128).textSizeChanged)
+    assertFalse(Settings(homeScalePercent = 128).textSizeChanged)
     assertTrue(Settings(fontPercents = FontPercents(cell = 25), homeScalePercent = 90).textSizeChanged)
   }
 }

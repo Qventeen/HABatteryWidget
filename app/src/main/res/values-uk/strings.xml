@@ -54,15 +54,37 @@
     <string name="notification_value_delta">Різниця комірок</string>
     <string name="notification_value_battery_temperature">Температура батареї</string>
     <string name="notification_value_mosfet_temperature">Температура MOSFET</string>
+    <string name="notification_value_grid_voltage">Вхід мережі</string>
+    <string name="notification_value_output_voltage">Вихід</string>
     <string name="notification_level_title">%1$s: %2$s %3$s</string>
     <string name="notification_level_title_short">%1$s: %2$s</string>
     <string name="notification_level_text">%1$s · виміряно о %2$s</string>
+    <string name="notification_mode_title">Інвертор: %1$s</string>
+    <string name="notification_mode_text">Виміряно о %1$s</string>
+    <string name="mode_word_power_on">запуск</string>
+    <string name="mode_word_standby">пауза</string>
+    <string name="mode_word_mains">мережа</string>
+    <string name="mode_word_off_grid">батарея</string>
+    <string name="mode_word_bypass">байпас</string>
+    <string name="mode_word_charging">заряд</string>
+    <string name="mode_word_fault">аварія</string>
 
-    <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
+    <string name="inverter_widget_name">Інвертор</string>
+    <string name="inverter_widget_description">Режим інвертора, напруга входу мережі та виходу з Home Assistant</string>
+    <string name="inverter_setup">Налаштуйте в застосунку</string>
+    <string name="inverter_no_data">Немає даних</string>
+    <string name="inverter_grid_voltage">Напруга входу мережі</string>
+    <string name="inverter_output_voltage">Напруга виходу</string>
+
+    <string name="overview_setup">Вкажіть URL Home Assistant і токен на вкладці «Загальні», а сутність заряду — нижче.</string>
     <string name="preview_description">Попередній перегляд віджета, %1$s</string>
+    <string name="tab_battery">Батарея</string>
+    <string name="tab_inverter">Інвертор</string>
+    <string name="tab_common">Загальні</string>
     <string name="action_refresh_now">Оновити зараз</string>
-    <string name="action_add_widget">Додати віджет</string>
+    <string name="action_add_widget">Додати на головний екран</string>
     <string name="action_add_widget_hint">Головний екран додає віджет розміром 4×2. Змініть розмір там.</string>
+    <string name="action_add_strip_hint">Головний екран додає віджет розміром 3×1. Змініть розмір там.</string>
     <string name="action_save">Зберегти</string>
     <string name="dialog_cancel">Скасувати</string>
 
@@ -115,7 +137,7 @@
 
     <string name="notify_title">Сповіщення</string>
     <string name="notifications_switch">Сповіщення</string>
-    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення».</string>
+    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення» на вкладках «Батарея» та «Інвертор». Про зміни режиму інвертора теж надходять сповіщення.</string>
     <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення надходять лише після ручного оновлення.</string>
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
@@ -152,8 +174,27 @@
     <string name="widget_scale_label">Масштаб на головному екрані</string>
     <string name="widget_scale_hint">Лише якщо ваш головний екран малює віджети меншими. Більшість телефонів: 100 %.</string>
     <string name="widget_reset_sizes">Скинути розміри</string>
+    <string name="widget_reset_scale">Скинути масштаб</string>
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
+
+    <string name="inverter_preview_setup">Вкажіть URL Home Assistant і токен на вкладці «Загальні», а сутності інвертора — нижче.</string>
+    <string name="inverter_display_title">Відображення</string>
+    <string name="inverter_mode_style">Вигляд режиму</string>
+    <string name="inverter_style_big_icon">Велика іконка</string>
+    <string name="inverter_style_icon_word">Іконка + слово</string>
+    <string name="inverter_font_word">Слово режиму</string>
+    <string name="inverter_font_value">Значення</string>
+    <string name="inverter_display_summary_changed">%1$s · розмір тексту змінено</string>
+    <string name="inverter_icons_title">Іконки</string>
+    <string name="inverter_icons_summary_default">Типові іконки</string>
+    <string name="inverter_icons_summary_custom">Власні іконки</string>
+    <string name="inverter_icon_change">Змінити іконку</string>
+    <string name="inverter_icon_default">%1$s, типова</string>
+    <string name="inverter_entities_prefix">Префікс, наприклад bps_inverter</string>
+    <string name="inverter_entity_mode">Режим роботи</string>
+    <string name="inverter_entity_grid_voltage">Напруга входу мережі (В)</string>
+    <string name="inverter_entity_output_voltage">Напруга виходу (В)</string>
 
     <string name="colors_title">Рівні та сповіщення</string>
     <string name="colors_summary_default">Типові рівні</string>
@@ -163,6 +204,8 @@
     <string name="colors_value_charge_current">Струм заряду</string>
     <string name="colors_value_discharge_current">Струм розряду</string>
     <string name="colors_value_delta">Різниця комірок</string>
+    <string name="colors_value_grid_voltage">Вхід мережі</string>
+    <string name="colors_value_output_voltage">Вихід</string>
     <string name="colors_unit_percent">%</string>
     <string name="colors_unit_volts">В</string>
     <string name="colors_unit_amps">А</string>
@@ -225,6 +268,8 @@
     <string name="level_name_high">Високий</string>
     <string name="level_name_very_high">Дуже високий</string>
     <string name="level_name_light">Слабкий</string>
+    <string name="level_name_no_grid">Немає мережі</string>
+    <string name="level_name_no_power">Немає живлення</string>
 
     <string name="summary_not_set">Не задано</string>
     <string name="token_summary_saved">Збережено</string>
@@ -263,4 +308,63 @@
     <string name="preview_current">10,0 А</string>
     <string name="preview_cell">3,312 В</string>
     <string name="preview_delta">Δ 12 мВ</string>
+    <string name="preview_inverter_volts">228 В</string>
+
+    <!-- Inverter icon names, read by screen readers and shown in the picker. -->
+    <string name="inv_icon_tower">Опора ЛЕП</string>
+    <string name="inv_icon_location_city">Місто</string>
+    <string name="inv_icon_electrical_services">Електровилка</string>
+    <string name="inv_icon_power_input">Вхід живлення</string>
+    <string name="inv_icon_electric_meter">Лічильник</string>
+    <string name="inv_icon_factory">Завод</string>
+    <string name="inv_icon_apartment">Багатоповерхівка</string>
+    <string name="inv_icon_offline_bolt">Блискавка в колі</string>
+    <string name="inv_icon_bolt">Блискавка</string>
+    <string name="inv_icon_electric_bolt">Електрична блискавка</string>
+    <string name="inv_icon_battery_charging_full">Батарея на зарядці</string>
+    <string name="inv_icon_battery_full">Повна батарея</string>
+    <string name="inv_icon_battery_5_bar">Батарея, п\'ять рисок</string>
+    <string name="inv_icon_battery_android_full">Повна батарея телефона</string>
+    <string name="inv_icon_battery_horiz_075">Батарея, три чверті</string>
+    <string name="inv_icon_energy_savings_leaf">Листок енергозбереження</string>
+    <string name="inv_icon_nest_eco_leaf">Еко-листок</string>
+    <string name="inv_icon_energy_program_saving">Програма енергозбереження</string>
+    <string name="inv_icon_solar_power">Сонячна енергія</string>
+    <string name="inv_icon_help">Допомога</string>
+    <string name="inv_icon_question_mark">Знак питання</string>
+    <string name="inv_icon_device_unknown">Невідомий пристрій</string>
+    <string name="inv_icon_pending">Очікування</string>
+    <string name="inv_icon_info">Інформація</string>
+    <string name="inv_icon_power">Штекер</string>
+    <string name="inv_icon_home">Дім</string>
+    <string name="inv_icon_house">Будинок</string>
+    <string name="inv_icon_cottage">Котедж</string>
+    <string name="inv_icon_home_work">Дім і офіс</string>
+    <string name="inv_icon_home_lightning_bolt">Будинок із блискавкою</string>
+    <string name="inv_icon_outlet">Розетка</string>
+    <string name="inv_icon_power_settings_new">Кнопка живлення</string>
+    <string name="inv_icon_restart_alt">Перезапуск</string>
+    <string name="inv_icon_mode_standby">Режим очікування</string>
+    <string name="inv_icon_bedtime">Місяць</string>
+    <string name="inv_icon_alt_route">Обхідний шлях</string>
+    <string name="inv_icon_call_split">Розгалуження</string>
+    <string name="inv_icon_swap_horiz">Обмін</string>
+    <string name="inv_icon_charger">Зарядний пристрій</string>
+    <string name="inv_icon_battery_charging_90">Батарея заряджається до 90 відсотків</string>
+    <string name="inv_icon_ev_charger">Зарядка для електромобіля</string>
+    <string name="inv_icon_error">Помилка</string>
+    <string name="inv_icon_report">Звіт</string>
+    <string name="inv_icon_warning">Попередження</string>
+    <string name="inv_icon_dangerous">Небезпека</string>
+
+    <string name="inv_slot_mode_power_on">Режим: запуск</string>
+    <string name="inv_slot_mode_standby">Режим: пауза</string>
+    <string name="inv_slot_mode_mains">Режим: мережа</string>
+    <string name="inv_slot_mode_off_grid">Режим: батарея</string>
+    <string name="inv_slot_mode_bypass">Режим: байпас</string>
+    <string name="inv_slot_mode_charging">Режим: заряд</string>
+    <string name="inv_slot_mode_fault">Режим: аварія</string>
+    <string name="inv_slot_mode_other">Режим: інший</string>
+    <string name="inv_slot_grid_voltage">Напруга входу мережі</string>
+    <string name="inv_slot_output_voltage">Напруга виходу</string>
 </resources>

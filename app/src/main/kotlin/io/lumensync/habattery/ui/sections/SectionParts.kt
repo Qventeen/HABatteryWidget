@@ -19,6 +19,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.model.FontPercents
+import kotlin.math.roundToInt
 
 /** Keyboard for entity IDs and URLs: no auto-correct, no capitals. */
 internal val IdKeyboard = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii)
@@ -176,4 +180,35 @@ internal fun <T> ChoiceRow(
       }
     }
   }
+}
+
+/**
+ * One font size: its [label], the percent, and a slider from 10 to 100 % in steps of 5. It saves
+ * when released.
+ */
+@Composable
+internal fun FontSlider(@StringRes label: Int, stored: Int, onSave: (Int) -> Unit) {
+  var dragValue by rememberSaveable { mutableStateOf<Int?>(null) }
+  val value = dragValue ?: stored
+  val name = stringResource(label)
+  val shown = stringResource(R.string.widget_font_value, value)
+  Row(Modifier.fillMaxWidth()) {
+    Text(name, Modifier.weight(1f))
+    Text(shown)
+  }
+  Slider(
+    value = value.toFloat(),
+    onValueChange = { dragValue = it.roundToInt() },
+    onValueChangeFinished = {
+      onSave(dragValue ?: stored)
+      dragValue = null
+    },
+    valueRange = FontPercents.MIN.toFloat()..FontPercents.MAX.toFloat(),
+    steps = (FontPercents.MAX - FontPercents.MIN) / FontPercents.STEP - 1,
+    modifier =
+      Modifier.semantics {
+        contentDescription = name
+        stateDescription = shown
+      },
+  )
 }

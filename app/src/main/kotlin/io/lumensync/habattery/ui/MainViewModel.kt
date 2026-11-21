@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
@@ -19,12 +20,18 @@ import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
+import io.lumensync.habattery.domain.model.IconSlot
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterFontPercents
+import io.lumensync.habattery.domain.model.InverterIcon
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.TokenType
+import io.lumensync.habattery.domain.model.withIcon
 import io.lumensync.habattery.domain.model.withCustomLevels
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
@@ -68,6 +75,7 @@ class MainViewModel(
           hasToken = hasToken,
           overview = overview,
           widget = WidgetModel.build(overview, s),
+          inverter = InverterWidgetModel.from(c, s, hasToken),
           syncing = l.running > 0,
           errors = l.errors,
         )
@@ -156,6 +164,20 @@ class MainViewModel(
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }
 
+  /** The strip's three ids: all blank (no inverter) or all set. Saving syncs. */
+  fun saveInverterEntities(entities: InverterEntitySettings) {
+    val clean =
+      InverterEntitySettings(
+        prefix = entities.prefix.trim(),
+        mode = entities.mode.trim(),
+        gridVoltage = entities.gridVoltage.trim(),
+        outputVoltage = entities.outputVoltage.trim(),
+      )
+    save(Validation.inverterEntities(clean), syncAfter = true) {
+      it.copy(inverter = it.inverter.copy(entities = clean))
+    }
+  }
+
   /**
    * Fill's second step (spec 0004, 5.4): asks HA, with the saved URL and token, for every battery
    * temperature sensor of [prefix]. It changes nothing; the section puts the ids in its draft.
@@ -221,11 +243,37 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = clamped) }
   }
 
-  /** "Reset sizes": fonts 50 %, scale 100 %, saved together. */
-  fun resetWidgetSettings() {
+  /** The battery tab's "Reset sizes": the battery fonts back to 50 %; the scale stays. */
+  fun resetBatterySizes() {
+    save(emptyList(), syncAfter = false) { it.copy(fontPercents = FontPercents()) }
+  }
+
+  /** The strip's display choice saves at once, like the battery's; no sync. */
+  fun saveModeStyle(style: ModeStyle) {
+    save(emptyList(), syncAfter = false) { it.copy(inverter = it.inverter.copy(modeStyle = style)) }
+  }
+
+  fun saveInverterFonts(percents: InverterFontPercents) {
+    val clamped = percents.clamped()
     save(emptyList(), syncAfter = false) {
-      it.copy(fontPercents = FontPercents(), homeScalePercent = HomeScale.DEFAULT)
+      it.copy(inverter = it.inverter.copy(fontPercents = clamped))
     }
+  }
+
+  /** The Inverter tab's "Reset sizes": the strip's fonts back to 50 %; the mode style stays. */
+  fun resetInverterSizes() {
+    save(emptyList(), syncAfter = false) {
+      it.copy(inverter = it.inverter.copy(fontPercents = InverterFontPercents()))
+    }
+  }
+
+  fun saveInverterIcon(slot: IconSlot, icon: InverterIcon) {
+    save(emptyList(), syncAfter = false) { it.copy(inverter = it.inverter.withIcon(slot, icon)) }
+  }
+
+  /** "Reset scale": the home-screen scale back to 100 %, for both widgets. */
+  fun resetHomeScale() {
+    save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = HomeScale.DEFAULT) }
   }
 
   fun saveCapacity(text: String, locale: Locale) {
@@ -308,6 +356,11 @@ class MainViewModel(
   /** Drops the owner's levels of [value]; the built-in ones apply again. */
   fun useDefaults(value: LevelValue) {
     save(emptyList(), syncAfter = false) { it.withCustomLevels(value, CustomLevels()) }
+  }
+
+  /** Drops the last save's errors. The screen keeps one list, so another tab must not show them. */
+  fun clearErrors() {
+    local.update { it.copy(errors = emptyList()) }
   }
 
   private fun fail(vararg errors: FieldError) {

@@ -5,7 +5,11 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterFontPercents
+import io.lumensync.habattery.domain.model.InverterSettings
 import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.ThemeChoice
@@ -59,7 +63,18 @@ class StoredJsonV2Test {
           "fontPercents": { "soc": 45, "underSoc": 30, "main": 75, "cell": 60, "small": 100 },
           "homeScalePercent": 128,
           "appearance": { "theme": "DARK" },
-          "colorLevels": {}
+          "colorLevels": {},
+          "inverter": {
+            "entities": {
+              "prefix": "bps_inverter",
+              "mode": "sensor.mode",
+              "gridVoltage": "sensor.grid",
+              "outputVoltage": "sensor.out"
+            },
+            "modeStyle": "ICON_WORD",
+            "icons": { "GRID_VOLTAGE": "HOME" },
+            "fontPercents": { "word": 60, "value": 40 }
+          }
         }
       }
       """
@@ -93,8 +108,28 @@ class StoredJsonV2Test {
             fontPercents = FontPercents(soc = 45, underSoc = 30, main = 75, cell = 60, small = 100),
             homeScalePercent = 128,
             appearance = AppearanceSettings(ThemeChoice.DARK),
+            inverter =
+              InverterSettings(
+                entities =
+                  InverterEntitySettings(
+                    prefix = "bps_inverter",
+                    mode = "sensor.mode",
+                    gridVoltage = "sensor.grid",
+                    outputVoltage = "sensor.out",
+                  ),
+                modeStyle = ModeStyle.ICON_WORD,
+                icons = mapOf("GRID_VOLTAGE" to "HOME"),
+                fontPercents = InverterFontPercents(word = 60, value = 40),
+              ),
           ),
       )
     assertV2(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun settingsWithoutInverter_decodeToDefaults() {
+    val json = """{"schemaVersion":2,"settings":{"notificationsOn":true}}"""
+    val record = StoreJson.decodeFromString(SettingsRecord.serializer(), json)
+    assertEquals(InverterSettings(), record.settings.inverter)
   }
 }

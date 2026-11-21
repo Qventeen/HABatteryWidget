@@ -2,28 +2,21 @@ package io.lumensync.habattery.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionRunCallback
-import androidx.glance.appwidget.provideContent
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
-import io.lumensync.habattery.container
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.Settings
-import kotlinx.coroutines.flow.first
 
 /** Renders from local data only (cache, settings, token presence). No network here. */
 class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
@@ -33,27 +26,10 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
    */
   override val sizeMode: SizeMode = SizeMode.Responsive(LayoutSpec.all.map { it.bucket }.toSet())
 
-  override suspend fun provideGlance(context: Context, id: GlanceId) {
-    val container = context.container
-    // First values are read up front, so the first frame shows real data, not empty defaults.
-    val initialCache = container.readingCache.state.first()
-    val initialSettings = container.settingsRepository.settings.first()
-    val initialSavedTypes = container.tokenStore.savedTypes.first()
-    val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-
-    provideContent {
-      val cache by container.readingCache.state.collectAsState(initialCache)
-      val settings by container.settingsRepository.settings.collectAsState(initialSettings)
-      val savedTypes by container.tokenStore.savedTypes.collectAsState(initialSavedTypes)
-      val config by container.configWatcher.config.collectAsState()
-      // A new key makes a new composition, also in a live session: the texts come from resources,
-      // and their fitted sizes and the sp handed to Glance from the font scale.
-      key(config) {
-        val hasToken = settings.connection.tokenType in savedTypes
-        BatteryWidgetContent(cache, settings, hasToken, System.currentTimeMillis(), appWidgetId)
-      }
+  override suspend fun provideGlance(context: Context, id: GlanceId) =
+    provideStoredContent(context, id) { cache, settings, hasToken, appWidgetId ->
+      BatteryWidgetContent(cache, settings, hasToken, System.currentTimeMillis(), appWidgetId)
     }
-  }
 }
 
 /**
@@ -92,4 +68,4 @@ internal fun BatteryWidgetContent(
  */
 const val EXTRA_TAPPED_WIDGET_ID = "io.lumensync.habattery.extra.TAPPED_WIDGET_ID"
 
-private val TappedWidgetKey = ActionParameters.Key<Int>(EXTRA_TAPPED_WIDGET_ID)
+internal val TappedWidgetKey = ActionParameters.Key<Int>(EXTRA_TAPPED_WIDGET_ID)

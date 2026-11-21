@@ -2,9 +2,11 @@ package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CustomLevels
+import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.withCustomLevels
@@ -28,6 +30,21 @@ class LevelAlertsTest {
 
   private fun socState(current: LevelName?, vararg disarmed: LevelName) =
     mapOf("SOC" to LevelAlertState(current?.let(::socId), disarmed.map(::socId)))
+
+  private val grid = DefaultLevels.of(LevelValue.GRID_VOLTAGE, noBasis)
+
+  private fun gridId(name: LevelName) = grid.single { it.defaultName == name }.id
+
+  private fun gridState(current: LevelName, vararg disarmed: LevelName) =
+    mapOf("GRID_VOLTAGE" to LevelAlertState(gridId(current), disarmed.map(::gridId)))
+
+  private fun evaluateGrid(volts: Double?, state: Map<String, LevelAlertState>): AlertOutcome =
+    LevelAlerts.evaluateInverter(
+      InverterReading(gridVoltageV = volts, updatedAtMillis = 1_000L),
+      base,
+      enabled = true,
+      state,
+    )
 
   private fun evaluate(
     reading: BatteryReading,
@@ -165,6 +182,8 @@ class LevelAlertsTest {
     assertEquals(3.0, LevelAlerts.margin(LevelValue.DELTA, noBasis), 0.0)
     assertEquals(2.0, LevelAlerts.margin(LevelValue.BATTERY_TEMPERATURE, noBasis), 0.0)
     assertEquals(2.0, LevelAlerts.margin(LevelValue.MOSFET_TEMPERATURE, noBasis), 0.0)
+    assertEquals(5.0, LevelAlerts.margin(LevelValue.GRID_VOLTAGE, noBasis), 0.0)
+    assertEquals(5.0, LevelAlerts.margin(LevelValue.OUTPUT_VOLTAGE, noBasis), 0.0)
   }
 
   @Test
@@ -316,5 +335,60 @@ class LevelAlertsTest {
     val stored = mapOf("DELTA" to LevelAlertState(2, listOf(3)))
     val outcome = evaluate(reading().copy(deltaCellVoltageV = null), stored)
     assertEquals(stored["DELTA"], outcome.state["DELTA"])
+  }
+
+  @Test
+  fun grid_undervoltage_posts() {
+    val outcome = evaluateGrid(205.0, gridState(LevelName.NORMAL))
+    val alert = outcome.alerts.single()
+    assertEquals(LevelValue.GRID_VOLTAGE, alert.value)
+    assertEquals(LevelName.LOW, alert.level.defaultName)
+    assertEquals(LevelSide.BELOW, alert.level.side)
+    assertEquals(LevelSpan.AtOrBelow(206.0), alert.span)
+    assertEquals(205.0, alert.shown, 0.0)
+    assertEquals(1_000L, alert.measuredAtMillis)
+  }
+
+  @Test
+  fun grid_overvoltage_postsCritical() {
+    val outcome = evaluateGrid(255.0, gridState(LevelName.NORMAL))
+    val alert = outcome.alerts.single()
+    assertEquals(LevelName.HIGH, alert.level.defaultName)
+    assertEquals(LevelType.CRITICAL, alert.level.type)
+  }
+
+  @Test
+  fun grid_roundsToWholeVolts() {
+    fun levelAt(volts: Double) =
+      evaluateGrid(volts, gridState(LevelName.HIGH)).state.getValue("GRID_VOLTAGE").current
+    assertEquals(gridId(LevelName.NORMAL), levelAt(206.6))
+    assertEquals(gridId(LevelName.LOW), levelAt(206.4))
+    // Half-even, as the strip shows it: 206.5 V is "206 V", so Low.
+    assertEquals(gridId(LevelName.LOW), levelAt(206.5))
+  }
+
+  @Test
+  fun grid_rearm5V() {
+    val fired = evaluateGrid(205.0, gridState(LevelName.NORMAL))
+    assertEquals(1, fired.alerts.size)
+    fun disarmedAt(volts: Double) =
+      evaluateGrid(volts, fired.state).state.getValue("GRID_VOLTAGE").disarmed
+    val low = gridId(LevelName.LOW)
+    assertEquals(listOf(low), disarmedAt(210.0))
+    assertEquals(emptyList<Int>(), disarmedAt(211.0))
+    assertEquals(listOf(low), disarmedAt(95.0))
+    assertEquals(emptyList<Int>(), disarmedAt(94.0))
+  }
+
+  @Test
+  fun inverter_nullVoltage_keepsState() {
+    val stored =
+      gridState(LevelName.LOW, LevelName.LOW) +
+        ("OUTPUT_VOLTAGE" to LevelAlertState(3)) +
+        socState(LevelName.NORMAL)
+    val outcome =
+      LevelAlerts.evaluateInverter(InverterReading(updatedAtMillis = 1_000L), base, true, stored)
+    assertEquals(emptyList<LevelAlert>(), outcome.alerts)
+    assertEquals(stored, outcome.state)
   }
 }
