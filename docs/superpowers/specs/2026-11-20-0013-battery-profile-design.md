@@ -46,6 +46,9 @@ per cell, §3.5) are wrong for other packs. The owner wants:
 - Changing the type or the cells changes only the defaults; own levels stay
   as they are.
 - Stored fields default to `null` (0001 §14): no type, no cell count.
+- From 0011 §7: default current and voltage lists reuse level ids when the
+  capacity or the cell count becomes known; re-check the alert state
+  (`CacheState.levelAlerts`) when this spec changes `LevelBasis`.
 
 ## 4. Open questions
 

@@ -207,4 +207,29 @@ class DefaultLevelsTest {
 
   @Test
   fun sidesAreTyped() = assertEquals(LevelSide.MIDDLE, ColorLevel().side)
+
+  @Test
+  fun defaultBells() {
+    val expected =
+      mapOf(
+        LevelValue.SOC to listOf(LevelName.LOW, LevelName.FULL),
+        LevelValue.BATTERY_TEMPERATURE to listOf(LevelName.FREEZING, LevelName.HOT),
+        LevelValue.MOSFET_TEMPERATURE to listOf(LevelName.HOT),
+      )
+    for (value in LevelValue.entries) {
+      for (basis in listOf(LevelBasis(100.0, 16), LevelBasis(null, null))) {
+        val bells = DefaultLevels.of(value, basis).filter { it.notify }.map { it.defaultName }
+        assertEquals("$value $basis", expected[value] ?: emptyList<LevelName>(), bells)
+      }
+    }
+  }
+
+  @Test
+  fun copyForCustom_keepsBells() {
+    val basis = LevelBasis(null, null)
+    assertEquals(
+      DefaultLevels.of(LevelValue.SOC, basis).map { it.notify },
+      DefaultLevels.copyForCustom(LevelValue.SOC, basis).map { it.notify },
+    )
+  }
 }

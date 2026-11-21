@@ -1,12 +1,15 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.LevelAlertState
+import io.lumensync.habattery.domain.model.LevelName
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.testing.FakeBatterySource
-import io.lumensync.habattery.testing.FakeNotifier
+import io.lumensync.habattery.testing.FakeLevelNotifier
 import io.lumensync.habattery.testing.FakeReadingCache
 import io.lumensync.habattery.testing.FakeSettingsRepository
 import io.lumensync.habattery.testing.FakeTokenStore
@@ -18,16 +21,17 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import java.io.IOException
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SyncBatteryTest {
-  private val notifier = FakeNotifier()
+  private val notifier = FakeLevelNotifier()
   private val widgets = FakeWidgetRefresher()
+  private val socLevels = DefaultLevels.of(LevelValue.SOC, LevelBasis(null, null))
+
+  private fun socId(name: LevelName) = socLevels.single { it.defaultName == name }.id
 
   private fun sync(
     source: FakeBatterySource,
@@ -35,6 +39,7 @@ class SyncBatteryTest {
     settings: Settings = configuredSettings(),
     token: String? = "t",
     userToken: String? = null,
+    notifier: FakeLevelNotifier = this.notifier,
   ) = SyncBattery(
     FakeSettingsRepository(settings),
     FakeTokenStore(token, user = userToken),
@@ -106,63 +111,94 @@ class SyncBatteryTest {
     assertEquals(1, widgets.refreshes)
   }
 
-  @Test
-  fun full_notifiesOnce() = runTest {
-    val full = SyncResult.Success(reading(100.0, 0.0))
-    val cache = FakeReadingCache()
-    val useCase = sync(FakeBatterySource(full), cache, configuredSettings(notifyOnFull = true))
-
-    useCase()
-    useCase()
-
-    assertEquals(1, notifier.shown)
-    assertTrue(cache.current.fullChargeNotified)
-  }
+  private val enteringLowCache
+    get() =
+      FakeReadingCache(
+        CacheState(levelAlerts = mapOf("SOC" to LevelAlertState(current = socId(LevelName.GETTING_LOW))))
+      )
 
   @Test
-  fun belowRearm_rearms() = runTest {
-    val cache = FakeReadingCache(CacheState(fullChargeNotified = true))
-    val source = FakeBatterySource(SyncResult.Success(reading(98.0, -5.0)))
-
-    sync(source, cache, configuredSettings(notifyOnFull = true))()
-
-    assertFalse(cache.current.fullChargeNotified)
-    assertEquals(0, notifier.shown)
-  }
-
-  @Test
-  fun notifyDisabled_neverNotifies() = runTest {
-    val cache = FakeReadingCache()
-
-    sync(FakeBatterySource(SyncResult.Success(reading(100.0, 0.0))), cache)()
-
-    assertEquals(0, notifier.shown)
-    assertFalse(cache.current.fullChargeNotified)
-  }
-
-  @Test
-  fun parallelRuns_notifyOnce() = runTest {
+  fun enteringLow_postsOnce() = runTest {
+    val cache = enteringLowCache
     val useCase =
       sync(
-        FakeBatterySource(SyncResult.Success(reading(100.0, 0.0))),
-        settings = configuredSettings(notifyOnFull = true),
+        FakeBatterySource(SyncResult.Success(reading(19.0))),
+        cache,
+        configuredSettings(notificationsOn = true),
+      )
+
+    useCase()
+    assertEquals(1, notifier.posted.size)
+
+    useCase()
+    assertEquals(1, notifier.posted.size)
+  }
+
+  @Test
+  fun noPermission_tracksOnly() = runTest {
+    val notifier = FakeLevelNotifier(canPost = false)
+    val cache = enteringLowCache
+
+    sync(
+      FakeBatterySource(SyncResult.Success(reading(19.0))),
+      cache,
+      configuredSettings(notificationsOn = true),
+      notifier = notifier,
+    )()
+
+    assertEquals(emptyList<LevelAlert>(), notifier.posted)
+    assertEquals(socId(LevelName.LOW), cache.current.levelAlerts["SOC"]?.current)
+  }
+
+  @Test
+  fun notificationsOff_postsNothing() = runTest {
+    val cache = enteringLowCache
+
+    sync(FakeBatterySource(SyncResult.Success(reading(19.0))), cache)()
+
+    assertEquals(emptyList<LevelAlert>(), notifier.posted)
+    assertEquals(socId(LevelName.LOW), cache.current.levelAlerts["SOC"]?.current)
+  }
+
+  @Test
+  fun failure_keepsAlertState() = runTest {
+    val cache = enteringLowCache
+    val before = cache.current.levelAlerts
+
+    sync(
+      FakeBatterySource(SyncResult.Failure(SyncError.Unreachable)),
+      cache,
+      configuredSettings(notificationsOn = true),
+    )()
+
+    assertEquals(before, cache.current.levelAlerts)
+    assertEquals(emptyList<LevelAlert>(), notifier.posted)
+  }
+
+  @Test
+  fun parallelRuns_postOnce() = runTest {
+    val useCase =
+      sync(
+        FakeBatterySource(SyncResult.Success(reading(19.0))),
+        enteringLowCache,
+        configuredSettings(notificationsOn = true),
       )
 
     listOf(async { useCase() }, async { useCase() }).awaitAll()
 
-    assertEquals(1, notifier.shown)
+    assertEquals(1, notifier.posted.size)
   }
 
   @Test
   fun sourceThrows_rethrowsButStillClearsRefreshingAndRedraws() = runTest {
     val source = FakeBatterySource(SyncResult.Success(reading())).apply { failWith = IOException("disk") }
     val cache = FakeReadingCache(CacheState(refreshingSinceMillis = 5L))
-    val useCase = sync(source, cache, configuredSettings(notifyOnFull = true))
+    val useCase = sync(source, cache, configuredSettings(notificationsOn = true))
 
     assertThrows(IOException::class.java) { runBlocking { useCase() } }
 
     assertNull(cache.current.refreshingSinceMillis)
     assertEquals(1, widgets.refreshes)
-    assertEquals(0, notifier.shown)
+    assertEquals(emptyList<LevelAlert>(), notifier.posted)
   }
 }

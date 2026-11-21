@@ -17,13 +17,16 @@ import androidx.compose.ui.res.stringResource
 import io.lumensync.habattery.R
 
 /**
- * The full-charge notification switch. On Android 13+ turning it on asks for the notification
- * permission first; when it is denied the switch stays off and a link to the settings appears.
+ * The main notification switch; the bells in Levels and alerts choose the levels. On Android 13+
+ * turning it on asks for the notification permission first; when it is denied the switch stays off
+ * and a link to the settings appears. Levels are checked only when a sync runs, so without
+ * [autoRefresh] a note says that nothing can come.
  */
 @Composable
 fun NotificationSection(
   enabled: Boolean,
-  onSetEnabled: (Boolean) -> Unit,
+  autoRefresh: Boolean,
+  onEnabledChange: (Boolean) -> Unit,
   onOpenSettings: () -> Unit,
   modifier: Modifier = Modifier,
   initiallyExpanded: Boolean = false,
@@ -32,7 +35,7 @@ fun NotificationSection(
   val permission =
     rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
       denied = !granted
-      if (granted) onSetEnabled(true)
+      if (granted) onEnabledChange(true)
     }
 
   val summary =
@@ -40,17 +43,29 @@ fun NotificationSection(
 
   SectionCard(R.string.notify_title, summary, initiallyExpanded, modifier) {
     SwitchRow(
-      stringResource(R.string.notify_on_full),
+      stringResource(R.string.notifications_switch),
       checked = enabled,
       onCheckedChange = { on ->
         when {
-          !on -> onSetEnabled(false)
+          !on -> onEnabledChange(false)
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
             permission.launch(Manifest.permission.POST_NOTIFICATIONS)
-          else -> onSetEnabled(true)
+          else -> onEnabledChange(true)
         }
       },
     )
+    Text(
+      stringResource(R.string.notifications_hint),
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      style = MaterialTheme.typography.bodySmall,
+    )
+    if (!autoRefresh) {
+      Text(
+        stringResource(R.string.notifications_no_auto_refresh),
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodySmall,
+      )
+    }
     if (denied) {
       Text(
         stringResource(R.string.notify_blocked),

@@ -1,6 +1,7 @@
 package io.lumensync.habattery.ui
 
 import io.lumensync.habattery.domain.DefaultLevels
+import io.lumensync.habattery.domain.LevelAlerts
 import io.lumensync.habattery.domain.LevelBasis
 import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.LevelSpan
@@ -21,7 +22,7 @@ import java.util.Locale
 
 /**
  * One level while the owner edits it: the edge is text, so a half-typed number survives. The
- * middle level has no edge, so its text is empty.
+ * middle level has no edge, so its text is empty. [notify] is the level's bell; a new level has none.
  */
 data class LevelDraft(
   val id: Int,
@@ -32,6 +33,7 @@ data class LevelDraft(
   val icon: LevelIcon?,
   val name: String,
   val defaultName: LevelName?,
+  val notify: Boolean = false,
 )
 
 fun ColorLevel.toDraft(value: LevelValue, locale: Locale): LevelDraft =
@@ -44,6 +46,7 @@ fun ColorLevel.toDraft(value: LevelValue, locale: Locale): LevelDraft =
     icon = icon,
     name = name,
     defaultName = defaultName,
+    notify = notify,
   )
 
 /** The edge typed in [locale], rounded as the save rounds it; `null` when it is not a number. */
@@ -77,6 +80,20 @@ fun editorDrafts(
 ): List<LevelDraft> =
   LevelPicker.ownLevels(value, custom)?.map { it.toDraft(value, locale) }
     ?: defaultDrafts(value, basis, locale)
+
+/**
+ * The margin text the editor opens with: the own margin of [custom] in [locale], or blank for the
+ * default. Like the alerts, it counts only while [custom] holds valid own levels.
+ */
+fun editorMargin(value: LevelValue, custom: CustomLevels, locale: Locale): String =
+  custom.margin
+    ?.takeIf { LevelPicker.ownLevels(value, custom) != null }
+    ?.let { value.formatEdge(it, locale) }
+    .orEmpty()
+
+/** The default margin of [value] as a number in [locale], such as "2" or "5,3". */
+fun defaultMarginText(value: LevelValue, basis: LevelBasis, locale: Locale): String =
+  value.formatEdge(LevelAlerts.margin(value, basis), locale)
 
 /**
  * What the middle level covers, from the rows whose limits are numbers, so a new empty row changes

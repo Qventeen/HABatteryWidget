@@ -10,6 +10,83 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-18-0012-inverter-widget-design.md` (design: `docs/design/README.md`, section "Inverter strip"; `inverter-*.png`).
 
+**Amended 2026-11-21 (0011 as built):**
+
+- `LevelAlert` has no `rising` field: the arrow is the level's side; it carries `span: LevelSpan`. Read Task 5's `rising == false` as `level.side == LevelSide.BELOW`.
+- `LevelAlerts.margin(value, basis: LevelBasis, custom)` takes a `LevelBasis`, not a capacity: read `margin(GRID_VOLTAGE, null)` as `margin(GRID_VOLTAGE, LevelBasis(null, null))`.
+- There is no `notification_measured_at`: the 0011 body is `notification_level_text` "%1$s · measured at %2$s" (number first). The mode notification has no number, so Task 6 adds its own string, e.g. `notification_mode_text` "Measured at %1$s" / "Виміряно о %1$s".
+- The number a level is picked by comes from `ShownNumber` (domain): see Task 5 for the whole-volt rounding, so the widget colour and the alert agree.
+- All four level channels are created on each post (0011 §7); `postMode` keeps that.
+- The section "Colours" is now "Levels and alerts" (`ColorsSection` keeps its name); read "Colours" in Tasks 11–12 as that section.
+- The margin field is "Hysteresis" with an ⓘ tip. The voltage default is 0.025 V × cells, rounded to 0.01 V, and 0.4 V without a cell count (`domain/LevelAlerts.kt:103-108`). The inverter voltages keep their own 5 V default.
+
+The readiness check (2026-11-21) confirmed the other names. Fixes by task (paths are under `app/src/main/kotlin/io/lumensync/habattery/` unless they start with `app/` or `docs/`):
+
+- **Global**
+  - Add `LevelSide`, `LevelBasis`, `LevelSpan`, `LevelSpans` and `ShownNumber` to the "Before Task 1" name check.
+  - Default voltage levels are two-sided (`side` + `edge`, no `from`; `domain/model/ColorLevels.kt:87-100`). Ids 1–4 in shown order: NO_GRID/NO_POWER `BELOW 99`, LOW `BELOW 206`, NORMAL `MIDDLE`, HIGH `ABOVE 254`. Read every "from 100 / 207 / 254" in Tasks 5 and 7 this way (Open question 1).
+  - Append-only: add one line in the `LevelValue` KDoc, "append only; ordinals are notification ids" (GRID 107, OUTPUT 108, mode 150).
+- **Task 1**
+  - `settingsRecord_v2` is a round trip (`data/store/StoredJsonV2Test.kt:22-28`) and `StoreJson.encodeDefaults = true`: add an `"inverter"` block with non-default values to its sample and `expected`. Test "no `inverter` key → defaults" in a separate decode-only test.
+  - Write the `IconSlot` defaults qualified: `MODE_STANDBY(InverterIcon.MODE_STANDBY)`, for every slot. A bare name resolves to the enum's own entry.
+- **Task 3**
+  - Keep `SyncResult` through Task 3 (`SyncBattery` maps the battery part back to it) and remove it in Task 4. It is still used by `system/SyncWorker.kt:23`, `SyncWorkerTest.kt` and `domain/SyncBattery.kt:28`.
+  - Add `test/domain/SyncBatteryTest.kt` and `test/ui/MainViewModelTest.kt` to the files: both build `SyncResult` fakes (`MainViewModelTest.kt:80, 395-409`). Add a helper `batteryOk(r) = FetchResult(PartResult.Ok(r), null)` in `test/testing/Fakes.kt`.
+  - `FakeBatterySource` also records `lastRequest: FetchRequest?` (it has `calls` and `lastToken` only, `Fakes.kt:73-95`).
+  - With no battery part, write `"temps": []` and `none` for the scalar keys (`data/ha/TemplateBuilder.kt:17`).
+- **Task 4**
+  - `cacheRecord_v1` is a round trip (`test/data/store/StoredJsonV1Test.kt:279-331`): add `inverterReading` and `inverterError` (Task 6 adds `inverterMode`) with real values to its sample and `expected`. The "old sample → null" case is decode-only.
+  - Drop `ui/MainViewModel.kt` from the files: `refreshNow` ignores the sync result (`MainViewModel.kt:81-91`).
+  - `FetchResult` keeps `null` = not asked. `SyncBattery.invoke()` returns `Failed(NotConfigured)` for each part it skips as not configured (see `SyncBatteryTest.kt:53-60`).
+  - Alert state: feed the inverter evaluator the battery outcome's map (`batteryOutcome?.state ?: state.levelAlerts`) and store the inverter result. `evaluate` copies the whole map (`LevelAlerts.kt:52, 74-76`), so starting both from `state.levelAlerts` loses the battery state and repeats a notification. Add a `SyncBatteryTest` where both parts post and both states are kept.
+  - The token-type hint fires on `Unauthorized` in either part (`ui/MainUiState.kt:25-28` reads only the battery error today). Do it here or in Task 11.
+- **Task 5**
+  - Add to the files, or it does not compile: `domain/ShownNumber.kt`, `ui/sections/ColorsSection.kt`, `ui/sections/LevelEditor.kt`, `system/AndroidLevelNotifier.kt`, `format/Formatters.kt`, `ShownNumberTest.kt`. They hold exhaustive `when (value)` (`ShownNumber.kt:22-33`, `ColorsSection.kt:323-333`, `LevelEditor.kt:580-589`, `AndroidLevelNotifier.kt:103-111`).
+  - `GRID_VOLTAGE(0, false, 0.0)` and `OUTPUT_VOLTAGE(0, false, 0.0)`, appended last (`LevelValue(decimals, hasIcons, floor)`, `ColorLevels.kt:72-80`).
+  - `ShownNumber.of(value, reading: BatteryReading, levels)` returns `null` for the two inverter values. Add `ShownNumber.of(value, reading: InverterReading): Double?` = the voltage `roundTo(0)`. `evaluateInverter` and `InverterWidgetModel` (number and colour) both use it. Do not use `roundToInt()` (half up): 206.5 V would show "207 V" in the Low colour.
+  - Add `Formatters.wholeVolts(volts: Double)` (`unit_volts`, 0 decimals; half-even like `roundTo(0)`), used by `shownText` here and the strip in Task 9. `Formatters.voltage` shows 2 decimals.
+  - `LevelValue` companion gets `BATTERY` (the 7 old values) and `INVERTER` (the 2 new ones). `evaluate` loops `BATTERY` (now `LevelValue.entries`, `LevelAlerts.kt:53`), `evaluateInverter` loops `INVERTER`, both through one private per-value step.
+  - `ColorsSection` gets `values: List<LevelValue>` (named, before `modifier`). It filters the own-levels map, the summary and the rows (loops at lines 90, 93, 102). `MainScreen` passes `LevelValue.BATTERY` until Task 12 adds the Inverter tab with `INVERTER`. Without it the battery "Levels and alerts" shows "Grid input" and "Output" from this task on.
+  - `DefaultLevelsTest.defaultBells` (`DefaultLevelsTest.kt:212-225`) checks every value against an exact map: add `LevelValue.GRID_VOLTAGE to listOf(LevelName.LOW)`. Update the bell list in the `DefaultLevels` KDoc (`DefaultLevels.kt:12-15`).
+  - `inverterDefaults`: assert sides `[BELOW, BELOW, MIDDLE, ABOVE]` and edges `[99.0, 206.0, null, 254.0]`.
+  - `grid_rearm5V`: after LOW fired at 205, 210 → still disarmed, 211 → re-armed; on the low side 95 → disarmed, 94 → re-armed (re-arm is `x >= upper + margin` or `x <= lower − margin`, LOW's upper bound is its own edge, `LevelSpans.kt:48-59`, `LevelAlerts.kt:128-140`).
+- **Task 6**
+  - Extract the channel step (delete `OLD_CHANNEL_IDS`, create all four) from `post` into one private function used by `post` and `postMode` (`AndroidLevelNotifier.kt:62-67, 196-210`). Add `MODE_NOTIFICATION_ID = 150` next to `BASE_ID`.
+  - The Critical and Warning channel ids are `level_critical_2` and `level_warning_2` (0011 §7: own tone and buzz); the Task 6 test bullets use them. A mode post on them plays that tone and buzz.
+  - Add `@StringRes fun modeWordRes(mode: InverterMode)` in `format/InverterLabels.kt`. Task 9 reuses it for the strip.
+- **Task 7**
+  - `LevelPicker.effective(value, settings, basis: LevelBasis)` needs a basis: pass `LevelBasis(null, null)` (`LevelPicker.kt:47-48`).
+  - `InverterWidgetModel.Empty(kind, error)`, not `Empty(kind)`; `NO_DATA` carries `cache.inverterError`, like `WidgetModel.Empty` (`WidgetModel.kt:45, 77`).
+  - Null volts → "—" in PLAIN, not in the first level's colour (the battery widget does this, `WidgetModel.kt:84-88`; Open question 2). A red "—" would look like "no power".
+  - The number and the colour come from the same `ShownNumber` value (see Task 5).
+- **Task 9**
+  - `InverterWidgetContent` takes `colors: WidgetColors`, not `look: WidgetLook`. `WidgetLook` is `internal` and takes a battery `LayoutSpec` (`widget/WidgetContent.kt:107-111`): build an inverter look inside, and move `sp()` out of `WidgetLook` or give `WidgetLook` the spec as a type parameter.
+  - Make `TappedWidgetKey` internal (`widget/BatteryWidget.kt:95`) and move `reapplySchedule` (`widget/BatteryWidgetReceiver.kt:24`) into a shared internal helper, for the inverter receiver's `onEnabled`/`onDisabled`.
+  - `PreviewWidget.kt` becomes a content lambda plus a bucket `DpSize` (`PreviewWidget(model: WidgetModel, …)` and `views(context, layout: LayoutSpec)` are battery-only today). Both previews keep the one `PREVIEW_ID = -2` and the one `drawing` mutex (`PreviewWidget.kt:26-31, 47, 59-62`); a second id or mutex can fail the older Glance session.
+  - Copy `initialLayout="@layout/glance_default_loading_layout"`, `updatePeriodMillis="0"` and `widgetCategory="home_screen"` from `app/src/main/res/xml/battery_widget_info.xml` to `inverter_widget_info.xml`.
+  - The strip uses `Formatters.wholeVolts` and `modeWordRes`.
+- **Task 11**
+  - Home-screen scale: "Reset sizes" resets fonts and scale today (`ui/MainViewModel.kt:225-229`); `Settings.textSizeChanged` counts the scale (`Settings.kt:34-37`); slider and reset sit in `ui/sections/WidgetSection.kt:36-66`. After the move, Battery "Reset sizes" resets the battery fonts only, Common gets its own scale reset, and the scale leaves `textSizeChanged` (Open question 3).
+  - `previewRequest` is set in `onCreate` from widget sizes, before settings load (`MainActivity.kt:74, 131-148`), and `PreviewTab.forSize` maps any size to a battery layout. Compute `PreviewTab` only for a battery provider (an inverter tap picks the strip's size tab). Apply `AppTabs.first` in `MainScreen` once the first state arrives, because it needs settings and token. `onNewIntent` (`MainActivity.kt:95-100`) sends a counted app-tab request, as `PreviewRequest` does.
+  - `setupNeeded` is not "no URL or no token": `BatteryOverview.setupNeeded` = `!isConfigured` incl. the charge entity (`domain/BatteryOverview.kt:33`) and drives `initiallyExpanded` of Connection, Token and Entities (`ui/MainScreen.kt:140, 150, 157`). Add `MainUiState.connectionMissing` (URL blank or no token) for `AppTabs.first` and for Connection/Token `initiallyExpanded`; battery Entities keeps the battery rule.
+  - "Add to home screen": `MainActions.requestPinWidget` is `() -> Unit` for the battery receiver only (`ui/MainScreen.kt:68`, `MainActivity.kt:174-179`). Make it `requestPinWidget(receiver: Class<out GlanceAppWidgetReceiver>)` (or two actions), with one hint per widget ("adds it as 3×1" for the strip). Say whether `action_add_widget` "Add widget" becomes "Add to home screen".
+  - Tabs drop saved UI state (`rememberSaveable` folds in `SectionParts.kt:59`, editor state in `ColorsSection.kt:99-108`, the size tab in `WidgetPreviewCard.kt:68-69`, scroll). Use `rememberSaveableStateHolder()` with `SaveableStateProvider(tab)` so each tab keeps its own scroll (spec §3.2). Test it in `MainScreenTest` (compile only).
+  - Update `app/src/androidTest/.../ui/MainScreenTest.kt`: `widgetSection_isFirstAfterPreviewAndActions` (176-185) asserts the flat order, and other tests scroll to Connection/Entities/Capacity/Reset sizes on one page. Tap the tab first; add an order test per tab. Keep `WidgetPreviewCard`'s signature, or update `WidgetPreviewTest` (`…/ui/WidgetPreviewTest.kt:88, 212`). Only compilation is gated, so a runtime break stays hidden until an instrumented run.
+- **Task 12**
+  - Drop `MainViewModel.fillInverterFromPrefix` and its test `fillInverterFromPrefix_noRequest`. `InverterEntitiesSection` calls `EntityFill.inverterFromPrefix(draft.prefix, draft)`, as battery Fill does (`EntitiesSection.kt:124`); `EntityFillTest` covers it.
+  - Add `inverter: InverterWidgetModel?` to `MainUiState` (`ui/MainUiState.kt:11-21`), built in `MainViewModel.uiState`, for the preview card. Add the file to the task.
+  - Make `ChoiceChip` internal (`LevelEditor.kt:530, 559`; `IconChips` and `ChoiceChip` are `private` and typed to `LevelIcon`) and build the 45-icon grid from it.
+  - Add 10 `inv_slot_*` strings EN/UK and `iconSlotRes(slot)` in `format/` for the Icons section rows.
+  - `ColorsSection(values = LevelValue.INVERTER)` uses the parameter from Task 5.
+  - Clear `MainUiState.errors` on a tab switch: it is one list (`MainViewModel.kt:58`), so `LEVEL_EDGE` / `LEVEL_MARGIN` errors from one tab's editor show in an editor open in the other tab.
+
+**Open — ask the owner before the named task:**
+
+1. Before Task 5: default edges for grid input and output. Option A: ↓99 No grid, ↓206 Low, ↕207–253 Normal, ↑254 High (keeps the spec ranges and EN 50160's 207–253 V as normal). Option B: ↓100 / ↓207 ("N is N and below", as SOC in 0010; 207 V becomes Low and the default bell rings there). Recommendation: A.
+2. Before Task 7: a missing voltage on the strip ("—"): plain, like the battery widget, or the first level's colour (blue for grid, red for output)? Recommendation: plain.
+3. Before Task 11: should the Battery tab's "Reset sizes" still reset the shared home-screen scale? Recommendation: no; Common gets its own scale reset.
+4. Before Task 6: the mode-change notification follows the main Notifications switch (default off), with no own switch, as the plan reads spec §3.5 "on by default; not configurable". Is that right, and should the Notifications hint also mention mode changes? Recommendation: yes to the first; add the mention.
+
 ## Global Constraints
 
 - Start only after 0011 is merged into `epic-widget-improvements`. Branch `0012-inverter-widget` from the epic; merge back after review.
@@ -220,7 +297,7 @@
   - `ModeAlertsTest.firstValue_storesOnly`; `change_alerts`: last `"Mains"`, reading `"Off-Grid"` → alert `OFF_GRID`; `sameIgnoringCase_noAlert`: last `"Mains"`, `"MAINS"` → none; `disabled_tracksOnly`.
   - `ModeAlertsTest.unavailable_isNotAChange` (Review Focus 2): last `"Mains"`, reading mode null → no alert, `last == "Mains"`; then `"Mains"` → still no alert.
   - `SyncBatteryTest.batteryFails_modeStillPosts` (Review Focus 1): battery `Failed`, inverter `Ok` with a new mode → one `postedModes` entry.
-  - `AndroidLevelNotifierTest.postMode_offGrid`: id 150, channel `level_warning`, title "Inverter: battery"; `postMode_unknown`: text `"Eco"` → channel `level_info`, title "Inverter: Eco"; `postMode_fault` → `level_critical`.
+  - `AndroidLevelNotifierTest.postMode_offGrid`: id 150, channel `level_warning_2`, title "Inverter: battery"; `postMode_unknown`: text `"Eco"` → channel `level_info`, title "Inverter: Eco"; `postMode_fault` → `level_critical_2`.
 - [ ] **Step 2: Run, expect FAIL**: `./gradlew :app:testDebugUnitTest --tests "*ModeAlertsTest" --tests "*SyncBatteryTest" --tests "*AndroidLevelNotifierTest"`
 - [ ] **Step 3: Implement**
 - [ ] **Step 4: Run the done gate, expect PASS**

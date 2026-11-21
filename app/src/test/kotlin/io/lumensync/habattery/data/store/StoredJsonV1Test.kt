@@ -9,6 +9,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
@@ -104,7 +105,7 @@ class StoredJsonV1Test {
                 balancing = "sensor.bal",
               ),
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
-            notifyOnFull = true,
+            notificationsOn = true,
             capacityAh = 314.5,
             display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
             fontPercents = FontPercents(soc = 45, underSoc = 30, main = 75, cell = 60, small = 100),
@@ -112,7 +113,7 @@ class StoredJsonV1Test {
             appearance = AppearanceSettings(ThemeChoice.DARK),
           ),
       )
-    assertV1(json, expected, SettingsRecord.serializer())
+    assertEquals(expected, StoreJson.decodeFromString(SettingsRecord.serializer(), json))
   }
 
   @Test
@@ -122,9 +123,10 @@ class StoredJsonV1Test {
       {
         "on": true,
         "levels": [
-          {"id": 1, "side": "MIDDLE", "edge": null, "type": "INFO", "color": null, "icon": null, "name": "", "defaultName": "BALANCED"},
-          {"id": 2, "side": "ABOVE", "edge": 12.0, "type": "WARNING", "color": "ORANGE", "icon": "FLAME", "name": "Drift", "defaultName": null}
-        ]
+          {"id": 1, "side": "MIDDLE", "edge": null, "type": "INFO", "color": null, "icon": null, "name": "", "defaultName": "BALANCED", "notify": false},
+          {"id": 2, "side": "ABOVE", "edge": 12.0, "type": "WARNING", "color": "ORANGE", "icon": "FLAME", "name": "Drift", "defaultName": null, "notify": true}
+        ],
+        "margin": 4.0
       }
       """
     val expected =
@@ -132,10 +134,19 @@ class StoredJsonV1Test {
         true,
         listOf(
           ColorLevel(1, LevelSide.MIDDLE, null, LevelType.INFO, defaultName = LevelName.BALANCED),
-          ColorLevel(2, LevelSide.ABOVE, 12.0, LevelType.WARNING, LevelColor.ORANGE, LevelIcon.FLAME, "Drift"),
+          ColorLevel(2, LevelSide.ABOVE, 12.0, LevelType.WARNING, LevelColor.ORANGE, LevelIcon.FLAME, "Drift", notify = true),
         ),
+        margin = 4.0,
       )
     assertV1(json, expected, CustomLevels.serializer())
+  }
+
+  @Test
+  fun customLevels_withoutMargin_decodesNull() {
+    val json = """{"on": true, "levels": [{"id": 1, "notify": true}]}"""
+    val decoded = StoreJson.decodeFromString(CustomLevels.serializer(), json)
+    assertEquals(null, decoded.margin)
+    assertEquals(true, decoded.levels.single().notify)
   }
 
   @Test
@@ -205,6 +216,12 @@ class StoredJsonV1Test {
         """{"schemaVersion":1,"state":{"reading":{"chargePercent":50.0,"cellVoltagesV":[3.3],"updatedAtMillis":1}}}""",
       )
     assertEquals(BatteryReading(chargePercent = 50.0, updatedAtMillis = 1), cache.state.reading)
+    val oldCache =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """{"schemaVersion":1,"state":{"fullChargeNotified":true}}""",
+      )
+    assertEquals(CacheState(), oldCache.state)
   }
 
   /** Spec 0005: the sp sizes of 0003 are dropped, so everyone starts at the design size (50 %). */
@@ -281,7 +298,7 @@ class StoredJsonV1Test {
           },
           "error": { "type": "http", "code": 503 },
           "refreshingSinceMillis": 1800000001000,
-          "fullChargeNotified": true
+          "levelAlerts": { "SOC": { "current": 2, "disarmed": [1] } }
         }
       }
       """
@@ -308,7 +325,7 @@ class StoredJsonV1Test {
               ),
             error = SyncError.HttpError(503),
             refreshingSinceMillis = 1_800_000_001_000L,
-            fullChargeNotified = true,
+            levelAlerts = mapOf("SOC" to LevelAlertState(current = 2, disarmed = listOf(1))),
           ),
       )
     assertV1(json, expected, CacheRecord.serializer())

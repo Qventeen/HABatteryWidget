@@ -106,6 +106,49 @@ class LevelDraftTest {
   }
 
   @Test
+  fun defaultDrafts_carryTheDefaultBells() =
+    assertEquals(
+      listOf(true, false, false, true),
+      defaultDrafts(LevelValue.SOC, noBasis, Locale.US).map { it.notify },
+    )
+
+  @Test
+  fun toDraft_keepsTheBell() =
+    assertEquals(true, ColorLevel(id = 1, notify = true).toDraft(LevelValue.SOC, Locale.US).notify)
+
+  @Test
+  fun withNewLevel_hasNoBell() =
+    assertEquals(false, emptyList<LevelDraft>().withNewLevel(emptyList()).last().notify)
+
+  private val ownVoltage =
+    CustomLevels(
+      true,
+      listOf(ColorLevel(id = 1), ColorLevel(id = 2, side = LevelSide.ABOVE, edge = 55.2)),
+      margin = 0.2,
+    )
+
+  @Test
+  fun editorMargin_ownMargin_inTheLocale() =
+    assertEquals("0,2", editorMargin(LevelValue.VOLTAGE, ownVoltage, uk))
+
+  @Test
+  fun editorMargin_noOwnMargin_isBlank() =
+    assertEquals("", editorMargin(LevelValue.VOLTAGE, ownVoltage.copy(margin = null), uk))
+
+  @Test
+  fun editorMargin_withoutOwnLevels_isBlank() =
+    assertEquals("", editorMargin(LevelValue.VOLTAGE, ownVoltage.copy(on = false), uk))
+
+  @Test
+  fun defaultMarginText_followsTheValue() {
+    assertEquals("2", defaultMarginText(LevelValue.SOC, noBasis, Locale.US))
+    assertEquals("0,4", defaultMarginText(LevelValue.VOLTAGE, noBasis, uk))
+    assertEquals("0,2", defaultMarginText(LevelValue.VOLTAGE, LevelBasis(null, 8), uk))
+    assertEquals("5,3", defaultMarginText(LevelValue.CHARGE_CURRENT, LevelBasis(105.0, null), uk))
+    assertEquals("1", defaultMarginText(LevelValue.DISCHARGE_CURRENT, noBasis, Locale.US))
+  }
+
+  @Test
   fun defaultDrafts_current100Ah() {
     val drafts = defaultDrafts(LevelValue.CHARGE_CURRENT, LevelBasis(100.0, null), Locale.US)
     assertEquals(

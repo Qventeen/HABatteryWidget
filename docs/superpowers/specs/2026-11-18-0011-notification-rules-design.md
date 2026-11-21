@@ -158,14 +158,15 @@ The check runs inside `SyncBattery` after each successful reading, where
   | Value | Margin |
   |---|---|
   | SOC | 2 % |
-  | Voltage | 0.1 V |
+  | Voltage | 0.025 V per cell (0.4 V on 16S; 0.4 V when the cell count is unknown) (owner, 2026-11-20) |
   | Charge and discharge current | 0.05 C (5 A on 100 Ah; 1 A when the capacity is unknown) |
   | Cell delta | 3 mV |
   | Battery and MOSFET temperature | 2 °C |
 
 - **Editable margin** (owner, 2026-11-19, while detailing 0012): the
-  value's editor (Edit, 0010 §3.5) has one field, "Notify again
-  after it moves back by", in the value's unit (current in whole amps,
+  value's editor (Edit, 0010 §3.5) has one field, named
+  "Hysteresis" / "Гістерезис" with an ⓘ tip (owner, 2026-11-20) instead of
+  "Notify again after it moves back by", in the value's unit (current in whole amps,
   like the custom copy). Blank means the default above, shown as a hint.
   A number ≥ 0 at the value's shown precision; anything else is a field
   error and nothing is saved. Stored as `CustomLevels.margin` (null = the
@@ -228,6 +229,11 @@ The check runs inside `SyncBattery` after each successful reading, where
   the owner can set the sound, vibration and pop-up per type in the Android
   settings. Importance (my call): Critical and Warning high (pop-up), Normal
   and Info default (no pop-up).
+- **Sound and vibration** (owner, 2026-11-21), so the types differ without a
+  look: Critical plays its own short tone and buzzes long three times;
+  Warning plays the phone's sound and buzzes short twice; Normal and Info
+  keep the phone's sound and vibration. The owner can still change each in
+  the Android settings.
 - **An icon per type** (owner decision on types, §1), from Material Symbols
   Rounded (Apache-2.0), as monochrome small icons: Critical `report`,
   Warning `warning`, Normal `check_circle`, Info `info` (icon picks are my
@@ -262,11 +268,12 @@ The check runs inside `SyncBattery` after each successful reading, where
 ### 3.7 App
 
 - **Notifications section:** the main switch ("Notifications"), a hint
-  "Choose the levels with the bells in Colours", and, when auto refresh is
+  "Choose the levels with the bells in Colours" (since 2026-11-21: "Choose the
+  levels with the bells in Levels and alerts"), and, when auto refresh is
   off, a note that no notification can come without it (§4, Delay). Its
   summary stays "On" or "Off" (0002).
-- **Colours section (0010):** a bell toggle on each level row in the editor;
-  the read-only default list shows the bells.
+- **Colours section (0010; since 2026-11-21: Levels and alerts):** a bell toggle on each level
+  row in the editor; the read-only default list shows the bells.
 - **Sync condition:** the periodic sync runs when auto refresh is on and (a
   widget exists or the main switch is on), as today.
 
@@ -324,3 +331,49 @@ The check runs inside `SyncBattery` after each successful reading, where
   exact alarms); they would cost phone battery.
 - No direction setting, no repeat, no quiet hours, no sync-error
   notification in this version.
+
+## 7. Build notes (2026-11-20)
+
+- The number a level is picked by comes from one domain function
+  (`ShownNumber`), used by the widget colours and the alerts — so both
+  always agree.
+- Title is "Value: Name ↓20 %" (the tag's place) and body is
+  "20% · measured at 14:05", as amended; the alert has no arrow field — the
+  arrow is the level's side.
+- Margin precision: the margin field takes the value's shown precision
+  (current 0.1 A), not whole amps — one rule for edges, hint and margin; a
+  typed 0.5 A was saved as 0. Kept: the owner gave 'go'
+  without asking for whole amps (2026-11-21).
+- Every level channel is created on each post — the owner can set all four
+  sounds after the first notification, and the names follow the language.
+- The no-auto-refresh note says a manual refresh still notifies — it does
+  still sync and can post.
+- `system/` reads the type colour from `widget/WidgetPalette` — an accepted
+  package edge.
+- Default current and voltage lists reuse level ids when the capacity or
+  cell count becomes known — harmless while those lists have no default
+  bells; spec 0013 must re-check it when it changes `LevelBasis`.
+- Margin field (owner, 2026-11-20): named "Hysteresis" / "Гістерезис". An ⓘ
+  button inside the field opens a short tip on tap; the tip says what the
+  margin does.
+- Voltage default margin (owner, 2026-11-20): 0.025 V per cell, rounded to
+  0.01 V (16S 0.40, 15S 0.38, 8S 0.20, 4S 0.10), so it fits every pack size.
+  `LevelAlerts.margin` now takes the `LevelBasis`.
+- The percent is written "↓20 %" in the title (the tag format) and "20%" in
+  the body (the widget format); kept as built.
+- Level pills (owner, 2026-11-21): the pills of each value stand in a
+  column, one per line, and fold under the value's name; they start folded.
+- Edit buttons (owner, 2026-11-21): while a value is edited, its name row
+  shows Cancel and Save, so the owner does not scroll to the bottom; the
+  bottom buttons stay.
+- Section name (owner, 2026-11-21): the section "Colours" is renamed
+  "Levels and alerts" / "Рівні та сповіщення" (summary "Default levels", the
+  Default dialog and the Notifications hint follow), because it now holds
+  the bells and the hysteresis too.
+- Sound and vibration (owner, 2026-11-21): the Critical and Warning channels
+  got new ids (`level_critical_2`, `level_warning_2`), because Android keeps
+  a channel's sound and vibration once it exists; the old ids are deleted
+  like `full_charge`. The Critical tone `res/raw/level_critical.ogg` (1 s,
+  two rising A5–C♯6–E6 beeps) is made here with a short script and ffmpeg,
+  so it has no licence terms. The channel stores the tone by name, not by
+  resource number.

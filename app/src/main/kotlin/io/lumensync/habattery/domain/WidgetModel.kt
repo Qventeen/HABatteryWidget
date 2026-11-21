@@ -10,7 +10,6 @@ import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 /**
@@ -76,17 +75,17 @@ sealed interface WidgetModel {
     fun build(overview: BatteryOverview, settings: Settings): WidgetModel {
       if (overview.setupNeeded) return Empty(EmptyKind.SETUP, null)
       val r = overview.reading ?: return Empty(EmptyKind.NO_DATA, overview.error)
-      val soc = r.chargePercent.roundToInt()
+      val soc = ShownNumber.soc(r)
       val flow = flow(r.currentA)
       val deltaMv = BatteryMath.deltaMv(r)
       val display = settings.display
       val basis = LevelBasis.of(r, settings)
       fun levels(value: LevelValue) = LevelPicker.effective(value, settings, basis)
-      // Each value picks its level by the number as shown, so colour and number agree at an edge.
-      fun look(value: LevelValue, shown: Double?): LevelLook =
-        shown?.let { LevelPicker.pick(levels(value), it).toLook(value) } ?: PLAIN
-      // The pill may show watts; its levels are in amps either way.
-      val amps = r.currentA?.let { abs(it).roundTo(1) }
+      fun look(value: LevelValue): LevelLook {
+        val levels = levels(value)
+        return ShownNumber.of(value, r, levels)?.let { LevelPicker.pick(levels, it).toLook(value) }
+          ?: PLAIN
+      }
       val mainValue =
         when (display.mainValue) {
           MainValue.CURRENT -> r.currentA
@@ -95,11 +94,11 @@ sealed interface WidgetModel {
       return Data(
         socPercent = soc,
         ringFraction = BatteryMath.progress(r.chargePercent),
-        ringLook = look(LevelValue.SOC, soc.toDouble()),
+        ringLook = look(LevelValue.SOC),
         underSoc = display.underSoc,
         underSocValue = underSocValue(r, display.underSoc),
         voltage = r.totalVoltageV,
-        voltageLook = look(LevelValue.VOLTAGE, r.totalVoltageV?.roundTo(2)),
+        voltageLook = look(LevelValue.VOLTAGE),
         main = display.mainValue,
         mainValue = mainValue,
         flow = flow,
@@ -107,8 +106,9 @@ sealed interface WidgetModel {
           when {
             mainValue == null -> PLAIN
             flow == Flow.NONE -> LevelLook(LevelColor.GREY)
-            flow == Flow.UP -> look(LevelValue.CHARGE_CURRENT, amps)
-            else -> look(LevelValue.DISCHARGE_CURRENT, amps)
+            // The pill may show watts; its levels are in amps either way.
+            flow == Flow.UP -> look(LevelValue.CHARGE_CURRENT)
+            else -> look(LevelValue.DISCHARGE_CURRENT)
           },
         timeLeft = overview.timeRemaining?.duration,
         balancing = r.balancing,
@@ -120,15 +120,15 @@ sealed interface WidgetModel {
         averageCellLook =
           averageCellLook(r.averageCellVoltageV, basis.cells, levels(LevelValue.VOLTAGE)),
         deltaMv = deltaMv,
-        deltaLook = look(LevelValue.DELTA, deltaMv?.toDouble()),
+        deltaLook = look(LevelValue.DELTA),
         temperatures =
           temperatures(
             r.temperaturesC,
             settings.entities.temperatures.size,
-            levels(LevelValue.BATTERY_TEMPERATURE),
+            look(LevelValue.BATTERY_TEMPERATURE),
           ),
         mosfet = r.mosfetTemperatureC,
-        mosfetLook = look(LevelValue.MOSFET_TEMPERATURE, r.mosfetTemperatureC?.let(::shown)),
+        mosfetLook = look(LevelValue.MOSFET_TEMPERATURE),
       )
     }
 
@@ -149,9 +149,6 @@ sealed interface WidgetModel {
         .toLook(LevelValue.VOLTAGE)
     }
 
-    /** Temperatures show in whole degrees; levels use the same value, so colour and number agree. */
-    private fun shown(celsius: Double): Double = celsius.roundToInt().toDouble()
-
     private fun flow(currentA: Double?): Flow =
       when {
         currentA == null -> Flow.NONE
@@ -171,16 +168,11 @@ sealed interface WidgetModel {
     private fun temperatures(
       values: List<Double?>,
       configured: Int,
-      levels: List<ColorLevel>,
+      look: LevelLook,
     ): Temperatures {
       if (configured == 0) return Temperatures.None
       val known = values.filterNotNull()
-      val worst = LevelPicker.worst(known.map { LevelPicker.pick(levels, shown(it)) })
-      return Temperatures.Battery(
-        known.takeIf { it.isNotEmpty() }?.average(),
-        worst?.toLook(LevelValue.BATTERY_TEMPERATURE) ?: PLAIN,
-        configured,
-      )
+      return Temperatures.Battery(known.takeIf { it.isNotEmpty() }?.average(), look, configured)
     }
   }
 }

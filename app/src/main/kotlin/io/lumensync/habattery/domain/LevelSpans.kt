@@ -27,10 +27,7 @@ object LevelSpans {
       LevelSide.ABOVE -> if (edge != null) return LevelSpan.AtOrAbove(edge)
       LevelSide.MIDDLE -> Unit
     }
-    val lowEdge =
-      levels.filter { it.side == LevelSide.BELOW }.mapNotNull { it.edge }.maxOrNull()
-    val highEdge =
-      levels.filter { it.side == LevelSide.ABOVE }.mapNotNull { it.edge }.minOrNull()
+    val (lowEdge, highEdge) = bounds(levels, level)
     val low = lowEdge?.let { stepsToDouble(it.toSteps(decimals) + 1, decimals) }
     val high = highEdge?.let { stepsToDouble(it.toSteps(decimals) - 1, decimals) }
     return when {
@@ -38,6 +35,26 @@ object LevelSpans {
       high != null -> LevelSpan.AtOrBelow(high)
       low != null -> LevelSpan.AtOrAbove(low)
       else -> floor?.let { LevelSpan.AtOrAbove(it) } ?: LevelSpan.Anything
+    }
+  }
+
+  /**
+   * The edges that bound [level] within [levels], as (lower, upper), `null` where there is none: a
+   * ↓ level lies between the nearest lower ↓ edge and its own edge, an ↑ level between its own edge
+   * and the nearest higher ↑ edge, the middle level between the highest ↓ edge and the lowest ↑
+   * edge. A ↓ or ↑ level without an edge counts as the middle one, as in [of]. The list may be
+   * unsorted.
+   */
+  fun bounds(levels: List<ColorLevel>, level: ColorLevel): Pair<Double?, Double?> {
+    val belowEdges = levels.filter { it.side == LevelSide.BELOW }.mapNotNull { it.edge }
+    val aboveEdges = levels.filter { it.side == LevelSide.ABOVE }.mapNotNull { it.edge }
+    val edge = level.edge
+    return when {
+      level.side == LevelSide.BELOW && edge != null ->
+        belowEdges.filter { it < edge }.maxOrNull() to edge
+      level.side == LevelSide.ABOVE && edge != null ->
+        edge to aboveEdges.filter { it > edge }.minOrNull()
+      else -> belowEdges.maxOrNull() to aboveEdges.minOrNull()
     }
   }
 }

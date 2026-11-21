@@ -18,6 +18,7 @@ import io.lumensync.habattery.data.store.JsonSerializer
 import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
+import io.lumensync.habattery.data.store.settingsDataStore
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.port.BatterySource
@@ -26,7 +27,7 @@ import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
 import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
-import io.lumensync.habattery.system.AndroidFullChargeNotifier
+import io.lumensync.habattery.system.AndroidLevelNotifier
 import io.lumensync.habattery.system.AppLanguage
 import io.lumensync.habattery.system.ConfigWatcher
 import io.lumensync.habattery.system.TextConfig
@@ -58,9 +59,7 @@ class AppContainer(context: Context) {
 
   val settingsRepository: SettingsRepository =
     DataStoreSettingsRepository(
-      jsonDataStore(JsonSerializer(SettingsRecord(), SettingsRecord.serializer()), storeScope) {
-        appContext.dataStoreFile(SETTINGS_FILE)
-      }
+      settingsDataStore(storeScope) { appContext.dataStoreFile(SETTINGS_FILE) }
     )
 
   val readingCache: ReadingCache =
@@ -97,7 +96,7 @@ class AppContainer(context: Context) {
       tokens = tokenStore,
       source = batterySource,
       cache = readingCache,
-      notifier = AndroidFullChargeNotifier(appContext),
+      notifier = AndroidLevelNotifier(appContext),
       widgets = widgetRefresher,
     )
 

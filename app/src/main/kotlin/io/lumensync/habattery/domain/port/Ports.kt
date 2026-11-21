@@ -1,5 +1,6 @@
 package io.lumensync.habattery.domain.port
 
+import io.lumensync.habattery.domain.LevelAlert
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
@@ -53,8 +54,14 @@ interface WidgetRefresher {
   suspend fun refreshAll()
 }
 
-interface FullChargeNotifier {
-  fun showFullCharge()
+interface LevelNotifier {
+  /**
+   * Whether the system lets the app post: permission granted and app notifications enabled. The
+   * main switch is not checked here.
+   */
+  fun canPost(): Boolean
+
+  fun post(alert: LevelAlert)
 }
 
 interface SyncScheduler {

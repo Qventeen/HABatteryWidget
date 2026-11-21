@@ -157,7 +157,7 @@ class MainActivity : ComponentActivity() {
       saveEntities = viewModel::saveEntities,
       findTemperatureSensors = viewModel::findTemperatureSensors,
       saveRefresh = viewModel::saveRefresh,
-      setNotifyOnFull = viewModel::setNotifyOnFull,
+      setNotificationsOn = viewModel::setNotificationsOn,
       saveCapacity = viewModel::saveCapacity,
       saveDisplay = viewModel::saveDisplay,
       saveFontPercents = viewModel::saveFontPercents,

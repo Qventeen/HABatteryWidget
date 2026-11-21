@@ -46,9 +46,20 @@
     <string name="widget_auto_off">Auto refresh off</string>
     <string name="widget_open_app">Open app</string>
 
-    <string name="notification_channel_full">Full charge</string>
-    <string name="notification_full_title">Battery full</string>
-    <string name="notification_full_text">The battery is fully charged.</string>
+    <string name="notification_channel_critical">Critical</string>
+    <string name="notification_channel_warning">Warning</string>
+    <string name="notification_channel_normal">Normal</string>
+    <string name="notification_channel_info">Info</string>
+    <string name="notification_value_soc">Charge</string>
+    <string name="notification_value_voltage">Voltage</string>
+    <string name="notification_value_charge_current">Charge current</string>
+    <string name="notification_value_discharge_current">Discharge current</string>
+    <string name="notification_value_delta">Cell delta</string>
+    <string name="notification_value_battery_temperature">Battery temperature</string>
+    <string name="notification_value_mosfet_temperature">MOSFET temperature</string>
+    <string name="notification_level_title">%1$s: %2$s %3$s</string>
+    <string name="notification_level_title_short">%1$s: %2$s</string>
+    <string name="notification_level_text">%1$s · measured at %2$s</string>
 
     <!-- Main screen. -->
     <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
@@ -110,7 +121,9 @@
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>
-    <string name="notify_on_full">Notify when the battery is full</string>
+    <string name="notifications_switch">Notifications</string>
+    <string name="notifications_hint">Choose the levels with the bells in Levels and alerts.</string>
+    <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual refresh.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
 
@@ -151,10 +164,10 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
 
-    <!-- Colours section (value levels). -->
-    <string name="colors_title">Colours</string>
-    <string name="colors_summary_default">Default colours</string>
-    <!-- %1$s lists the values with custom colours, comma-separated. -->
+    <!-- Levels and alerts section (value levels). -->
+    <string name="colors_title">Levels and alerts</string>
+    <string name="colors_summary_default">Default levels</string>
+    <!-- %1$s lists the values with custom levels, comma-separated. -->
     <string name="colors_summary_custom">Custom: %1$s</string>
     <string name="colors_value_soc">State of charge</string>
     <string name="colors_value_voltage">Voltage</string>
@@ -169,7 +182,7 @@
     <string name="colors_default">Default</string>
     <string name="colors_edit">Edit</string>
     <!-- %1$s is the value, such as Voltage. -->
-    <string name="colors_default_title">Use default colours for %1$s?</string>
+    <string name="colors_default_title">Use default levels for %1$s?</string>
     <string name="colors_default_text">Your levels for this value are deleted.</string>
     <string name="colors_default_confirm">Use defaults</string>
     <string name="colors_add_level">Add level</string>
@@ -196,6 +209,17 @@
     <string name="colors_two_parts">%1$s · %2$s</string>
     <!-- Joins the parts TalkBack reads for a level tag, such as 20 % and below, Low. -->
     <string name="colors_list_parts">%1$s, %2$s</string>
+    <!-- TalkBack's last part of a level tag whose level notifies. -->
+    <string name="colors_tag_bell">Bell on</string>
+    <!-- TalkBack's name for a level's bell in the editor; %1$s is the level's name, such as Low. -->
+    <string name="level_bell">Notify about %1$s</string>
+    <!-- The re-arm margin field, in the value's unit. -->
+    <string name="level_margin">Hysteresis</string>
+    <!-- The info button of the margin field: TalkBack name and the tip it opens. -->
+    <string name="level_margin_info">About hysteresis</string>
+    <string name="level_margin_tip">After a notification, the level notifies again only when the value moves this far from its edge. Stops repeats when the value jitters.</string>
+    <!-- %1$s is the default margin with its unit, such as 2 %. -->
+    <string name="level_margin_default">Default: %1$s</string>
     <string name="level_type_critical">Critical</string>
     <string name="level_type_warning">Warning</string>
     <string name="level_type_normal">Normal</string>
@@ -258,6 +282,7 @@
     <string name="field_level_edge_invalid">Enter a number</string>
     <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
     <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
+    <string name="field_level_margin_invalid">Enter a number of 0 or more</string>
 
     <!-- Sample values for the widget picker preview. -->
     <string name="preview_time_left">17h 16m</string>

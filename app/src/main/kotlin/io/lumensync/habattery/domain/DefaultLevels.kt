@@ -9,7 +9,10 @@ import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import kotlin.math.floor
 
-/** The built-in levels of each value, in shown order. Ids run 1..n and names stay empty. */
+/**
+ * The built-in levels of each value, in shown order. Ids run 1..n and names stay empty. Bells are on
+ * for the levels that mean act now: SOC Low and Full, Freezing and Hot battery, Hot MOSFET.
+ */
 object DefaultLevels {
   private val BELOW = LevelSide.BELOW
   private val MIDDLE = LevelSide.MIDDLE
@@ -96,9 +99,18 @@ object DefaultLevels {
         color = row.color,
         icon = row.icon,
         defaultName = row.name,
+        notify = isBell(value, row.name),
       )
     }
   }
+
+  private fun isBell(value: LevelValue, name: LevelName): Boolean =
+    when (value) {
+      LevelValue.SOC -> name == LevelName.LOW || name == LevelName.FULL
+      LevelValue.BATTERY_TEMPERATURE -> name == LevelName.FREEZING || name == LevelName.HOT
+      LevelValue.MOSFET_TEMPERATURE -> name == LevelName.HOT
+      else -> false
+    }
 
   private class Row(
     val side: LevelSide,

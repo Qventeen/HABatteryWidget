@@ -2,8 +2,9 @@ package io.lumensync.habattery.ui.sections
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,12 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.FieldError
@@ -47,21 +52,24 @@ import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
 import io.lumensync.habattery.domain.model.LevelName
-import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.customLevels
 import io.lumensync.habattery.format.SpanText
+import io.lumensync.habattery.format.levelNameRes
+import io.lumensync.habattery.format.nameOrNull
 import io.lumensync.habattery.format.numberText
-import io.lumensync.habattery.format.placeText
+import io.lumensync.habattery.format.placeWithUnit
 import io.lumensync.habattery.format.spanText
+import io.lumensync.habattery.format.typeLabel
+import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
 
 /**
- * The colour levels of every value as tags, with Default and Edit; one editor is open at a time.
+ * The levels of every value as tags, with Default and Edit; one editor is open at a time.
  * [basis] gives the built-in edges.
  * [onSaveLevels] returns `false` when a field has an error, and the editor stays open.
  */
@@ -70,7 +78,7 @@ fun ColorsSection(
   colorLevels: Map<String, CustomLevels>,
   basis: LevelBasis,
   errors: List<FieldError>,
-  onSaveLevels: (LevelValue, List<LevelDraft>, Locale) -> Boolean,
+  onSaveLevels: (LevelValue, List<LevelDraft>, margin: String, Locale) -> Boolean,
   onUseDefaults: (LevelValue) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -96,8 +104,9 @@ fun ColorsSection(
       // take over the closed editor's draft and errors.
       key(value) {
         val levels = LevelPicker.effective(value, own[value], basis)
+        // Above the editor branch, so the fold state survives an open editor.
+        var folded by rememberSaveable { mutableStateOf(true) }
         if (editing == value) {
-          ValueRow(value)
           LevelEditor(
             value = value,
             stored = settings.customLevels(value),
@@ -105,17 +114,18 @@ fun ColorsSection(
             basis = basis,
             palette = palette,
             errors = errors,
-            onSave = { drafts, locale -> onSaveLevels(value, drafts, locale) },
+            onSave = { drafts, margin, locale -> onSaveLevels(value, drafts, margin, locale) },
             onClose = { editing = null },
+            header = { buttons -> ValueRow(value, buttons = buttons) },
           )
         } else {
-          ValueRow(value) {
+          ValueRow(value, expanded = !folded, onToggle = { folded = !folded }) {
             ValueButton(R.string.colors_default, enabled = own[value] != null) {
               confirmDefault = value
             }
             ValueButton(R.string.colors_edit) { editing = value }
           }
-          LevelTags(value, levels, palette)
+          if (!folded) LevelTags(value, levels, palette)
         }
       }
     }
@@ -132,44 +142,80 @@ fun ColorsSection(
   }
 }
 
-/** A value's name, then its [buttons]. The name wraps, so a long name keeps the buttons in view. */
+/**
+ * A value's name, then its [buttons]. The name wraps, so a long name keeps the buttons in view.
+ * With [onToggle] the name and an arrow form one button that folds the value's tags; [expanded]
+ * says whether they show.
+ */
 @Composable
-private fun ValueRow(value: LevelValue, buttons: @Composable RowScope.() -> Unit = {}) {
+private fun ValueRow(
+  value: LevelValue,
+  expanded: Boolean = false,
+  onToggle: (() -> Unit)? = null,
+  buttons: @Composable RowScope.() -> Unit = {},
+) {
+  val name = stringResource(valueLabel(value))
+  var toggle: Modifier = Modifier.heightIn(min = 48.dp)
+  if (onToggle != null) {
+    val action =
+      stringResource(if (expanded) R.string.section_hide else R.string.section_show, name)
+    val state =
+      stringResource(if (expanded) R.string.section_expanded else R.string.section_collapsed)
+    toggle =
+      toggle
+        .clickable(onClickLabel = action, role = Role.Button, onClick = onToggle)
+        .semantics { stateDescription = state }
+  }
   Row(
     Modifier.fillMaxWidth().heightIn(min = 48.dp),
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Text(
-      stringResource(valueLabel(value)),
-      Modifier.weight(1f).semantics { heading() },
-      style = MaterialTheme.typography.titleSmall,
-    )
+    Row(Modifier.weight(1f).then(toggle), verticalAlignment = Alignment.CenterVertically) {
+      Text(
+        name,
+        Modifier.weight(1f, fill = false).semantics { heading() },
+        style = MaterialTheme.typography.titleSmall,
+      )
+      if (onToggle != null) {
+        Icon(
+          painterResource(if (expanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
+          contentDescription = null, // the row speaks for it
+        )
+      }
+    }
     buttons()
   }
 }
 
-/** A value's button, with the narrow text-button padding so two fit beside a long name. */
+/**
+ * A value's button, with the narrow text-button padding so two fit beside a long name. [filled]
+ * marks the primary action.
+ */
 @Composable
-private fun ValueButton(@StringRes label: Int, enabled: Boolean = true, onClick: () -> Unit) {
-  OutlinedButton(
-    onClick = onClick,
-    enabled = enabled,
-    contentPadding = ButtonDefaults.TextButtonContentPadding,
-  ) {
-    Text(stringResource(label))
+internal fun ValueButton(
+  @StringRes label: Int,
+  enabled: Boolean = true,
+  filled: Boolean = false,
+  onClick: () -> Unit,
+) {
+  val padding = ButtonDefaults.TextButtonContentPadding
+  if (filled) {
+    Button(onClick = onClick, enabled = enabled, contentPadding = padding) {
+      Text(stringResource(label))
+    }
+  } else {
+    OutlinedButton(onClick = onClick, enabled = enabled, contentPadding = padding) {
+      Text(stringResource(label))
+    }
   }
 }
 
-/** The [levels] of [value], in shown order, as pills in the widget's look. */
+/** The [levels] of [value], in shown order, as pills in the widget's look, one per line. */
 @Composable
 private fun LevelTags(value: LevelValue, levels: List<ColorLevel>, palette: WidgetPalette) {
   val locale = LocalConfiguration.current.locales[0]
-  FlowRow(
-    Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-  ) {
+  Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
     levels.forEach { level ->
       val span = LevelSpans.of(levels, level, value.decimals, value.floor)
       LevelTag(value, level, span, locale, palette)
@@ -178,9 +224,9 @@ private fun LevelTags(value: LevelValue, levels: List<ColorLevel>, palette: Widg
 }
 
 /**
- * One level: its icon and "place · name", such as "↓20 % · Low". The colour shows the type, so only
- * TalkBack says it, and TalkBack reads the place in words. A level with no name shows its type word
- * instead.
+ * One level: its icon, "place · name", such as "↓20 % · Low", and a bell when the level notifies.
+ * The colour shows the type, so only TalkBack says it, and TalkBack reads the place in words. A
+ * level with no name shows its type word instead.
  */
 @Composable
 private fun LevelTag(
@@ -192,15 +238,14 @@ private fun LevelTag(
 ) {
   val shades = palette.shades(level.shownColor)
   val unit = stringResource(unitLabel(value))
-  val name = level.name.ifBlank { defaultNameText(level.defaultName) }.ifBlank { null }
+  val resources = LocalResources.current
+  val name = level.nameOrNull(resources)
   val type = stringResource(typeLabel(level.type))
-  val place =
-    span.placeText(value.decimals, locale, level.side)?.let {
-      stringResource(R.string.colors_place, it, unit)
-    }
+  val place = span.placeWithUnit(value.decimals, unit, locale, level.side, resources)
   val text = joined(R.string.colors_two_parts, place, name ?: type)
   val words = spanWords(span, value.decimals, unit, locale)
-  val description = joined(R.string.colors_list_parts, words, name, type)
+  val bell = if (level.notify) stringResource(R.string.colors_tag_bell) else null
+  val description = joined(R.string.colors_list_parts, words, name, type, bell)
   Row(
     Modifier.background(shades.background, CircleShape)
       .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -217,6 +262,14 @@ private fun LevelTag(
       )
     }
     Text(text, color = shades.text, style = MaterialTheme.typography.labelLarge)
+    if (level.notify) {
+      Icon(
+        painterResource(R.drawable.ic_bell),
+        contentDescription = null,
+        modifier = Modifier.size(16.dp),
+        tint = shades.text,
+      )
+    }
   }
 }
 
@@ -265,7 +318,7 @@ internal fun appPalette(): WidgetPalette =
 
 @Composable
 internal fun defaultNameText(name: LevelName?): String =
-  name?.let { stringResource(nameLabel(it)) }.orEmpty()
+  name?.let { stringResource(levelNameRes(it)) }.orEmpty()
 
 @StringRes
 private fun valueLabel(value: LevelValue): Int =
@@ -277,27 +330,6 @@ private fun valueLabel(value: LevelValue): Int =
     LevelValue.DELTA -> R.string.colors_value_delta
     LevelValue.BATTERY_TEMPERATURE -> R.string.widget_battery_temperature
     LevelValue.MOSFET_TEMPERATURE -> R.string.widget_mosfet_temperature
-  }
-
-@StringRes
-internal fun unitLabel(value: LevelValue): Int =
-  when (value) {
-    LevelValue.SOC -> R.string.colors_unit_percent
-    LevelValue.VOLTAGE -> R.string.colors_unit_volts
-    LevelValue.CHARGE_CURRENT,
-    LevelValue.DISCHARGE_CURRENT -> R.string.colors_unit_amps
-    LevelValue.DELTA -> R.string.colors_unit_millivolts
-    LevelValue.BATTERY_TEMPERATURE,
-    LevelValue.MOSFET_TEMPERATURE -> R.string.colors_unit_celsius
-  }
-
-@StringRes
-internal fun typeLabel(type: LevelType): Int =
-  when (type) {
-    LevelType.CRITICAL -> R.string.level_type_critical
-    LevelType.WARNING -> R.string.level_type_warning
-    LevelType.NORMAL -> R.string.level_type_normal
-    LevelType.INFO -> R.string.level_type_info
   }
 
 @StringRes
@@ -322,21 +354,4 @@ internal fun iconLabel(icon: LevelIcon?): Int =
     LevelIcon.LEAF -> R.string.level_icon_leaf
     LevelIcon.FLAME -> R.string.level_icon_flame
     LevelIcon.FLAME_ALERT -> R.string.level_icon_flame_alert
-  }
-
-@StringRes
-private fun nameLabel(name: LevelName): Int =
-  when (name) {
-    LevelName.LOW -> R.string.level_name_low
-    LevelName.GETTING_LOW -> R.string.level_name_getting_low
-    LevelName.NORMAL -> R.string.level_name_normal
-    LevelName.FULL -> R.string.level_name_full
-    LevelName.FREEZING -> R.string.level_name_freezing
-    LevelName.COOL -> R.string.level_name_cool
-    LevelName.WARM -> R.string.level_name_warm
-    LevelName.HOT -> R.string.level_name_hot
-    LevelName.BALANCED -> R.string.level_name_balanced
-    LevelName.HIGH -> R.string.level_name_high
-    LevelName.VERY_HIGH -> R.string.level_name_very_high
-    LevelName.LIGHT -> R.string.level_name_light
   }

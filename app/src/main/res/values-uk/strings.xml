@@ -43,9 +43,20 @@
     <string name="delta_label">Δ %1$s</string>
     <string name="average_cell_label">сер. %1$s</string>
 
-    <string name="notification_channel_full">Повний заряд</string>
-    <string name="notification_full_title">Батарея заряджена</string>
-    <string name="notification_full_text">Батарею повністю заряджено.</string>
+    <string name="notification_channel_critical">Критичні</string>
+    <string name="notification_channel_warning">Попередження</string>
+    <string name="notification_channel_normal">Звичайні</string>
+    <string name="notification_channel_info">Інформація</string>
+    <string name="notification_value_soc">Заряд</string>
+    <string name="notification_value_voltage">Напруга</string>
+    <string name="notification_value_charge_current">Струм заряду</string>
+    <string name="notification_value_discharge_current">Струм розряду</string>
+    <string name="notification_value_delta">Різниця комірок</string>
+    <string name="notification_value_battery_temperature">Температура батареї</string>
+    <string name="notification_value_mosfet_temperature">Температура MOSFET</string>
+    <string name="notification_level_title">%1$s: %2$s %3$s</string>
+    <string name="notification_level_title_short">%1$s: %2$s</string>
+    <string name="notification_level_text">%1$s · виміряно о %2$s</string>
 
     <string name="overview_setup">Вкажіть нижче URL Home Assistant, токен і сутність заряду.</string>
     <string name="preview_description">Попередній перегляд віджета, %1$s</string>
@@ -103,7 +114,9 @@
     <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
 
     <string name="notify_title">Сповіщення</string>
-    <string name="notify_on_full">Сповіщати, коли батарея заряджена</string>
+    <string name="notifications_switch">Сповіщення</string>
+    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення».</string>
+    <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення надходять лише після ручного оновлення.</string>
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
 
@@ -142,8 +155,8 @@
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · розмір тексту змінено</string>
 
-    <string name="colors_title">Кольори</string>
-    <string name="colors_summary_default">Типові кольори</string>
+    <string name="colors_title">Рівні та сповіщення</string>
+    <string name="colors_summary_default">Типові рівні</string>
     <string name="colors_summary_custom">Власні: %1$s</string>
     <string name="colors_value_soc">Рівень заряду</string>
     <string name="colors_value_voltage">Напруга</string>
@@ -157,7 +170,7 @@
     <string name="colors_unit_celsius">°C</string>
     <string name="colors_default">Типові</string>
     <string name="colors_edit">Змінити</string>
-    <string name="colors_default_title">Типові кольори для «%1$s»?</string>
+    <string name="colors_default_title">Типові рівні для «%1$s»?</string>
     <string name="colors_default_text">Ваші рівні для цього значення буде видалено.</string>
     <string name="colors_default_confirm">Повернути типові</string>
     <string name="colors_add_level">Додати рівень</string>
@@ -175,6 +188,13 @@
     <string name="colors_color_default">%1$s, типовий</string>
     <string name="colors_two_parts">%1$s · %2$s</string>
     <string name="colors_list_parts">%1$s, %2$s</string>
+    <string name="colors_tag_bell">Дзвіночок увімкнено</string>
+    <string name="level_bell">Сповіщати про «%1$s»</string>
+    <string name="level_margin">Гістерезис</string>
+    <!-- The info button of the margin field: TalkBack name and the tip it opens. -->
+    <string name="level_margin_info">Про гістерезис</string>
+    <string name="level_margin_tip">Після сповіщення рівень сповістить знову, лише коли значення відійде від межі на цю величину. Захищає від повторів, коли значення коливається.</string>
+    <string name="level_margin_default">Типово: %1$s</string>
     <string name="level_type_critical">Критичний</string>
     <string name="level_type_warning">Попередження</string>
     <string name="level_type_normal">Норма</string>
@@ -235,6 +255,7 @@
     <string name="field_level_edge_invalid">Введіть число</string>
     <string name="field_level_edge_duplicate">Два рівні з одного боку не можуть мати однакову межу</string>
     <string name="field_level_edge_overlap">Залиште проміжок між рівнями ↓ і ↑</string>
+    <string name="field_level_margin_invalid">Введіть число, не менше 0</string>
 
     <string name="preview_time_left">17г і 16х</string>
     <string name="preview_kwh">4,58 кВт·год</string>

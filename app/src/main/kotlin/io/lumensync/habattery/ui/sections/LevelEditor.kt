@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,18 +23,25 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldLabelPosition
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +49,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -48,6 +57,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -73,16 +84,22 @@ import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MAX_LEVELS
 import io.lumensync.habattery.format.mark
-import io.lumensync.habattery.format.placeText
+import io.lumensync.habattery.format.placeWithUnit
+import io.lumensync.habattery.format.shownName
+import io.lumensync.habattery.format.typeLabel
+import io.lumensync.habattery.format.unitLabel
 import io.lumensync.habattery.ui.LevelDraft
 import io.lumensync.habattery.ui.defaultDrafts
+import io.lumensync.habattery.ui.defaultMarginText
 import io.lumensync.habattery.ui.editorDrafts
+import io.lumensync.habattery.ui.editorMargin
 import io.lumensync.habattery.ui.middleSpan
 import io.lumensync.habattery.ui.withNewLevel
 import io.lumensync.habattery.ui.withoutLevel
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.widget.levelIconRes
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 /** The picker's colours. Teal is left out: 0012 keeps it for the inverter, a stored teal stays. */
 private val PickerColors =
@@ -98,10 +115,13 @@ private val PickerColors =
   )
 
 /**
- * The owner's levels of [value] as a draft: the [stored] own levels, or the built-in ones. Nothing
- * is stored before Save; [onSave] returns `false` when a field has an error, and the editor stays
+ * The owner's levels of [value] as a draft: the [stored] own levels, or the built-in ones, and the
+ * re-arm margin, blank for the default of [basis]. Nothing is stored before Save; [onSave] takes
+ * the drafts and the margin text and returns `false` when a field has an error, and the editor stays
  * open. The rows stay in draft order, so the index of an edge error still names its row. [shown]
- * are the levels the tags show; a new level's id stays above theirs.
+ * are the levels the tags show; a new level's id stays above theirs. The [header] draws the value's
+ * name row and places the Cancel and Save buttons it is given, so they stay in view above the rows;
+ * they act like the ones at the bottom.
  */
 @Composable
 internal fun LevelEditor(
@@ -111,22 +131,40 @@ internal fun LevelEditor(
   basis: LevelBasis,
   palette: WidgetPalette,
   errors: List<FieldError>,
-  onSave: (List<LevelDraft>, Locale) -> Boolean,
+  onSave: (List<LevelDraft>, margin: String, Locale) -> Boolean,
   onClose: () -> Unit,
+  header: @Composable (buttons: @Composable RowScope.() -> Unit) -> Unit,
 ) {
   val locale = LocalConfiguration.current.locales[0]
+  val focusManager = LocalFocusManager.current
   // Plain remember: losing an unsaved draft on rotation is accepted. Not keyed by the basis: a
   // sync may bring a new one while the owner types.
   var drafts by
     remember(value, stored) { mutableStateOf(editorDrafts(value, stored, basis, locale)) }
+  var margin by remember(value, stored) { mutableStateOf(editorMargin(value, stored, locale)) }
   var resets by remember { mutableIntStateOf(0) }
-  // The screen has one error list. Only this editor's own save gives its edge errors, and their
-  // indexes no longer match once a row is removed or the draft is reset.
+  // The screen has one error list. Only this editor's own save gives its edge and margin errors,
+  // and the edge indexes no longer match once a row is removed or the draft is reset.
   var ownErrors by remember(value) { mutableStateOf(false) }
   val unit = stringResource(unitLabel(value))
   val middle = middleSpan(value, drafts, locale)
   val middleRange = middleRangeText(middle, value.decimals, unit, locale)
   val middleWords = middle?.let { spanWords(it, value.decimals, unit, locale) }
+  // The one save, for both Save buttons. It clears focus, which hides the keyboard.
+  val save = {
+    focusManager.clearFocus()
+    ownErrors = true
+    if (onSave(drafts, margin, locale)) onClose()
+  }
+
+  header {
+    ValueButton(R.string.dialog_cancel, onClick = onClose)
+    ValueButton(
+      R.string.action_save,
+      filled = true,
+      onClick = save,
+    )
+  }
 
   // The text fields keep their own text, and the built-in levels reuse ids, so the rows are built
   // again whenever the drafts are: on a reset, and when the stored levels change under the open
@@ -171,6 +209,7 @@ internal fun LevelEditor(
     OutlinedButton(
       onClick = {
         drafts = defaultDrafts(value, basis, locale)
+        margin = ""
         resets++
         ownErrors = false
       }
@@ -178,25 +217,85 @@ internal fun LevelEditor(
       Text(stringResource(R.string.colors_reset))
     }
   }
+  // Rebuilt like the rows: the field keeps its own text and would not show the reset.
+  key(stored, resets) {
+    MarginField(
+      margin = margin,
+      error = if (ownErrors) errors.errorFor(Field.LEVEL_MARGIN) else null,
+      unit = unit,
+      defaultMargin = defaultMarginText(value, basis, locale),
+      onMarginChange = { margin = it },
+    )
+  }
   FlowRow(
     horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
     TextButton(onClick = onClose) { Text(stringResource(R.string.dialog_cancel)) }
-    SaveButton {
-      ownErrors = true
-      if (onSave(drafts, locale)) onClose()
+    SaveButton(onClick = save)
+  }
+}
+
+/**
+ * The value's re-arm margin (hysteresis), in its [unit]. An info button inside the field opens a
+ * tip. Under it: the [error] of the last save, else the [defaultMargin] that a blank field keeps.
+ */
+@Composable
+private fun MarginField(
+  margin: String,
+  error: FieldError?,
+  unit: String,
+  defaultMargin: String,
+  onMarginChange: (String) -> Unit,
+) {
+  LevelTextField(
+    text = margin,
+    onTextChange = onMarginChange,
+    label = stringResource(R.string.level_margin),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+    modifier = Modifier.fillMaxWidth(),
+    suffix = unit,
+    isError = error != null,
+    supportingText =
+      error?.let { fieldErrorText(it) }
+        ?: stringResource(
+          R.string.level_margin_default,
+          stringResource(R.string.colors_place, defaultMargin, unit),
+        ),
+    trailingIcon = { MarginInfo() },
+  )
+}
+
+/**
+ * The info button of the margin field. A tap shows a rich tip that stays until a tap outside; a
+ * persistent tip is also what TalkBack can read.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MarginInfo() {
+  val tip = rememberTooltipState(isPersistent = true)
+  val scope = rememberCoroutineScope()
+  TooltipBox(
+    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+    tooltip = { RichTooltip { Text(stringResource(R.string.level_margin_tip)) } },
+    state = tip,
+  ) {
+    IconButton(onClick = { scope.launch { tip.show() } }) {
+      Icon(
+        painterResource(R.drawable.ic_info),
+        contentDescription = stringResource(R.string.level_margin_info),
+      )
     }
   }
 }
 
 /**
- * One level in the editor, in four parts. The first line holds the name and, on a ↓ or ↑ level, the
- * limit with its [unit] after the number; the middle level has no limit and shows [middleRange]
- * instead, which TalkBack reads as [middleWords]. A limit [error] shows under that line. The second
- * line holds the ↓/↑ choice, the type and the remove button; the middle level has only its type.
- * Last come the colour and, if the value has icons, the icon. [onUpdate] takes a change to apply to
- * the level's current draft.
+ * One level in the editor, in four parts. The first line holds the name, on a ↓ or ↑ level the
+ * limit with its [unit] after the number, and the bell; the middle level has no limit and shows
+ * [middleRange] instead, which TalkBack reads as [middleWords]. A limit [error] shows under that
+ * line. The second line holds the ↓/↑ choice, the type and the remove button; the middle level has
+ * only its type. Last come the colour and, if the value has icons, the icon. [onUpdate] takes a
+ * change to apply to the level's current draft.
  */
 @Composable
 private fun LevelRow(
@@ -214,37 +313,46 @@ private fun LevelRow(
   val shown = draft.color ?: draft.type.defaultColor
   val edged = draft.side != LevelSide.MIDDLE
   val errorText = error?.let { fieldErrorText(it) }
+  // The bell reads the name the tag would show, also while the name field is empty.
+  val bellName =
+    ColorLevel(type = draft.type, name = draft.name, defaultName = draft.defaultName)
+      .shownName(LocalResources.current)
   HorizontalDivider()
-  Row(
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    LevelTextField(
-      text = draft.name,
-      onTextChange = { text -> onUpdate { it.copy(name = text) } },
-      label = stringResource(R.string.colors_name),
-      keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-      modifier = Modifier.weight(1f),
-      placeholder = draft.defaultName?.let { defaultNameText(it) },
-    )
-    if (edged) {
+  Row(verticalAlignment = Alignment.CenterVertically) {
+    // No gap before the bell: its touch area already pads the icon, and the name needs the width.
+    Row(
+      Modifier.weight(1f),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
       LevelTextField(
-        text = draft.edgeText,
-        onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
-        label = stringResource(R.string.colors_edge),
-        keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
-        // The error text under the line is hidden from TalkBack, so the field carries it.
-        modifier = Modifier.width(120.dp).semantics { errorText?.let { error(it) } },
-        suffix = unit,
-        isError = error != null,
+        text = draft.name,
+        onTextChange = { text -> onUpdate { it.copy(name = text) } },
+        label = stringResource(R.string.colors_name),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        modifier = Modifier.weight(1f),
+        placeholder = draft.defaultName?.let { defaultNameText(it) },
       )
-    } else {
-      Text(
-        middleRange,
-        Modifier.semantics { middleWords?.let { contentDescription = it } },
-        style = MaterialTheme.typography.bodyLarge,
-      )
+      if (edged) {
+        LevelTextField(
+          text = draft.edgeText,
+          onTextChange = { text -> onUpdate { it.copy(edgeText = text) } },
+          label = stringResource(R.string.colors_edge),
+          keyboardOptions = KeyboardOptions(keyboardType = edgeKeyboard(value)),
+          // The error text under the line is hidden from TalkBack, so the field carries it.
+          modifier = Modifier.width(120.dp).semantics { errorText?.let { error(it) } },
+          suffix = unit,
+          isError = error != null,
+        )
+      } else {
+        Text(
+          middleRange,
+          Modifier.semantics { middleWords?.let { contentDescription = it } },
+          style = MaterialTheme.typography.bodyLarge,
+        )
+      }
     }
+    BellToggle(draft.notify, bellName) { on -> onUpdate { it.copy(notify = on) } }
   }
   errorText?.let {
     Text(
@@ -301,11 +409,23 @@ private fun SideChoice(side: LevelSide, onSelect: (LevelSide) -> Unit) {
   }
 }
 
+/** A level's bell; TalkBack reads it as a checkbox named after the level's [name]. */
+@Composable
+private fun BellToggle(on: Boolean, name: String, onChange: (Boolean) -> Unit) {
+  IconToggleButton(checked = on, onCheckedChange = onChange) {
+    Icon(
+      painterResource(if (on) R.drawable.ic_bell else R.drawable.ic_bell_off),
+      contentDescription = stringResource(R.string.level_bell, name),
+    )
+  }
+}
+
 /**
  * An outlined field whose label stays on the border, so the [placeholder] shows inside while the
  * field is empty. In Material 3 1.4 only the state-based field takes a label position, so the field
  * keeps its own text: it starts from [text], reports each change to [onTextChange], and ignores a
- * later [text].
+ * later [text]. The label and the [placeholder] keep to one line and cut their end when the field
+ * is too narrow; TalkBack still reads them whole.
  */
 @Composable
 private fun LevelTextField(
@@ -317,6 +437,8 @@ private fun LevelTextField(
   placeholder: String? = null,
   suffix: String? = null,
   isError: Boolean = false,
+  supportingText: String? = null,
+  trailingIcon: (@Composable () -> Unit)? = null,
 ) {
   // Plain remember, like the draft: an unsaved edit may be lost on rotation.
   val state = remember { TextFieldState(text) }
@@ -326,9 +448,11 @@ private fun LevelTextField(
     state = state,
     modifier = modifier,
     labelPosition = TextFieldLabelPosition.Attached(alwaysMinimize = true),
-    label = { Text(label) },
-    placeholder = placeholder?.let { { Text(it) } },
+    label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+    placeholder = placeholder?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
     suffix = suffix?.let { { Text(it) } },
+    supportingText = supportingText?.let { { Text(it) } },
+    trailingIcon = trailingIcon,
     isError = isError,
     keyboardOptions = keyboardOptions,
     lineLimits = TextFieldLineLimits.SingleLine,
@@ -469,7 +593,6 @@ private fun edgeKeyboard(value: LevelValue): KeyboardType =
 @Composable
 private fun middleRangeText(span: LevelSpan?, decimals: Int, unit: String, locale: Locale): String {
   if (span == null) return stringResource(R.string.colors_range_unknown)
-  val place =
-    span.placeText(decimals, locale, LevelSide.MIDDLE) ?: return LevelSide.MIDDLE.mark()
-  return stringResource(R.string.colors_place, place, unit)
+  return span.placeWithUnit(decimals, unit, locale, LevelSide.MIDDLE, LocalResources.current)
+    ?: LevelSide.MIDDLE.mark()
 }

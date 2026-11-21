@@ -26,7 +26,7 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.testing.FakeBatterySource
-import io.lumensync.habattery.testing.FakeNotifier
+import io.lumensync.habattery.testing.FakeLevelNotifier
 import io.lumensync.habattery.testing.FakeReadingCache
 import io.lumensync.habattery.testing.FakeSettingsRepository
 import io.lumensync.habattery.testing.FakeSyncScheduler
@@ -79,7 +79,7 @@ class MainViewModelTest {
     tokens = FakeTokenStore(token, user = userToken)
     source = FakeBatterySource(SyncResult.Success(reading()))
     val cache = FakeReadingCache()
-    val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeNotifier(), widgets)
+    val sync = SyncBattery(settings, tokens, batterySource ?: source, cache, FakeLevelNotifier(), widgets)
     val vm = MainViewModel(
         settings, tokens, cache, sync, scheduler, widgets, batterySource ?: source, clock = { 1_000L })
     backgroundScope.launch { vm.uiState.collect {} }
@@ -229,11 +229,11 @@ class MainViewModelTest {
     settings.updateFailure = IOException("disk")
     vm.saveConnection("http://192.168.1.2:8123")
     vm.saveCapacity("100", Locale.US)
-    vm.setNotifyOnFull(true)
+    vm.setNotificationsOn(true)
     advanceUntilIdle()
     assertEquals("http://ha.local:8123", state.settings.connection.url)
     assertNull(state.settings.capacityAh)
-    assertFalse(state.settings.notifyOnFull)
+    assertFalse(state.settings.notificationsOn)
     assertEquals(1, source.calls)
     settings.updateFailure = null
     vm.saveCapacity("100", Locale.US)
@@ -381,11 +381,11 @@ class MainViewModelTest {
     assertTrue(widgets.refreshes > before)
   }
 
-  @Test fun setNotifyOnFull_saves() = runTest(dispatcher) {
+  @Test fun setNotificationsOn_saves() = runTest(dispatcher) {
     val vm = start()
-    vm.setNotifyOnFull(true)
+    vm.setNotificationsOn(true)
     advanceUntilIdle()
-    assertTrue(state.settings.notifyOnFull)
+    assertTrue(state.settings.notificationsOn)
     assertEquals(1, source.calls)
   }
 
@@ -526,8 +526,13 @@ class MainViewModelTest {
     assertEquals(ids, state.settings.entities.temperatures)
   }
 
-  private fun draft(side: LevelSide, edge: String = "", id: Int = 0, name: String = "") =
-    LevelDraft(id, side, edge, LevelType.NORMAL, null, null, name, null)
+  private fun draft(
+    side: LevelSide,
+    edge: String = "",
+    id: Int = 0,
+    name: String = "",
+    notify: Boolean = false,
+  ) = LevelDraft(id, side, edge, LevelType.NORMAL, null, null, name, null, notify)
 
   private val mid = draft(LevelSide.MIDDLE, id = 2)
 
@@ -544,6 +549,7 @@ class MainViewModelTest {
           draft(LevelSide.BELOW, "20", id = 1),
           draft(LevelSide.ABOVE, "50", id = 4, name = " Mid "),
         ),
+        "",
         Locale.US,
       )
     advanceUntilIdle()
@@ -561,6 +567,7 @@ class MainViewModelTest {
       vm.saveLevels(
         LevelValue.SOC,
         listOf(draft(LevelSide.MIDDLE, "junk", id = 1), draft(LevelSide.ABOVE, "50", id = 2)),
+        "",
         Locale.US,
       )
     advanceUntilIdle()
@@ -571,7 +578,12 @@ class MainViewModelTest {
   @Test fun saveLevels_blankEdge_isRequired() = runTest(dispatcher) {
     val vm = start()
     val saved =
-      vm.saveLevels(LevelValue.SOC, listOf(mid, draft(LevelSide.ABOVE, "  ", id = 1)), Locale.US)
+      vm.saveLevels(
+        LevelValue.SOC,
+        listOf(mid, draft(LevelSide.ABOVE, "  ", id = 1)),
+        "",
+        Locale.US,
+      )
     advanceUntilIdle()
     assertFalse(saved)
     assertEquals(listOf(FieldError(Field.LEVEL_EDGE, Problem.REQUIRED, 1)), state.errors)
@@ -589,6 +601,7 @@ class MainViewModelTest {
           draft(LevelSide.ABOVE, "x", id = 3),
           draft(LevelSide.ABOVE, "40", id = 4),
         ),
+        "",
         Locale.US,
       )
       advanceUntilIdle()
@@ -609,6 +622,7 @@ class MainViewModelTest {
       vm.saveLevels(
         LevelValue.SOC,
         listOf(mid, draft(LevelSide.ABOVE, "40", id = 1), draft(LevelSide.ABOVE, "40", id = 3)),
+        "",
         Locale.US,
       )
     advanceUntilIdle()
@@ -624,6 +638,7 @@ class MainViewModelTest {
       vm.saveLevels(
         LevelValue.SOC,
         listOf(draft(LevelSide.BELOW, "40", id = 1), mid, draft(LevelSide.ABOVE, "41", id = 3)),
+        "",
         Locale.US,
       )
     advanceUntilIdle()
@@ -641,6 +656,7 @@ class MainViewModelTest {
       vm.saveLevels(
         LevelValue.SOC,
         listOf(draft(LevelSide.BELOW, "40", id = 1), mid, draft(LevelSide.ABOVE, "42", id = 3)),
+        "",
         Locale.US,
       )
     advanceUntilIdle()
@@ -654,11 +670,13 @@ class MainViewModelTest {
     vm.saveLevels(
       LevelValue.BATTERY_TEMPERATURE,
       listOf(draft(LevelSide.BELOW, "-10", id = 1), mid, draft(LevelSide.ABOVE, "45", id = 3)),
+      "",
       uk,
     )
     vm.saveLevels(
       LevelValue.VOLTAGE,
       listOf(draft(LevelSide.BELOW, "51,2", id = 1), mid, draft(LevelSide.ABOVE, "55,2", id = 3)),
+      "",
       uk,
     )
     advanceUntilIdle()
@@ -668,17 +686,130 @@ class MainViewModelTest {
 
   @Test fun saveLevels_roundsToShownPrecision() = runTest(dispatcher) {
     val vm = start()
-    vm.saveLevels(LevelValue.DELTA, listOf(mid, draft(LevelSide.ABOVE, "12.4", id = 1)), Locale.US)
+    vm.saveLevels(
+      LevelValue.DELTA,
+      listOf(mid, draft(LevelSide.ABOVE, "12.4", id = 1)),
+      "",
+      Locale.US,
+    )
     advanceUntilIdle()
     assertEquals(listOf<Double?>(null, 12.0), edges(LevelValue.DELTA))
   }
 
   @Test fun useDefaults_dropsOwnLevels() = runTest(dispatcher) {
     val vm = start()
-    vm.saveLevels(LevelValue.SOC, listOf(mid, draft(LevelSide.ABOVE, "30", id = 1)), Locale.US)
+    vm.saveLevels(LevelValue.SOC, listOf(mid, draft(LevelSide.ABOVE, "30", id = 1)), "", Locale.US)
     advanceUntilIdle()
     vm.useDefaults(LevelValue.SOC)
     advanceUntilIdle()
     assertEquals(CustomLevels(), state.settings.customLevels(LevelValue.SOC))
+  }
+
+  @Test fun saveLevels_keepsBells() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(
+      LevelValue.SOC,
+      listOf(
+        draft(LevelSide.BELOW, "20", id = 1),
+        draft(LevelSide.BELOW, "40", id = 3, notify = true),
+        mid,
+      ),
+      "",
+      Locale.US,
+    )
+    advanceUntilIdle()
+    val bells = state.settings.customLevels(LevelValue.SOC).levels.associate { it.id to it.notify }
+    assertEquals(mapOf(1 to false, 3 to true, 2 to false), bells)
+  }
+
+  private val socDrafts = listOf(mid, draft(LevelSide.ABOVE, "100", id = 1))
+
+  private fun margin(value: LevelValue) = state.settings.customLevels(value).margin
+
+  @Test fun saveLevels_margin() = runTest(dispatcher) {
+    val uk = Locale.forLanguageTag("uk")
+    val vm = start()
+    assertTrue(vm.saveLevels(LevelValue.SOC, socDrafts, "4", Locale.US))
+    advanceUntilIdle()
+    assertEquals(4.0, margin(LevelValue.SOC))
+
+    val before = state.settings
+    assertFalse(vm.saveLevels(LevelValue.SOC, socDrafts, "-1", Locale.US))
+    advanceUntilIdle()
+    assertEquals(listOf(FieldError(Field.LEVEL_MARGIN, Problem.INVALID)), state.errors)
+    assertEquals(before, state.settings)
+
+    assertTrue(vm.saveLevels(LevelValue.SOC, socDrafts, " ", Locale.US))
+    advanceUntilIdle()
+    assertNull(margin(LevelValue.SOC))
+
+    val voltage = listOf(mid, draft(LevelSide.ABOVE, "55,2", id = 1))
+    assertTrue(vm.saveLevels(LevelValue.VOLTAGE, voltage, "0,2", uk))
+    advanceUntilIdle()
+    assertEquals(0.2, margin(LevelValue.VOLTAGE))
+  }
+
+  @Test fun saveLevels_unparsableMargin_isInvalid() = runTest(dispatcher) {
+    val vm = start()
+    assertFalse(vm.saveLevels(LevelValue.SOC, socDrafts, "2 %", Locale.US))
+    advanceUntilIdle()
+    assertEquals(listOf(FieldError(Field.LEVEL_MARGIN, Problem.INVALID)), state.errors)
+    assertTrue(state.settings.colorLevels.isEmpty())
+  }
+
+  @Test fun saveLevels_marginAndEdgeErrors_areReportedTogether() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, listOf(mid, draft(LevelSide.ABOVE, "x", id = 1)), "-1", Locale.US)
+    advanceUntilIdle()
+    assertEquals(
+      setOf(
+        FieldError(Field.LEVEL_EDGE, Problem.INVALID, 1),
+        FieldError(Field.LEVEL_MARGIN, Problem.INVALID),
+      ),
+      state.errors.toSet(),
+    )
+  }
+
+  @Test fun saveLevels_marginRoundsToShownPrecision() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, socDrafts, "2.4", Locale.US)
+    vm.saveLevels(
+      LevelValue.VOLTAGE,
+      listOf(mid, draft(LevelSide.ABOVE, "55.2", id = 1)),
+      "0.123",
+      Locale.US,
+    )
+    vm.saveLevels(
+      LevelValue.CHARGE_CURRENT,
+      listOf(mid, draft(LevelSide.ABOVE, "50", id = 1)),
+      "4.6",
+      Locale.US,
+    )
+    advanceUntilIdle()
+    assertEquals(2.0, margin(LevelValue.SOC))
+    assertEquals(0.12, margin(LevelValue.VOLTAGE))
+    assertEquals(4.6, margin(LevelValue.CHARGE_CURRENT))
+  }
+
+  @Test fun saveLevels_currentMarginBelowOneAmp_isKept() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(
+      LevelValue.CHARGE_CURRENT,
+      listOf(mid, draft(LevelSide.ABOVE, "50", id = 1)),
+      "0.5",
+      Locale.US,
+    )
+    advanceUntilIdle()
+    assertEquals(0.5, margin(LevelValue.CHARGE_CURRENT))
+  }
+
+  @Test fun useDefaults_clearsMargin() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveLevels(LevelValue.SOC, socDrafts, "4", Locale.US)
+    advanceUntilIdle()
+    assertEquals(4.0, margin(LevelValue.SOC))
+    vm.useDefaults(LevelValue.SOC)
+    advanceUntilIdle()
+    assertNull(margin(LevelValue.SOC))
   }
 }
