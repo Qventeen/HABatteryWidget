@@ -184,16 +184,16 @@ class DefaultLevelsTest {
       listOf(LevelName.NO_GRID, LevelName.LOW, LevelName.NORMAL, LevelName.HIGH),
       grid.names(),
     )
-    assertEquals(listOf(INFO, WARNING, NORMAL, WARNING), grid.types())
-    assertEquals(listOf(false, true, false, false), grid.map { it.notify })
+    assertEquals(listOf(INFO, WARNING, NORMAL, CRITICAL), grid.types())
+    assertEquals(listOf(false, true, false, true), grid.map { it.notify })
     assertEquals(listOf(1, 2, 3, 4), grid.map { it.id })
 
     val output = of(LevelValue.OUTPUT_VOLTAGE)
     assertEquals(grid.sides(), output.sides())
     assertEquals(grid.edges(), output.edges())
     assertEquals(LevelName.NO_POWER, output.first().defaultName)
-    assertEquals(listOf(CRITICAL, WARNING, NORMAL, WARNING), output.types())
-    assertTrue(output.none { it.notify })
+    assertEquals(listOf(CRITICAL, WARNING, NORMAL, CRITICAL), output.types())
+    assertEquals(listOf(false, false, false, true), output.map { it.notify })
   }
 
   @Test
@@ -242,7 +242,8 @@ class DefaultLevelsTest {
         LevelValue.SOC to listOf(LevelName.LOW, LevelName.FULL),
         LevelValue.BATTERY_TEMPERATURE to listOf(LevelName.FREEZING, LevelName.HOT),
         LevelValue.MOSFET_TEMPERATURE to listOf(LevelName.HOT),
-        LevelValue.GRID_VOLTAGE to listOf(LevelName.LOW),
+        LevelValue.GRID_VOLTAGE to listOf(LevelName.LOW, LevelName.HIGH),
+        LevelValue.OUTPUT_VOLTAGE to listOf(LevelName.HIGH),
       )
     for (value in LevelValue.entries) {
       for (basis in listOf(LevelBasis(100.0, 16), LevelBasis(null, null))) {

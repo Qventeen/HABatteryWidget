@@ -6,6 +6,7 @@ import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.withCustomLevels
@@ -346,6 +347,14 @@ class LevelAlertsTest {
     assertEquals(LevelSpan.AtOrBelow(206.0), alert.span)
     assertEquals(205.0, alert.shown, 0.0)
     assertEquals(1_000L, alert.measuredAtMillis)
+  }
+
+  @Test
+  fun grid_overvoltage_postsCritical() {
+    val outcome = evaluateGrid(255.0, gridState(LevelName.NORMAL))
+    val alert = outcome.alerts.single()
+    assertEquals(LevelName.HIGH, alert.level.defaultName)
+    assertEquals(LevelType.CRITICAL, alert.level.type)
   }
 
   @Test
