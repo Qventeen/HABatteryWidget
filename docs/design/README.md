@@ -1,7 +1,8 @@
 # Widget design — 4×2, 5×2, 4×3, 5×3
 
-The inverter strip (3×1, 4×1, 5×1, spec 0012) has its own section at the
-end, "Inverter strip".
+The inverter strip (3×1, 4×1, 5×1, spec 0012) has its own section near the
+end, "Inverter strip". The app's Modes section (spec 0014) follows it,
+"Mode editor".
 
 Status: approved (v5), built in spec 0005 (layouts); temperatures in
 spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
@@ -272,3 +273,33 @@ The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
 | Unknown mode text | `help` icon, grey; with "icon + word" the HA text as it is |
 | No data yet / setup needed | The tower icon and one line: "No data" or "Set up in the app"; no button |
 
+## Mode editor — Modes section of the Inverter tab (v8)
+
+Status: approved by the owner (2026-11-21), for spec 0014; not built yet.
+An app screen, not a widget: the Modes section on the Inverter tab, below
+Icons. On the canvas the v8 row ("Mode editor · v8") also shows the option
+the owner did not pick (2a: the texts in one comma-separated field).
+
+| File | What it is |
+|---|---|
+| `mode-editor.png` | Three frames, light theme: 1 view, 2 editor with one mode open, 3 a new mode just added |
+
+Rendered at 2× scale from an HTML mockup with the app's own drawables and
+the 0010 palette (light shades). The spec decides the behaviour; this
+picture shows the layout.
+
+![Mode editor](mode-editor.png)
+
+- **View:** one row per mode, "other" last: the mode pill (icon in the
+  mode colour), the shown word, its texts in small grey, the bell mark
+  (crossed out when off), the type word. "Default" and "Edit" on the
+  section header; the "Now" line at the end.
+- **Editor:** Cancel and Save on the section header. A closed mode row:
+  pill, word, bell toggle, type menu, expand arrow. One open mode: icon
+  button (opens the icon grid), "Name" field (placeholder = the default
+  word, "Blank = …" under it), "Home Assistant texts" as chips with ✕, an
+  "Add text" field with a round + button, eight colour chips (red, orange,
+  amber, green, teal, blue, violet, grey; the type's colour carries a white
+  dot), "✕ Delete mode". "+ Add mode" under the last row.
+- **New mode:** bell off, type Info, `help` icon, grey; a blank name shows
+  its first text ("Utility").
