@@ -137,7 +137,7 @@
 
     <string name="notify_title">Сповіщення</string>
     <string name="notifications_switch">Сповіщення</string>
-    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення». Зміни режиму інвертора теж сповіщаються.</string>
+    <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення» на вкладках «Батарея» та «Інвертор». Про зміни режиму інвертора теж надходять сповіщення.</string>
     <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення надходять лише після ручного оновлення.</string>
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
