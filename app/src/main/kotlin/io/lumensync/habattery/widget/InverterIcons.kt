@@ -53,7 +53,8 @@ fun InverterIcon.drawable(): Int =
     InverterIcon.ERROR -> R.drawable.ic_inv_error
     InverterIcon.REPORT -> R.drawable.ic_inv_report
     InverterIcon.WARNING -> R.drawable.ic_inv_warning
-    InverterIcon.DANGEROUS -> R.drawable.ic_inv_dangerous  }
+    InverterIcon.DANGEROUS -> R.drawable.ic_inv_dangerous
+  }
 
 /** A short name for screen readers and the icon picker. */
 @StringRes
@@ -103,4 +104,5 @@ fun InverterIcon.label(): Int =
     InverterIcon.ERROR -> R.string.inv_icon_error
     InverterIcon.REPORT -> R.string.inv_icon_report
     InverterIcon.WARNING -> R.string.inv_icon_warning
-    InverterIcon.DANGEROUS -> R.string.inv_icon_dangerous  }
+    InverterIcon.DANGEROUS -> R.string.inv_icon_dangerous
+  }

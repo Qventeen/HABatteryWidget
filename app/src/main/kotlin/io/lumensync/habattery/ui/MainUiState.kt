@@ -38,4 +38,3 @@ data class MainUiState(
   val connectionMissing: Boolean
     get() = settings.connection.url.isBlank() || !hasToken
 }
-

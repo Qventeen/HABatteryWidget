@@ -25,8 +25,8 @@ import okhttp3.OkHttpClient
 /**
  * Reads the battery and the inverter with a non-admin token (spec 0009): HA refuses
  * `POST /api/template` to it, so each configured entity is one `GET /api/states/<id>`. The
- * readings follow the template path's rules: a missing entity or a state that is not a number
- * gives no value.
+ * readings follow the template path's rules: a missing entity gives no value, and a numeric key
+ * needs a number.
  */
 class StatesSource(
   client: OkHttpClient,

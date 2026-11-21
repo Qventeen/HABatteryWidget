@@ -3,7 +3,7 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.model.InverterMode
 import io.lumensync.habattery.domain.model.InverterReading
 
-/** [mode] is `null` for a text the app has no row for; [text] is then what the ESP32 sent. */
+/** [mode] is `null` for a text the app has no row for; [text] is what the title shows then. */
 data class ModeAlert(val text: String, val mode: InverterMode?, val measuredAtMillis: Long)
 
 /** [last] is the mode text to store; [alert] is what to post, if anything. */

@@ -35,8 +35,8 @@ import io.lumensync.habattery.widget.WidgetPalette
 import kotlin.math.roundToInt
 
 /**
- * Posts level notifications on one channel per level type. Never asks for the permission; the
- * screen does that.
+ * Posts level and inverter mode notifications; the levels use one channel per level type. Never
+ * asks for the permission; the screen does that.
  */
 class AndroidLevelNotifier(context: Context) : LevelNotifier {
   private val context = context.applicationContext
@@ -101,8 +101,8 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
   }
 
   /**
-   * All four are created again before each post: the owner can set every type's sound at once,
-   * and the names follow the current language.
+   * All four level channels are created again before each post: the owner can set every type's
+   * sound at once, and the names follow the current language.
    */
   private fun createChannels(manager: NotificationManagerCompat) {
     OLD_CHANNEL_IDS.forEach(manager::deleteNotificationChannel)
