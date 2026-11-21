@@ -71,7 +71,7 @@ class WidgetContentTest {
           formatters.kilowattHours(4.1605),
           formatters.voltage(26.5),
           formatters.current(10.0),
-          "avg ${formatters.cellVoltage(3.312)}",
+          formatters.cellVoltage(3.312),
           text(R.string.delta_label, formatters.deltaMv(12)),
           formatters.temperature(25.0),
           formatters.temperature(27.0),
@@ -164,9 +164,17 @@ class WidgetContentTest {
   }
 
   @Test
-  fun missingAverageCell_showsDashInLabel() =
+  fun averageCellPill_iconInsteadOfLabel() =
+    render(model()) {
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_average_cell)))
+        .assertCountEquals(1)
+      onNode(hasTextEqualTo(formatters.cellVoltage(3.312))).assertExists()
+    }
+
+  @Test
+  fun missingAverageCell_showsDash() =
     render(model(sample.copy(averageCellVoltageV = null))) {
-      onNode(hasTextEqualTo("avg ${text(R.string.value_missing)}")).assertExists()
+      onNode(hasTextEqualTo(text(R.string.value_missing))).assertExists()
     }
 
   @Test
