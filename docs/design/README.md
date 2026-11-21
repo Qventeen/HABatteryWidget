@@ -2,7 +2,8 @@
 
 The inverter strip (3×1, 4×1, 5×1, spec 0012) has its own section near the
 end, "Inverter strip". The app's Modes section (spec 0014) follows it,
-"Mode editor".
+"Mode editor". The app icon and the notification icons (spec 0015) come
+last, "App icon".
 
 Status: approved (v5), built in spec 0005 (layouts); temperatures in
 spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
@@ -322,3 +323,39 @@ behaviour; this picture shows the layout.
   last row.
 - **New mode:** bell off, type Info, `help` icon, grey; a blank name shows
   its first text ("Utility").
+
+## App icon — House of tiles (v12, version A)
+
+Status: approved by the owner (2026-11-21), for spec 0015. Picked from 20
+ideas on the canvas: v10 (battery marks) and v11 (smart-home marks). The
+pick is v11 idea 1 "House of tiles" (one tile per widget, so new widgets
+fit the icon) in v12 colour version A "Lit window". The v12 row also shows
+versions B and C, which the owner did not pick.
+
+| File | What it is |
+|---|---|
+| `app-icon.png` | Version A: launcher (circle, rounded square), home screen light and dark, themed light and dark; notifications with one glyph per widget |
+
+Rendered at 2× scale from the canvas boards; 1 px of the design = 1 dp.
+
+![App icon](app-icon.png)
+
+- **Layers** (adaptive icon, 108 dp; the launcher shows the middle 72):
+  background `#2E7D32` (the light palette accent); foreground a white
+  `#FFFFFF` house with a 2 × 2 grid of tiles, the top-right tile amber
+  `#FFB869`, the other three tiles holes; monochrome (themed icons,
+  Android 13+) the same house with all four tiles cut out.
+- **Geometry**, in a 24-unit glyph box: house
+  `M12 3.4 L20.6 10.3 V19.1 H5.2 V10.3 Z`, bottom corners radius 1.8, its
+  outline grown by 0.5 with round joins (soft roof and eaves). Tiles
+  3.6 × 3.6, corner 0.9, at (7.8, 11.2), (12.6, 11.2), (7.8, 16),
+  (12.6, 16). On the 108-dp canvas the glyph is scaled ×2 and moved by
+  (30, 30): 48 dp, inside the 66-dp safe zone.
+- **Holes are real holes** (even-odd fill), not painted green, so the
+  themed icon and any launcher background show through them.
+- **Notifications:** the small icon names the widget, not the type.
+  Battery alerts (every value except grid input and output):
+  `ic_notify_battery`, a battery with three of four bars. Inverter alerts
+  and mode changes: `ic_notify_inverter`, a square with a diagonal, "="
+  and "~". Both are white 24-dp masks. The circle keeps its colour: the
+  type colour for levels, the mode colour for modes.
