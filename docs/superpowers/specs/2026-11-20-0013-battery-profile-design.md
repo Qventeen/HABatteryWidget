@@ -125,7 +125,8 @@ Used when the total capacity sensor is empty or unavailable.
   SOC, cell delta and the temperatures keep one default list (§6). The
   inverter values do not use it.
 - Each preset keeps the shape, names, types, sides and bells of 0010: six
-  voltage levels and four current levels per direction, no default bells.
+  voltage levels, and four current levels for charge and four for
+  discharge, with no default bells.
 - **Voltage per cell** (times the cell count, rounded half up to 0.01 V,
   as today):
 
@@ -163,26 +164,36 @@ Used when the total capacity sensor is empty or unavailable.
     the owner can Edit them (owner, 2026-11-18: "stop polishing defaults").
   - Known effect, as in 0010: the edges are rest voltages, so under load a
     pack shows a colour lower than at rest.
-- **Current** (C-rate × full capacity; the same list for charge and
-  discharge, as in 0010):
+- **Current** (C-rate × full capacity). **Charge and discharge have their
+  own preset** (owner, 2026-11-21: "this often different"):
 
-  | Level | LiFePO4 (0010) | Li-ion (NMC) | LTO | Name | Type |
-  |---|---|---|---|---|---|
-  | ↓ | 0.2 C | 0.2 C | 0.4 C | Light | Info |
-  | middle | — | — | — | Normal | Normal |
-  | ↑ | 0.5 C | 0.5 C | 1 C | High | Warning |
-  | ↑ | 0.8 C | 0.8 C | 5 C | Very high | Critical |
+  | Level | LiFePO4 (0010) charge = discharge | Li-ion charge | Li-ion discharge | LTO charge | LTO discharge | Name | Type |
+  |---|---|---|---|---|---|---|---|
+  | ↓ | 0.2 C | 0.2 C | 0.4 C | 0.4 C | 0.4 C | Light | Info |
+  | middle | — | — | — | — | — | Normal | Normal |
+  | ↑ | 0.5 C | 0.5 C | 1 C | 1 C | 1 C | High | Warning |
+  | ↑ | 0.8 C | 0.8 C | 1.3 C | 5 C | 6 C | Very high | Critical |
 
-  One rule for all three: **High** = the standard rate, **Very high** ≈ 0.8
-  × the maximum continuous rate, **Light** = 0.4 × the standard rate.
-  - LiFePO4: standard 0.5 C, maximum 1 C (EVE LF105, LF100LA).
-  - Li-ion: standard charge 0.5 C, maximum about 1 C (SVOLT 21700, a 75 Ah
-    prismatic NCM cell); discharge is often rated higher, so the charge
-    numbers are the safe side for both directions.
-  - LTO: standard 1 C, maximum continuous 6–8 C (Leclanché LT34 6 C, a
-    45 Ah 66160 cell 8 C both ways); 0.8 × 6 C = 4.8, rounded to 5 C.
-    Example 40 Ah: ↓16 A / ↑40 A / ↑200 A.
-  - How sure: likely. They are a start, like the voltages.
+  One rule for every column: **High** = the standard rate, **Very high** ≈
+  0.8 × the maximum continuous rate, **Light** = 0.4 × the standard rate.
+  - LiFePO4: standard 0.5 C, maximum continuous 1 C, both ways (EVE LF105,
+    LF280). Only the 30 s pulse differs (1 C charge, 3 C discharge), and a
+    pulse is not a level. So both directions keep the owner's 0010 numbers.
+  - Li-ion charge: standard 0.5 C, maximum about 1 C (SVOLT 21700, a 75 Ah
+    prismatic NCM cell; Samsung SDI 94 Ah recommends 72 A ≈ 0.8 C).
+  - Li-ion discharge: standard 1 C (SVOLT 21700), maximum continuous about
+    1.6 C (Samsung SDI 94 Ah: 150 A, the usual prismatic cell of home
+    packs; cylindrical cells often allow more). 0.8 × 1.6 = 1.28, rounded
+    to 1.3 C. Example 100 Ah: ↓40 A / ↑100 A / ↑130 A.
+  - LTO charge: standard 1 C (Yinlong 66160 40 Ah, a 45 Ah 66160 cell),
+    maximum continuous 6–8 C (Leclanché 6 C, the 45 Ah cell 8 C); 0.8 × 6 C
+    = 4.8, rounded to 5 C. Example 40 Ah: ↓16 A / ↑40 A / ↑200 A.
+  - LTO discharge: standard 1 C, maximum continuous 8–10 C (the 45 Ah cell
+    8 C, Yinlong 40 Ah 10 C); 0.8 × 8 C = 6.4, rounded to 6 C. Example
+    40 Ah: ↓16 A / ↑40 A / ↑240 A.
+  - How sure: likely. They are a start, like the voltages. The real limit
+    of a pack is often the BMS or the inverter, not the cell; Edit covers
+    that.
 - **Hysteresis** (my call): stays 0.025 V per cell and 0.05 C for all
   three types. 0.025 V is 2–4 % of each chemistry's cell working range
   (LiFePO4 2.6–3.65 V, Li-ion 3.0–4.2 V, LTO 1.8–2.8 V), so one number
@@ -227,8 +238,9 @@ Used when the total capacity sensor is empty or unavailable.
   settings.cellCount` (each only when ≥ 1) and `type = settings.batteryType
   ?: LIFEPO4`. The inverter's `LevelBasis(null, null)` stays as it is.
 - The per-type numbers live in one domain place (for example a
-  `BatteryPreset` per type: five volts per cell, three C-rates), and
-  `DefaultLevels` builds the voltage and current rows from it. The rest of
+  `BatteryPreset` per type: five volts per cell, three charge C-rates and
+  three discharge C-rates), and `DefaultLevels` builds the voltage, charge
+  and discharge rows from it. The rest of
   `DefaultLevels` stays as it is.
 - `Validation.cells(count)` with `MAX_CELLS = 32`; a new `Field.CELLS`.
 - `MainViewModel`: `saveBatteryType(type)` (at the tap) and one save for
@@ -267,8 +279,10 @@ Result: no change is needed.
 - `MainScreenTest` (instrumented) finds the Capacity section by its title
   and checks the section order: it needs the new title.
 - `copyForCustom` rounds current edges to whole amps: on a small LTO pack
-  (for example 2 Ah) 0.4 C is 0.8 A → 1 A. This is the known small-pack
-  case of 0010 (parked minor), not new.
+  (for example 2 Ah) 0.4 C is 0.8 A → 1 A, and on a 1 Ah Li-ion pack the
+  discharge edges 1 C and 1.3 C both become 1 A. This is the known
+  small-pack case of 0010 (parked minor), not new; the editor shows the
+  error and the owner fixes the draft.
 
 ## 5. Questions (all decided, 2026-11-21)
 
@@ -279,6 +293,9 @@ Result: no change is needed.
    owner agreed to my suggestion).
 4. Temperatures per type → not now (§6, my call).
 5. BMS limits from Home Assistant → later (§3.0 B).
+6. Charge and discharge presets → separate per type (owner, 2026-11-21;
+   the tables of §3.2). LiFePO4 stays the same both ways (its datasheets
+   are symmetric for continuous current).
 
 ## 6. Non-goals
 
@@ -287,15 +304,15 @@ Result: no change is needed.
   widely (charging from −20 °C to −50 °C). An LTO owner edits the
   temperature levels. A later spec can add it.
 - SOC and cell delta per type.
-- Separate charge and discharge presets.
 - Other chemistries (sodium-ion, lead-acid).
 - Reading the BMS's own limits from Home Assistant (§3.0 B).
 - A warning when the typed and the counted cells differ.
 
 ## 7. Testing and done
 
-- Unit tests: `DefaultLevels` per type (voltage at 16S, 14S, 22S; current at
-  100 Ah and 40 Ah; no count / no capacity unchanged); `LevelBasis.of`
+- Unit tests: `DefaultLevels` per type (voltage at 16S, 14S, 22S; charge
+  and discharge current at 100 Ah and 40 Ah, each direction from its own
+  preset; no count / no capacity unchanged); `LevelBasis.of`
   (reading count wins, typed count fills a gap, null type = LiFePO4);
   `Validation.cells` (blank, 1, 32, 0, 33); the ViewModel saves (type at
   the tap; cells + capacity together; any error stores nothing); settings
@@ -309,7 +326,11 @@ Result: no change is needed.
 
 Sources (checked 2026-11-21):
 
-- EVE LF105 / LF100LA datasheets and JK-BMS LiFePO4 settings (0010 §3.5).
+- EVE LF105 / LF100LA datasheets and JK-BMS LiFePO4 settings (0010 §3.5);
+  EVE LF105 and LF280 specs (1 C / 1 C continuous, 30 s pulse 1 C / 3 C).
+- Samsung SDI 94 Ah NMC cell (4.15 V, 2.7 V, recommended charge 72 A,
+  continuous discharge 150 A).
+- Yinlong LTO 66160 40 Ah listings (charge 1 C, continuous discharge 10 C).
 - SVOLT 21700 4400 mAh datasheet (4.2 V, 2.75 V, standard charge 0.5 C,
   standard discharge 1 C).
 - Evlithium 75 Ah prismatic NCM cell (4.3 V, 2.75 V, standard 0.5 C).
