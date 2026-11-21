@@ -30,7 +30,7 @@ data class BatteryOverview(
       val reading = cache.reading
       val since = cache.refreshingSinceMillis
       return BatteryOverview(
-        setupNeeded = !Validation.isConfigured(settings, hasToken),
+        setupNeeded = !Validation.isBatteryConfigured(settings, hasToken),
         reading = reading,
         state = reading?.let { BatteryMath.state(it.chargePercent, it.currentA) },
         timeRemaining =

@@ -24,11 +24,16 @@ data class Settings(
   val appearance: AppearanceSettings = AppearanceSettings(),
   /** Keyed by [LevelValue.name]: a key written by a later version cannot break the file. */
   val colorLevels: Map<String, CustomLevels> = emptyMap(),
+  val inverter: InverterSettings = InverterSettings(),
 )
 
 /** Both stored ranges applied (fonts and home-screen scale); readers get only valid values. */
 fun Settings.clamped(): Settings =
-  copy(fontPercents = fontPercents.clamped(), homeScalePercent = HomeScale.clamp(homeScalePercent))
+  copy(
+    fontPercents = fontPercents.clamped(),
+    homeScalePercent = HomeScale.clamp(homeScalePercent),
+    inverter = inverter.copy(fontPercents = inverter.fontPercents.clamped()),
+  )
 
 /** What the Widget section's text-size summary reports: any font off 50 % or the scale off 100 %. */
 val Settings.textSizeChanged: Boolean

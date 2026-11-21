@@ -50,8 +50,12 @@ private fun invalidMessage(field: Field): Int =
     Field.DELTA_CELL_VOLTAGE,
     Field.MOSFET_TEMPERATURE,
     Field.TEMPERATURES,
-    Field.BALANCING -> R.string.field_entity_invalid
-    Field.PREFIX -> R.string.field_prefix_invalid
+    Field.BALANCING,
+    Field.INVERTER_MODE,
+    Field.INVERTER_GRID,
+    Field.INVERTER_OUTPUT -> R.string.field_entity_invalid
+    Field.PREFIX,
+    Field.INVERTER_PREFIX -> R.string.field_prefix_invalid
     Field.INTERVAL -> R.string.field_interval_invalid
     Field.CAPACITY -> R.string.field_capacity_invalid
     Field.LEVEL_EDGE -> R.string.field_level_edge_invalid

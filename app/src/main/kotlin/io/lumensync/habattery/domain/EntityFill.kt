@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.InverterEntitySettings
 
 /** Fills every entity id from the BMS prefix. Hand edits are overwritten. */
 object EntityFill {
@@ -19,6 +20,17 @@ object EntityFill {
       mosfetTemperature = "sensor.${p}_power_tube_temperature",
       temperatures = listOf("sensor.${p}_temperature_sensor_1"),
       balancing = "sensor.${p}_balancing",
+    )
+  }
+
+  /** Same as [fromPrefix], for the inverter's three ids. */
+  fun inverterFromPrefix(prefix: String, current: InverterEntitySettings): InverterEntitySettings {
+    val p = prefix.trim().trimEnd('_')
+    return current.copy(
+      prefix = p,
+      mode = "sensor.${p}_operation_mode",
+      gridVoltage = "sensor.${p}_main_voltage",
+      outputVoltage = "sensor.${p}_output_voltage",
     )
   }
 }

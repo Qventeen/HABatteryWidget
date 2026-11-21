@@ -32,7 +32,7 @@ class SyncBattery(
         val current = settings.settings.first()
         val token = tokens.get(current.connection.tokenType)
         val result =
-          if (token == null || !Validation.isConfigured(current, hasToken = true)) {
+          if (token == null || !Validation.isBatteryConfigured(current, hasToken = true)) {
             SyncResult.Failure(SyncError.NotConfigured)
           } else {
             source.fetch(current.connection, current.entities, token)
