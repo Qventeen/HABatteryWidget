@@ -57,9 +57,10 @@ The canvas compared 20 ideas. In short:
 - **Monochrome** (themed icons, Android 13+): the same house, all four
   tiles cut out.
 - **Geometry**, in a 24-unit glyph box (as drawn on the canvas):
-  - House: `M12 3.4 L20.6 10.3 V19.1` (bottom corners radius 1.8)
-    `H5.2 V10.3 Z`, its outline grown by 0.5 with round joins, so the roof
-    point and the eaves are soft.
+  - House: `M12 3.4 L20.6 10.3 V19.1 A1.8 1.8 0 0 1 18.8 20.9 H5.2
+    A1.8 1.8 0 0 1 3.4 19.1 V10.3 Z` (bottom corners radius 1.8), its
+    outline grown by 0.5 with round joins, so the roof point and the eaves
+    are soft.
   - Tiles: 3.6 × 3.6, corner radius 0.9, at (7.8, 11.2), (12.6, 11.2),
     (7.8, 16), (12.6, 16).
   - On the 108-dp adaptive canvas the glyph is scaled ×2 and moved by

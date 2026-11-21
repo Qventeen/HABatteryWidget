@@ -346,8 +346,9 @@ Rendered at 2× scale from the canvas boards; 1 px of the design = 1 dp.
   `#FFB869`, the other three tiles holes; monochrome (themed icons,
   Android 13+) the same house with all four tiles cut out.
 - **Geometry**, in a 24-unit glyph box: house
-  `M12 3.4 L20.6 10.3 V19.1 H5.2 V10.3 Z`, bottom corners radius 1.8, its
-  outline grown by 0.5 with round joins (soft roof and eaves). Tiles
+  `M12 3.4 L20.6 10.3 V19.1 A1.8 1.8 0 0 1 18.8 20.9 H5.2 A1.8 1.8 0 0 1 3.4 19.1 V10.3 Z`
+  (bottom corners radius 1.8), its outline grown by 0.5 with round joins
+  (soft roof and eaves). Tiles
   3.6 × 3.6, corner 0.9, at (7.8, 11.2), (12.6, 11.2), (7.8, 16),
   (12.6, 16). On the 108-dp canvas the glyph is scaled ×2 and moved by
   (30, 30): 48 dp, inside the 66-dp safe zone.
