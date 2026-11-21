@@ -9,6 +9,7 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelAlertState
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
@@ -298,7 +299,14 @@ class StoredJsonV1Test {
           },
           "error": { "type": "http", "code": 503 },
           "refreshingSinceMillis": 1800000001000,
-          "levelAlerts": { "SOC": { "current": 2, "disarmed": [1] } }
+          "levelAlerts": { "SOC": { "current": 2, "disarmed": [1] } },
+          "inverterReading": {
+            "mode": "Off-Grid",
+            "gridVoltageV": 0.0,
+            "outputVoltageV": 230.5,
+            "updatedAtMillis": 1800000000000
+          },
+          "inverterError": { "type": "bad_response" }
         }
       }
       """
@@ -326,9 +334,37 @@ class StoredJsonV1Test {
             error = SyncError.HttpError(503),
             refreshingSinceMillis = 1_800_000_001_000L,
             levelAlerts = mapOf("SOC" to LevelAlertState(current = 2, disarmed = listOf(1))),
+            inverterReading =
+              InverterReading(
+                mode = "Off-Grid",
+                gridVoltageV = 0.0,
+                outputVoltageV = 230.5,
+                updatedAtMillis = 1_800_000_000_000L,
+              ),
+            inverterError = SyncError.BadResponse,
           ),
       )
     assertV1(json, expected, CacheRecord.serializer())
+  }
+
+  @Test
+  fun cacheRecordWithoutInverter_loadsWithoutInverterPart() {
+    val record =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """
+        {
+          "schemaVersion": 1,
+          "state": {
+            "reading": { "chargePercent": 54.6, "updatedAtMillis": 1800000000000 },
+            "error": { "type": "unreachable" }
+          }
+        }
+        """,
+      )
+    assertEquals(SyncError.Unreachable, record.state.error)
+    assertNull(record.state.inverterReading)
+    assertNull(record.state.inverterError)
   }
 
   @Test

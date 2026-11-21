@@ -13,6 +13,7 @@ data class MainUiState(
   /** The selected token type's slot holds a token; the other slot does not count. */
   val hasToken: Boolean = false,
   val overview: BatteryOverview? = null,
+  val inverterError: SyncError? = null,
   /** What the widget preview draws; built with [overview], null until the first state. */
   val widget: WidgetModel? = null,
   val syncing: Boolean = false,
@@ -20,10 +21,11 @@ data class MainUiState(
 ) {
   /**
    * HA rejects a non-admin token on the template path, so a 401 in Admin mode may mean the wrong
-   * type. In User mode a 401 means the token itself is wrong: no hint.
+   * type. Either part's error counts: when one part is not configured, only the other can carry
+   * the 401. In User mode a 401 means the token itself is wrong: no hint.
    */
   val showTokenTypeHint: Boolean
     get() =
-      overview?.error == SyncError.Unauthorized &&
+      SyncError.Unauthorized in listOf(overview?.error, inverterError) &&
         settings.connection.tokenType == TokenType.ADMIN
 }

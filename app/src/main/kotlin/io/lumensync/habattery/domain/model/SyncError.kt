@@ -16,12 +16,6 @@ sealed interface SyncError {
   @Serializable @SerialName("bad_response") data object BadResponse : SyncError
 }
 
-sealed interface SyncResult {
-  data class Success(val reading: BatteryReading) : SyncResult
-
-  data class Failure(val error: SyncError) : SyncResult
-}
-
 /** What one sync asks Home Assistant for; a `null` part is not asked. */
 data class FetchRequest(val battery: EntitySettings?, val inverter: InverterEntitySettings?)
 

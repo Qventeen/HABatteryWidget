@@ -7,6 +7,9 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FetchRequest
 import io.lumensync.habattery.domain.model.FetchResult
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.InverterSettings
 import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
@@ -169,17 +172,36 @@ class FakeSyncScheduler : SyncScheduler {
   }
 }
 
+val inverterEntities =
+  InverterEntitySettings(
+    mode = "sensor.inv_operation_mode",
+    gridVoltage = "sensor.inv_main_voltage",
+    outputVoltage = "sensor.inv_output_voltage",
+  )
+
+/** [battery] and [inverter] say which parts have their entities set. */
 fun configuredSettings(
   notificationsOn: Boolean = false,
   tokenType: TokenType = TokenType.ADMIN,
+  battery: Boolean = true,
+  inverter: Boolean = false,
 ): Settings =
   Settings(
     connection = ConnectionSettings(url = "http://ha.local:8123", tokenType = tokenType),
-    entities = EntitySettings(charge = "sensor.soc"),
+    entities = if (battery) EntitySettings(charge = "sensor.soc") else EntitySettings(),
+    inverter = if (inverter) InverterSettings(entities = inverterEntities) else InverterSettings(),
     notificationsOn = notificationsOn,
   )
 
 fun reading(charge: Double = 50.0, current: Double? = 0.0): BatteryReading =
   BatteryReading(chargePercent = charge, currentA = current, updatedAtMillis = 1_000L)
+
+fun inverterReading(): InverterReading =
+  InverterReading(
+    mode = "Mains",
+    gridVoltageV = 230.0,
+    outputVoltageV = 230.0,
+    updatedAtMillis = 1_000L,
+  )
 
 fun batteryOk(r: BatteryReading): FetchResult = FetchResult(PartResult.Ok(r), null)

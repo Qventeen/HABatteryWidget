@@ -10,12 +10,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MainUiStateTest {
-  private fun state(error: SyncError?, type: TokenType): MainUiState {
+  private fun state(
+    error: SyncError?,
+    type: TokenType,
+    inverterError: SyncError? = null,
+  ): MainUiState {
     val settings = configuredSettings(tokenType = type)
     return MainUiState(
       settings = settings,
       hasToken = true,
       overview = BatteryOverview.build(CacheState(error = error), settings, true, 0L),
+      inverterError = inverterError,
     )
   }
 
@@ -25,5 +30,14 @@ class MainUiStateTest {
     assertFalse(state(SyncError.Unauthorized, TokenType.USER).showTokenTypeHint)
     assertFalse(state(SyncError.Unreachable, TokenType.ADMIN).showTokenTypeHint)
     assertFalse(state(null, TokenType.ADMIN).showTokenTypeHint)
+  }
+
+  @Test
+  fun showTokenTypeHint_inverterUnauthorized() {
+    val notConfigured = SyncError.NotConfigured
+
+    assertTrue(state(notConfigured, TokenType.ADMIN, SyncError.Unauthorized).showTokenTypeHint)
+    assertFalse(state(notConfigured, TokenType.USER, SyncError.Unauthorized).showTokenTypeHint)
+    assertFalse(state(notConfigured, TokenType.ADMIN, SyncError.Unreachable).showTokenTypeHint)
   }
 }

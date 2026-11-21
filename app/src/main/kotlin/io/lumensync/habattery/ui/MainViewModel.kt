@@ -67,6 +67,7 @@ class MainViewModel(
           settings = s,
           hasToken = hasToken,
           overview = overview,
+          inverterError = c.inverterError,
           widget = WidgetModel.build(overview, s),
           syncing = l.running > 0,
           errors = l.errors,

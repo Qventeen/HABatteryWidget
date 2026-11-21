@@ -1,9 +1,9 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.SyncResult
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
@@ -27,48 +27,57 @@ class SyncBattery(
 ) {
   private val mutex = Mutex()
 
-  suspend operator fun invoke(): SyncResult =
+  /**
+   * Both parts of the result are set. A part that is not configured is not fetched and comes back
+   * as `Failed(NotConfigured)`; its last reading stays in the cache.
+   */
+  suspend operator fun invoke(): FetchResult =
     mutex.withLock {
       var refreshingCleared = false
       try {
         val current = settings.settings.first()
         val token = tokens.get(current.connection.tokenType)
-        val result =
-          if (token == null || !Validation.isBatteryConfigured(current, hasToken = true)) {
-            SyncResult.Failure(SyncError.NotConfigured)
+        val hasToken = token != null
+        val request =
+          FetchRequest(
+            battery = current.entities.takeIf { Validation.isBatteryConfigured(current, hasToken) },
+            inverter =
+              current.inverter.entities.takeIf {
+                Validation.isInverterConfigured(current, hasToken)
+              },
+          )
+        val answer =
+          if (token != null && (request.battery != null || request.inverter != null)) {
+            source.fetch(current.connection, request, token)
           } else {
-            // The cache holds the battery part only, so the inverter is not asked.
-            val request = FetchRequest(current.entities, inverter = null)
-            when (val battery = source.fetch(current.connection, request, token).battery) {
-              is PartResult.Ok -> SyncResult.Success(battery.reading)
-              is PartResult.Failed -> SyncResult.Failure(battery.error)
-              // A source answers every asked part; a missing one is no usable answer.
-              null -> SyncResult.Failure(SyncError.BadResponse)
-            }
+            null
           }
+        val battery = partOf(asked = request.battery != null, answer?.battery)
+        val inverter = partOf(asked = request.inverter != null, answer?.inverter)
 
         // Read once, before the write, so tracking and posting agree on the same answer.
         val enabled = current.notificationsOn && notifier.canPost()
         var alerts = emptyList<LevelAlert>()
         cache.update { state ->
-          when (result) {
-            is SyncResult.Success -> {
-              val r = result.reading
-              val outcome = LevelAlerts.evaluate(r, current, enabled, state.levelAlerts)
-              alerts = outcome.alerts
-              state.copy(
-                reading = r,
-                error = null,
-                refreshingSinceMillis = null,
-                levelAlerts = outcome.state,
-              )
+          val batteryOutcome =
+            if (battery is PartResult.Ok) {
+              LevelAlerts.evaluate(battery.reading, current, enabled, state.levelAlerts)
+            } else {
+              null
             }
-            is SyncResult.Failure -> state.copy(error = result.error, refreshingSinceMillis = null)
-          }
+          alerts = batteryOutcome?.alerts.orEmpty()
+          state.copy(
+            reading = battery.readingOr(state.reading),
+            error = battery.errorOrNull(),
+            inverterReading = inverter.readingOr(state.inverterReading),
+            inverterError = inverter.errorOrNull(),
+            refreshingSinceMillis = null,
+            levelAlerts = batteryOutcome?.state ?: state.levelAlerts,
+          )
         }
         refreshingCleared = true
         alerts.forEach(notifier::post)
-        result
+        FetchResult(battery, inverter)
       } finally {
         withContext(NonCancellable) {
           // Best effort: a failing store must not hide the original exception.
@@ -80,3 +89,16 @@ class SyncBattery(
       }
     }
 }
+
+/** A source answers every asked part, so an asked part it left out is no usable answer. */
+private fun <T> partOf(asked: Boolean, answer: PartResult<T>?): PartResult<T> =
+  when {
+    !asked -> PartResult.Failed(SyncError.NotConfigured)
+    answer == null -> PartResult.Failed(SyncError.BadResponse)
+    else -> answer
+  }
+
+/** A failed part keeps [last]. */
+private fun <T> PartResult<T>.readingOr(last: T?): T? = if (this is PartResult.Ok) reading else last
+
+private fun PartResult<*>.errorOrNull(): SyncError? = (this as? PartResult.Failed)?.error

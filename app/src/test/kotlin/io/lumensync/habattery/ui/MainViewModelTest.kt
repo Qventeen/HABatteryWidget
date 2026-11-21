@@ -21,6 +21,7 @@ import io.lumensync.habattery.domain.model.FetchRequest
 import io.lumensync.habattery.domain.model.FetchResult
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.MainValue
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
@@ -107,6 +108,14 @@ class MainViewModelTest {
     val widget = state.widget
     assertTrue("$widget", widget is WidgetModel.Data)
     assertEquals(50, (widget as WidgetModel.Data).socPercent)
+  }
+
+  @Test fun uiState_carriesTheInverterError() = runTest(dispatcher) {
+    val inverterOnly = configuredSettings(battery = false, inverter = true)
+    val unauthorized = FetchResult(null, PartResult.Failed(SyncError.Unauthorized))
+    start(inverterOnly, source = FakeBatterySource(unauthorized))
+    assertEquals(SyncError.Unauthorized, state.inverterError)
+    assertTrue(state.showTokenTypeHint)
   }
 
   @Test fun init_syncsOnce() = runTest(dispatcher) {
