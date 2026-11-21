@@ -20,8 +20,9 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
   the per-value alert state), `ModeAlerts` (the inverter mode change to post), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` and `InverterWidgetModel` (what each widget and its app preview show),
-  `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value levels and alerts),
-  `ToggleAutoRefresh`. `model/` holds `InverterSettings`, `InverterReading`, `InverterMode` /
+  `DefaultLevels`, `LevelBasis` (capacity, cells and battery type), `BatteryPreset` (volts per
+  cell and charge / discharge C-rates per `BatteryType`), `LevelPicker` and `LevelSpans` (value
+  levels and alerts), `ToggleAutoRefresh`. `model/` holds `BatteryType`, `InverterSettings`, `InverterReading`, `InverterMode` /
   `ModeText` (the mode table), and `FetchRequest` / `PartResult` / `FetchResult` (what a sync
   asks and gets back, one result per part).
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,

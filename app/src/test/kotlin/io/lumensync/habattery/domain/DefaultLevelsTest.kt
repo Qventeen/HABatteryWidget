@@ -1,5 +1,6 @@
 package io.lumensync.habattery.domain
 
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelIcon
@@ -20,8 +21,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DefaultLevelsTest {
-  private fun of(value: LevelValue, capacityAh: Double? = null, cells: Int? = null) =
-    DefaultLevels.of(value, LevelBasis(capacityAh, cells))
+  private fun of(
+    value: LevelValue,
+    capacityAh: Double? = null,
+    cells: Int? = null,
+    type: BatteryType = BatteryType.LIFEPO4,
+  ) = DefaultLevels.of(value, LevelBasis(capacityAh, cells, type))
+
+  /** Every type, with and without a capacity and a cell count. */
+  private val bases =
+    BatteryType.entries.flatMap {
+      listOf(LevelBasis(100.0, 16, it), LevelBasis(null, null, it), LevelBasis(105.0, 15, it))
+    }
 
   private fun List<ColorLevel>.sides() = map { it.side }
 
@@ -88,6 +99,34 @@ class DefaultLevelsTest {
   }
 
   @Test
+  fun voltageLiIon14Cells() {
+    val levels = of(LevelValue.VOLTAGE, cells = 14, type = BatteryType.LI_ION)
+    assertEquals(listOf(47.6, 50.4, null, 57.4, 58.1, 58.8), levels.edges())
+    val liFePO4 = of(LevelValue.VOLTAGE, cells = 14)
+    assertEquals(liFePO4.sides(), levels.sides())
+    assertEquals(liFePO4.types(), levels.types())
+    assertEquals(liFePO4.names(), levels.names())
+    assertEquals(listOf(1, 2, 3, 4, 5, 6), levels.map { it.id })
+    assertTrue(levels.none { it.notify })
+  }
+
+  @Test
+  fun voltageLto22Cells() =
+    assertEquals(
+      listOf(44.0, 48.4, null, 58.3, 59.4, 61.6),
+      of(LevelValue.VOLTAGE, cells = 22, type = BatteryType.LTO).edges(),
+    )
+
+  @Test
+  fun voltageNoCells_isOnePlainLevel_forEveryType() {
+    for (type in BatteryType.entries) {
+      val levels = of(LevelValue.VOLTAGE, type = type)
+      assertEquals(listOf(MIDDLE), levels.sides())
+      assertEquals(LevelColor.PLAIN, levels.single().shownColor)
+    }
+  }
+
+  @Test
   fun current100Ah() {
     for (value in listOf(LevelValue.CHARGE_CURRENT, LevelValue.DISCHARGE_CURRENT)) {
       val levels = of(value, capacityAh = 100.0)
@@ -106,6 +145,42 @@ class DefaultLevelsTest {
   }
 
   @Test
+  fun currentLiIon100Ah() {
+    assertEquals(
+      listOf(20.0, null, 50.0, 80.0),
+      of(LevelValue.CHARGE_CURRENT, 100.0, type = BatteryType.LI_ION).edges(),
+    )
+    assertEquals(
+      listOf(40.0, null, 100.0, 130.0),
+      of(LevelValue.DISCHARGE_CURRENT, 100.0, type = BatteryType.LI_ION).edges(),
+    )
+  }
+
+  @Test
+  fun currentLto40Ah() {
+    assertEquals(
+      listOf(16.0, null, 40.0, 200.0),
+      of(LevelValue.CHARGE_CURRENT, 40.0, type = BatteryType.LTO).edges(),
+    )
+    val discharge = of(LevelValue.DISCHARGE_CURRENT, 40.0, type = BatteryType.LTO)
+    assertEquals(listOf(16.0, null, 40.0, 240.0), discharge.edges())
+    assertEquals(of(LevelValue.DISCHARGE_CURRENT, 40.0).sides(), discharge.sides())
+    assertEquals(of(LevelValue.DISCHARGE_CURRENT, 40.0).types(), discharge.types())
+    assertEquals(of(LevelValue.DISCHARGE_CURRENT, 40.0).names(), discharge.names())
+  }
+
+  @Test
+  fun copyForCustom_lto40AhDischarge() =
+    assertEquals(
+      listOf(16.0, null, 40.0, 240.0),
+      DefaultLevels.copyForCustom(
+          LevelValue.DISCHARGE_CURRENT,
+          LevelBasis(40.0, null, BatteryType.LTO),
+        )
+        .edges(),
+    )
+
+  @Test
   fun copyForCustom_roundsToWholeAmps() {
     val levels = DefaultLevels.copyForCustom(LevelValue.CHARGE_CURRENT, LevelBasis(105.0, null))
     assertEquals(listOf(21.0, null, 53.0, 84.0), levels.edges())
@@ -115,13 +190,29 @@ class DefaultLevelsTest {
 
   @Test
   fun currentWithoutCapacity() {
-    for (cap in listOf(null, 0.0)) {
-      val charge = of(LevelValue.CHARGE_CURRENT, capacityAh = cap)
-      val discharge = of(LevelValue.DISCHARGE_CURRENT, capacityAh = cap)
-      assertEquals(listOf(MIDDLE), charge.sides())
-      assertEquals(listOf(MIDDLE), discharge.sides())
-      assertEquals(LevelColor.GREEN, charge.single().shownColor)
-      assertEquals(LevelColor.AMBER, discharge.single().shownColor)
+    for (type in BatteryType.entries) {
+      for (cap in listOf(null, 0.0)) {
+        val charge = of(LevelValue.CHARGE_CURRENT, capacityAh = cap, type = type)
+        val discharge = of(LevelValue.DISCHARGE_CURRENT, capacityAh = cap, type = type)
+        assertEquals(listOf(MIDDLE), charge.sides())
+        assertEquals(listOf(MIDDLE), discharge.sides())
+        assertEquals(LevelColor.GREEN, charge.single().shownColor)
+        assertEquals(LevelColor.AMBER, discharge.single().shownColor)
+      }
+    }
+  }
+
+  @Test
+  fun otherValues_areTheSameForEveryType() {
+    val typed = listOf(LevelValue.VOLTAGE, LevelValue.CHARGE_CURRENT, LevelValue.DISCHARGE_CURRENT)
+    for (type in BatteryType.entries) {
+      for (value in LevelValue.entries - typed) {
+        assertEquals(
+          "$value $type",
+          DefaultLevels.of(value, LevelBasis(100.0, 16)),
+          DefaultLevels.of(value, LevelBasis(100.0, 16, type)),
+        )
+      }
     }
   }
 
@@ -205,12 +296,7 @@ class DefaultLevelsTest {
   @Test
   fun defaults_areValid() {
     for (value in LevelValue.entries) {
-      for (basis in
-        listOf(
-          LevelBasis(100.0, 16),
-          LevelBasis(null, null),
-          LevelBasis(105.0, 15),
-        )) {
+      for (basis in bases) {
         val levels = DefaultLevels.of(value, basis)
         assertTrue(levels.size <= MAX_LEVELS)
         assertEquals(emptyList<FieldError>(), Validation.levels(value, levels))
@@ -222,8 +308,7 @@ class DefaultLevelsTest {
   @Test
   fun defaults_areOrdered() {
     for (value in LevelValue.entries) {
-      for (basis in
-        listOf(LevelBasis(100.0, 16), LevelBasis(null, null), LevelBasis(105.0, 15))) {
+      for (basis in bases) {
         val levels = DefaultLevels.of(value, basis)
         assertEquals(LevelPicker.ordered(levels), levels)
         val copy = DefaultLevels.copyForCustom(value, basis)
@@ -246,7 +331,7 @@ class DefaultLevelsTest {
         LevelValue.OUTPUT_VOLTAGE to listOf(LevelName.HIGH),
       )
     for (value in LevelValue.entries) {
-      for (basis in listOf(LevelBasis(100.0, 16), LevelBasis(null, null))) {
+      for (basis in bases) {
         val bells = DefaultLevels.of(value, basis).filter { it.notify }.map { it.defaultName }
         assertEquals("$value $basis", expected[value] ?: emptyList<LevelName>(), bells)
       }

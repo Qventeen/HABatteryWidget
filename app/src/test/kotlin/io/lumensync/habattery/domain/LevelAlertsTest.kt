@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelAlertState
@@ -172,6 +173,24 @@ class LevelAlertsTest {
     val outcome = evaluate(reading(current = null), stored, base.copy(capacityAh = 100.0))
     assertEquals(stored["CHARGE_CURRENT"], outcome.state["CHARGE_CURRENT"])
     assertEquals(stored["DISCHARGE_CURRENT"], outcome.state["DISCHARGE_CURRENT"])
+  }
+
+  @Test
+  fun typeChange_postsNothing() {
+    val pack =
+      BatteryReading(
+        chargePercent = 50.0,
+        totalVoltageV = 52.8,
+        averageCellVoltageV = 3.3,
+        currentA = -10.0,
+        updatedAtMillis = 1_000L,
+      )
+    val liFePO4 = base.copy(capacityAh = 100.0)
+    val first = evaluate(pack, settings = liFePO4)
+    assertEquals(3, first.state.getValue("VOLTAGE").current) // Normal
+    val lto = evaluate(pack, first.state, liFePO4.copy(batteryType = BatteryType.LTO))
+    assertEquals(emptyList<LevelAlert>(), lto.alerts)
+    assertEquals(6, lto.state.getValue("VOLTAGE").current) // Very high
   }
 
   @Test
