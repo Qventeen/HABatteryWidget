@@ -4,11 +4,12 @@
 - **Status:** concept, NOT approved. It needs a detailing session (research
   of the presets and the open questions in §4) before a plan.
 - **Set:** `0013`, epic `epic-widget-improvements`. Code later on branch
-  `0013-battery-profile`, from the epic. Build order: the owner decides
-  (it does not depend on 0011 or 0012).
+  `0013-battery-profile`, from the epic. Build order (owner, 2026-11-21):
+  next after 0012, before 0014.
 - **Builds on:** 0010 (value colours: default levels, `DefaultLevels`,
-  the Colours section) and spec 0001 (§14 stored data). On one topic the
-  newest spec wins.
+  the "Levels and alerts" section, named "Colours" before 0011), 0012 (the
+  app tabs: the Capacity section is on the Battery tab) and spec 0001 (§14
+  stored data). On one topic the newest spec wins.
 
 ## 1. Intent (owner, 2026-11-20)
 
@@ -36,8 +37,13 @@ per cell, §3.5) are wrong for other packs. The owner wants:
 
 ## 3. Direction (to detail)
 
-- The Capacity section becomes **Battery**: capacity (as today), cells and
-  type.
+- The Capacity section becomes a pack section: capacity (as today), cells
+  and type. Since 0012 it sits on the Battery tab, so its title should not
+  repeat the tab name (for example "Battery pack" / "Акумуляторна збірка";
+  to decide in the detailing).
+- Only the battery values change. The grid and output voltages (0012) have
+  their own defaults and use `LevelBasis(null, null)`; the profile does not
+  touch them.
 - **Type:** the three chemistries JK-BMS knows: LiFePO4, Li-ion (NMC), LTO.
 - **Cells:** blank means "work it out from the reading" (today's rule).
 - **Presets per type:** voltage edges per cell (six levels like 0010's
