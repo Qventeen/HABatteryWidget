@@ -44,7 +44,13 @@ object ShownNumber {
     when (value) {
       LevelValue.GRID_VOLTAGE -> reading.gridVoltageV
       LevelValue.OUTPUT_VOLTAGE -> reading.outputVoltageV
-      else -> null
+      LevelValue.SOC,
+      LevelValue.VOLTAGE,
+      LevelValue.CHARGE_CURRENT,
+      LevelValue.DISCHARGE_CURRENT,
+      LevelValue.DELTA,
+      LevelValue.BATTERY_TEMPERATURE,
+      LevelValue.MOSFET_TEMPERATURE -> null
     }?.roundTo(value.decimals)
 
   /** The charge in whole percent, as the widget shows it. */
