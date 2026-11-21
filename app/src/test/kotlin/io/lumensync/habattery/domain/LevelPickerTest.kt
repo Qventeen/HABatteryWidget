@@ -1,5 +1,6 @@
 package io.lumensync.habattery.domain
 
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.LevelName
@@ -168,6 +169,18 @@ class LevelPickerTest {
       DefaultLevels.of(LevelValue.SOC, noBasis),
       LevelPicker.effective(LevelValue.SOC, settings(CustomLevels(false, own)), noBasis),
     )
+
+  @Test
+  fun typeChange_keepsOwnLevels() {
+    val ownVoltage = listOf(below(1, 48.0), middle(2), above(3, 56.0))
+    val settings = Settings().withCustomLevels(LevelValue.VOLTAGE, CustomLevels(true, ownVoltage))
+    for (type in BatteryType.entries) {
+      assertEquals(
+        LevelPicker.ordered(ownVoltage),
+        LevelPicker.effective(LevelValue.VOLTAGE, settings, LevelBasis(null, 16, type)),
+      )
+    }
+  }
 
   @Test
   fun ordered_sortsSides() {

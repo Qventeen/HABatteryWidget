@@ -1,6 +1,7 @@
 package io.lumensync.habattery.data.store
 
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
@@ -18,6 +19,8 @@ import io.lumensync.habattery.domain.model.UnderSoc
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** A fixed sample of the v2 stored settings JSON: the rename of the main switch must not slip back. */
@@ -59,6 +62,8 @@ class StoredJsonV2Test {
           "refresh": { "auto": true, "intervalMinutes": 30 },
           "notificationsOn": true,
           "capacityAh": 314.5,
+          "batteryType": "LTO",
+          "cellCount": 22,
           "display": { "underSoc": "AH", "mainValue": "POWER" },
           "fontPercents": { "soc": 45, "underSoc": 30, "main": 75, "cell": 60, "small": 100 },
           "homeScalePercent": 128,
@@ -104,6 +109,8 @@ class StoredJsonV2Test {
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
             notificationsOn = true,
             capacityAh = 314.5,
+            batteryType = BatteryType.LTO,
+            cellCount = 22,
             display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
             fontPercents = FontPercents(soc = 45, underSoc = 30, main = 75, cell = 60, small = 100),
             homeScalePercent = 128,
@@ -131,5 +138,23 @@ class StoredJsonV2Test {
     val json = """{"schemaVersion":2,"settings":{"notificationsOn":true}}"""
     val record = StoreJson.decodeFromString(SettingsRecord.serializer(), json)
     assertEquals(InverterSettings(), record.settings.inverter)
+  }
+
+  @Test
+  fun settingsWithoutPack_decodeToNull() {
+    val json = """{"schemaVersion":2,"settings":{"notificationsOn":true}}"""
+    val settings = StoreJson.decodeFromString(SettingsRecord.serializer(), json).settings
+    assertNull(settings.batteryType)
+    assertNull(settings.cellCount)
+  }
+
+  @Test
+  fun settingsWithUnknownBatteryType_readsNull() {
+    val json =
+      """{"schemaVersion":2,"settings":{"notificationsOn":true,"batteryType":"SODIUM","cellCount":16}}"""
+    val settings = StoreJson.decodeFromString(SettingsRecord.serializer(), json).settings
+    assertNull(settings.batteryType)
+    assertEquals(16, settings.cellCount)
+    assertTrue(settings.notificationsOn)
   }
 }

@@ -13,6 +13,7 @@ import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.roundTo
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.CustomLevels
@@ -276,13 +277,29 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = HomeScale.DEFAULT) }
   }
 
-  fun saveCapacity(text: String, locale: Locale) {
-    val trimmed = text.trim()
-    val ah = if (trimmed.isEmpty()) null else parseDecimal(trimmed, locale)
-    if (trimmed.isNotEmpty() && ah == null) {
-      return fail(FieldError(Field.CAPACITY, Problem.INVALID))
+  /** The type only picks default levels, so it needs no new reading. */
+  fun saveBatteryType(type: BatteryType) {
+    save(emptyList(), syncAfter = false) { it.copy(batteryType = type) }
+  }
+
+  /**
+   * Saves the typed cell count and capacity (in [locale]) together. A blank field stores `null`;
+   * with an error in either field nothing is stored, and the errors come in field order.
+   */
+  fun savePack(cellsText: String, capacityText: String, locale: Locale) {
+    val cellsTyped = cellsText.trim()
+    val capacityTyped = capacityText.trim()
+    val cells = if (cellsTyped.isEmpty()) null else cellsTyped.toIntOrNull()
+    val ah = if (capacityTyped.isEmpty()) null else parseDecimal(capacityTyped, locale)
+    val cellsErrors =
+      if (cellsTyped.isNotEmpty() && cells == null) listOf(FieldError(Field.CELLS, Problem.INVALID))
+      else Validation.cells(cells)
+    val capacityErrors =
+      if (capacityTyped.isNotEmpty() && ah == null) listOf(FieldError(Field.CAPACITY, Problem.INVALID))
+      else Validation.capacity(ah)
+    save(cellsErrors + capacityErrors, syncAfter = false) {
+      it.copy(cellCount = cells, capacityAh = ah)
     }
-    save(Validation.capacity(ah), syncAfter = false) { it.copy(capacityAh = ah) }
   }
 
   /**

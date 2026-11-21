@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.LevelAlertState
@@ -175,6 +176,24 @@ class LevelAlertsTest {
   }
 
   @Test
+  fun typeChange_postsNothing() {
+    val pack =
+      BatteryReading(
+        chargePercent = 50.0,
+        totalVoltageV = 52.8,
+        averageCellVoltageV = 3.3,
+        currentA = -10.0,
+        updatedAtMillis = 1_000L,
+      )
+    val liFePO4 = base.copy(capacityAh = 100.0)
+    val first = evaluate(pack, settings = liFePO4)
+    assertEquals(3, first.state.getValue("VOLTAGE").current) // Normal
+    val lto = evaluate(pack, first.state, liFePO4.copy(batteryType = BatteryType.LTO))
+    assertEquals(emptyList<LevelAlert>(), lto.alerts)
+    assertEquals(6, lto.state.getValue("VOLTAGE").current) // Very high
+  }
+
+  @Test
   fun margin_values() {
     assertEquals(2.0, LevelAlerts.margin(LevelValue.SOC, noBasis), 0.0)
     assertEquals(5.0, LevelAlerts.margin(LevelValue.CHARGE_CURRENT, LevelBasis(100.0, null)), 0.0)
@@ -195,6 +214,10 @@ class LevelAlertsTest {
     assertEquals(0.1, voltage(4), 0.0)
     assertEquals(0.4, voltage(null), 0.0)
   }
+
+  @Test
+  fun margin_voltage_usesTheTypedCount() =
+    assertEquals(0.2, LevelAlerts.margin(LevelValue.VOLTAGE, LevelBasis.of(null, Settings(cellCount = 8))), 0.0)
 
   @Test
   fun margin_current_roundsHalfUpToTheShownDecimals() {

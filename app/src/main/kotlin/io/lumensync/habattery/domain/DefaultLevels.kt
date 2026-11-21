@@ -10,9 +10,10 @@ import io.lumensync.habattery.domain.model.LevelValue
 import kotlin.math.floor
 
 /**
- * The built-in levels of each value, in shown order. Ids run 1..n and names stay empty. Bells are on
- * for the levels that mean act now: SOC Low and Full, Freezing and Hot battery, Hot MOSFET, Low and
- * High grid voltage, High output voltage.
+ * The built-in levels of each value, in shown order. Ids run 1..n and names stay empty. The voltage
+ * and current edges come from the [BatteryPreset] of the basis type; the other lists are the same
+ * for every type. Bells are on for the levels that mean act now: SOC Low and Full, Freezing and Hot
+ * battery, Hot MOSFET, Low and High grid voltage, High output voltage.
  */
 object DefaultLevels {
   private val BELOW = LevelSide.BELOW
@@ -33,6 +34,7 @@ object DefaultLevels {
   ): List<ColorLevel> {
     val capacity = basis.capacityAh?.takeIf { it > 0.0 }
     val cells = basis.cells?.takeIf { it >= 1 }
+    val preset = BatteryPreset.of(basis.type)
     val rows: List<Row> =
       when (value) {
         LevelValue.SOC ->
@@ -44,14 +46,14 @@ object DefaultLevels {
           )
         LevelValue.VOLTAGE ->
           if (cells != null) {
-            // LiFePO4 volts per cell, scaled to the pack.
+            val volts = preset.cellVolts
             listOf(
-              Row(BELOW, packEdge(3.00, cells), LevelType.CRITICAL, LevelName.LOW),
-              Row(BELOW, packEdge(3.20, cells), LevelType.WARNING, LevelName.GETTING_LOW),
+              Row(BELOW, packEdge(volts.low, cells), LevelType.CRITICAL, LevelName.LOW),
+              Row(BELOW, packEdge(volts.gettingLow, cells), LevelType.WARNING, LevelName.GETTING_LOW),
               Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
-              Row(ABOVE, packEdge(3.45, cells), LevelType.INFO, LevelName.FULL),
-              Row(ABOVE, packEdge(3.55, cells), LevelType.WARNING, LevelName.HIGH),
-              Row(ABOVE, packEdge(3.65, cells), LevelType.CRITICAL, LevelName.VERY_HIGH),
+              Row(ABOVE, packEdge(volts.full, cells), LevelType.INFO, LevelName.FULL),
+              Row(ABOVE, packEdge(volts.high, cells), LevelType.WARNING, LevelName.HIGH),
+              Row(ABOVE, packEdge(volts.veryHigh, cells), LevelType.CRITICAL, LevelName.VERY_HIGH),
             )
           } else {
             listOf(Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL, LevelColor.PLAIN))
@@ -59,11 +61,12 @@ object DefaultLevels {
         LevelValue.CHARGE_CURRENT,
         LevelValue.DISCHARGE_CURRENT ->
           if (capacity != null) {
+            val rates = if (value == LevelValue.CHARGE_CURRENT) preset.charge else preset.discharge
             listOf(
-              Row(BELOW, roundEdge(0.2 * capacity), LevelType.INFO, LevelName.LIGHT),
+              Row(BELOW, roundEdge(rates.light * capacity), LevelType.INFO, LevelName.LIGHT),
               Row(MIDDLE, null, LevelType.NORMAL, LevelName.NORMAL),
-              Row(ABOVE, roundEdge(0.5 * capacity), LevelType.WARNING, LevelName.HIGH),
-              Row(ABOVE, roundEdge(0.8 * capacity), LevelType.CRITICAL, LevelName.VERY_HIGH),
+              Row(ABOVE, roundEdge(rates.high * capacity), LevelType.WARNING, LevelName.HIGH),
+              Row(ABOVE, roundEdge(rates.veryHigh * capacity), LevelType.CRITICAL, LevelName.VERY_HIGH),
             )
           } else {
             val color = if (value == LevelValue.DISCHARGE_CURRENT) LevelColor.AMBER else null

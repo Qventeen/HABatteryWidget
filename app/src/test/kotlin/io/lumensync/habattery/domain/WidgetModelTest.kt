@@ -280,6 +280,14 @@ class WidgetModelTest {
   }
 
   @Test
+  fun averageCell_typedCountFillsAGap() =
+    assertEquals(
+      LevelLook(LevelColor.GREEN),
+      data(sample.copy(totalVoltageV = null, averageCellVoltageV = 3.30), settings().copy(cellCount = 16))
+        .averageCellLook,
+    )
+
+  @Test
   fun delta_9mV_blue_10mV_green() {
     fun delta(volts: Double) = data(sample.copy(deltaCellVoltageV = volts)).deltaLook
     assertEquals(LevelLook(LevelColor.BLUE), delta(0.009))

@@ -8,6 +8,7 @@ import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.EmptyKind
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.CustomLevels
@@ -256,7 +257,7 @@ class MainViewModelTest {
     val vm = start()
     settings.updateFailure = IOException("disk")
     vm.saveConnection("http://192.168.1.2:8123")
-    vm.saveCapacity("100", Locale.US)
+    vm.savePack("", "100", Locale.US)
     vm.setNotificationsOn(true)
     advanceUntilIdle()
     assertEquals("http://ha.local:8123", state.settings.connection.url)
@@ -264,7 +265,7 @@ class MainViewModelTest {
     assertFalse(state.settings.notificationsOn)
     assertEquals(1, source.calls)
     settings.updateFailure = null
-    vm.saveCapacity("100", Locale.US)
+    vm.savePack("", "100", Locale.US)
     advanceUntilIdle()
     assertEquals(100.0, state.settings.capacityAh)
   }
@@ -288,20 +289,72 @@ class MainViewModelTest {
     assertEquals(listOf(FieldError(Field.INTERVAL, Problem.INVALID)), state.errors)
   }
 
-  @Test fun saveCapacity_ukrainianComma() = runTest(dispatcher) {
+  @Test fun savePack_capacityUkrainianComma() = runTest(dispatcher) {
     val vm = start()
-    vm.saveCapacity("314,5", Locale.forLanguageTag("uk"))
+    vm.savePack("", "314,5", Locale.forLanguageTag("uk"))
     advanceUntilIdle()
     assertEquals(314.5, state.settings.capacityAh)
-    vm.saveCapacity("", Locale.US)
+    vm.savePack("", "", Locale.US)
     advanceUntilIdle()
     assertNull(state.settings.capacityAh)
-    vm.saveCapacity("0", Locale.US)
+    vm.savePack("", "0", Locale.US)
     advanceUntilIdle()
     assertEquals(listOf(FieldError(Field.CAPACITY, Problem.OUT_OF_RANGE)), state.errors)
-    vm.saveCapacity("x", Locale.US)
+    vm.savePack("", "x", Locale.US)
     advanceUntilIdle()
     assertEquals(listOf(FieldError(Field.CAPACITY, Problem.INVALID)), state.errors)
+  }
+
+  @Test fun saveBatteryType_storesAtOnce() = runTest(dispatcher) {
+    val vm = start()
+    val calls = source.calls
+    vm.saveBatteryType(BatteryType.LTO)
+    advanceUntilIdle()
+    assertEquals(BatteryType.LTO, state.settings.batteryType)
+    assertEquals(calls, source.calls)
+  }
+
+  @Test fun savePack_storesCellsAndCapacity() = runTest(dispatcher) {
+    val vm = start()
+    val calls = source.calls
+    vm.savePack(" 16 ", "314,5", Locale.forLanguageTag("uk"))
+    advanceUntilIdle()
+    assertEquals(16, state.settings.cellCount)
+    assertEquals(314.5, state.settings.capacityAh)
+    assertEquals(calls, source.calls)
+    vm.savePack("", "", Locale.US)
+    advanceUntilIdle()
+    assertNull(state.settings.cellCount)
+    assertNull(state.settings.capacityAh)
+  }
+
+  @Test fun savePack_cellsErrors() = runTest(dispatcher) {
+    val vm = start()
+    for ((text, problem) in
+      listOf(
+        "15.5" to Problem.INVALID,
+        "x" to Problem.INVALID,
+        "0" to Problem.OUT_OF_RANGE,
+        "33" to Problem.OUT_OF_RANGE,
+      )) {
+      vm.savePack(text, "", Locale.US)
+      advanceUntilIdle()
+      assertEquals(text, listOf(FieldError(Field.CELLS, problem)), state.errors)
+      assertNull(state.settings.cellCount)
+    }
+  }
+
+  @Test fun savePack_anyError_storesNothing() = runTest(dispatcher) {
+    val vm = start()
+    vm.savePack("0", "100", Locale.US)
+    advanceUntilIdle()
+    assertNull(state.settings.capacityAh)
+    vm.savePack("x", "0", Locale.US)
+    advanceUntilIdle()
+    assertEquals(
+      listOf(FieldError(Field.CELLS, Problem.INVALID), FieldError(Field.CAPACITY, Problem.OUT_OF_RANGE)),
+      state.errors,
+    )
   }
 
   @Test fun saveEntities_chargeRequired() = runTest(dispatcher) {

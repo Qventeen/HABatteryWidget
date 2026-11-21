@@ -12,7 +12,8 @@ voltage and the output voltage, read from the same HA. The app has three tabs:
 
 - **Battery**: a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3),
   "Add to home screen", the "Widget" settings (kWh or Ah under SOC, current or
-  power, font sizes), colour levels and alerts, entities and capacity.
+  power, font sizes), colour levels and alerts, entities and the pack: type,
+  cells, capacity.
 - **Inverter**: a preview of the strip for each size (3×1, 4×1, 5×1), "Add to home
   screen", the display (mode as a big icon or icon + word, font sizes), the icons,
   colour levels and alerts for the two voltages, and the inverter entities. Blank

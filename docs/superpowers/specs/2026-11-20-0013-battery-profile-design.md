@@ -106,7 +106,8 @@ Used when the total capacity sensor is empty or unavailable.
   | type label | Type | Тип |
   | type hint | Sets the default voltage and current levels. Own levels stay as they are. Li-ion means NMC. | Задає типові рівні напруги та струму. Власні рівні не змінюються. Li-ion — це NMC. |
   | cells label | Cells in series | Комірок послідовно |
-  | cells hint | Used when the total voltage or average cell sensor is empty. | Використовується, коли датчик загальної напруги або середньої комірки порожній. |
+  | cells hint (no count) | Used when the total voltage or average cell sensor is empty. | Використовується, коли датчик загальної напруги або середньої комірки порожній. |
+  | cells hint (counted, §3.3) | The sensors count 16 cells now. This number is used only when the total voltage or average cell sensor is empty. | За датчиками зараз 16 комірок. Це число використовується, лише коли датчик загальної напруги або середньої комірки порожній. |
   | cells error | Enter a whole number from 1 to 32 | Введіть ціле число від 1 до 32 |
   | capacity label | Capacity (Ah) | Ємність (А·год) |
 
@@ -215,6 +216,10 @@ Used when the total capacity sensor is empty or unavailable.
   simpler than "the setting overrides the reading".
 - **Mismatch:** no warning (my call). The reading wins, so a wrong typed
   number never changes what the widget shows while both sensors work.
+- **Counted hint** (owner, 2026-11-21: a changed typed count did not move
+  the voltage levels and looked broken): while the reading counts the
+  cells, the cells hint names that count (plural forms in Ukrainian), so
+  the user sees which count is used. With no count it keeps the plain hint.
 - **Range:** a whole number from 1 to 32 (my call). JK-BMS boards go up to
   24 cells; 32 leaves room. Anything else (0, 33, "15.5", letters) is a
   field error.

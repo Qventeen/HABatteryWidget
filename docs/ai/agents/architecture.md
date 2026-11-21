@@ -20,8 +20,9 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
   the per-value alert state), `ModeAlerts` (the inverter mode change to post), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
   `Validation`, `UrlPolicy`, `WidgetModel` and `InverterWidgetModel` (what each widget and its app preview show),
-  `DefaultLevels`, `LevelBasis`, `LevelPicker` and `LevelSpans` (value levels and alerts),
-  `ToggleAutoRefresh`. `model/` holds `InverterSettings`, `InverterReading`, `InverterMode` /
+  `DefaultLevels`, `LevelBasis` (capacity, cells and battery type), `BatteryPreset` (volts per
+  cell and charge / discharge C-rates per `BatteryType`), `LevelPicker` and `LevelSpans` (value
+  levels and alerts), `ToggleAutoRefresh`. `model/` holds `BatteryType`, `InverterSettings`, `InverterReading`, `InverterMode` /
   `ModeText` (the mode table), and `FetchRequest` / `PartResult` / `FetchResult` (what a sync
   asks and gets back, one result per part).
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
@@ -128,3 +129,6 @@ when it has a second implementation or a test fake.
   font sizes (spec 0012), and a level's type defaults to `NORMAL`
   and its side to `MIDDLE`, the level with no edge (`ColorLevel.type`, `ColorLevel.side`,
   spec 0010).
+- The pack fields (spec 0013): `Settings.batteryType` `null` reads as LiFePO4, and a type name
+  from a later build reads as `null`; `Settings.cellCount` is used only when the reading cannot
+  count the cells, like `capacityAh` for the capacity.

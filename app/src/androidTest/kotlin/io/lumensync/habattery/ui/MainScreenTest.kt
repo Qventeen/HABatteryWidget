@@ -163,9 +163,9 @@ class MainScreenTest {
     waitForContent()
     openTab(AppTab.BATTERY)
     val label = text(R.string.capacity_label)
-    val header = compose.onNodeWithText(text(R.string.capacity_title))
+    val header = compose.onNodeWithText(text(R.string.pack_title))
 
-    // The capacity section starts folded: its content is not composed.
+    // The Pack section starts folded: its content is not composed.
     compose.onNodeWithText(label).assertDoesNotExist()
 
     header.performScrollTo().performClick()
@@ -200,7 +200,7 @@ class MainScreenTest {
 
   /**
    * Battery: preview, "Add to home screen" (when the launcher can pin), Widget, Levels and alerts,
-   * Entities, Capacity.
+   * Entities, Pack.
    */
   @Test
   fun batteryTab_order() {
@@ -212,9 +212,9 @@ class MainScreenTest {
     val widget = top(compose.onNodeWithText(text(R.string.widget_settings_title)))
     val colors = top(compose.onNodeWithText(text(R.string.colors_title)))
     val entities = top(compose.onNodeWithText(text(R.string.entities_title)))
-    val capacity = top(compose.onNodeWithText(text(R.string.capacity_title)))
+    val pack = top(compose.onNodeWithText(text(R.string.pack_title)))
     add?.positionInRoot?.y?.let { assertTrue(preview < it && it < widget) }
-    assertTrue(preview < widget && widget < colors && colors < entities && entities < capacity)
+    assertTrue(preview < widget && widget < colors && colors < entities && entities < pack)
     compose.onNodeWithTag(CONNECTION_SECTION_TAG).assertDoesNotExist()
   }
 
@@ -263,17 +263,17 @@ class MainScreenTest {
     openTab(AppTab.BATTERY)
     val fiveByThree = compose.activity.getString(R.string.preview_size, 5, 3)
     compose.onNodeWithText(fiveByThree).performClick()
-    val capacity = compose.onNodeWithText(text(R.string.capacity_title))
-    capacity.performScrollTo().performClick()
+    val pack = compose.onNodeWithText(text(R.string.pack_title))
+    pack.performScrollTo().performClick()
     compose.waitForIdle()
-    val scrolledTop = top(capacity)
+    val scrolledTop = top(pack)
 
     openTab(AppTab.COMMON)
-    compose.onNodeWithText(text(R.string.capacity_title)).assertDoesNotExist()
+    compose.onNodeWithText(text(R.string.pack_title)).assertDoesNotExist()
     openTab(AppTab.BATTERY)
 
     compose.onNodeWithText(text(R.string.capacity_label)).assertExists()
-    assertEquals(scrolledTop, top(compose.onNodeWithText(text(R.string.capacity_title))), 1f)
+    assertEquals(scrolledTop, top(compose.onNodeWithText(text(R.string.pack_title))), 1f)
     compose.onNodeWithText(fiveByThree).assertIsSelected()
   }
 

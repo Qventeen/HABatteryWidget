@@ -18,6 +18,10 @@ data class Settings(
   /** The main notification switch; a v1 file stored it as `notifyOnFull`. */
   @JsonNames("notifyOnFull") val notificationsOn: Boolean = false,
   val capacityAh: Double? = null,
+  /** `null` reads as [BatteryType.DEFAULT]; a name a later version wrote reads as `null`. */
+  val batteryType: BatteryType? = null,
+  /** Cells in series, typed by the user: used only when the reading cannot count them. */
+  val cellCount: Int? = null,
   val display: DisplaySettings = DisplaySettings(),
   val fontPercents: FontPercents = FontPercents(),
   val homeScalePercent: Int = HomeScale.DEFAULT,
