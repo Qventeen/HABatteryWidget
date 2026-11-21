@@ -197,6 +197,10 @@ class LevelAlertsTest {
   }
 
   @Test
+  fun margin_voltage_usesTheTypedCount() =
+    assertEquals(0.2, LevelAlerts.margin(LevelValue.VOLTAGE, LevelBasis.of(null, Settings(cellCount = 8))), 0.0)
+
+  @Test
   fun margin_current_roundsHalfUpToTheShownDecimals() {
     val charge = LevelAlerts.margin(LevelValue.CHARGE_CURRENT, LevelBasis(105.0, null))
     val discharge = LevelAlerts.margin(LevelValue.DISCHARGE_CURRENT, LevelBasis(314.0, null))
