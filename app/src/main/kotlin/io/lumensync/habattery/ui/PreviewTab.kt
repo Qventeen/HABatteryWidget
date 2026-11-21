@@ -43,6 +43,15 @@ data class StripRequest(val spec: InverterLayoutSpec, val count: Int = 0) {
         ?.takeIf { it.provider == InverterWidgetReceiver::class.java.name }
         ?.size
         ?.let { InverterLayoutSpec.forSize(it.width.value, it.height.value) }
+
+    /**
+     * The size the strip preview opens on, like [PreviewTab.first]: the strip the app was opened for
+     * ([opened]), else the first placed strip ([firstPlaced], its reported size); none → 3×1.
+     */
+    fun first(opened: NamedWidget?, firstPlaced: DpSize?): InverterLayoutSpec =
+      named(opened)
+        ?: firstPlaced?.let { InverterLayoutSpec.forSize(it.width.value, it.height.value) }
+        ?: InverterLayoutSpec.S3X1
   }
 }
 

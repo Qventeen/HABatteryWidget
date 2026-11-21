@@ -39,6 +39,7 @@ import io.lumensync.habattery.ui.theme.HaBatteryTheme
 import io.lumensync.habattery.widget.BatteryWidgetReceiver
 import io.lumensync.habattery.widget.EXTRA_TAPPED_WIDGET_ID
 import io.lumensync.habattery.widget.InverterLayoutSpec
+import io.lumensync.habattery.widget.InverterWidgetReceiver
 import kotlinx.coroutines.launch
 
 /** The app screen. It is also both widgets' configure activity (see [confirmWidgetPlacement]). */
@@ -83,8 +84,8 @@ class MainActivity : ComponentActivity() {
     language = if (appLanguage.supported) appLanguage.current() else null
     val actions = mainActions(appLanguage)
     val opened = openedWidget()
-    previewRequest = PreviewRequest(PreviewTab.first(opened, firstPlacedSize()))
-    stripRequest = StripRequest(StripRequest.named(opened) ?: InverterLayoutSpec.S3X1)
+    previewRequest = PreviewRequest(PreviewTab.first(opened, firstPlacedSize(BatteryWidgetReceiver::class.java)))
+    stripRequest = StripRequest(StripRequest.first(opened, firstPlacedSize(InverterWidgetReceiver::class.java)))
     tabRequest = AppTabRequest(opened?.provider, requested = requestedTab())
     setContent {
       val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -158,10 +159,10 @@ class MainActivity : ComponentActivity() {
   private fun providerOf(id: Int): String? =
     AppWidgetManager.getInstance(this).getAppWidgetInfo(id)?.provider?.className
 
-  /** The size of the first placed battery widget; null when none is placed. */
-  private fun firstPlacedSize(): DpSize? =
+  /** The size of the first placed widget of [receiver]; null when none is placed. */
+  private fun firstPlacedSize(receiver: Class<*>): DpSize? =
     AppWidgetManager.getInstance(this)
-      .getAppWidgetIds(ComponentName(this, BatteryWidgetReceiver::class.java))
+      .getAppWidgetIds(ComponentName(this, receiver))
       .firstOrNull()
       ?.let(::reportedSize)
 

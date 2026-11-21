@@ -35,6 +35,20 @@ class StripRequestTest {
     assertNull(StripRequest.named(NamedWidget(null, DpSize(340.dp, 60.dp))))
   }
 
+  private fun size(spec: InverterLayoutSpec) = DpSize(spec.bucketWidthDp.dp, spec.bucketHeightDp.dp)
+
+  @Test
+  fun first_openedStrip_winsOverPlaced() = assertEquals(S4X1, StripRequest.first(strip(S4X1), size(S5X1)))
+
+  @Test
+  fun first_noOpenedStrip_usesTheFirstPlacedStrip() {
+    assertEquals(S5X1, StripRequest.first(null, size(S5X1)))
+    assertEquals(S5X1, StripRequest.first(NamedWidget(BatteryWidgetReceiver::class.java.name, DpSize(340.dp, 205.dp)), size(S5X1)))
+  }
+
+  @Test
+  fun first_noStripPlaced_opensTheSmallestStrip() = assertEquals(S3X1, StripRequest.first(null, null))
+
   @Test
   fun next_namedSpec_isANewRequest() = assertEquals(StripRequest(S5X1, 3), StripRequest(S3X1, 2).next(S5X1))
 
