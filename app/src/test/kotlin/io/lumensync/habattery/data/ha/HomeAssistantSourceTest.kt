@@ -6,11 +6,11 @@ import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FetchRequest
 import io.lumensync.habattery.domain.model.FetchResult
-import io.lumensync.habattery.domain.model.InverterEntitySettings
 import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.testing.inverterEntities
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
@@ -39,13 +39,7 @@ class HomeAssistantSourceTest {
   private val source = HomeAssistantSource(client) { 1234L }
   private val entities = EntitySettings(charge = "sensor.soc")
   private val batteryOnly = FetchRequest(entities, null)
-  private val inverter =
-    InverterEntitySettings(
-      mode = "sensor.inv_operation_mode",
-      gridVoltage = "sensor.inv_main_voltage",
-      outputVoltage = "sensor.inv_output_voltage",
-    )
-  private val both = FetchRequest(entities, inverter)
+  private val both = FetchRequest(entities, inverterEntities)
   private val okBody =
     """{"soc":55.0,"power":-500.0,"current":-10.0,"total_v":26.5}"""
 
@@ -210,7 +204,7 @@ class HomeAssistantSourceTest {
   fun onlyInverterAsked_batteryNull() = runTest {
     val body = """{"soc":null,"inv_mode":"Off-Grid","inv_grid_v":0.0,"inv_out_v":230.0}"""
     val s = server(reply(200, body))
-    val result = fetch(s.base(), request = FetchRequest(null, inverter))
+    val result = fetch(s.base(), request = FetchRequest(null, inverterEntities))
     val ok = PartResult.Ok(InverterReading("Off-Grid", 0.0, 230.0, 1234L))
     assertEquals(FetchResult(null, ok), result)
     val template = s.takeRequest().template()

@@ -10,6 +10,7 @@ import io.lumensync.habattery.domain.model.InverterReading
 import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
+import io.lumensync.habattery.testing.inverterEntities
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -66,13 +67,6 @@ class StatesSourceTest {
       "sensor.mosfet" to state("31.5"),
       "binary_sensor.balancing" to state("on"),
     ) + (1..8).associate { "sensor.t$it" to state("2$it") }
-
-  private val inverter =
-    InverterEntitySettings(
-      mode = "sensor.inv_operation_mode",
-      gridVoltage = "sensor.inv_main_voltage",
-      outputVoltage = "sensor.inv_output_voltage",
-    )
 
   private val inverterStates =
     mapOf(
@@ -301,7 +295,7 @@ class StatesSourceTest {
   @Test
   fun inverterIds_threeMoreRequests() = runTest {
     val s = server(allStates + inverterStates)
-    val result = fetch(s.base(), inverter = inverter)
+    val result = fetch(s.base(), inverter = inverterEntities)
     assertEquals(PartResult.Ok(InverterReading("Off-Grid", 0.0, 230.5, 1234L)), result.inverter)
     assertTrue(result.battery is PartResult.Ok)
     assertEquals(21, s.requestCount)
@@ -310,7 +304,7 @@ class StatesSourceTest {
 
   @Test
   fun batteryChargeMissing_inverterOk() = runTest {
-    val result = fetch(server(allStates - "sensor.soc" + inverterStates).base(), inverter = inverter)
+    val result = fetch(server(allStates - "sensor.soc" + inverterStates).base(), inverter = inverterEntities)
     assertEquals(PartResult.Failed(SyncError.BadResponse), result.battery)
     assertEquals(PartResult.Ok(InverterReading("Off-Grid", 0.0, 230.5, 1234L)), result.inverter)
   }
@@ -319,7 +313,25 @@ class StatesSourceTest {
   fun inverterIdUnauthorized_failsBoth() = runTest {
     val states = allStates + inverterStates + ("sensor.inv_main_voltage" to reply(401))
     val failed = PartResult.Failed(SyncError.Unauthorized)
-    assertEquals(FetchResult(failed, failed), fetch(server(states).base(), inverter = inverter))
+    assertEquals(FetchResult(failed, failed), fetch(server(states).base(), inverter = inverterEntities))
+  }
+
+  @Test
+  fun onlyInverterAsked_threeRequests_batteryNull() = runTest {
+    val s = server(inverterStates)
+    val result = source.fetch(ConnectionSettings(s.base()), FetchRequest(null, inverterEntities), "t0ken")
+    assertNull(result.battery)
+    assertTrue(result.inverter is PartResult.Ok)
+    assertEquals(3, s.requestCount)
+    assertTrue(s.paths().all { it.startsWith("/api/states/sensor.inv_") })
+  }
+
+  @Test
+  fun inverterAllUnavailable_isBadResponse() = runTest {
+    val unavailable = inverterStates.mapValues { state("unavailable") }
+    val result = fetch(server(allStates + unavailable).base(), inverter = inverterEntities)
+    assertEquals(PartResult.Failed(SyncError.BadResponse), result.inverter)
+    assertTrue(result.battery is PartResult.Ok)
   }
 
   @Test
