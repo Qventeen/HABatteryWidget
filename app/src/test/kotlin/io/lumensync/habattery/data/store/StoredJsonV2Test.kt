@@ -13,6 +13,10 @@ import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.InverterIcon
+import io.lumensync.habattery.domain.model.LevelType
+import io.lumensync.habattery.domain.model.TextValue
+import io.lumensync.habattery.domain.model.customTextLevels
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.model.UnderSoc
@@ -69,6 +73,7 @@ class StoredJsonV2Test {
           "homeScalePercent": 128,
           "appearance": { "theme": "DARK" },
           "colorLevels": {},
+          "textLevels": {},
           "inverter": {
             "entities": {
               "prefix": "bps_inverter",
@@ -156,5 +161,28 @@ class StoredJsonV2Test {
     assertNull(settings.batteryType)
     assertEquals(16, settings.cellCount)
     assertTrue(settings.notificationsOn)
+  }
+
+  @Test
+  fun settingsWithoutTextLevels_decodeToEmpty() {
+    val json = """{"schemaVersion":2,"settings":{"notificationsOn":true}}"""
+    val settings = StoreJson.decodeFromString(SettingsRecord.serializer(), json).settings
+    assertTrue(settings.textLevels.isEmpty())
+  }
+
+  @Test
+  fun textLevelUnknownKeys_readSafely() {
+    val json =
+      """{"schemaVersion":2,"settings":{"textLevels":{"MODE":{"on":true,"levels":[""" +
+        """{"id":1,"texts":["Eco"],"defaultName":"SOLAR","icon":"NEW_ICON","type":"URGENT"}]}}}}"""
+    val level =
+      StoreJson.decodeFromString(SettingsRecord.serializer(), json)
+        .settings
+        .customTextLevels(TextValue.MODE)
+        .levels
+        .single()
+    assertNull(level.defaultName)
+    assertEquals(InverterIcon.HELP, level.shownIcon)
+    assertEquals(LevelType.NORMAL, level.type)
   }
 }

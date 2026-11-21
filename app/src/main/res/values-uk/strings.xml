@@ -307,6 +307,10 @@
     <string name="field_cells_range">Введіть ціле число від 1 до %1$d</string>
     <string name="field_level_edge_invalid">Введіть число</string>
     <string name="field_level_edge_duplicate">Два рівні з одного боку не можуть мати однакову межу</string>
+    <string name="field_mode_texts_required">Додайте хоча б один текст</string>
+    <string name="field_mode_text_invalid">«unavailable» і «unknown» означають, що значення немає</string>
+    <string name="field_mode_text_duplicate">Цей текст уже є в одному з режимів</string>
+    <string name="field_modes_too_many">Максимум режимів: %1$d</string>
     <string name="field_level_edge_overlap">Залиште проміжок між рівнями ↓ і ↑</string>
     <string name="field_level_margin_invalid">Введіть число, не менше 0</string>
 

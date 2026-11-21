@@ -343,6 +343,10 @@
     <string name="field_cells_range">Enter a whole number from 1 to %1$d</string>
     <string name="field_level_edge_invalid">Enter a number</string>
     <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
+    <string name="field_mode_texts_required">Add at least one text</string>
+    <string name="field_mode_text_invalid">“unavailable” and “unknown” mean no value</string>
+    <string name="field_mode_text_duplicate">This text is already in a mode</string>
+    <string name="field_modes_too_many">Maximum number of modes: %1$d</string>
     <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
     <string name="field_level_margin_invalid">Enter a number of 0 or more</string>
 
