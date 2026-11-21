@@ -381,7 +381,7 @@ class SyncBatteryTest {
   }
 
   @Test
-  fun modeChange_postsAfterLevelAlerts_andOnlyOnce() = runTest {
+  fun modeChange_postsOnce() = runTest {
     val cache =
       FakeReadingCache(CacheState(levelAlerts = enteringLow + gridNormal, inverterMode = "Mains"))
     val source =

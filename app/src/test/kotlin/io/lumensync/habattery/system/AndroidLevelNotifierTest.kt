@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.media.AudioAttributes
 import android.provider.Settings
+import androidx.compose.ui.graphics.toArgb
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.domain.DefaultLevels
 import io.lumensync.habattery.domain.LevelAlert
@@ -14,10 +15,12 @@ import io.lumensync.habattery.domain.LevelSpan
 import io.lumensync.habattery.domain.ModeAlert
 import io.lumensync.habattery.domain.model.InverterMode
 import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.LevelName
 import io.lumensync.habattery.domain.model.LevelSide
 import io.lumensync.habattery.domain.model.LevelType
 import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.widget.WidgetPalette
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -90,6 +93,7 @@ class AndroidLevelNotifierTest {
 
     val posted = shadowOf(manager).getNotification(150)
     assertEquals("level_warning_2", posted.channelId)
+    assertEquals(WidgetPalette.Light.shades(LevelColor.GREEN).ring.toArgb(), posted.color)
     assertEquals("Inverter: battery", posted.extras.getString("android.title"))
     assertTrue(posted.extras.getString("android.text")!!.startsWith("Measured at "))
   }
