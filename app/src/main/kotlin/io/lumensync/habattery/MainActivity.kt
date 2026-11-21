@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.system.AppLanguage
+import io.lumensync.habattery.system.EXTRA_INVERTER_ALERT
 import io.lumensync.habattery.ui.AppTab
 import io.lumensync.habattery.ui.AppTabRequest
 import io.lumensync.habattery.ui.MainActions
@@ -132,8 +133,9 @@ class MainActivity : ComponentActivity() {
   /** The widget the user tapped to open the app (see [EXTRA_TAPPED_WIDGET_ID]). */
   private fun tappedWidgetId(): Int? = widgetIdExtra(EXTRA_TAPPED_WIDGET_ID)
 
-  /** The tab an alert notification asks for (see [AppTab.EXTRA_OPEN_TAB]); null for none. */
-  private fun requestedTab(): AppTab? = AppTab.named(intent.getStringExtra(AppTab.EXTRA_OPEN_TAB))
+  /** The Inverter tab for an inverter alert tap (see [EXTRA_INVERTER_ALERT]); null for none. */
+  private fun requestedTab(): AppTab? =
+    if (intent.getBooleanExtra(EXTRA_INVERTER_ALERT, false)) AppTab.INVERTER else null
 
   private fun widgetIdExtra(name: String): Int? =
     intent.getIntExtra(name, AppWidgetManager.INVALID_APPWIDGET_ID).takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }

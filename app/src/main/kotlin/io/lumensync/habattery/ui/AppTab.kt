@@ -7,15 +7,7 @@ import io.lumensync.habattery.widget.InverterWidgetReceiver
 enum class AppTab {
   BATTERY,
   INVERTER,
-  COMMON;
-
-  companion object {
-    /** The intent extra of a notification that opens the app on one tab; its value is an [AppTab] name. */
-    const val EXTRA_OPEN_TAB = "io.lumensync.habattery.extra.OPEN_TAB"
-
-    /** The tab whose enum name is [name]; null when there is none. */
-    fun named(name: String?): AppTab? = entries.firstOrNull { it.name == name }
-  }
+  COMMON,
 }
 
 object AppTabs {
@@ -36,8 +28,8 @@ object AppTabs {
 /**
  * A request to show the tab of the widget from [provider] (null: none named), or the [requested]
  * tab of a notification (null: none). The tab needs the settings and the token, so the screen
- * resolves it with [AppTabs.first] once the first state arrives. Like [PreviewRequest], a widget tap while the app is open makes a new one with a higher
- * [count].
+ * resolves it with [AppTabs.first] once the first state arrives. Like [PreviewRequest], a widget
+ * tap or an alert tap while the app is open makes a new one with a higher [count].
  */
 data class AppTabRequest(val provider: String?, val count: Int = 0, val requested: AppTab? = null) {
   /**

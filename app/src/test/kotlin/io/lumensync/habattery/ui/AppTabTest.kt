@@ -61,19 +61,6 @@ class AppTabTest {
   fun first_widgetWinsOverTheRequestedTab() =
     assertEquals(BATTERY, AppTabs.first(battery, connectionMissing = false, requested = INVERTER))
 
-  @Test
-  fun named_readsTheEnumName() {
-    assertEquals(INVERTER, AppTab.named("INVERTER"))
-    assertEquals(COMMON, AppTab.named("COMMON"))
-  }
-
-  @Test
-  fun named_missingOrUnknown_isNull() {
-    assertNull(AppTab.named(null))
-    assertNull(AppTab.named("inverter"))
-    assertNull(AppTab.named("Settings"))
-  }
-
   /** An alert tap while the app is open: a new request, even with no widget named. */
   @Test
   fun next_requestedTab_isANewRequest() =

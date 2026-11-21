@@ -31,7 +31,6 @@ import io.lumensync.habattery.format.notificationValueRes
 import io.lumensync.habattery.format.placeWithUnit
 import io.lumensync.habattery.format.shownName
 import io.lumensync.habattery.format.unitLabel
-import io.lumensync.habattery.ui.AppTab
 import io.lumensync.habattery.widget.WidgetPalette
 import kotlin.math.roundToInt
 
@@ -39,6 +38,9 @@ import kotlin.math.roundToInt
  * Posts level and inverter mode notifications; the levels use one channel per level type. Never
  * asks for the permission; the screen does that.
  */
+/** The boolean intent extra of an inverter notification's tap; the app opens its Inverter tab. */
+const val EXTRA_INVERTER_ALERT = "io.lumensync.habattery.extra.INVERTER_ALERT"
+
 class AndroidLevelNotifier(context: Context) : LevelNotifier {
   private val context = context.applicationContext
   private val formatters = Formatters(this.context)
@@ -59,7 +61,7 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
         .setColor(WidgetPalette.Light.shades(type.defaultColor).ring.toArgb())
         .setContentTitle(title(alert))
         .setContentText(text(alert))
-        .setContentIntent(openApp(BASE_ID + alert.value.ordinal, tabOf(alert.value)))
+        .setContentIntent(openApp(BASE_ID + alert.value.ordinal, isInverterAlert(alert.value)))
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_STATUS)
         .build()
@@ -88,7 +90,7 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
             formatters.updatedAt(alert.measuredAtMillis),
           )
         )
-        .setContentIntent(openApp(MODE_NOTIFICATION_ID, AppTab.INVERTER))
+        .setContentIntent(openApp(MODE_NOTIFICATION_ID, inverterAlert = true))
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_STATUS)
         .build()
@@ -151,22 +153,21 @@ class AndroidLevelNotifier(context: Context) : LevelNotifier {
       LevelValue.OUTPUT_VOLTAGE -> formatters.wholeVolts(shown)
     }
 
-  /** The inverter values open the Inverter tab; the battery values open the app's usual first tab. */
-  private fun tabOf(value: LevelValue): AppTab? =
-    if (value in LevelValue.INVERTER) AppTab.INVERTER else null
+  /** The inverter values are the ones the app shows on its Inverter tab. */
+  private fun isInverterAlert(value: LevelValue): Boolean = value in LevelValue.INVERTER
 
   /**
-   * Opens the app, on [tab] when given. A PendingIntent is told apart by its request code and not
-   * by its extras, so each notification passes its own id: a shared code would let the newest
-   * notification's tab overwrite the older one's.
+   * Opens the app; [inverterAlert] sets [EXTRA_INVERTER_ALERT]. A PendingIntent is told apart by
+   * its request code and not by its extras, so each notification passes its own id: a shared code
+   * would let the newest notification's extra overwrite the older one's.
    */
-  private fun openApp(requestCode: Int, tab: AppTab?): PendingIntent =
+  private fun openApp(requestCode: Int, inverterAlert: Boolean): PendingIntent =
     PendingIntent.getActivity(
       context,
       requestCode,
       Intent(context, MainActivity::class.java)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        .apply { tab?.let { putExtra(AppTab.EXTRA_OPEN_TAB, it.name) } },
+        .putExtra(EXTRA_INVERTER_ALERT, inverterAlert),
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
