@@ -41,7 +41,7 @@ The readiness check (2026-11-21) confirmed the other names. Fixes by task (paths
   - Alert state: feed the inverter evaluator the battery outcome's map (`batteryOutcome?.state ?: state.levelAlerts`) and store the inverter result. `evaluate` copies the whole map (`LevelAlerts.kt:52, 74-76`), so starting both from `state.levelAlerts` loses the battery state and repeats a notification. Add a `SyncBatteryTest` where both parts post and both states are kept.
   - The token-type hint fires on `Unauthorized` in either part (`ui/MainUiState.kt:25-28` reads only the battery error today). Do it here or in Task 11.
 - **Task 5**
-  - Add to the files, or it does not compile: `domain/ShownNumber.kt`, `ui/sections/ColorsSection.kt`, `ui/sections/LevelEditor.kt`, `system/AndroidLevelNotifier.kt`, `format/Formatters.kt`, `ShownNumberTest.kt`. They hold exhaustive `when (value)` (`ShownNumber.kt:22-33`, `ColorsSection.kt:323-333`, `LevelEditor.kt:580-589`, `AndroidLevelNotifier.kt:104-113`).
+  - Add to the files, or it does not compile: `domain/ShownNumber.kt`, `ui/sections/ColorsSection.kt`, `ui/sections/LevelEditor.kt`, `system/AndroidLevelNotifier.kt`, `format/Formatters.kt`, `ShownNumberTest.kt`. They hold exhaustive `when (value)` (`ShownNumber.kt:22-33`, `ColorsSection.kt:323-333`, `LevelEditor.kt:580-589`, `AndroidLevelNotifier.kt:103-111`).
   - `GRID_VOLTAGE(0, false, 0.0)` and `OUTPUT_VOLTAGE(0, false, 0.0)`, appended last (`LevelValue(decimals, hasIcons, floor)`, `ColorLevels.kt:72-80`).
   - `ShownNumber.of(value, reading: BatteryReading, levels)` returns `null` for the two inverter values. Add `ShownNumber.of(value, reading: InverterReading): Double?` = the voltage `roundTo(0)`. `evaluateInverter` and `InverterWidgetModel` (number and colour) both use it. Do not use `roundToInt()` (half up): 206.5 V would show "207 V" in the Low colour.
   - Add `Formatters.wholeVolts(volts: Double)` (`unit_volts`, 0 decimals; half-even like `roundTo(0)`), used by `shownText` here and the strip in Task 9. `Formatters.voltage` shows 2 decimals.
@@ -51,7 +51,8 @@ The readiness check (2026-11-21) confirmed the other names. Fixes by task (paths
   - `inverterDefaults`: assert sides `[BELOW, BELOW, MIDDLE, ABOVE]` and edges `[99.0, 206.0, null, 254.0]`.
   - `grid_rearm5V`: after LOW fired at 205, 210 → still disarmed, 211 → re-armed; on the low side 95 → disarmed, 94 → re-armed (re-arm is `x >= upper + margin` or `x <= lower − margin`, LOW's upper bound is its own edge, `LevelSpans.kt:48-59`, `LevelAlerts.kt:128-140`).
 - **Task 6**
-  - Extract the channel step (delete `full_charge`, create all four) from `post` into one private function used by `post` and `postMode` (`AndroidLevelNotifier.kt:58-70, 158-162`). Add `MODE_NOTIFICATION_ID = 150` next to `BASE_ID`.
+  - Extract the channel step (delete `OLD_CHANNEL_IDS`, create all four) from `post` into one private function used by `post` and `postMode` (`AndroidLevelNotifier.kt:62-67, 196-210`). Add `MODE_NOTIFICATION_ID = 150` next to `BASE_ID`.
+  - The Critical and Warning channel ids are `level_critical_2` and `level_warning_2` (0011 §7: own tone and buzz); the Task 6 test bullets use them. A mode post on them plays that tone and buzz.
   - Add `@StringRes fun modeWordRes(mode: InverterMode)` in `format/InverterLabels.kt`. Task 9 reuses it for the strip.
 - **Task 7**
   - `LevelPicker.effective(value, settings, basis: LevelBasis)` needs a basis: pass `LevelBasis(null, null)` (`LevelPicker.kt:47-48`).
@@ -296,7 +297,7 @@ The readiness check (2026-11-21) confirmed the other names. Fixes by task (paths
   - `ModeAlertsTest.firstValue_storesOnly`; `change_alerts`: last `"Mains"`, reading `"Off-Grid"` → alert `OFF_GRID`; `sameIgnoringCase_noAlert`: last `"Mains"`, `"MAINS"` → none; `disabled_tracksOnly`.
   - `ModeAlertsTest.unavailable_isNotAChange` (Review Focus 2): last `"Mains"`, reading mode null → no alert, `last == "Mains"`; then `"Mains"` → still no alert.
   - `SyncBatteryTest.batteryFails_modeStillPosts` (Review Focus 1): battery `Failed`, inverter `Ok` with a new mode → one `postedModes` entry.
-  - `AndroidLevelNotifierTest.postMode_offGrid`: id 150, channel `level_warning`, title "Inverter: battery"; `postMode_unknown`: text `"Eco"` → channel `level_info`, title "Inverter: Eco"; `postMode_fault` → `level_critical`.
+  - `AndroidLevelNotifierTest.postMode_offGrid`: id 150, channel `level_warning_2`, title "Inverter: battery"; `postMode_unknown`: text `"Eco"` → channel `level_info`, title "Inverter: Eco"; `postMode_fault` → `level_critical_2`.
 - [ ] **Step 2: Run, expect FAIL**: `./gradlew :app:testDebugUnitTest --tests "*ModeAlertsTest" --tests "*SyncBatteryTest" --tests "*AndroidLevelNotifierTest"`
 - [ ] **Step 3: Implement**
 - [ ] **Step 4: Run the done gate, expect PASS**

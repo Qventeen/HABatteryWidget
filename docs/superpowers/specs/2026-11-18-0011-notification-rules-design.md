@@ -229,6 +229,11 @@ The check runs inside `SyncBattery` after each successful reading, where
   the owner can set the sound, vibration and pop-up per type in the Android
   settings. Importance (my call): Critical and Warning high (pop-up), Normal
   and Info default (no pop-up).
+- **Sound and vibration** (owner, 2026-11-21), so the types differ without a
+  look: Critical plays its own short tone and buzzes long three times;
+  Warning plays the phone's sound and buzzes short twice; Normal and Info
+  keep the phone's sound and vibration. The owner can still change each in
+  the Android settings.
 - **An icon per type** (owner decision on types, §1), from Material Symbols
   Rounded (Apache-2.0), as monochrome small icons: Critical `report`,
   Warning `warning`, Normal `check_circle`, Info `info` (icon picks are my
@@ -365,3 +370,10 @@ The check runs inside `SyncBattery` after each successful reading, where
   "Levels and alerts" / "Рівні та сповіщення" (summary "Default levels", the
   Default dialog and the Notifications hint follow), because it now holds
   the bells and the hysteresis too.
+- Sound and vibration (owner, 2026-11-21): the Critical and Warning channels
+  got new ids (`level_critical_2`, `level_warning_2`), because Android keeps
+  a channel's sound and vibration once it exists; the old ids are deleted
+  like `full_charge`. The Critical tone `res/raw/level_critical.ogg` (1 s,
+  two rising A5–C♯6–E6 beeps) is made here with a short script and ffmpeg,
+  so it has no licence terms. The channel stores the tone by name, not by
+  resource number.
