@@ -6,6 +6,9 @@
   `epic-widget-v5` for 0004–0008): each spec branches from the epic and merges
   back after its review; the epic merges into `develop` after the owner's review.
 - The app version is `versionName` / `versionCode` in `app/build.gradle.kts`.
+- Ideas for later live in `docs/ideas.md`; an idea is not a promise. Add a row
+  when a spec leaves something for later or the owner floats an idea. When the
+  owner picks one, brainstorm it into a spec and remove its row.
 - `references/` holds cloned expert repos (index: `references/README.md`,
   "What to study, by topic"). Check the matching row before you design widget,
   sync or test code. Read only: never build or run code there. Take the
