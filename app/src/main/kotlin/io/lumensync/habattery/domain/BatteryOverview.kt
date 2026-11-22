@@ -19,8 +19,6 @@ data class BatteryOverview(
   val refresh: RefreshSettings,
 ) {
   companion object {
-    const val REFRESHING_LIMIT_MS = 120_000L
-
     fun build(
       cache: CacheState,
       settings: Settings,
@@ -38,7 +36,7 @@ data class BatteryOverview(
             BatteryMath.timeRemaining(it, BatteryMath.fullCapacityAh(it, settings.capacityAh))
           },
         error = cache.error,
-        refreshing = since != null && nowMillis - since in 0 until REFRESHING_LIMIT_MS,
+        refreshing = Freshness.isRefreshing(since, nowMillis),
         refresh = settings.refresh,
       )
     }

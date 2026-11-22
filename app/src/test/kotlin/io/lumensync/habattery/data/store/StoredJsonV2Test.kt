@@ -65,7 +65,7 @@ class StoredJsonV2Test {
             "temperatures": ["sensor.t1", "sensor.t2"],
             "balancing": "sensor.bal"
           },
-          "refresh": { "auto": true, "intervalMinutes": 30 },
+          "refresh": { "auto": true, "intervalMinutes": 30, "onUnlock": true },
           "notificationsOn": true,
           "capacityAh": 314.5,
           "batteryType": "LTO",
@@ -138,6 +138,14 @@ class StoredJsonV2Test {
           ),
       )
     assertV2(json, expected, SettingsRecord.serializer())
+  }
+
+  @Test
+  fun refreshWithoutOnUnlock_readsOn() {
+    val json =
+      """{"schemaVersion":2,"settings":{"refresh":{"auto":true,"intervalMinutes":30}}}"""
+    val settings = StoreJson.decodeFromString(SettingsRecord.serializer(), json).settings
+    assertEquals(RefreshSettings(true, 30, onUnlock = true), settings.refresh)
   }
 
   @Test
