@@ -3,7 +3,8 @@
 The inverter strip (3×1, 4×1, 5×1, spec 0012) has its own section near the
 end, "Inverter strip". The app's Modes section (spec 0014) follows it,
 "Mode editor". The app icon and the notification icons (spec 0015) come
-last, "App icon".
+next, "App icon". The refresh controls of both widgets (↻ and the freshness
+dot, spec 0016) come last, "Refresh".
 
 Status: approved (v5), built in spec 0005 (layouts); temperatures in
 spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
@@ -62,7 +63,7 @@ the ring), so its top row spans the full width and the ring sits below it.
 
 ```
 5×2                                 4×3                     5×3
-╭─────╮ ⌛ 17 h ⚖ 11:29 (⟳)(↻)      ⌛ 17 h ⚖  11:29 (⟳)(↻)   ⌛ 17 h ⚖      11:29 (⟳)(↻)
+╭─────╮ ⌛ 17 h ⚖ 11:29 (↻•)        ⌛ 17 h ⚖  11:29 (↻•)     ⌛ 17 h ⚖      11:29 (↻•)
 │ SOC │ (26.50 V) (3.312 V)         ╭───╮ (  26.50 V  )     ╭─────╮ (26.50 V) (3.312 V)
 │ 55  │ (       ) (Δ 12 mV)         │55 │ ( ↓ 10.0 A  )     │ SOC │ (       ) (Δ 12 mV)
 │ kWh │ (↓10.0 A) (🌡 25 °C)        ╰───╯                   │ 55  │ (↓10.0 A) (🌡 25 °C)
@@ -71,10 +72,10 @@ the ring), so its top row spans the full width and the ring sits below it.
 ```
 
 - **Top row:** time left, balancing icon, last update time (or the error
-  icon, see States), auto-refresh toggle, manual refresh (right corner).
-  The two button touch areas touch each other. 4×2 and 5×2 buttons are
-  32 dp: below Android's 48 dp advice; the owner chose a 32 dp top row at
-  2 rows.
+  icon, see States), and ↻ with the freshness dot in the right corner.
+  Spec 0016 removed the auto-refresh toggle (see "Refresh"). The 4×2 and
+  5×2 ↻ is 32 dp: below Android's 48 dp advice; the owner chose a 32 dp top
+  row at 2 rows.
 - **Pack pills** fill their column. Neither value has a sign: the arrow and
   the colour show the direction. "↓ 125.5 A" and "↑ 3.98 kW" fit at the
   design card sizes; the widget fits its texts to the boxes at its bucket
@@ -113,7 +114,7 @@ shrink a little (about 16 sp in 4×2).
 
 | State | Widget |
 |---|---|
-| Normal | As above; the update time in the top row |
+| Normal | As above; the update time in the top row; the freshness dot on ↻ (green, amber when late; spec 0016) |
 | Refreshing | The ↻ icon dims; everything else stays |
 | Sync error, data exists | The last values stay. A red ⚠ icon replaces the update time. No error text on the widget; the icon's content description is "Sync error: <reason>", and the app shows the full text |
 | One value missing | "—" in its place, e.g. "Δ —" |
@@ -149,7 +150,8 @@ every id can also be typed by hand.
 | Cell delta | `sensor.<p>_delta_cell_voltage` | Reported in V, shown in mV |
 | Balancing | `sensor.<p>_balancing` | Read-only; `on`/`off`, `true`/`false` or `1`/`0` |
 | Update time | app | Time of the last successful sync; only the date when it was on an earlier day |
-| Auto refresh | app setting | The widget toggle turns periodic sync on or off; with no interval set, it uses 15 min |
+| Auto refresh | app setting | "Refresh in the background" turns the periodic sync on or off (no widget toggle since spec 0016); "Refresh when the phone is unlocked" syncs on unlock |
+| Freshness dot | app | The shown data's age: green up to the interval + 5 min (15 min when the periodic sync is off), amber after (spec 0016) |
 
 ## Colours and levels
 
@@ -162,7 +164,7 @@ every id can also be typed by hand.
 | MOSFET pill | amber above 65 °C, red above 80 °C |
 | Sync error icon | red ⚠ |
 | Balancing icon | green when on, grey when off |
-| Auto-refresh toggle | green tonal when on; grey with a slash when off |
+| Freshness dot | 8 dp with a 2 dp ring in the card colour, on the ↻ circle's top-right edge: ring-bar green while fresh, amber ring colour when late |
 | Refresh button | grey; dimmed while refreshing |
 
 Theme tokens (light / dark) are the same as in v4:
@@ -191,7 +193,7 @@ The app theme is green; no blue.
   "State of charge N percent" (as in v4).
 - Every icon-only element needs a content description: current direction,
   balancing, sync error (with the reason), battery temperature, MOSFET,
-  both buttons.
+  and ↻ (its description also says the data's age, spec 0016).
 - `minSdk` is 26. Glance's rounded corners work only from Android 12
   (likely); older versions need rounded background drawables for the pills
   and the card.
@@ -234,13 +236,13 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 | Mode pill, icon + word | icon 20 over the word (10.5), word ≤ 44 wide | icon 22, gap 5, word 14, ≤ 72 wide | icon 22, gap 5, word 16, ≤ 90 wide |
 | Voltage pills | icon 11, gap 2, value 12.5 | icon 13, gap 2, value 15 | icon 15, gap 2, value 18 |
 
-- Left to right: mode pill, grid input voltage, output voltage, and on a
-  sync error a red ⚠ (14) at the end. Every pill is 43 high and fully
-  round; the mode pill keeps its content width (at least 43), the two
+- Left to right: mode pill, grid input voltage, output voltage, and ↻ with
+  the freshness dot (spec 0016, see "Refresh"). Every pill is 43 high and
+  fully round; the mode pill keeps its content width (at least 43), the two
   voltage pills share the rest equally (weights). Text weight 500.
 - Voltages in whole volts ("230 V"). A long mode word ends with "…".
-- No update time and no buttons on the strip; a tap opens the app on the
-  Inverter tab.
+- No update time on the strip. ↻ refreshes; a tap anywhere else opens the
+  app on the Inverter tab.
 
 The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
 5×1) with no tuning.
@@ -270,7 +272,7 @@ The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
 | State | Strip |
 |---|---|
 | Normal | As above |
-| Sync error, data exists | The last values stay; a red ⚠ at the end (content description "Sync error: <reason>") |
+| Sync error, data exists | The last values stay; a red ⚠ (11 dp) above ↻, not a button (content description "Sync error: <reason>"; spec 0016) |
 | Unknown mode text | `help` icon, grey; with "icon + word" the HA text as it is |
 | No data yet / setup needed | The tower icon and one line: "No data" or "Set up in the app"; no button |
 
@@ -360,3 +362,34 @@ Rendered at 2× scale from the canvas boards; 1 px of the design = 1 dp.
   and mode changes: `ic_notify_inverter`, a square with a diagonal, "="
   and "~". Both are white 24-dp masks. The circle keeps its colour: the
   type colour for levels, the mode colour for modes.
+
+## Refresh — ↻ and freshness dot (v14)
+
+Status: approved by the owner (2026-11-22), for spec 0016; not built yet.
+On the canvas the row "Refresh · v14 · ↻ and freshness dot" holds the
+picked design only: battery 4×2, 5×2, 4×3, 5×3, strip 3×1, 4×1, 5×1 and a
+sync error of each widget, in a light and a dark line. The battery boards
+keep the v5 look: the level colours of specs 0010–0013 are not drawn there.
+
+| File | What it is |
+|---|---|
+| `refresh-dot.png` | Both widgets with ↻ and the dot: every size with fresh data, then late, refreshing, sync error and dark |
+
+![Refresh and freshness dot](refresh-dot.png)
+
+- **One ↻ per widget.** The battery widget's auto-refresh toggle is gone;
+  the app's "Refresh in the background" switch is the only on/off for the
+  periodic sync.
+- **Freshness dot:** 8 dp with a 2 dp ring in the card colour, on the
+  top-right edge of the ↻ circle. Green (`#43A047` / `#66BB6A`) while the
+  shown data is at most the interval + 5 min old (15 min when the periodic
+  sync is off), amber (`#F59E0B` / `#FFB74D`) after. Each widget follows its
+  own part (battery or inverter). No dot in the empty states.
+- **Battery top row:** time left, balancing, update time (or the ⚠ in its
+  place), then ↻ with the dot. Sizes as in "Sizes", with one button.
+- **Strip:** ↻ at the right end: a 28 dp circle, 15 dp icon, the dot on its
+  edge. On a sync error a red ⚠, 11 dp, sits above ↻, 2 dp clear of it
+  (from the card's top: ⚠ 2.5–13.5 dp, ↻ 15.5–43.5 dp). It is not a button
+  and nothing moves. Fallback (owner): if it does not fit well on the
+  phone, the ⚠ picture replaces ↻ during the error.
+- **Refreshing:** ↻ dims; the dot stays.
