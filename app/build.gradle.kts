@@ -125,6 +125,7 @@ dependencies {
   testImplementation(libs.okhttp.mockwebserver3)
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.test.core)
+  testImplementation(libs.androidx.work.testing)
   testImplementation(libs.androidx.glance.appwidget.testing)
 
   // Instrumented tests

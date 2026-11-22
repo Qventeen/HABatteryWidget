@@ -2,6 +2,7 @@ package io.lumensync.habattery.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -10,6 +11,7 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.provideContent
 import io.lumensync.habattery.container
+import io.lumensync.habattery.domain.Freshness
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.Settings
 import kotlinx.coroutines.flow.first
@@ -40,6 +42,9 @@ internal suspend fun GlanceAppWidget.provideStoredContent(
     // and their fitted sizes and the sp handed to Glance from the font scale.
     key(config) {
       val hasToken = settings.connection.tokenType in savedTypes
+      // A widget redraws only when asked, so ask for the moment a green dot turns amber.
+      val lateAt = Freshness.nextLateAt(cache, settings, hasToken, System.currentTimeMillis())
+      LaunchedEffect(lateAt) { lateAt?.let(container.syncScheduler::redrawAt) }
       content(cache, settings, hasToken, appWidgetId)
     }
   }

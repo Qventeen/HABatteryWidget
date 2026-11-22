@@ -77,4 +77,7 @@ interface SyncScheduler {
   suspend fun apply(settings: Settings, settingsChanged: Boolean)
 
   fun syncNow()
+
+  /** Redraws the widgets from local data at [atMillis]; a new call replaces the earlier one. */
+  fun redrawAt(atMillis: Long)
 }
