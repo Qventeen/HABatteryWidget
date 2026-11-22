@@ -86,6 +86,7 @@ fun InverterPreviewCard(
             fonts = fonts,
             hostScale = 1f,
             openApp = null,
+            refresh = null,
           )
         }
       }

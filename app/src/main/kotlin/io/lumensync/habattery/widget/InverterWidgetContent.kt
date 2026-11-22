@@ -16,8 +16,11 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
@@ -35,10 +38,11 @@ import io.lumensync.habattery.format.Formatters
 private val PILL_RADIUS = 999.dp
 
 /**
- * The inverter strip (spec 0012), drawn from [model] and [colors] only, at the sizes of [spec] ×
- * [hostScale]: the mode pill, grid input and output voltage, and on a sync error a red icon at
- * the end. Texts are fitted before drawing ([InverterFonts]). Tapping the card runs [openApp];
- * without it (the app's preview) nothing takes taps.
+ * The inverter strip (specs 0012, 0016), drawn from [model] and [colors] only, at the sizes of
+ * [spec] × [hostScale]: the mode pill, grid input and output voltage, and ↻ with the freshness dot,
+ * with a red icon above ↻ on a sync error. Texts are fitted before drawing ([InverterFonts]).
+ * Tapping ↻ runs [refresh] and the rest of the card [openApp]; without them (the app's preview)
+ * nothing takes taps.
  */
 @Composable
 fun InverterWidgetContent(
@@ -48,6 +52,7 @@ fun InverterWidgetContent(
   fonts: InverterFontPercents,
   hostScale: Float,
   openApp: Action?,
+  refresh: Action?,
   measurer: TextMeasurer? = null,
 ) {
   val context = LocalContext.current
@@ -61,7 +66,6 @@ fun InverterWidgetContent(
       .background(colors.card)
       .cornerRadius(s.corner.dp) // Android 12+ only; square before, as the battery widget
       .tapAction(openApp)
-      .padding(s.padding.dp)
       .semantics { testTag = "strip_${spec.name}" },
     contentAlignment = Alignment.Center,
   ) {
@@ -69,7 +73,7 @@ fun InverterWidgetContent(
       is InverterWidgetModel.Data -> {
         val texts = StripTexts.of(model, context, formatters)
         val sizes = InverterFonts.data(model.style, texts, spec, hostScale, fonts, fontScale, m)
-        Strip(model, texts, sizes, look)
+        Strip(model, texts, sizes, look, refresh)
       }
       is InverterWidgetModel.Empty -> {
         val title =
@@ -91,25 +95,90 @@ private fun Strip(
   texts: StripTexts,
   sizes: StripFonts,
   look: WidgetLook<StripSizes>,
+  refresh: Action?,
 ) {
   val s = look.spec
-  Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-    ModePill(model.mode, model.style, texts.word, sizes, look)
-    Spacer(GlanceModifier.width(s.gap.dp))
-    val share = GlanceModifier.defaultWeight()
-    ValuePill(model.grid, texts.grid, R.string.inverter_grid_voltage, sizes.value, look, share)
-    Spacer(GlanceModifier.width(s.gap.dp))
-    ValuePill(
-      model.output,
-      texts.output,
-      R.string.inverter_output_voltage,
-      sizes.value,
-      look,
-      share,
-    )
-    if (texts.error != null) {
-      Spacer(GlanceModifier.width(s.gap.dp))
-      WidgetIcon(R.drawable.ic_alert, s.alertIcon.dp, look.colors.bad, texts.error)
+  // The card has no padding: the ↻ column starts at the card's top, where the ⚠ sits.
+  Row(GlanceModifier.fillMaxSize()) {
+    Box(
+      GlanceModifier.defaultWeight()
+        .fillMaxHeight()
+        .padding(start = s.padding.dp, top = s.padding.dp, bottom = s.padding.dp, end = s.gap.dp)
+    ) {
+      Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        ModePill(model.mode, model.style, texts.word, sizes, look)
+        Spacer(GlanceModifier.width(s.gap.dp))
+        val share = GlanceModifier.defaultWeight()
+        ValuePill(model.grid, texts.grid, R.string.inverter_grid_voltage, sizes.value, look, share)
+        Spacer(GlanceModifier.width(s.gap.dp))
+        ValuePill(
+          model.output,
+          texts.output,
+          R.string.inverter_output_voltage,
+          sizes.value,
+          look,
+          share,
+        )
+      }
+    }
+    RefreshColumn(model, texts.error, look, refresh)
+  }
+}
+
+/**
+ * ↻ with the freshness dot, and the red sync error icon described by [error] above it. The icon
+ * is not a button, and its place stays empty without an error, so ↻ never moves. Without
+ * [refresh] (the app's preview) ↻ takes no taps and TalkBack does not announce it.
+ */
+@Composable
+private fun RefreshColumn(
+  model: InverterWidgetModel.Data,
+  error: String?,
+  look: WidgetLook<StripSizes>,
+  refresh: Action?,
+) {
+  val context = LocalContext.current
+  val s = look.spec
+  val c = look.colors
+  Column(
+    GlanceModifier.width((s.refresh + s.padding).dp).fillMaxHeight().padding(end = s.padding.dp)
+  ) {
+    Spacer(GlanceModifier.height(s.alertTop.dp))
+    if (error != null) {
+      // Centred over the circle, as drawn in the design.
+      Box(GlanceModifier.width(s.refresh.dp), contentAlignment = Alignment.Center) {
+        WidgetIcon(R.drawable.ic_alert, s.alertIcon.dp, c.bad, error)
+      }
+    } else {
+      Spacer(GlanceModifier.height(s.alertIcon.dp))
+    }
+    // This spacer and the dot's overhang above the circle make the design's gap under the ⚠.
+    Spacer(GlanceModifier.height(s.dotOverhang.dp))
+    val description = WidgetTexts.refreshDescription(context, model.refreshing, model.dataAgeMinutes)
+    val described =
+      if (refresh == null) GlanceModifier else GlanceModifier.semantics { contentDescription = description }
+    // Glance aligns all children of a Box alike, so the circle and the dot each get a full-size
+    // box with its own alignment, as on the battery widget's ↻.
+    Box(
+      GlanceModifier.size((s.refresh + s.dotOverhang).dp).tapAction(refresh).then(described)
+    ) {
+      Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
+        Box(
+          GlanceModifier.size(s.refresh.dp).background(c.tile).cornerRadius((s.refresh / 2).dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          // While a sync runs, ↻ only dims; the dot still shows the data's age.
+          WidgetIcon(
+            R.drawable.ic_refresh,
+            s.refreshIcon.dp,
+            if (model.refreshing) c.dim else c.sub,
+            null,
+          )
+        }
+      }
+      Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+        FreshnessBadge(model.dataLate, s.dot, s.dotRing, c)
+      }
     }
   }
 }
@@ -193,7 +262,7 @@ private fun ValuePill(
 private fun EmptyStrip(title: String, size: Float, look: WidgetLook<StripSizes>) {
   val s = look.spec
   Row(
-    GlanceModifier.fillMaxSize(),
+    GlanceModifier.fillMaxSize().padding(s.padding.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalAlignment = Alignment.CenterVertically,
   ) {

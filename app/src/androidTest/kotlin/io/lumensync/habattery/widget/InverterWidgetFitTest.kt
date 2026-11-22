@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import android.widget.FrameLayout
 import androidx.glance.action.actionStartActivity
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.compose
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -36,8 +37,8 @@ import org.junit.runner.RunWith
  * Ukrainian. Every text must show whole; only a mode text longer than its box may end with "…".
  *
  * The worst case is a mode text the table does not know and too long for its box ([LONG_MODE]):
- * it gives the widest mode pill, so with 288 V, 300 V and the sync error icon the voltage pills
- * have the least room. "Unknown" itself is no value (`ModeText`) and shows "—".
+ * it gives the widest mode pill, so with 288 V and 300 V the voltage pills have the least room.
+ * "Unknown" itself is no value (`ModeText`) and shows "—".
  */
 @RunWith(AndroidJUnit4::class)
 class InverterWidgetFitTest {
@@ -118,6 +119,8 @@ class InverterWidgetFitTest {
         context.getString(R.string.mode_word_mains),
         context.getString(R.string.inverter_grid_voltage),
         context.getString(R.string.inverter_output_voltage),
+        // The reading is taken just before the model, so it is 0 min old.
+        context.getString(R.string.widget_refresh_age, 0),
         context.getString(R.string.widget_sync_error, Formatters(context).error(SyncError.Unreachable)),
       )
     val model = model(reading("Mains", 228.0, 228.0), ModeStyle.BIG_ICON, SyncError.Unreachable)
@@ -143,7 +146,12 @@ class InverterWidgetFitTest {
     InverterReading(mode, grid, output, updatedAtMillis = System.currentTimeMillis())
 
   private fun model(reading: InverterReading?, style: ModeStyle, error: SyncError? = null, hasToken: Boolean = true) =
-    InverterWidgetModel.from(CacheState(inverterReading = reading, inverterError = error), settings(style), hasToken)
+    InverterWidgetModel.from(
+      CacheState(inverterReading = reading, inverterError = error),
+      settings(style),
+      hasToken,
+      System.currentTimeMillis(),
+    )
 
   /** Typical and worst-case strips in both mode styles, and the empty states. */
   private fun models(): Map<String, InverterWidgetModel> =
@@ -178,6 +186,7 @@ class InverterWidgetFitTest {
           percents,
           hostScale = 1f,
           openApp = actionStartActivity<MainActivity>(),
+          refresh = actionRunCallback<RefreshAction>(),
         )
       }
     val views = runBlocking { widget.compose(context, size = spec.bucket) }

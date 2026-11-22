@@ -3,6 +3,7 @@ package io.lumensync.habattery.domain
 import io.lumensync.habattery.domain.InverterWidgetModel.Data
 import io.lumensync.habattery.domain.InverterWidgetModel.Empty
 import io.lumensync.habattery.domain.WidgetModel.EmptyKind
+import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.InverterIcon
 import io.lumensync.habattery.domain.model.InverterReading
@@ -16,6 +17,7 @@ import io.lumensync.habattery.domain.model.CustomTextLevels
 import io.lumensync.habattery.domain.model.withCustomTextLevels
 import io.lumensync.habattery.testing.configuredSettings
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -35,14 +37,15 @@ class InverterWidgetModelTest {
     grid: Double? = 0.0,
     output: Double? = 230.0,
     error: SyncError? = null,
+    updated: Long = NOW - 60_000L,
   ) =
     CacheState(
-      inverterReading = InverterReading(mode, grid, output, updatedAtMillis = 5L),
+      inverterReading = InverterReading(mode, grid, output, updatedAtMillis = updated),
       inverterError = error,
     )
 
   private fun data(cache: CacheState, s: Settings = settings) =
-    InverterWidgetModel.from(cache, s, hasToken = true) as Data
+    InverterWidgetModel.from(cache, s, hasToken = true, NOW) as Data
 
   @Test
   fun offGrid_default() {
@@ -117,7 +120,7 @@ class InverterWidgetModelTest {
   fun notConfigured_isSetup() {
     assertEquals(
       Empty(EmptyKind.SETUP, null),
-      InverterWidgetModel.from(cache(), configuredSettings(), hasToken = true),
+      InverterWidgetModel.from(cache(), configuredSettings(), hasToken = true, NOW),
     )
   }
 
@@ -125,7 +128,12 @@ class InverterWidgetModelTest {
   fun noReading_isNoData() {
     assertEquals(
       Empty(EmptyKind.NO_DATA, SyncError.Unreachable),
-      InverterWidgetModel.from(CacheState(inverterError = SyncError.Unreachable), settings, hasToken = true),
+      InverterWidgetModel.from(
+        CacheState(inverterError = SyncError.Unreachable),
+        settings,
+        hasToken = true,
+        NOW,
+      ),
     )
   }
 
@@ -133,5 +141,26 @@ class InverterWidgetModelTest {
   fun inverterError_shown_batteryErrorIgnored() {
     val c = cache(error = SyncError.BadResponse).copy(error = SyncError.Unauthorized)
     assertEquals(SyncError.BadResponse, data(c).error)
+  }
+
+  /** With the timed sync off, data turns late after 20 min; the battery's fresh reading does not count. */
+  @Test
+  fun stripDot_followsInverterPart() {
+    val battery = BatteryReading(chargePercent = 50.0, updatedAtMillis = NOW - 60_000L)
+    val d = data(cache(updated = NOW - 25 * 60_000L).copy(reading = battery))
+    assertTrue(d.dataLate)
+    assertEquals(25L, d.dataAgeMinutes)
+    assertFalse(data(cache()).dataLate)
+  }
+
+  /** One sync serves both widgets, so the strip's ↻ dims on the same mark as the battery's. */
+  @Test
+  fun refreshing_sharedMark() {
+    assertTrue(data(cache().copy(refreshingSinceMillis = NOW - 10_000L)).refreshing)
+    assertFalse(data(cache()).refreshing)
+  }
+
+  private companion object {
+    const val NOW = 1_800_000_000_000L
   }
 }

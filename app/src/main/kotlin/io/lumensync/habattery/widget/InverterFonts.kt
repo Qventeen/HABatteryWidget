@@ -49,8 +49,8 @@ internal data class StripFonts(
  */
 internal object InverterFonts {
   /**
-   * The mode pill keeps its content width; the two voltage pills share what is left, less the
-   * sync error icon. Both values show at one size, the largest that fits both pills.
+   * The mode pill keeps its content width; the two voltage pills share what is left ([pillWidth]).
+   * Both values show at one size, the largest that fits both pills.
    *
    * The word is not shrunk below its 50 % size to fit the word box: a longer word ends with "…"
    * there, as the design has it, instead of turning tiny. A word asking for less keeps its size.
@@ -89,12 +89,20 @@ internal object InverterFonts {
       }
     val modeWidth = maxOf(content, s.modeMinWidth)
 
-    val alert = if (texts.error != null) s.gap + s.alertIcon else 0f
-    val pill = (inner.width - modeWidth - 2 * s.gap - alert) / 2
+    val pill = pillWidth(spec, hostScale, modeWidth)
     val valueBox = Box(pill - 2 * s.valuePadding - s.valueIcon - s.valueIconGap, inner.height)
     val wanted = requested(s.valueFont, percents.value)
     val value = minOf(fit(texts.grid, wanted, valueBox), fit(texts.output, wanted, valueBox))
     return StripFonts(word, value, modeWidth)
+  }
+
+  /**
+   * One voltage pill's width: the inner box less ↻, the mode pill and the three gaps before ↻,
+   * halved. The sync error icon sits above ↻, so it takes no width.
+   */
+  fun pillWidth(spec: InverterLayoutSpec, hostScale: Float, modeWidth: Float): Float {
+    val s = spec.design.scaled(hostScale)
+    return (spec.fitInner(hostScale).width - s.refresh - 3 * s.gap - modeWidth) / 2
   }
 
   /** The empty state's line beside its icon; no font setting, as the battery widget's. */

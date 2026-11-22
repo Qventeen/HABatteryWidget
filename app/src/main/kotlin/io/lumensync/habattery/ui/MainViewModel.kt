@@ -74,13 +74,14 @@ class MainViewModel(
   val uiState: StateFlow<MainUiState> =
     combine(settings.settings, tokens.savedTypes, cache.state, local) { s, saved, c, l ->
         val hasToken = s.connection.tokenType in saved
-        val overview = BatteryOverview.build(c, s, hasToken, clock())
+        val now = clock()
+        val overview = BatteryOverview.build(c, s, hasToken, now)
         MainUiState(
           settings = s,
           hasToken = hasToken,
           overview = overview,
           widget = WidgetModel.build(overview, s),
-          inverter = InverterWidgetModel.from(c, s, hasToken),
+          inverter = InverterWidgetModel.from(c, s, hasToken, now),
           syncing = l.running > 0,
           errors = l.errors,
         )
