@@ -353,6 +353,7 @@ Expected: BUILD SUCCESSFUL; lint 0 errors, no new warnings (25 today).
 
 - [ ] **Step 4: Phone check by the owner** (debug APK, `adb -s <phone> install -r` after the `ro.serialno` check):
   - unlocking refreshes both widgets within seconds;
+  - leave the app unopened and the screen off for 15 min or more, then unlock and watch whether the widgets refresh within seconds (Android 14 may queue the unlock broadcast while the app is cached);
   - the dot turns amber 20 min after the last sync with the timed sync off;
   - a sync error shows the ⚠ above ↻ on the strip (if it looks cramped: the spec's fallback, ⚠ instead of ↻);
   - the battery widget has one ↻; the app shows the new switch, on.
