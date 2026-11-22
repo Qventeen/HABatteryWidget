@@ -30,7 +30,7 @@ class App : Application() {
     super.onCreate()
     ContextCompat.registerReceiver(
       this,
-      UnlockReceiver { container.appScope.launch { container.unlockRefresh() } },
+      UnlockReceiver(container.appScope) { container.unlockRefresh() },
       IntentFilter(Intent.ACTION_USER_PRESENT),
       // USER_PRESENT is protected (only the system may send it), and the receiver checks the action.
       ContextCompat.RECEIVER_EXPORTED,
