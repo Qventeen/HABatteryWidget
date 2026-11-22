@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview: the 3x1 strip at 50 % in its normal state (light theme, mode "Mains" as
+     the big icon, both voltages normal). The card has the 3x1 bucket size (188 x 53 dp), centred:
+     a launcher may give the preview another box, and a smaller one would cut a bigger card. As in
+     the widget, the voltage pills share the width the mode pill leaves. Text sizes are dp, so a
+     large system font cannot overflow the fixed card. RemoteViews-safe views only. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="UselessParent,SpUsage">
+
+    <LinearLayout
+        android:layout_width="188dp"
+        android:layout_height="53dp"
+        android:layout_gravity="center"
+        android:background="@drawable/preview_strip_bg"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <FrameLayout
+            android:layout_width="44dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/preview_blue_pill_bg">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_inv_tower"
+                android:tint="#1565C0" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/preview_green_pill_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="2dp">
+            <ImageView
+                android:layout_width="11dp"
+                android:layout_height="11dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_inv_tower"
+                android:tint="#2E7D32" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:maxLines="1"
+                android:text="@string/preview_inverter_volts"
+                android:textColor="#2E7D32"
+                android:textSize="12.5dp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/preview_green_pill_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="2dp">
+            <ImageView
+                android:layout_width="11dp"
+                android:layout_height="11dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_inv_home"
+                android:tint="#2E7D32" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:maxLines="1"
+                android:text="@string/preview_inverter_volts"
+                android:textColor="#2E7D32"
+                android:textSize="12.5dp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

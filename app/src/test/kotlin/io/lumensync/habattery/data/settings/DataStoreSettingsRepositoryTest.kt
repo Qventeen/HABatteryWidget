@@ -1,8 +1,6 @@
 package io.lumensync.habattery.data.settings
 
-import io.lumensync.habattery.data.store.JsonSerializer
-import io.lumensync.habattery.data.store.SettingsRecord
-import io.lumensync.habattery.data.store.jsonDataStore
+import io.lumensync.habattery.data.store.settingsDataStore
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.Settings
@@ -28,11 +26,7 @@ class DataStoreSettingsRepositoryTest {
 
   private fun TestScope.repo() =
     DataStoreSettingsRepository(
-      jsonDataStore(
-        JsonSerializer(SettingsRecord(), SettingsRecord.serializer()),
-        backgroundScope,
-        { file },
-      )
+      settingsDataStore(backgroundScope) { file }
     )
 
   @Test
@@ -49,9 +43,9 @@ class DataStoreSettingsRepositoryTest {
   @Test
   fun update_roundTripsAndWritesSchemaVersion() = runTest {
     val r = repo()
-    r.update { it.copy(notifyOnFull = true) }
-    assertTrue(r.settings.first().notifyOnFull)
-    assertTrue(file.readText().contains("\"schemaVersion\":1"))
+    r.update { it.copy(notificationsOn = true) }
+    assertTrue(r.settings.first().notificationsOn)
+    assertTrue(file.readText().contains("\"schemaVersion\":2"))
   }
 
   @Test
@@ -59,7 +53,26 @@ class DataStoreSettingsRepositoryTest {
     file.writeText(
       """{"schemaVersion":1,"future":"x","settings":{"notifyOnFull":true,"newField":3}}"""
     )
-    assertTrue(repo().settings.first().notifyOnFull)
+    assertTrue(repo().settings.first().notificationsOn)
+  }
+
+  @Test
+  fun v1File_migratesToV2() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"notifyOnFull":true}}""")
+    val r = repo()
+    assertTrue(r.settings.first().notificationsOn)
+    // DataStore runs the migration and writes at the first read, before any update.
+    assertTrue(file.readText().contains("\"schemaVersion\":2"))
+    r.update { it }
+    val text = file.readText()
+    assertTrue(text.contains("\"notificationsOn\":true"))
+    assertFalse(text.contains("notifyOnFull"))
+  }
+
+  @Test
+  fun v1File_withSwitchOff_loadsOff() = runTest {
+    file.writeText("""{"schemaVersion":1,"settings":{"notifyOnFull":false}}""")
+    assertFalse(repo().settings.first().notificationsOn)
   }
 
   @Test

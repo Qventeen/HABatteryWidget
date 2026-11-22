@@ -41,6 +41,10 @@ class Formatters(private val context: Context) {
     fun voltage(volts: Double): String =
         context.getString(R.string.unit_volts, number(volts, 2, 2))
 
+    /** The inverter voltages: whole volts, half-even like their `ShownNumber`. */
+    fun wholeVolts(volts: Double): String =
+        context.getString(R.string.unit_volts, number(volts, 0, 0))
+
     fun current(amps: Double): String =
         context.getString(R.string.unit_amps, number(amps, 1, 1))
 
@@ -85,19 +89,36 @@ class Formatters(private val context: Context) {
     }
 
     /**
+     * The data's age as TalkBack says it, so in Android's full words: minutes under an hour, whole
+     * hours under a day, else whole days ("3 minutes", "2 days").
+     */
+    fun age(minutes: Long): String {
+        val measure = when {
+            minutes < MINUTES_PER_HOUR -> Measure(minutes, MeasureUnit.MINUTE)
+            minutes < MINUTES_PER_DAY -> Measure(minutes / MINUTES_PER_HOUR, MeasureUnit.HOUR)
+            else -> Measure(minutes / MINUTES_PER_DAY, MeasureUnit.DAY)
+        }
+        return MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.WIDE).format(measure)
+    }
+
+    /**
      * When a reading was taken: the time for today, else only the date (owner, 2026-11-16), in the
      * app's language; the year only when it is not this year.
      */
     fun updatedAt(millis: Long, nowMillis: Long = System.currentTimeMillis()): String {
-        val day = localDate(millis)
-        val today = localDate(nowMillis)
+        val zone = ZoneId.systemDefault()
+        val day = localDate(millis, zone)
+        val today = localDate(nowMillis, zone)
         if (day == today) return DateFormat.getTimeFormat(context).format(Date(millis))
         val skeleton = if (day.year == today.year) MONTH_DAY else YEAR_MONTH_DAY
-        return android.icu.text.DateFormat.getInstanceForSkeleton(skeleton, locale).format(Date(millis))
+        return android.icu.text.DateFormat.getInstanceForSkeleton(skeleton, locale)
+            // ICU caches its own default zone, and only Android keeps it in step with the system's.
+            .apply { timeZone = android.icu.util.TimeZone.getTimeZone(zone.id) }
+            .format(Date(millis))
     }
 
-    private fun localDate(millis: Long): LocalDate =
-        Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+    private fun localDate(millis: Long, zone: ZoneId): LocalDate =
+        Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
     fun error(e: SyncError): String = when (e) {
         SyncError.NotConfigured -> context.getString(R.string.error_not_configured)
@@ -109,7 +130,8 @@ class Formatters(private val context: Context) {
 
     private companion object {
         const val KILO = 1000.0
-        const val MINUTES_PER_DAY = 24 * 60L
+        const val MINUTES_PER_HOUR = 60L
+        const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 
         /** "Jan 14" / "14 січ." */
         const val MONTH_DAY = "MMMd"

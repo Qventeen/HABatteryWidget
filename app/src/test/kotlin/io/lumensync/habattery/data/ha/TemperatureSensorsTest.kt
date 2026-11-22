@@ -42,4 +42,20 @@ class TemperatureSensorsTest {
     assertNull(parse("""{"a":1}"""))
     assertNull(parse("<html>login</html>"))
   }
+
+  @Test
+  fun `select sorts, filters and cuts`() {
+    fun id(n: Int) = "sensor.bms_temperature_sensor_$n"
+    assertEquals(
+      listOf(id(1), id(2), id(10)),
+      TemperatureSensors.select(
+        listOf(id(10), id(2), id(1), "sensor.other", "sensor.otherbms_temperature_sensor_3"),
+        "bms",
+      ),
+    )
+    assertEquals(
+      (1..8).map(::id),
+      TemperatureSensors.select((12 downTo 1).map(::id), "bms"),
+    )
+  }
 }

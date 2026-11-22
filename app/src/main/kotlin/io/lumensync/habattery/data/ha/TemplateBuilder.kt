@@ -1,21 +1,32 @@
 package io.lumensync.habattery.data.ha
 
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.InverterEntitySettings
 
-/** Builds the Jinja template that HA renders into one JSON object. Missing entities become `none`. */
+/**
+ * Builds the Jinja template that HA renders into one JSON object. Missing entities become `none`;
+ * a part not asked has every key, all `none`.
+ */
 object TemplateBuilder {
-  fun build(entities: EntitySettings): String =
-    "{{ {\"soc\": ${stateOrNone(entities.charge)}, " +
-      "\"total_v\": ${stateOrNone(entities.totalVoltage)}, " +
-      "\"current\": ${stateOrNone(entities.current)}, " +
-      "\"power\": ${stateOrNone(entities.power)}, " +
-      "\"ah_left\": ${stateOrNone(entities.capacityRemaining)}, " +
-      "\"capacity\": ${stateOrNone(entities.totalCapacity)}, " +
-      "\"avg_cell\": ${stateOrNone(entities.averageCellVoltage)}, " +
-      "\"delta\": ${stateOrNone(entities.deltaCellVoltage)}, " +
-      "\"mosfet\": ${stateOrNone(entities.mosfetTemperature)}, " +
-      "\"temps\": [${entities.temperatures.joinToString(", ") { state(it) }}], " +
-      "\"balancing\": ${rawStateOrNone(entities.balancing)}} | to_json }}"
+  fun build(request: FetchRequest): String {
+    val battery = request.battery ?: EntitySettings()
+    val inverter = request.inverter ?: InverterEntitySettings()
+    return "{{ {\"soc\": ${stateOrNone(battery.charge)}, " +
+      "\"total_v\": ${stateOrNone(battery.totalVoltage)}, " +
+      "\"current\": ${stateOrNone(battery.current)}, " +
+      "\"power\": ${stateOrNone(battery.power)}, " +
+      "\"ah_left\": ${stateOrNone(battery.capacityRemaining)}, " +
+      "\"capacity\": ${stateOrNone(battery.totalCapacity)}, " +
+      "\"avg_cell\": ${stateOrNone(battery.averageCellVoltage)}, " +
+      "\"delta\": ${stateOrNone(battery.deltaCellVoltage)}, " +
+      "\"mosfet\": ${stateOrNone(battery.mosfetTemperature)}, " +
+      "\"temps\": [${battery.temperatures.joinToString(", ") { state(it) }}], " +
+      "\"balancing\": ${rawStateOrNone(battery.balancing)}, " +
+      "\"inv_mode\": ${rawStateOrNone(inverter.mode)}, " +
+      "\"inv_grid_v\": ${stateOrNone(inverter.gridVoltage)}, " +
+      "\"inv_out_v\": ${stateOrNone(inverter.outputVoltage)}} | to_json }}"
+  }
 
   /**
    * Lists the entity ids that match `sensor.<prefix>_temperature_sensor_<digits>`. The prefix must be

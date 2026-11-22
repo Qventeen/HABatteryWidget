@@ -3,6 +3,9 @@
 - The HA token goes only through `TokenStore` (`EncryptedTokenStore`, AES-GCM
   key in the Android Keystore). Never log it; never put it in an exception, a
   `SyncError` or UI state.
+- `EncryptedTokenStore` has two slots, Admin and User, in one record with the same
+  Keystore key. "Remove token" clears only the selected type's slot. The app
+  only reads from HA (`GET /api/states[/<id>]`, `POST /api/template`).
 - Never commit signing keys, tokens or other secrets. Use placeholders for real
   hosts and credentials.
 - Release signing reads four `habattery.release.*` Gradle properties from

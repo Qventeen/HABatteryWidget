@@ -12,18 +12,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,6 +50,9 @@ import androidx.compose.ui.unit.dp
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.model.FontPercents
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 /** Keyboard for entity IDs and URLs: no auto-correct, no capitals. */
 internal val IdKeyboard = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii)
@@ -136,6 +149,26 @@ internal fun SettingsTextField(
   )
 }
 
+/**
+ * An ⓘ button for a field's trailing icon. The tip is persistent: it stays until a tap outside, so
+ * a long text can be read, and TalkBack can read it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun InfoTip(@StringRes tip: Int, @StringRes description: Int) {
+  val state = rememberTooltipState(isPersistent = true)
+  val scope = rememberCoroutineScope()
+  TooltipBox(
+    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+    tooltip = { RichTooltip { Text(stringResource(tip)) } },
+    state = state,
+  ) {
+    IconButton(onClick = { scope.launch { state.show() } }) {
+      Icon(painterResource(R.drawable.ic_info), contentDescription = stringResource(description))
+    }
+  }
+}
+
 /** A label with a switch; the whole row toggles. */
 @Composable
 internal fun SwitchRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -176,4 +209,35 @@ internal fun <T> ChoiceRow(
       }
     }
   }
+}
+
+/**
+ * One font size: its [label], the percent, and a slider from 10 to 100 % in steps of 5. It saves
+ * when released.
+ */
+@Composable
+internal fun FontSlider(@StringRes label: Int, stored: Int, onSave: (Int) -> Unit) {
+  var dragValue by rememberSaveable { mutableStateOf<Int?>(null) }
+  val value = dragValue ?: stored
+  val name = stringResource(label)
+  val shown = stringResource(R.string.widget_font_value, value)
+  Row(Modifier.fillMaxWidth()) {
+    Text(name, Modifier.weight(1f))
+    Text(shown)
+  }
+  Slider(
+    value = value.toFloat(),
+    onValueChange = { dragValue = it.roundToInt() },
+    onValueChangeFinished = {
+      onSave(dragValue ?: stored)
+      dragValue = null
+    },
+    valueRange = FontPercents.MIN.toFloat()..FontPercents.MAX.toFloat(),
+    steps = (FontPercents.MAX - FontPercents.MIN) / FontPercents.STEP - 1,
+    modifier =
+      Modifier.semantics {
+        contentDescription = name
+        stateDescription = shown
+      },
+  )
 }

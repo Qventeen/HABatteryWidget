@@ -3,7 +3,7 @@ package io.lumensync.habattery.widget
 import androidx.compose.ui.graphics.Color
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
-import io.lumensync.habattery.domain.Level
+import io.lumensync.habattery.domain.model.LevelColor
 import io.lumensync.habattery.domain.model.ThemeChoice
 
 /**
@@ -30,9 +30,13 @@ class WidgetColors(private val theme: ThemeChoice) {
   val okBg = of { okBg }
   val bad = of { bad }
 
-  fun pillBackground(level: Level): ColorProvider = of { pillBackground(level) }
+  // The freshness dot reuses the ring's green and amber, so the widget has one of each.
+  val fresh = of { shades(LevelColor.GREEN).ring }
+  val late = of { shades(LevelColor.AMBER).ring }
 
-  fun pillText(level: Level): ColorProvider = of { pillText(level) }
+  fun pillBackground(color: LevelColor): ColorProvider = of { shades(color).background }
 
-  fun ring(level: Level): ColorProvider = of { ringColor(level) }
+  fun pillText(color: LevelColor): ColorProvider = of { shades(color).text }
+
+  fun ring(color: LevelColor): ColorProvider = of { shades(color).ring }
 }

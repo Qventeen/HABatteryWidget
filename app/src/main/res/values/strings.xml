@@ -22,10 +22,10 @@
 
     <string name="widget_name">HA battery</string>
     <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
-    <string name="widget_refreshing">Refreshing…</string>
+    <string name="widget_refreshing_age">Refreshing… Data is %1$s old</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
-    <string name="widget_refresh_action">Refresh</string>
+    <string name="widget_refresh_age">Refresh. Data is %1$s old</string>
     <string name="delta_label">Δ %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
     <plurals name="widget_soc_description">
@@ -41,24 +41,77 @@
     <string name="widget_battery_temperature">Battery temperature</string>
     <string name="widget_average_temperature">Average battery temperature</string>
     <string name="widget_mosfet_temperature">MOSFET temperature</string>
-    <string name="widget_auto_on">Auto refresh on</string>
-    <string name="widget_auto_off">Auto refresh off</string>
+    <string name="widget_average_cell">Average cell voltage</string>
     <string name="widget_open_app">Open app</string>
 
-    <string name="notification_channel_full">Full charge</string>
-    <string name="notification_full_title">Battery full</string>
-    <string name="notification_full_text">The battery is fully charged.</string>
+    <string name="notification_channel_critical">Critical</string>
+    <string name="notification_channel_warning">Warning</string>
+    <string name="notification_channel_normal">Normal</string>
+    <string name="notification_channel_info">Info</string>
+    <string name="notification_value_soc">Charge</string>
+    <string name="notification_value_voltage">Voltage</string>
+    <string name="notification_value_charge_current">Charge current</string>
+    <string name="notification_value_discharge_current">Discharge current</string>
+    <string name="notification_value_delta">Cell delta</string>
+    <string name="notification_value_battery_temperature">Battery temperature</string>
+    <string name="notification_value_mosfet_temperature">MOSFET temperature</string>
+    <string name="notification_value_grid_voltage">Grid input</string>
+    <string name="notification_value_output_voltage">Output</string>
+    <string name="notification_level_title">%1$s: %2$s %3$s</string>
+    <string name="notification_level_title_short">%1$s: %2$s</string>
+    <string name="notification_level_text">%1$s · measured at %2$s</string>
+    <string name="notification_mode_title">Inverter: %1$s</string>
+    <string name="notification_mode_text">Measured at %1$s</string>
+    <string name="mode_word_power_on">power on</string>
+    <string name="mode_word_standby">standby</string>
+    <string name="mode_word_mains">main</string>
+    <string name="mode_word_off_grid">battery</string>
+    <string name="mode_word_bypass">bypass</string>
+    <string name="mode_word_charging">charging</string>
+    <string name="mode_word_fault">fault</string>
+    <string name="mode_other_label">other</string>
+    <string name="modes_title">Modes</string>
+    <string name="modes_summary_default">Default modes</string>
+    <string name="modes_summary_custom">Custom modes</string>
+    <string name="mode_other_hint">any other text</string>
+    <string name="mode_name_hint">Blank = %1$s</string>
+    <string name="mode_texts_label">Home Assistant texts</string>
+    <string name="mode_add_text_label">Add text</string>
+    <string name="mode_add_text_placeholder">Type a text, then +</string>
+    <string name="mode_add_text_hint">Exactly as Home Assistant shows it</string>
+    <string name="mode_remove_text">Remove %1$s</string>
+    <string name="mode_icon_button">Icon of %1$s</string>
+    <string name="mode_delete">Delete mode</string>
+    <string name="mode_add">Add mode</string>
+    <string name="mode_now">now</string>
+    <string name="mode_live_text">“%1$s”</string>
+    <string name="modes_default_title">Use the default modes?</string>
+    <string name="modes_default_text">Your modes, texts and names are deleted.</string>
+
+    <!-- Inverter strip widget. -->
+    <string name="inverter_widget_name">Inverter</string>
+    <string name="inverter_widget_description">Inverter mode, grid input and output voltage from Home Assistant</string>
+    <string name="inverter_setup">Set up in the app</string>
+    <string name="inverter_no_data">No data</string>
+    <string name="inverter_grid_voltage">Grid input voltage</string>
+    <string name="inverter_output_voltage">Output voltage</string>
 
     <!-- Main screen. -->
-    <string name="overview_setup">Enter the Home Assistant URL, the token and the charge entity below.</string>
+    <string name="overview_setup">Enter the Home Assistant URL and the token on the Common tab, and the charge entity below.</string>
     <!-- A size tab of the widget preview: columns × rows of home-screen cells. -->
     <string name="preview_size" translatable="false">%1$d×%2$d</string>
     <!-- TalkBack's name for the drawn widget; %1$s is the size tab, such as 4×2. -->
     <string name="preview_description">Widget preview, %1$s</string>
+    <!-- The bottom navigation bar's tabs. -->
+    <string name="tab_battery">Battery</string>
+    <string name="tab_inverter">Inverter</string>
+    <string name="tab_common">Common</string>
     <string name="action_refresh_now">Refresh now</string>
-    <string name="action_add_widget">Add widget</string>
+    <string name="action_add_widget">Add to home screen</string>
     <string name="action_add_widget_hint">The home screen adds it as 4×2. Resize it there.</string>
+    <string name="action_add_strip_hint">The home screen adds it as 3×1. Resize it there.</string>
     <string name="action_save">Save</string>
+    <string name="dialog_cancel">Cancel</string>
 
     <string name="connection_title">Connection</string>
     <string name="connection_url">Home Assistant URL</string>
@@ -69,6 +122,14 @@
     <string name="token_saved">Token saved</string>
     <string name="token_show">Show token</string>
     <string name="token_hide">Hide token</string>
+    <string name="token_type_label">Token type</string>
+    <string name="token_type_admin">Admin</string>
+    <string name="token_type_user">User</string>
+    <string name="token_type_hint">A token of a user who is not an administrator needs token type User.</string>
+    <string name="token_remove">Remove token</string>
+    <string name="token_remove_title_admin">Remove the Admin token from this phone?</string>
+    <string name="token_remove_title_user">Remove the User token from this phone?</string>
+    <string name="token_remove_confirm">Remove</string>
 
     <string name="entities_title">Entities</string>
     <string name="entity_charge">State of charge (%) — required</string>
@@ -97,16 +158,30 @@
     <string name="refresh_title">Auto-refresh</string>
     <string name="refresh_auto">Refresh in the background</string>
     <string name="refresh_interval">Refresh interval (min)</string>
+    <string name="refresh_on_unlock">Refresh when the phone is unlocked</string>
+    <string name="refresh_on_unlock_hint">Gets fresh data when you look. Works while Android keeps the app running; opening the app or the next timed sync starts it again.</string>
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>
-    <string name="notify_on_full">Notify when the battery is full</string>
+    <string name="notifications_switch">Notifications</string>
+    <string name="notifications_hint">Choose the levels with the bells in Levels and alerts on the Battery and Inverter tabs. You also get a notification when the inverter mode changes.</string>
+    <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual or an unlock refresh.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
 
-    <string name="capacity_title">Battery capacity</string>
-    <string name="capacity_label">Battery capacity (Ah)</string>
-    <string name="capacity_hint">Used when the total capacity sensor is empty or unavailable.</string>
+    <string name="pack_title">Pack</string>
+    <string name="pack_type_label">Type</string>
+    <string name="pack_type_hint">Sets the default voltage and current levels. Own levels stay as they are. Li-ion means NMC.</string>
+    <string name="battery_type_lifepo4" translatable="false">LiFePO4</string>
+    <string name="battery_type_li_ion" translatable="false">Li-ion</string>
+    <string name="battery_type_lto" translatable="false">LTO</string>
+    <string name="cells_label">Cells in series</string>
+    <string name="cells_counted">From sensors: %1$d</string>
+    <string name="cells_info">About the cell count</string>
+    <string name="cells_tip">Used only when the total voltage or average cell sensor is empty. While both work, the app counts the cells from them.</string>
+    <string name="capacity_label">Capacity (Ah)</string>
+    <string name="capacity_info">About the capacity</string>
+    <string name="capacity_tip">Used when the total capacity sensor is empty or unavailable.</string>
 
     <string name="appearance_title">Appearance</string>
     <string name="appearance_theme">Theme</string>
@@ -138,14 +213,134 @@
     <string name="widget_scale_label">Home-screen scale</string>
     <string name="widget_scale_hint">Only if your home screen draws widgets smaller. Most phones: 100 %.</string>
     <string name="widget_reset_sizes">Reset sizes</string>
+    <string name="widget_reset_scale">Reset scale</string>
     <string name="widget_summary">%1$s · %2$s</string>
     <string name="widget_summary_changed">%1$s · %2$s · text size changed</string>
+
+    <!-- Inverter tab: the strip's preview note and its sections. -->
+    <string name="inverter_preview_setup">Enter the Home Assistant URL and the token on the Common tab, and the inverter entities below.</string>
+    <string name="inverter_display_title">Display</string>
+    <string name="inverter_mode_style">Mode style</string>
+    <string name="inverter_style_big_icon">Big icon</string>
+    <string name="inverter_style_icon_word">Icon + word</string>
+    <string name="inverter_font_word">Mode word</string>
+    <string name="inverter_font_value">Values</string>
+    <string name="inverter_display_summary_changed">%1$s · text size changed</string>
+    <string name="inverter_icons_title">Icons</string>
+    <string name="inverter_icons_summary_default">Default icons</string>
+    <string name="inverter_icons_summary_custom">Custom icons</string>
+    <string name="inverter_icon_change">Change icon</string>
+    <!-- TalkBack's name for the picker chip of the place's own icon. -->
+    <string name="inverter_icon_default">%1$s, default</string>
+    <string name="inverter_entities_prefix">Prefix, like bps_inverter</string>
+    <string name="inverter_entity_mode">Operation mode</string>
+    <string name="inverter_entity_grid_voltage">Grid input voltage (V)</string>
+    <string name="inverter_entity_output_voltage">Output voltage (V)</string>
+
+    <!-- Levels and alerts section (value levels). -->
+    <string name="colors_title">Levels and alerts</string>
+    <string name="colors_summary_default">Default levels</string>
+    <!-- %1$s lists the values with custom levels, comma-separated. -->
+    <string name="colors_summary_custom">Custom: %1$s</string>
+    <string name="colors_value_soc">State of charge</string>
+    <string name="colors_value_voltage">Voltage</string>
+    <string name="colors_value_charge_current">Charge current</string>
+    <string name="colors_value_discharge_current">Discharge current</string>
+    <string name="colors_value_delta">Cell delta</string>
+    <string name="colors_value_grid_voltage">Grid input</string>
+    <string name="colors_value_output_voltage">Output</string>
+    <string name="colors_unit_percent">%</string>
+    <string name="colors_unit_volts">V</string>
+    <string name="colors_unit_amps">A</string>
+    <string name="colors_unit_millivolts">mV</string>
+    <string name="colors_unit_celsius">°C</string>
+    <string name="colors_default">Default</string>
+    <string name="colors_edit">Edit</string>
+    <!-- %1$s is the value, such as Voltage. -->
+    <string name="colors_default_title">Use default levels for %1$s?</string>
+    <string name="colors_default_text">Your levels for this value are deleted.</string>
+    <string name="colors_default_confirm">Use defaults</string>
+    <string name="colors_add_level">Add level</string>
+    <string name="colors_reset">Reset</string>
+    <!-- A level's place: %1$s is its mark and numbers, such as ↓20 or ↕41–99, or a bare number; %2$s the unit. -->
+    <string name="colors_place">%1$s %2$s</string>
+    <!-- TalkBack's place of a level: %1$s is the number, such as 20; %2$s its unit, such as %. -->
+    <string name="colors_place_below">%1$s %2$s and below</string>
+    <string name="colors_place_above">%1$s %2$s and above</string>
+    <!-- %1$s and %2$s are the lowest and the highest number, such as 41 and 99; %3$s the unit. -->
+    <string name="colors_place_between">%1$s to %2$s %3$s</string>
+    <!-- %1$s is a voltage level's edge or range divided by the cell count, such as 3.2 or 3.201–3.449. -->
+    <!-- TalkBack's names for the ↓ and ↑ buttons of a level in the editor. -->
+    <string name="colors_side_below">And below</string>
+    <string name="colors_side_above">And above</string>
+    <string name="colors_edge">Limit</string>
+    <!-- The middle level's range while the other levels have an error. -->
+    <string name="colors_range_unknown">—</string>
+    <string name="colors_name">Name</string>
+    <string name="colors_remove_level">Remove level %1$d</string>
+    <!-- TalkBack's name for the colour chip of the level type's own colour. -->
+    <string name="colors_color_default">%1$s, default</string>
+    <!-- Joins the parts of a level tag, such as ↓20 % · Low. -->
+    <string name="colors_two_parts">%1$s · %2$s</string>
+    <!-- Joins the parts TalkBack reads for a level tag, such as 20 % and below, Low. -->
+    <string name="colors_list_parts">%1$s, %2$s</string>
+    <!-- TalkBack's last part of a level tag whose level notifies. -->
+    <string name="colors_tag_bell">Bell on</string>
+    <!-- TalkBack's name for a level's bell in the editor; %1$s is the level's name, such as Low. -->
+    <string name="level_bell">Notify about %1$s</string>
+    <!-- The re-arm margin field, in the value's unit. -->
+    <string name="level_margin">Hysteresis</string>
+    <!-- The info button of the margin field: TalkBack name and the tip it opens. -->
+    <string name="level_margin_info">About hysteresis</string>
+    <string name="level_margin_tip">After a notification, the level notifies again only when the value moves this far from its edge. Stops repeats when the value jitters.</string>
+    <!-- %1$s is the default margin with its unit, such as 2 %. -->
+    <string name="level_margin_default">Default: %1$s</string>
+    <string name="level_type_critical">Critical</string>
+    <string name="level_type_warning">Warning</string>
+    <string name="level_type_normal">Normal</string>
+    <string name="level_type_info">Info</string>
+    <string name="level_type_critical_short">Critical</string>
+    <string name="level_type_warning_short">Warning</string>
+    <string name="level_type_normal_short">Normal</string>
+    <string name="level_type_info_short">Info</string>
+    <string name="level_color_plain">Plain</string>
+    <string name="level_color_red">Red</string>
+    <string name="level_color_orange">Orange</string>
+    <string name="level_color_amber">Amber</string>
+    <string name="level_color_green">Green</string>
+    <string name="level_color_teal">Teal</string>
+    <string name="level_color_blue">Blue</string>
+    <string name="level_color_violet">Violet</string>
+    <string name="level_color_grey">Grey</string>
+    <string name="level_icon_none">None</string>
+    <string name="level_icon_snowflake">Snowflake</string>
+    <string name="level_icon_leaf">Leaf</string>
+    <string name="level_icon_flame">Flame</string>
+    <string name="level_icon_flame_alert">Flame with alert</string>
+    <!-- The built-in level names. -->
+    <string name="level_name_low">Low</string>
+    <string name="level_name_getting_low">Getting low</string>
+    <string name="level_name_normal">Normal</string>
+    <string name="level_name_full">Full</string>
+    <string name="level_name_freezing">Freezing</string>
+    <string name="level_name_cool">Cool</string>
+    <string name="level_name_warm">Warm</string>
+    <string name="level_name_hot">Hot</string>
+    <string name="level_name_balanced">Balanced</string>
+    <string name="level_name_high">High</string>
+    <string name="level_name_very_high">Very high</string>
+    <string name="level_name_light">Light</string>
+    <string name="level_name_no_grid">No grid</string>
+    <string name="level_name_no_power">No power</string>
 
     <!-- Folded section summaries and chevron descriptions. -->
     <string name="summary_not_set">Not set</string>
     <string name="token_summary_saved">Saved</string>
+    <!-- %1$s is Saved or Not set, %2$s the token type. -->
+    <string name="token_summary_with_type">%1$s · %2$s</string>
     <string name="entities_summary_manual">Set by hand</string>
     <string name="refresh_summary_off">Off</string>
+    <string name="refresh_summary_unlock">On unlock</string>
     <plurals name="refresh_summary_every">
         <item quantity="one">Every %d min</item>
         <item quantity="other">Every %d min</item>
@@ -153,6 +348,8 @@
     <string name="notify_summary_on">On</string>
     <string name="notify_summary_off">Off</string>
     <string name="capacity_summary">%1$s Ah</string>
+    <string name="pack_summary_cells" translatable="false">%1$dS</string>
+    <string name="pack_summary_join" translatable="false">%1$s · %2$s</string>
     <string name="section_show">Show %1$s</string>
     <string name="section_expanded">Expanded</string>
     <string name="section_collapsed">Collapsed</string>
@@ -166,6 +363,15 @@
     <string name="field_interval_invalid">Enter a whole number of minutes</string>
     <string name="field_capacity_invalid">Enter a number</string>
     <string name="field_capacity_range">Enter more than 0 and up to %1$d Ah</string>
+    <string name="field_cells_range">Enter a whole number from 1 to %1$d</string>
+    <string name="field_level_edge_invalid">Enter a number</string>
+    <string name="field_level_edge_duplicate">Two levels on one side can\'t share a limit</string>
+    <string name="field_mode_texts_required">Add at least one text</string>
+    <string name="field_mode_text_invalid">“unavailable” and “unknown” mean no value</string>
+    <string name="field_mode_text_duplicate">This text is already in a mode</string>
+    <string name="field_modes_too_many">Maximum number of modes: %1$d</string>
+    <string name="field_level_edge_overlap">Leave a gap between ↓ and ↑ levels</string>
+    <string name="field_level_margin_invalid">Enter a number of 0 or more</string>
 
     <!-- Sample values for the widget picker preview. -->
     <string name="preview_time_left">17h 16m</string>
@@ -178,4 +384,56 @@
     <string name="preview_delta">Δ 12 mV</string>
     <string name="preview_battery_temperature" translatable="false">25 °C</string>
     <string name="preview_mosfet_temperature" translatable="false">27 °C</string>
+    <string name="preview_inverter_volts">228 V</string>
+
+    <!-- Inverter icon names, read by screen readers and shown in the picker. -->
+    <string name="inv_icon_tower">Transmission tower</string>
+    <string name="inv_icon_location_city">City</string>
+    <string name="inv_icon_electrical_services">Electrical plug</string>
+    <string name="inv_icon_power_input">Power input</string>
+    <string name="inv_icon_electric_meter">Electric meter</string>
+    <string name="inv_icon_factory">Factory</string>
+    <string name="inv_icon_apartment">Apartment block</string>
+    <string name="inv_icon_offline_bolt">Bolt in a circle</string>
+    <string name="inv_icon_bolt">Bolt</string>
+    <string name="inv_icon_electric_bolt">Electric bolt</string>
+    <string name="inv_icon_battery_charging_full">Charging battery</string>
+    <string name="inv_icon_battery_full">Full battery</string>
+    <string name="inv_icon_battery_5_bar">Battery, five bars</string>
+    <string name="inv_icon_battery_android_full">Full phone battery</string>
+    <string name="inv_icon_battery_horiz_075">Battery, three quarters</string>
+    <string name="inv_icon_energy_savings_leaf">Energy-saving leaf</string>
+    <string name="inv_icon_nest_eco_leaf">Eco leaf</string>
+    <string name="inv_icon_energy_program_saving">Energy saving program</string>
+    <string name="inv_icon_solar_power">Solar power</string>
+    <string name="inv_icon_help">Help</string>
+    <string name="inv_icon_question_mark">Question mark</string>
+    <string name="inv_icon_device_unknown">Unknown device</string>
+    <string name="inv_icon_pending">Pending</string>
+    <string name="inv_icon_info">Information</string>
+    <string name="inv_icon_power">Power plug</string>
+    <string name="inv_icon_home">Home</string>
+    <string name="inv_icon_house">House</string>
+    <string name="inv_icon_cottage">Cottage</string>
+    <string name="inv_icon_home_work">Home and office</string>
+    <string name="inv_icon_home_lightning_bolt">House with a bolt</string>
+    <string name="inv_icon_outlet">Outlet</string>
+    <string name="inv_icon_power_settings_new">Power button</string>
+    <string name="inv_icon_restart_alt">Restart</string>
+    <string name="inv_icon_mode_standby">Standby</string>
+    <string name="inv_icon_bedtime">Moon</string>
+    <string name="inv_icon_alt_route">Alternative route</string>
+    <string name="inv_icon_call_split">Split</string>
+    <string name="inv_icon_swap_horiz">Swap</string>
+    <string name="inv_icon_charger">Charger</string>
+    <string name="inv_icon_battery_charging_90">Battery charging at 90 percent</string>
+    <string name="inv_icon_ev_charger">Electric vehicle charger</string>
+    <string name="inv_icon_error">Error</string>
+    <string name="inv_icon_report">Report</string>
+    <string name="inv_icon_warning">Warning</string>
+    <string name="inv_icon_dangerous">Danger</string>
+
+    <!-- The strip's places with their own icon, in the Icons section. -->
+    <string name="inv_slot_grid_voltage">Grid input voltage</string>
+    <string name="inv_slot_output_voltage">Output voltage</string>
 </resources>

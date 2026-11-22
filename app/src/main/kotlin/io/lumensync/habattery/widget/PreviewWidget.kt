@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.DpSize
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -12,41 +14,36 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.provideContent
 import androidx.glance.state.GlanceStateDefinition
-import io.lumensync.habattery.domain.WidgetModel
-import io.lumensync.habattery.domain.model.FontPercents
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * The widget as the app shows it (spec 0006, A1): the same [WidgetContent], drawn from the
- * [model], [fontPercents] and [colors] it is given instead of the stored ones, without tap targets,
- * at home-screen scale 1 (spec 0007, 8: nothing shrinks it in the app). No network, no Glance state.
+ * A widget as the app shows it (spec 0006): [content] is the drawing the home screen composes
+ * ([WidgetContent] or [InverterWidgetContent]), given the values to show instead of the stored
+ * ones, no tap targets and home-screen scale 1 (spec 0007: nothing shrinks it in the app). No
+ * network, no Glance state.
  */
-class PreviewWidget(
-  private val model: WidgetModel,
-  private val fontPercents: FontPercents,
-  private val colors: WidgetColors,
-) : GlanceAppWidget() {
+class PreviewWidget(private val content: @Composable () -> Unit) : GlanceAppWidget() {
   override val sizeMode: SizeMode = SizeMode.Exact
 
   override val stateDefinition: GlanceStateDefinition<*>? = null
 
-  override suspend fun provideGlance(context: Context, id: GlanceId) = provideContent {
-    WidgetContent(model, fontPercents, colors, actions = null)
-  }
+  override suspend fun provideGlance(context: Context, id: GlanceId) = provideContent { content() }
 
   /**
-   * The views of [layout], composed at its bucket as on the home screen (`LocalSize` is the bucket
-   * there too). They are composed with the application context of [context], as the home-screen
-   * widget is: the per-app language is process-wide and the app overrides no font scale, density
-   * or night mode per activity, so the texts and sizes match the activity's. Before Android 12 this
-   * context also fixes day or night; from 12 on, the context that applies the views does.
-   * Drawings run one at a time. Null when Glance fails to draw them.
+   * The views composed at [bucket], as on the home screen (`LocalSize` is the bucket there too).
+   * They are composed with the application context of [context], as the home-screen widget is: the
+   * per-app language is process-wide and the app overrides no font scale, density or night mode
+   * per activity, so the texts and sizes match the activity's. Before Android 12 this context also
+   * fixes day or night; from 12 on, the context that applies the views does. Drawings of both
+   * widgets run one at a time. Null when Glance fails to draw them.
    */
-  suspend fun views(context: Context, layout: LayoutSpec): RemoteViews? {
+  suspend fun views(context: Context, bucket: DpSize): RemoteViews? {
     val app = context.applicationContext
-    return previewOrNull("compose") { drawing.withLock { compose(app, previewId(app), size = layout.bucket) } }
+    return previewOrNull("compose") {
+      drawing.withLock { compose(app, previewId(app), size = bucket) }
+    }
   }
 
   private companion object {
@@ -58,7 +55,7 @@ class PreviewWidget(
      */
     const val PREVIEW_ID = -2
 
-    /** Glance fails the older of two sessions that run with the same id. */
+    /** Glance fails the older of two sessions with the same id, whichever widget they draw. */
     val drawing = Mutex()
 
     /** The public way to a widget id that Glance does not look up among the placed widgets. */

@@ -11,7 +11,7 @@ import java.util.Locale
  */
 fun parseDecimal(text: String, locale: Locale): Double? {
     val trimmed = text.trim()
-    if (TYPED_DECIMAL.matches(trimmed)) return trimmed.replace(',', '.').toDouble()
+    if (TYPED_DECIMAL.matches(trimmed)) return trimmed.replace(',', '.').toDouble().takeIf { it.isFinite() }
     return parseLocaleDecimal(trimmed, locale)
 }
 

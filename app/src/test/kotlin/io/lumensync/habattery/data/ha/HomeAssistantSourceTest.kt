@@ -1,16 +1,24 @@
 package io.lumensync.habattery.data.ha
 
+import io.lumensync.habattery.data.store.StoreJson
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.SyncError
-import io.lumensync.habattery.domain.model.SyncResult
+import io.lumensync.habattery.testing.inverterEntities
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +38,8 @@ class HomeAssistantSourceTest {
       .build()
   private val source = HomeAssistantSource(client) { 1234L }
   private val entities = EntitySettings(charge = "sensor.soc")
+  private val batteryOnly = FetchRequest(entities, null)
+  private val both = FetchRequest(entities, inverterEntities)
   private val okBody =
     """{"soc":55.0,"power":-500.0,"current":-10.0,"total_v":26.5}"""
 
@@ -56,17 +66,29 @@ class HomeAssistantSourceTest {
   private fun reply(code: Int, body: String = "") =
     MockResponse.Builder().code(code).body(body).build()
 
-  private suspend fun fetch(url: String, token: String = "t0ken"): SyncResult =
-    source.fetch(ConnectionSettings(url), entities, token)
+  private suspend fun fetch(
+    url: String,
+    token: String = "t0ken",
+    request: FetchRequest = batteryOnly,
+  ): FetchResult = source.fetch(ConnectionSettings(url), request, token)
 
-  private fun SyncResult.error(): SyncError = (this as SyncResult.Failure).error
+  private fun FetchResult.error(): SyncError = (battery as PartResult.Failed).error
+
+  private fun failedBoth(error: SyncError) =
+    FetchResult(PartResult.Failed(error), PartResult.Failed(error))
+
+  private fun RecordedRequest.template(): String =
+    StoreJson.parseToJsonElement(body!!.utf8()).jsonObject["template"]!!.jsonPrimitive.content
 
   @Test
   fun success_parsesAndSendsRequest() = runTest {
     val s = server(reply(200, okBody))
     val result = fetch(s.base())
     assertEquals(
-      SyncResult.Success(BatteryReading(55.0, -500.0, -10.0, 26.5, updatedAtMillis = 1234L)),
+      FetchResult(
+        PartResult.Ok(BatteryReading(55.0, -500.0, -10.0, 26.5, updatedAtMillis = 1234L)),
+        null,
+      ),
       result,
     )
     val req = s.takeRequest()
@@ -87,8 +109,8 @@ class HomeAssistantSourceTest {
       }
     val s = server(reply(200, okBody))
     val result =
-      publicSource.fetch(ConnectionSettings("http://example.com:${s.port}"), entities, "t0ken")
-    assertTrue(result is SyncResult.Success)
+      publicSource.fetch(ConnectionSettings("http://example.com:${s.port}"), batteryOnly, "t0ken")
+    assertTrue(result.battery is PartResult.Ok)
     assertEquals(1, s.requestCount)
     assertEquals("Bearer t0ken", s.takeRequest().headers["Authorization"])
   }
@@ -146,6 +168,48 @@ class HomeAssistantSourceTest {
   @Test
   fun missingCharge_isBadResponse() = runTest {
     assertEquals(SyncError.BadResponse, fetch(server(reply(200, """{"soc":null}""")).base()).error())
+  }
+
+  @Test
+  fun batteryFails_inverterOk() = runTest {
+    val body = """{"soc":null,"inv_mode":"Mains","inv_grid_v":231.0,"inv_out_v":230.0}"""
+    val result = fetch(server(reply(200, body)).base(), request = both)
+    assertEquals(PartResult.Failed(SyncError.BadResponse), result.battery)
+    assertEquals(PartResult.Ok(InverterReading("Mains", 231.0, 230.0, 1234L)), result.inverter)
+  }
+
+  @Test
+  fun inverterAllUnavailable_isBadResponse() = runTest {
+    val body = """{"soc":55.0,"inv_mode":"unavailable","inv_grid_v":null,"inv_out_v":null}"""
+    val result = fetch(server(reply(200, body)).base(), request = both)
+    assertEquals(PartResult.Ok(BatteryReading(55.0, updatedAtMillis = 1234L)), result.battery)
+    assertEquals(PartResult.Failed(SyncError.BadResponse), result.inverter)
+  }
+
+  @Test
+  fun unauthorized_failsBoth() = runTest {
+    val result = fetch(server(reply(401)).base(), request = both)
+    assertEquals(failedBoth(SyncError.Unauthorized), result)
+  }
+
+  @Test
+  fun otherWholeRequestFailures_failBoth() = runTest {
+    suspend fun failure(url: String) = fetch(url, request = both)
+    assertEquals(failedBoth(SyncError.HttpError(500)), failure(server(reply(500)).base()))
+    assertEquals(failedBoth(SyncError.BadResponse), failure(server(reply(200, "{nope")).base()))
+    assertEquals(failedBoth(SyncError.Unreachable), failure(closedUrl()))
+  }
+
+  @Test
+  fun onlyInverterAsked_batteryNull() = runTest {
+    val body = """{"soc":null,"inv_mode":"Off-Grid","inv_grid_v":0.0,"inv_out_v":230.0}"""
+    val s = server(reply(200, body))
+    val result = fetch(s.base(), request = FetchRequest(null, inverterEntities))
+    val ok = PartResult.Ok(InverterReading("Off-Grid", 0.0, 230.0, 1234L))
+    assertEquals(FetchResult(null, ok), result)
+    val template = s.takeRequest().template()
+    assertTrue(template, "\"soc\": none" in template)
+    assertTrue(template, "\"inv_mode\": states('sensor.inv_operation_mode')" in template)
   }
 
   @Test

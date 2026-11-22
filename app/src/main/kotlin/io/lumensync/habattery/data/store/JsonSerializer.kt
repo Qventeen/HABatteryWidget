@@ -10,6 +10,8 @@ import kotlinx.serialization.json.Json
 
 val StoreJson = Json {
   ignoreUnknownKeys = true
+  // A newer build may store an enum value this one lacks: read the property default, not the whole file.
+  coerceInputValues = true
   encodeDefaults = true
 }
 

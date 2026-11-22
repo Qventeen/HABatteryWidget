@@ -5,13 +5,16 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -35,7 +38,9 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
 import io.lumensync.habattery.domain.model.LanguageChoice
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.ui.sections.LANGUAGE_ROW_TAG
+import io.lumensync.habattery.ui.sections.STRIP_PREVIEW_TAG
 import io.lumensync.habattery.ui.sections.WIDGET_PREVIEW_TAG
 import io.lumensync.habattery.widget.WidgetPalette
 import io.lumensync.habattery.ui.sections.CONNECTION_SECTION_TAG
@@ -62,7 +67,7 @@ class MainScreenTest {
         val container = ApplicationProvider.getApplicationContext<App>().container
         runBlocking {
           container.settingsRepository.update { Settings() }
-          container.tokenStore.clear()
+          TokenType.entries.forEach { container.tokenStore.clear(it) }
           container.readingCache.update { CacheState() }
         }
       }
@@ -74,23 +79,43 @@ class MainScreenTest {
 
   private fun text(@StringRes id: Int): String = compose.activity.getString(id)
 
+  /** The bottom bar comes with the first state from storage. */
   private fun waitForContent() {
     compose.waitUntil(LOAD_TIMEOUT_MS) {
-      compose.onAllNodesWithText(text(R.string.overview_setup)).fetchSemanticsNodes().isNotEmpty()
+      compose.onAllNodesWithTag(appTabTag(AppTab.COMMON)).fetchSemanticsNodes().isNotEmpty()
     }
   }
 
+  private fun openTab(tab: AppTab) {
+    compose.onNodeWithTag(appTabTag(tab)).performClick()
+    compose.waitForIdle()
+  }
+
+  /** No URL and no token: the app opens on Common; the setup text stays under the battery preview. */
   @Test
-  fun freshInstall_showsSetupTextAndConnection() {
+  fun freshInstall_opensCommon_setupTextOnBattery() {
     waitForContent()
 
-    compose.onNodeWithText(text(R.string.overview_setup)).assertIsDisplayed()
+    compose.onNodeWithTag(appTabTag(AppTab.COMMON)).assertIsSelected()
     compose.onNodeWithText(text(R.string.connection_title)).performScrollTo().assertIsDisplayed()
+    openTab(AppTab.BATTERY)
+    compose.onNodeWithText(text(R.string.overview_setup)).assertIsDisplayed()
+  }
+
+  @Test
+  fun refreshNow_inTheTopBarOnEveryTab() {
+    waitForContent()
+
+    AppTab.entries.forEach {
+      openTab(it)
+      compose.onNodeWithContentDescription(text(R.string.action_refresh_now)).assertIsDisplayed()
+    }
   }
 
   @Test
   fun localUrl_savesWithoutFieldError() {
     waitForContent()
+    openTab(AppTab.COMMON)
 
     compose
       .onNodeWithText(text(R.string.connection_url))
@@ -106,6 +131,7 @@ class MainScreenTest {
   @Test
   fun save_clearsFocus() {
     waitForContent()
+    openTab(AppTab.COMMON)
     val field = compose.onNodeWithText(text(R.string.connection_url))
     field.performScrollTo().performClick().performTextReplacement("http://10.0.2.2:8123")
     field.assertIsFocused()
@@ -119,6 +145,7 @@ class MainScreenTest {
   @Test
   fun fillSetsEveryEntityFieldFromPrefix() {
     waitForContent()
+    openTab(AppTab.BATTERY)
 
     compose
       .onNodeWithText(text(R.string.entities_prefix))
@@ -134,10 +161,11 @@ class MainScreenTest {
   @Test
   fun sectionsFoldAndUnfold() {
     waitForContent()
+    openTab(AppTab.BATTERY)
     val label = text(R.string.capacity_label)
-    val header = compose.onNodeWithText(text(R.string.capacity_title))
+    val header = compose.onNodeWithText(text(R.string.pack_title))
 
-    // The capacity section starts folded: its content is not composed.
+    // The Pack section starts folded: its content is not composed.
     compose.onNodeWithText(label).assertDoesNotExist()
 
     header.performScrollTo().performClick()
@@ -150,6 +178,7 @@ class MainScreenTest {
   @Test
   fun widgetSection_choosesAh() {
     waitForContent()
+    openTab(AppTab.BATTERY)
     compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
 
     compose.onNodeWithText(text(R.string.widget_choice_ah)).performScrollTo().performClick()
@@ -169,17 +198,83 @@ class MainScreenTest {
   private fun top(node: SemanticsNodeInteraction) =
     node.fetchSemanticsNode().positionInRoot.y
 
-  /** After the preview and the actions come Widget, then Appearance, then Connection. */
+  /**
+   * Battery: preview, "Add to home screen" (when the launcher can pin), Widget, Levels and alerts,
+   * Entities, Pack.
+   */
   @Test
-  fun widgetSection_isFirstAfterPreviewAndActions() {
+  fun batteryTab_order() {
     waitForContent()
+    openTab(AppTab.BATTERY)
+    val preview = top(compose.onNodeWithTag(WIDGET_PREVIEW_TAG))
+    val add =
+      compose.onAllNodesWithText(text(R.string.action_add_widget)).fetchSemanticsNodes().firstOrNull()
     val widget = top(compose.onNodeWithText(text(R.string.widget_settings_title)))
+    val colors = top(compose.onNodeWithText(text(R.string.colors_title)))
+    val entities = top(compose.onNodeWithText(text(R.string.entities_title)))
+    val pack = top(compose.onNodeWithText(text(R.string.pack_title)))
+    add?.positionInRoot?.y?.let { assertTrue(preview < it && it < widget) }
+    assertTrue(preview < widget && widget < colors && colors < entities && entities < pack)
+    compose.onNodeWithTag(CONNECTION_SECTION_TAG).assertDoesNotExist()
+  }
+
+  /** Common: Appearance, Connection, Token, Auto-refresh, Notifications, Home-screen scale. */
+  @Test
+  fun commonTab_order() {
+    waitForContent()
+    openTab(AppTab.COMMON)
     val appearance = top(compose.onNodeWithText(text(R.string.appearance_title)))
     val connection = top(compose.onNodeWithTag(CONNECTION_SECTION_TAG))
-    val preview = top(compose.onNodeWithTag(WIDGET_PREVIEW_TAG))
-    val refresh = top(compose.onNodeWithText(text(R.string.action_refresh_now)))
-    assertTrue(preview < widget && refresh < widget)
-    assertTrue(widget < appearance && appearance < connection)
+    val token = top(compose.onNodeWithText(text(R.string.token_title)))
+    val refresh = top(compose.onNodeWithText(text(R.string.refresh_title)))
+    val notify = top(compose.onNodeWithText(text(R.string.notify_title)))
+    val scale = top(compose.onNodeWithText(text(R.string.widget_scale_label)))
+    assertTrue(appearance < connection && connection < token && token < refresh)
+    assertTrue(refresh < notify && notify < scale)
+    compose.onNodeWithTag(WIDGET_PREVIEW_TAG).assertDoesNotExist()
+  }
+
+  /**
+   * Inverter: preview, "Add to home screen" (when the launcher can pin), Display, Icons, Levels and
+   * alerts, Entities; no battery or shared section.
+   */
+  @Test
+  fun inverterTab_order() {
+    waitForContent()
+    openTab(AppTab.INVERTER)
+    val preview = top(compose.onNodeWithTag(STRIP_PREVIEW_TAG))
+    val add =
+      compose.onAllNodesWithText(text(R.string.action_add_widget)).fetchSemanticsNodes().firstOrNull()
+    val display = top(compose.onNodeWithText(text(R.string.inverter_display_title)))
+    val icons = top(compose.onNodeWithText(text(R.string.inverter_icons_title)))
+    val colors = top(compose.onNodeWithText(text(R.string.colors_title)))
+    val entities = top(compose.onNodeWithText(text(R.string.entities_title)))
+    add?.positionInRoot?.y?.let { assertTrue(preview < it && it < display) }
+    assertTrue(preview < display && display < icons && icons < colors && colors < entities)
+    compose.onNodeWithTag(WIDGET_PREVIEW_TAG).assertDoesNotExist()
+    compose.onNodeWithText(text(R.string.widget_settings_title)).assertDoesNotExist()
+    compose.onNodeWithTag(CONNECTION_SECTION_TAG).assertDoesNotExist()
+  }
+
+  /** A tab left and opened again keeps its preview size tab, its folds and its scroll. */
+  @Test
+  fun tabSwitch_keepsTheTabsState() {
+    waitForContent()
+    openTab(AppTab.BATTERY)
+    val fiveByThree = compose.activity.getString(R.string.preview_size, 5, 3)
+    compose.onNodeWithText(fiveByThree).performClick()
+    val pack = compose.onNodeWithText(text(R.string.pack_title))
+    pack.performScrollTo().performClick()
+    compose.waitForIdle()
+    val scrolledTop = top(pack)
+
+    openTab(AppTab.COMMON)
+    compose.onNodeWithText(text(R.string.pack_title)).assertDoesNotExist()
+    openTab(AppTab.BATTERY)
+
+    compose.onNodeWithText(text(R.string.capacity_label)).assertExists()
+    assertEquals(scrolledTop, top(compose.onNodeWithText(text(R.string.pack_title))), 1f)
+    compose.onNodeWithText(fiveByThree).assertIsSelected()
   }
 
   private fun storedSettings() =
@@ -187,10 +282,74 @@ class MainScreenTest {
       ApplicationProvider.getApplicationContext<App>().container.settingsRepository.settings.first()
     }
 
+  private val tokenStore get() = ApplicationProvider.getApplicationContext<App>().container.tokenStore
+
+  private fun tokenSummary(@StringRes state: Int) =
+    compose.activity.getString(R.string.token_summary_with_type, text(state), text(R.string.token_type_user))
+
+  /** A fresh install has no token, so the token section starts unfolded. */
+  @Test
+  fun tokenType_switchAndRemove() {
+    waitForContent()
+    openTab(AppTab.COMMON)
+    compose.onNodeWithText(text(R.string.token_type_user)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().connection.tokenType == TokenType.USER }
+
+    runBlocking {
+      tokenStore.set(TokenType.ADMIN, "admin-token")
+      tokenStore.set(TokenType.USER, "user-token")
+    }
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      compose.onAllNodesWithText(tokenSummary(R.string.token_summary_saved)).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText(text(R.string.token_remove)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.token_remove_title_user)).assertIsDisplayed()
+    compose.onNodeWithText(text(R.string.token_remove_confirm)).performClick()
+
+    compose.waitUntil(LOAD_TIMEOUT_MS) {
+      compose.onAllNodesWithText(tokenSummary(R.string.summary_not_set)).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText(text(R.string.token_remove)).assertDoesNotExist()
+    assertEquals(setOf(TokenType.ADMIN), runBlocking { tokenStore.savedTypes.first() })
+  }
+
+  private fun tokenFieldText(): String =
+    compose
+      .onNodeWithText(text(R.string.token_label))
+      .fetchSemanticsNode()
+      .config[SemanticsProperties.EditableText]
+      .text
+
+  private fun tapTokenType(type: TokenType, @StringRes label: Int) {
+    compose.onNodeWithText(text(label)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().connection.tokenType == type }
+    compose.waitForIdle()
+  }
+
+  /** A draft typed for one type must never reach the other type's slot. */
+  @Test
+  fun tokenType_tapDropsUnsavedDraft() {
+    waitForContent()
+    openTab(AppTab.COMMON)
+    compose
+      .onNodeWithText(text(R.string.token_label))
+      .performScrollTo()
+      .performTextReplacement("draft-token")
+    assertTrue(tokenFieldText().isNotEmpty())
+
+    tapTokenType(TokenType.USER, R.string.token_type_user)
+    assertEquals("", tokenFieldText())
+
+    tapTokenType(TokenType.ADMIN, R.string.token_type_admin)
+    assertEquals("", tokenFieldText())
+    assertEquals(emptySet<TokenType>(), runBlocking { tokenStore.savedTypes.first() })
+  }
+
   @Test
   fun scaleSlider_savesWhenReleased() {
     waitForContent()
-    compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
+    openTab(AppTab.COMMON)
+    compose.onNodeWithText(text(R.string.widget_scale_label)).performScrollTo().performClick()
     val slider = compose.onNodeWithContentDescription(text(R.string.widget_scale_label))
     slider.performScrollTo()
     // Inside the track: the semantics bounds are wider than the draggable area.
@@ -202,23 +361,37 @@ class MainScreenTest {
     assertEquals(HomeScale.DEFAULT, storedSettings().homeScalePercent)
     slider.performTouchInput { up() }
     compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().homeScalePercent == HomeScale.MAX }
+    compose.onNodeWithText(text(R.string.widget_reset_scale)).performScrollTo().performClick()
+  }
+
+  private fun storeFontsAndScale(fonts: FontPercents, scale: Int) =
+    runBlocking {
+      ApplicationProvider.getApplicationContext<App>().container.settingsRepository.update {
+        it.copy(fontPercents = fonts, homeScalePercent = scale)
+      }
+    }
+
+  @Test
+  fun resetSizes_setsFontsTo50_keepsTheScale() {
+    waitForContent()
+    storeFontsAndScale(FontPercents(soc = 90, small = 30), 128)
+    openTab(AppTab.BATTERY)
+    compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
     compose.onNodeWithText(text(R.string.widget_reset_sizes)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().fontPercents == FontPercents() }
+    assertEquals(128, storedSettings().homeScalePercent)
   }
 
   @Test
-  fun reset_setsFontsTo50AndScaleTo100() {
+  fun resetScale_setsTheScaleTo100_keepsTheFonts() {
     waitForContent()
-    runBlocking {
-      ApplicationProvider.getApplicationContext<App>().container.settingsRepository.update {
-        it.copy(fontPercents = FontPercents(soc = 90, small = 30), homeScalePercent = 128)
-      }
-    }
-    compose.onNodeWithText(text(R.string.widget_settings_title)).performScrollTo().performClick()
-    compose.onNodeWithText(text(R.string.widget_reset_sizes)).performScrollTo().performClick()
-    compose.waitUntil(LOAD_TIMEOUT_MS) {
-      val s = storedSettings()
-      s.fontPercents == FontPercents() && s.homeScalePercent == HomeScale.DEFAULT
-    }
+    val fonts = FontPercents(soc = 90, small = 30)
+    storeFontsAndScale(fonts, 128)
+    openTab(AppTab.COMMON)
+    compose.onNodeWithText(text(R.string.widget_scale_label)).performScrollTo().performClick()
+    compose.onNodeWithText(text(R.string.widget_reset_scale)).performScrollTo().performClick()
+    compose.waitUntil(LOAD_TIMEOUT_MS) { storedSettings().homeScalePercent == HomeScale.DEFAULT }
+    assertEquals(fonts, storedSettings().fontPercents)
   }
 
   /** A pixel at the left edge, half way down: the screen's background. */
@@ -233,8 +406,12 @@ class MainScreenTest {
     return pixels[pixels.width / 2, pixels.height - 6]
   }
 
-  /** The theme changes the colours in a moment: wait for them, do not read once. */
+  /**
+   * The theme changes the colours in a moment: wait for them, do not read once. The preview lives
+   * on the Battery tab, so this opens it.
+   */
   private fun waitForTheme(dark: Boolean) {
+    openTab(AppTab.BATTERY)
     val card = if (dark) WidgetPalette.Dark.card else WidgetPalette.Light.card
     compose.waitUntil(LOAD_TIMEOUT_MS) {
       val background = backgroundPixel().luminance()
@@ -245,22 +422,27 @@ class MainScreenTest {
   @Test
   fun themeSwitch_changesTheAppColours() {
     waitForContent()
+    openTab(AppTab.COMMON)
     compose.onNodeWithText(text(R.string.appearance_title)).performScrollTo().performClick()
 
     compose.onNodeWithText(text(R.string.appearance_theme_dark)).performScrollTo().performClick()
     waitForTheme(dark = true)
 
+    // Common keeps Appearance unfolded while the Battery tab is shown.
+    openTab(AppTab.COMMON)
     compose.onNodeWithText(text(R.string.appearance_theme_light)).performScrollTo().performClick()
     waitForTheme(dark = false)
 
     // Leave the stored choice as a fresh install has it.
     // The theme row comes first; the language row (Android 13+) has a System button too.
+    openTab(AppTab.COMMON)
     compose.onAllNodesWithText(text(R.string.appearance_system))[0].performScrollTo().performClick()
   }
 
   @Test
   fun languageRow_existsOnlyFromAndroid13() {
     waitForContent()
+    openTab(AppTab.COMMON)
     compose.onNodeWithText(text(R.string.appearance_title)).performScrollTo().performClick()
     compose.waitForIdle()
 
@@ -278,6 +460,7 @@ class MainScreenTest {
     waitForContent()
     val language = ApplicationProvider.getApplicationContext<App>().container.appLanguage
     val before = language.current()
+    openTab(AppTab.COMMON)
     compose.onNodeWithText(text(R.string.appearance_title)).performScrollTo().performClick()
     try {
       compose.onNodeWithText(text(R.string.appearance_language_ukrainian)).performScrollTo().performClick()

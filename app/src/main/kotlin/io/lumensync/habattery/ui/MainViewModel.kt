@@ -5,19 +5,35 @@ import androidx.lifecycle.viewModelScope
 import io.lumensync.habattery.domain.BatteryOverview
 import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
+import io.lumensync.habattery.domain.InverterWidgetModel
+import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.Problem
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.Validation
 import io.lumensync.habattery.domain.WidgetModel
+import io.lumensync.habattery.domain.roundTo
 import io.lumensync.habattery.domain.model.AppearanceSettings
+import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.EntitySettings
 import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.domain.model.HomeScale
+import io.lumensync.habattery.domain.model.IconSlot
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterFontPercents
+import io.lumensync.habattery.domain.model.InverterIcon
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SensorList
+import io.lumensync.habattery.domain.model.TokenType
+import io.lumensync.habattery.domain.model.withIcon
+import io.lumensync.habattery.domain.model.withCustomLevels
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
@@ -25,6 +41,10 @@ import io.lumensync.habattery.domain.port.SyncScheduler
 import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
 import io.lumensync.habattery.format.parseDecimal
+import io.lumensync.habattery.domain.model.withCustomTextLevels
+import io.lumensync.habattery.domain.model.TextValue
+import io.lumensync.habattery.domain.model.CustomTextLevels
+import io.lumensync.habattery.domain.TextLevelPicker
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +59,7 @@ import kotlinx.coroutines.launch
 class MainViewModel(
   private val settings: SettingsRepository,
   private val tokens: TokenStore,
-  cache: ReadingCache,
+  private val cache: ReadingCache,
   private val sync: SyncBattery,
   private val scheduler: SyncScheduler,
   private val widgets: WidgetRefresher,
@@ -52,13 +72,16 @@ class MainViewModel(
   private val local = MutableStateFlow(Local())
 
   val uiState: StateFlow<MainUiState> =
-    combine(settings.settings, tokens.hasToken, cache.state, local) { s, hasToken, c, l ->
-        val overview = BatteryOverview.build(c, s, hasToken, clock())
+    combine(settings.settings, tokens.savedTypes, cache.state, local) { s, saved, c, l ->
+        val hasToken = s.connection.tokenType in saved
+        val now = clock()
+        val overview = BatteryOverview.build(c, s, hasToken, now)
         MainUiState(
           settings = s,
           hasToken = hasToken,
           overview = overview,
           widget = WidgetModel.build(overview, s),
+          inverter = InverterWidgetModel.from(c, s, hasToken, now),
           syncing = l.running > 0,
           errors = l.errors,
         )
@@ -82,23 +105,49 @@ class MainViewModel(
   }
 
   fun saveConnection(url: String) {
-    val connection = ConnectionSettings(url.trim())
-    save(Validation.connection(connection), syncAfter = true) { it.copy(connection = connection) }
+    val trimmed = url.trim()
+    // Validation reads only the URL; the stored token type is kept by copying inside the update.
+    save(Validation.connection(ConnectionSettings(trimmed)), syncAfter = true) {
+      it.copy(connection = it.connection.copy(url = trimmed))
+    }
   }
 
+  /** Saves [token] in the slot of the stored token type. */
   fun saveToken(token: String) {
     val trimmed = token.trim()
     if (trimmed.isEmpty()) return fail(FieldError(Field.TOKEN, Problem.REQUIRED))
     viewModelScope.launch {
       try {
-        tokens.set(trimmed)
+        tokens.set(settings.settings.first().connection.tokenType, trimmed)
       } catch (e: CancellationException) {
         throw e
       } catch (_: Exception) {
-        // GeneralSecurityException / ProviderException from the Keystore. No message in state.
+        // GeneralSecurityException / ProviderException from the Keystore, or a failing store.
+        // No message in state.
         return@launch fail(FieldError(Field.TOKEN, Problem.INVALID))
       }
       guarded { afterSave(syncAfter = true) }
+    }
+  }
+
+  /** The token type saves at once and syncs: it decides which token is sent. */
+  fun saveTokenType(type: TokenType) {
+    save(emptyList(), syncAfter = true) {
+      it.copy(connection = it.connection.copy(tokenType = type))
+    }
+  }
+
+  /**
+   * Clears only the stored type's token; the widgets redraw. No sync: an empty slot already shows
+   * "Set up in the app".
+   */
+  fun removeToken() {
+    viewModelScope.launch {
+      guarded {
+        tokens.clear(settings.settings.first().connection.tokenType)
+        local.update { it.copy(errors = emptyList()) }
+        widgets.refreshAll()
+      }
     }
   }
 
@@ -121,6 +170,20 @@ class MainViewModel(
     save(Validation.entities(clean), syncAfter = true) { it.copy(entities = clean) }
   }
 
+  /** The strip's three ids: all blank (no inverter) or all set. Saving syncs. */
+  fun saveInverterEntities(entities: InverterEntitySettings) {
+    val clean =
+      InverterEntitySettings(
+        prefix = entities.prefix.trim(),
+        mode = entities.mode.trim(),
+        gridVoltage = entities.gridVoltage.trim(),
+        outputVoltage = entities.outputVoltage.trim(),
+      )
+    save(Validation.inverterEntities(clean), syncAfter = true) {
+      it.copy(inverter = it.inverter.copy(entities = clean))
+    }
+  }
+
   /**
    * Fill's second step (spec 0004, 5.4): asks HA, with the saved URL and token, for every battery
    * temperature sensor of [prefix]. It changes nothing; the section puts the ids in its draft.
@@ -129,7 +192,7 @@ class MainViewModel(
   suspend fun findTemperatureSensors(prefix: String, stillCurrent: () -> Boolean): SensorSearch =
     try {
       val connection = settings.settings.first().connection
-      val token = tokens.get()
+      val token = tokens.get(connection.tokenType)
       if (connection.url.isBlank() || token == null) {
         SensorSearch.Skipped
       } else {
@@ -151,18 +214,18 @@ class MainViewModel(
       SensorSearch.Skipped
     }
 
-  fun saveRefresh(auto: Boolean, intervalText: String) {
+  fun saveRefresh(auto: Boolean, intervalText: String, onUnlock: Boolean) {
     val text = intervalText.trim()
     val minutes = if (text.isEmpty()) null else text.toIntOrNull()
     if (text.isNotEmpty() && minutes == null) {
       return fail(FieldError(Field.INTERVAL, Problem.INVALID))
     }
-    val refresh = RefreshSettings(auto, minutes)
+    val refresh = RefreshSettings(auto, minutes, onUnlock)
     save(Validation.refresh(refresh), syncAfter = false) { it.copy(refresh = refresh) }
   }
 
-  fun setNotifyOnFull(enabled: Boolean) {
-    save(emptyList(), syncAfter = false) { it.copy(notifyOnFull = enabled) }
+  fun setNotificationsOn(enabled: Boolean) {
+    save(emptyList(), syncAfter = false) { it.copy(notificationsOn = enabled) }
   }
 
   /** Display choices save at once; only the drawings change, so no sync. */
@@ -186,20 +249,168 @@ class MainViewModel(
     save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = clamped) }
   }
 
-  /** "Reset sizes": fonts 50 %, scale 100 %, saved together. */
-  fun resetWidgetSettings() {
+  /** The battery tab's "Reset sizes": the battery fonts back to 50 %; the scale stays. */
+  fun resetBatterySizes() {
+    save(emptyList(), syncAfter = false) { it.copy(fontPercents = FontPercents()) }
+  }
+
+  /** The strip's display choice saves at once, like the battery's; no sync. */
+  fun saveModeStyle(style: ModeStyle) {
+    save(emptyList(), syncAfter = false) { it.copy(inverter = it.inverter.copy(modeStyle = style)) }
+  }
+
+  fun saveInverterFonts(percents: InverterFontPercents) {
+    val clamped = percents.clamped()
     save(emptyList(), syncAfter = false) {
-      it.copy(fontPercents = FontPercents(), homeScalePercent = HomeScale.DEFAULT)
+      it.copy(inverter = it.inverter.copy(fontPercents = clamped))
     }
   }
 
-  fun saveCapacity(text: String, locale: Locale) {
-    val trimmed = text.trim()
-    val ah = if (trimmed.isEmpty()) null else parseDecimal(trimmed, locale)
-    if (trimmed.isNotEmpty() && ah == null) {
-      return fail(FieldError(Field.CAPACITY, Problem.INVALID))
+  /** The Inverter tab's "Reset sizes": the strip's fonts back to 50 %; the mode style stays. */
+  fun resetInverterSizes() {
+    save(emptyList(), syncAfter = false) {
+      it.copy(inverter = it.inverter.copy(fontPercents = InverterFontPercents()))
     }
-    save(Validation.capacity(ah), syncAfter = false) { it.copy(capacityAh = ah) }
+  }
+
+  fun saveInverterIcon(slot: IconSlot, icon: InverterIcon) {
+    save(emptyList(), syncAfter = false) { it.copy(inverter = it.inverter.withIcon(slot, icon)) }
+  }
+
+  /** "Reset scale": the home-screen scale back to 100 %, for both widgets. */
+  fun resetHomeScale() {
+    save(emptyList(), syncAfter = false) { it.copy(homeScalePercent = HomeScale.DEFAULT) }
+  }
+
+  /** The type only picks default levels, so it needs no new reading. */
+  fun saveBatteryType(type: BatteryType) {
+    save(emptyList(), syncAfter = false) { it.copy(batteryType = type) }
+  }
+
+  /**
+   * Saves the typed cell count and capacity (in [locale]) together. A blank field stores `null`;
+   * with an error in either field nothing is stored, and the errors come in field order.
+   */
+  fun savePack(cellsText: String, capacityText: String, locale: Locale) {
+    val cellsTyped = cellsText.trim()
+    val capacityTyped = capacityText.trim()
+    val cells = if (cellsTyped.isEmpty()) null else cellsTyped.toIntOrNull()
+    val ah = if (capacityTyped.isEmpty()) null else parseDecimal(capacityTyped, locale)
+    val cellsErrors =
+      if (cellsTyped.isNotEmpty() && cells == null) listOf(FieldError(Field.CELLS, Problem.INVALID))
+      else Validation.cells(cells)
+    val capacityErrors =
+      if (capacityTyped.isNotEmpty() && ah == null) listOf(FieldError(Field.CAPACITY, Problem.INVALID))
+      else Validation.capacity(ah)
+    save(cellsErrors + capacityErrors, syncAfter = false) {
+      it.copy(cellCount = cells, capacityAh = ah)
+    }
+  }
+
+  /**
+   * Saves [drafts] as the owner's levels of [value], bells included, with [margin] as the value's
+   * re-arm margin. Edges and the margin are typed in [locale] and rounded to the precision the
+   * widget shows; the middle draft has no edge. A blank [margin]
+   * stores none, so the default applies. An edge error is reported at the draft's position in
+   * [drafts], a margin that is not a number of 0 or more without a position; with any error nothing
+   * is stored. The stored list is in shown order.
+   *
+   * @return `false` when an error was found, `true` when the save was started.
+   */
+  fun saveLevels(
+    value: LevelValue,
+    drafts: List<LevelDraft>,
+    margin: String,
+    locale: Locale,
+  ): Boolean {
+    val errors = mutableListOf<FieldError>()
+    val unparsed = mutableSetOf<Int>()
+    val built =
+      drafts.mapIndexed { i, d ->
+        var edge: Double? = null
+        if (d.side != LevelSide.MIDDLE) {
+          val text = d.edgeText.trim()
+          edge = if (text.isEmpty()) null else parseDecimal(text, locale)?.roundTo(value.decimals)
+          if (edge == null) {
+            unparsed += i
+            val problem = if (text.isEmpty()) Problem.REQUIRED else Problem.INVALID
+            errors += FieldError(Field.LEVEL_EDGE, problem, i)
+          }
+        }
+        ColorLevel(
+          id = d.id,
+          side = d.side,
+          edge = edge,
+          type = d.type,
+          color = d.color,
+          icon = d.icon,
+          name = d.name.trim(),
+          defaultName = d.defaultName,
+          notify = d.notify,
+        )
+      }
+    // A missing edge is already reported above, with the more precise problem.
+    errors += Validation.levels(value, built).filterNot { it.index in unparsed }
+    val marginText = margin.trim()
+    // Checked before rounding, so -0.4 % is not saved as 0 %.
+    val ownMargin =
+      if (marginText.isEmpty()) null else parseDecimal(marginText, locale)?.takeIf { it >= 0.0 }
+    if (marginText.isNotEmpty() && ownMargin == null) {
+      errors += FieldError(Field.LEVEL_MARGIN, Problem.INVALID)
+    }
+    if (errors.isNotEmpty()) {
+      fail(*errors.toTypedArray())
+      return false
+    }
+    save(emptyList(), syncAfter = false) {
+      it.withCustomLevels(
+        value,
+        CustomLevels(
+          on = true,
+          levels = LevelPicker.ordered(built),
+          margin = ownMargin?.roundTo(value.decimals),
+        ),
+      )
+    }
+    return true
+  }
+
+  /** Drops the owner's levels of [value]; the built-in ones apply again. */
+  fun useDefaults(value: LevelValue) {
+    save(emptyList(), syncAfter = false) { it.withCustomLevels(value, CustomLevels()) }
+  }
+
+  /**
+   * Saves [drafts] as the owner's items of [value], a text still typed in a mode's "Add text"
+   * field included. An error is reported at the draft's position in [drafts]; with any error
+   * nothing is stored. The stored list has "other" last.
+   *
+   * @return `false` when an error was found, `true` when the save was started.
+   */
+  fun saveTextLevels(value: TextValue, drafts: List<TextLevelDraft>): Boolean {
+    val errors = drafts.saveErrors()
+    if (errors.isNotEmpty()) {
+      fail(*errors.toTypedArray())
+      return false
+    }
+    val built = drafts.map { it.toLevel() }
+    save(emptyList(), syncAfter = false) {
+      it.withCustomTextLevels(
+        value,
+        CustomTextLevels(on = true, levels = TextLevelPicker.ordered(built)),
+      )
+    }
+    return true
+  }
+
+  /** Drops the owner's items of [value]; the built-in ones apply again. */
+  fun useTextDefaults(value: TextValue) {
+    save(emptyList(), syncAfter = false) { it.withCustomTextLevels(value, CustomTextLevels()) }
+  }
+
+  /** Drops the last save's errors. The screen keeps one list, so another tab must not show them. */
+  fun clearErrors() {
+    local.update { it.copy(errors = emptyList()) }
   }
 
   private fun fail(vararg errors: FieldError) {

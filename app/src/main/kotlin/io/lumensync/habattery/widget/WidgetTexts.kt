@@ -34,7 +34,7 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
 
   fun timeLeft(m: WidgetModel.Data): String = m.timeLeft?.let(formatters::duration) ?: missing
 
-  fun updatedAt(m: WidgetModel.Data): String = formatters.updatedAt(m.updatedAtMillis)
+  fun updatedAt(m: WidgetModel.Data): String = formatters.updatedAt(m.updatedAtMillis, m.nowMillis)
 
   fun soc(m: WidgetModel.Data): String = formatters.socNumber(m.socPercent)
 
@@ -84,11 +84,11 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
         WidgetModel.Flow.NONE -> null
       }
 
-    @StringRes
-    fun autoDescription(on: Boolean): Int = if (on) R.string.widget_auto_on else R.string.widget_auto_off
-
-    @StringRes
-    fun refreshDescription(refreshing: Boolean): Int =
-      if (refreshing) R.string.widget_refreshing else R.string.widget_refresh_action
+    /** ↻ says the data's age: the freshness dot next to it is not described. */
+    fun refreshDescription(context: Context, refreshing: Boolean, ageMinutes: Long): String =
+      context.getString(
+        if (refreshing) R.string.widget_refreshing_age else R.string.widget_refresh_age,
+        Formatters(context).age(ageMinutes),
+      )
   }
 }

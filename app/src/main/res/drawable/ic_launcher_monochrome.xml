@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The tiles are real holes (even-odd), so any launcher background shows through. The
+     stroke softens the roof and eaves and shrinks each hole to the tile size. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M54,36.8 L71.2,50.6 V68.2 A3.6,3.6 0 0 1 67.6,71.8 H40.4 A3.6,3.6 0 0 1 36.8,68.2 V50.6 Z M47.4,51.4 H51 A2.8,2.8 0 0 1 53.8,54.2 V57.8 A2.8,2.8 0 0 1 51,60.6 H47.4 A2.8,2.8 0 0 1 44.6,57.8 V54.2 A2.8,2.8 0 0 1 47.4,51.4 Z M57,51.4 H60.6 A2.8,2.8 0 0 1 63.4,54.2 V57.8 A2.8,2.8 0 0 1 60.6,60.6 H57 A2.8,2.8 0 0 1 54.2,57.8 V54.2 A2.8,2.8 0 0 1 57,51.4 Z M47.4,61 H51 A2.8,2.8 0 0 1 53.8,63.8 V67.4 A2.8,2.8 0 0 1 51,70.2 H47.4 A2.8,2.8 0 0 1 44.6,67.4 V63.8 A2.8,2.8 0 0 1 47.4,61 Z M57,61 H60.6 A2.8,2.8 0 0 1 63.4,63.8 V67.4 A2.8,2.8 0 0 1 60.6,70.2 H57 A2.8,2.8 0 0 1 54.2,67.4 V63.8 A2.8,2.8 0 0 1 57,61 Z"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineJoin="round" />
+</vector>

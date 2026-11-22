@@ -1,34 +1,52 @@
 package io.lumensync.habattery.domain.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 /**
  * Stored settings. Defaults are empty values (0001 §14), except the display choices, the font
  * percents, the home-screen scale and the [appearance] (theme): they are not user data, so they
  * default to the design values (specs 0003, 0005, 0007, 0008).
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class Settings(
   val connection: ConnectionSettings = ConnectionSettings(),
   val entities: EntitySettings = EntitySettings(),
   val refresh: RefreshSettings = RefreshSettings(),
-  val notifyOnFull: Boolean = false,
+  /** The main notification switch; a v1 file stored it as `notifyOnFull`. */
+  @JsonNames("notifyOnFull") val notificationsOn: Boolean = false,
   val capacityAh: Double? = null,
+  /** `null` reads as [BatteryType.DEFAULT]; a name a later version wrote reads as `null`. */
+  val batteryType: BatteryType? = null,
+  /** Cells in series, typed by the user: used only when the reading cannot count them. */
+  val cellCount: Int? = null,
   val display: DisplaySettings = DisplaySettings(),
   val fontPercents: FontPercents = FontPercents(),
   val homeScalePercent: Int = HomeScale.DEFAULT,
   val appearance: AppearanceSettings = AppearanceSettings(),
+  /** Keyed by [LevelValue.name]: a key written by a later version cannot break the file. */
+  val colorLevels: Map<String, CustomLevels> = emptyMap(),
+  /** Keyed by [TextValue.name], like [colorLevels]. */
+  val textLevels: Map<String, CustomTextLevels> = emptyMap(),
+  val inverter: InverterSettings = InverterSettings(),
 )
 
 /** Both stored ranges applied (fonts and home-screen scale); readers get only valid values. */
 fun Settings.clamped(): Settings =
-  copy(fontPercents = fontPercents.clamped(), homeScalePercent = HomeScale.clamp(homeScalePercent))
+  copy(
+    fontPercents = fontPercents.clamped(),
+    homeScalePercent = HomeScale.clamp(homeScalePercent),
+    inverter = inverter.copy(fontPercents = inverter.fontPercents.clamped()),
+  )
 
-/** What the Widget section's text-size summary reports: any font off 50 % or the scale off 100 %. */
+/**
+ * What the battery Widget section's text-size summary reports: any battery font off 50 %. The
+ * home-screen scale has its own section.
+ */
 val Settings.textSizeChanged: Boolean
-  get() =
-    FontGroup.entries.any { fontPercents[it] != FontPercents.DEFAULT } ||
-      homeScalePercent != HomeScale.DEFAULT
+  get() = FontGroup.entries.any { fontPercents[it] != FontPercents.DEFAULT }
 
 /**
  * The home-screen scale in percent (spec 0007, §8): some launchers draw widgets smaller than their
@@ -46,8 +64,22 @@ object HomeScale {
   fun factor(percent: Int): Float = percent / 100f
 }
 
+/** Which kind of Home Assistant token the user stored (spec 0009). */
 @Serializable
-data class ConnectionSettings(val url: String = "")
+enum class TokenType {
+  ADMIN,
+  USER,
+}
+
+@Serializable
+data class ConnectionSettings(
+  val url: String = "",
+  /**
+   * Not user data, so the default is [TokenType.ADMIN], not empty (0001 §14 exception, like
+   * [ThemeChoice]): settings stored before this field load as ADMIN.
+   */
+  val tokenType: TokenType = TokenType.ADMIN,
+)
 
 @Serializable
 data class EntitySettings(
@@ -70,15 +102,12 @@ data class EntitySettings(
 }
 
 @Serializable
-data class RefreshSettings(val auto: Boolean = false, val intervalMinutes: Int? = null) {
-  /**
-   * The widget's auto toggle. Turning on keeps a valid interval, brings one out of range into range,
-   * and uses [DEFAULT_INTERVAL] when none is set. Turning off keeps the interval.
-   */
-  fun toggled(): RefreshSettings =
-    if (auto) copy(auto = false)
-    else RefreshSettings(true, intervalMinutes?.coerceIn(MIN_INTERVAL, MAX_INTERVAL) ?: DEFAULT_INTERVAL)
-
+data class RefreshSettings(
+  val auto: Boolean = false,
+  val intervalMinutes: Int? = null,
+  /** Sync when the phone is unlocked and a reading is old. On by default, also for older stored files. */
+  val onUnlock: Boolean = true,
+) {
   companion object {
     const val MIN_INTERVAL = 15
     const val MAX_INTERVAL = 1440
