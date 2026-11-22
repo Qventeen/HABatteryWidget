@@ -17,6 +17,7 @@ data class BatteryOverview(
   val error: SyncError?,
   val refreshing: Boolean,
   val refresh: RefreshSettings,
+  val nowMillis: Long,
 ) {
   companion object {
     fun build(
@@ -38,6 +39,7 @@ data class BatteryOverview(
         error = cache.error,
         refreshing = Freshness.isRefreshing(since, nowMillis),
         refresh = settings.refresh,
+        nowMillis = nowMillis,
       )
     }
   }

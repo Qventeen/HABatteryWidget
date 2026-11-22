@@ -143,13 +143,47 @@ class WidgetContentTest {
   fun refreshing_keepsButtonWithRefreshingDescription() {
     render(model()) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refresh_action)))
+        .assert(hasContentDescription(text(R.string.widget_refresh_age, 1)))
     }
     render(model(refreshingSince = NOW - 1_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refreshing)))
+        .assert(hasContentDescription(text(R.string.widget_refreshing_age, 1)))
     }
   }
+
+  @Test
+  fun refreshDescription_saysAge() {
+    render(model(updated = NOW - 3 * 60_000L)) {
+      onNode(hasRunCallbackClickAction<NoOpRefresh>())
+        .assert(hasContentDescription("Refresh. Data is 3 min old"))
+    }
+    render(model(updated = NOW - 3 * 60_000L, refreshingSince = NOW - 1_000L)) {
+      onNode(hasRunCallbackClickAction<NoOpRefresh>())
+        .assert(hasContentDescription("Refreshing… Data is 3 min old"))
+    }
+  }
+
+  /** With the timed sync off, data turns late after 20 min (spec 0016). */
+  @Test
+  fun dot_freshThenLate() {
+    render(model(updated = NOW - 3 * 60_000L)) {
+      onNode(hasTestTag("dot_fresh")).assertExists()
+      onAllNodes(hasTestTag("dot_late")).assertCountEquals(0)
+    }
+    render(model(updated = NOW - 25 * 60_000L)) {
+      onNode(hasTestTag("dot_late")).assertExists()
+      onAllNodes(hasTestTag("dot_fresh")).assertCountEquals(0)
+    }
+  }
+
+  @Test
+  fun emptyStates_haveNoDot() =
+    listOf(model(hasToken = false), model(reading = null)).forEach { empty ->
+      render(empty) {
+        onAllNodes(hasTestTag("dot_fresh")).assertCountEquals(0)
+        onAllNodes(hasTestTag("dot_late")).assertCountEquals(0)
+      }
+    }
 
   @Test
   fun topRow_hasNoAutoToggle() =
@@ -247,9 +281,8 @@ class WidgetContentTest {
   fun noActions_eachBucket_buttonsAreNotDescribed() =
     LayoutSpec.all.forEach { spec ->
       render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
-        listOf(R.string.widget_refresh_action).forEach {
-          onAllNodes(hasContentDescriptionEqualTo(text(it))).assertCountEquals(0)
-        }
+        onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_refresh_age, 1)))
+          .assertCountEquals(0)
         onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
         onNode(hasTextEqualTo("55")).assertExists()
       }
@@ -431,9 +464,15 @@ class WidgetContentTest {
     error: SyncError? = null,
     hasToken: Boolean = true,
     refreshingSince: Long? = null,
+    updated: Long = UPDATED,
   ): WidgetModel =
     WidgetModel.build(
-      BatteryOverview.build(CacheState(reading, error, refreshingSince), settings, hasToken, NOW),
+      BatteryOverview.build(
+        CacheState(reading?.copy(updatedAtMillis = updated), error, refreshingSince),
+        settings,
+        hasToken,
+        NOW,
+      ),
       settings,
     )
 

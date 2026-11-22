@@ -22,10 +22,10 @@
 
     <string name="widget_name">HA battery</string>
     <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
-    <string name="widget_refreshing">Refreshing…</string>
+    <string name="widget_refreshing_age">Refreshing… Data is %1$d min old</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
-    <string name="widget_refresh_action">Refresh</string>
+    <string name="widget_refresh_age">Refresh. Data is %1$d min old</string>
     <string name="delta_label">Δ %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
     <plurals name="widget_soc_description">

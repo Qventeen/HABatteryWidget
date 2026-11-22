@@ -72,6 +72,9 @@ data class LayoutSpec(
   val buttonTouch: Float,
   val buttonFace: Float,
   val buttonIcon: Float,
+  // The freshness dot on ↻ and the card-coloured ring around it.
+  val dot: Float = 8f,
+  val dotRing: Float = 2f,
   // Ring and its text stack; [ringTextGap] is the visible gap between the three lines (owner, 2026-11-16).
   val ring: Float,
   val ringStroke: Float,
@@ -173,6 +176,8 @@ data class LayoutSpec(
       buttonTouch = buttonTouch * k,
       buttonFace = buttonFace * k,
       buttonIcon = buttonIcon * k,
+      dot = dot * k,
+      dotRing = dotRing * k,
       ring = ring * k,
       ringStroke = ringStroke * k,
       ringTextGap = ringTextGap * k,

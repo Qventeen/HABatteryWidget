@@ -27,6 +27,7 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
+import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.unit.ColorProvider
@@ -43,8 +44,8 @@ private val CELL_RADIUS = 999.dp
 private const val RING_RENDER_SCALE = 1.25f
 
 /**
- * Time left, balancing, the update time (or the red sync error icon in its place), the auto-refresh
- * toggle and ↻ (spec 0005, 5.3). The error takes the update time's place, so nothing else moves.
+ * Time left, balancing, the update time (or the red sync error icon in its place) and ↻ with the
+ * freshness dot (specs 0005, 0016). The error takes the update time's place, so nothing else moves.
  */
 @Composable
 internal fun TopRow(d: DataLook, actions: WidgetActions?) {
@@ -78,21 +79,22 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
         Text(d.texts.updatedAt, style = textStyle(small, c.sub), maxLines = 1)
       }
     }
-    // While a sync runs, ↻ stays in place and only dims.
+    // While a sync runs, ↻ stays in place and only dims; the dot still shows the data's age.
     CircleButton(
       d,
       icon = R.drawable.ic_refresh,
       iconColor = if (model.refreshing) c.dim else c.sub,
       face = c.tile,
-      description = context.getString(WidgetTexts.refreshDescription(model.refreshing)),
+      description = WidgetTexts.refreshDescription(context, model.refreshing, model.dataAgeMinutes),
       action = actions?.refresh,
+      badge = { FreshnessBadge(model.dataLate, s.dot, s.dotRing, c) },
     )
   }
 }
 
 /**
- * A circle in its touch area. Without [action] (the app's preview) the circle does nothing, so
- * TalkBack does not announce it.
+ * A circle in its touch area, with [badge] on its top-right edge. Without [action] (the app's
+ * preview) the circle does nothing, so TalkBack does not announce it.
  */
 @Composable
 private fun CircleButton(
@@ -102,6 +104,7 @@ private fun CircleButton(
   face: ColorProvider,
   description: String,
   action: Action?,
+  badge: (@Composable () -> Unit)?,
 ) {
   val s = d.spec
   val described =
@@ -113,12 +116,37 @@ private fun CircleButton(
       .then(described),
     contentAlignment = Alignment.Center,
   ) {
-    Box(
-      GlanceModifier.size(s.buttonFace.dp).background(face).cornerRadius((s.buttonFace / 2).dp),
-      contentAlignment = Alignment.Center,
-    ) {
-      WidgetIcon(icon, s.buttonIcon.dp, iconColor, null)
+    // Glance aligns all children of a Box alike, so the face and the badge each get a full-size
+    // box with its own alignment. The 1 dp extra puts the badge on the circle's edge.
+    Box(GlanceModifier.size((s.buttonFace + 1).dp)) {
+      Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
+        Box(
+          GlanceModifier.size(s.buttonFace.dp).background(face).cornerRadius((s.buttonFace / 2).dp),
+          contentAlignment = Alignment.Center,
+        ) {
+          WidgetIcon(icon, s.buttonIcon.dp, iconColor, null)
+        }
+      }
+      if (badge != null) {
+        Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) { badge() }
+      }
     }
+  }
+}
+
+/**
+ * The freshness dot: green, or amber when [late], in a [ring] of the card colour that sets it off
+ * from the circle under it. It has no description: ↻ says the data's age.
+ */
+@Composable
+internal fun FreshnessBadge(late: Boolean, dot: Float, ring: Float, colors: WidgetColors) {
+  val outer = dot + 2 * ring
+  Box(
+    GlanceModifier.size(outer.dp).semantics { testTag = if (late) "dot_late" else "dot_fresh" },
+    contentAlignment = Alignment.Center,
+  ) {
+    WidgetIcon(R.drawable.widget_dot, outer.dp, colors.card, null)
+    WidgetIcon(R.drawable.widget_dot, dot.dp, if (late) colors.late else colors.fresh, null)
   }
 }
 
