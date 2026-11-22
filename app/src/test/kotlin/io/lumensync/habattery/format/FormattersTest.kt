@@ -1,6 +1,7 @@
 package io.lumensync.habattery.format
 
 import android.content.Context
+import android.icu.util.TimeZone as IcuTimeZone
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.SyncError.BadResponse
@@ -109,6 +110,16 @@ class FormattersTest {
         assertEquals("Jan 14", f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING))
     }
 
+    /**
+     * The date is written in the zone that picks the day. ICU keeps its own default zone from its
+     * first use, and on the JVM `TimeZone.setDefault` does not clear it.
+     */
+    @Test
+    fun updatedAt_olderDay_ignoresIcusOwnDefaultZone() =
+        withIcuDefaultZone("Asia/Tokyo") {
+            assertEquals("Jan 14", Formatters(context).updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING))
+        }
+
     @Test
     fun updatedAt_otherYear_showsTheYear() =
         assertEquals("Dec 31, 2026", Formatters(context).updatedAt(MORNING - 15.days.inWholeMilliseconds, nowMillis = MORNING))
@@ -160,6 +171,17 @@ class FormattersTest {
         val minuteUnit = f.duration(1.minutes).filterNot { it.isDigit() }.trim()
         assertTrue(text, text.contains("2") && text.contains("7") && !text.contains("20"))
         assertFalse(text, text.contains(minuteUnit))
+    }
+
+    /** ICU's setter is hidden from apps; clearing it makes ICU read the JVM's zone again. */
+    private fun withIcuDefaultZone(id: String, block: () -> Unit) {
+        val setIcuDefault = IcuTimeZone::class.java.getMethod("setICUDefault", IcuTimeZone::class.java)
+        setIcuDefault.invoke(null, IcuTimeZone.getTimeZone(id))
+        try {
+            block()
+        } finally {
+            setIcuDefault.invoke(null, null)
+        }
     }
 
     private companion object {

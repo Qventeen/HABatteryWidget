@@ -93,15 +93,19 @@ class Formatters(private val context: Context) {
      * app's language; the year only when it is not this year.
      */
     fun updatedAt(millis: Long, nowMillis: Long = System.currentTimeMillis()): String {
-        val day = localDate(millis)
-        val today = localDate(nowMillis)
+        val zone = ZoneId.systemDefault()
+        val day = localDate(millis, zone)
+        val today = localDate(nowMillis, zone)
         if (day == today) return DateFormat.getTimeFormat(context).format(Date(millis))
         val skeleton = if (day.year == today.year) MONTH_DAY else YEAR_MONTH_DAY
-        return android.icu.text.DateFormat.getInstanceForSkeleton(skeleton, locale).format(Date(millis))
+        return android.icu.text.DateFormat.getInstanceForSkeleton(skeleton, locale)
+            // ICU caches its own default zone, and only Android keeps it in step with the system's.
+            .apply { timeZone = android.icu.util.TimeZone.getTimeZone(zone.id) }
+            .format(Date(millis))
     }
 
-    private fun localDate(millis: Long): LocalDate =
-        Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+    private fun localDate(millis: Long, zone: ZoneId): LocalDate =
+        Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 
     fun error(e: SyncError): String = when (e) {
         SyncError.NotConfigured -> context.getString(R.string.error_not_configured)
