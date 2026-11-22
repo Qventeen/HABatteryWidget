@@ -2,7 +2,6 @@ package io.lumensync.habattery.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -11,15 +10,14 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.provideContent
 import io.lumensync.habattery.container
-import io.lumensync.habattery.domain.Freshness
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.Settings
 import kotlinx.coroutines.flow.first
 
 /**
  * Provides [content] from local data only (cache, settings, token presence), for every widget.
- * One place holds the token-presence rule and the recompose-on-config rule, so the widgets
- * cannot drift apart.
+ * One place holds the token-presence rule, the recompose-on-config rule and the amber redraw, so
+ * the widgets cannot drift apart.
  */
 internal suspend fun GlanceAppWidget.provideStoredContent(
   context: Context,
@@ -32,6 +30,9 @@ internal suspend fun GlanceAppWidget.provideStoredContent(
   val initialSettings = container.settingsRepository.settings.first()
   val initialSavedTypes = container.tokenStore.savedTypes.first()
   val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
+  // Asked here, not in the composition: Responsive mode composes once per size, and each new ask
+  // replaces the redraw work, even one that is running.
+  container.lateRedraw()
 
   provideContent {
     val cache by container.readingCache.state.collectAsState(initialCache)
@@ -42,9 +43,6 @@ internal suspend fun GlanceAppWidget.provideStoredContent(
     // and their fitted sizes and the sp handed to Glance from the font scale.
     key(config) {
       val hasToken = settings.connection.tokenType in savedTypes
-      // A widget redraws only when asked, so ask for the moment a green dot turns amber.
-      val lateAt = Freshness.nextLateAt(cache, settings, hasToken, System.currentTimeMillis())
-      LaunchedEffect(lateAt) { lateAt?.let(container.syncScheduler::redrawAt) }
       content(cache, settings, hasToken, appWidgetId)
     }
   }

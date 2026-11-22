@@ -20,6 +20,7 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
   the per-value alert state), `ModeAlerts` (the inverter mode change to post: compares the modes of the new and the stored text), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy` (also `unlockSyncWanted`, the unlock gate),
   `Freshness` (when a reading is late, its age, the "refreshing" limit; the dot's rules),
+  `LateRedraw` (asks `SyncScheduler.redrawAt` for the moment the next green dot turns amber),
   `UnlockRefresh` (on unlock: marks refreshing, redraws, queues the unlock sync),
   `Validation`, `UrlPolicy`, `WidgetModel` and `InverterWidgetModel` (what each widget and its app preview show),
   `DefaultLevels`, `LevelBasis` (capacity, cells and battery type), `BatteryPreset` (volts per
@@ -41,7 +42,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   (`modeWord`: the one mode word for strip, notification and app; icon slot names); one formatter for
   widget, screen and notification.
 - `system/`: `SyncWorker`, `RedrawWorker` (redraws both widgets from local data, no network, so a
-  green dot can turn amber; queued by `SyncScheduler.redrawAt`), `WorkManagerSyncScheduler`
+  green dot can turn amber; queued by `SyncScheduler.redrawAt`; finishes its redraw even when the
+  next ask replaces it), `WorkManagerSyncScheduler`
   (`syncNow`, `syncWhenOnline`: waits for a network, `redrawAt`), `UnlockReceiver` (`USER_PRESENT`,
   registered in `App.onCreate`; calls `UnlockRefresh`), `AndroidLevelNotifier` (one channel per level
   type; also posts mode changes; notification ids: 100 + `LevelValue` ordinal, so 107 and 108 for
@@ -66,9 +68,11 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `InverterLayoutSpec` (three sizes, 3×1, 4×1, 5×1, with `StripSizes`), `InverterWidgetContent`
   (mode pill, two voltage pills), `InverterFonts` (fits its texts like `WidgetFonts`) and
   `InverterIcons` (icon → drawable and name). `StoredContent` (`provideStoredContent`) gives both
-  widgets their local data and the recompose-on-config rule, `WidgetSchedule` re-applies the
-  sync schedule when a receiver gets its first or last widget, and `WidgetLook<S>` holds the
-  sizes `S` and the colours of one drawing. `GlanceWidgetRefresher` redraws both widgets.
+  widgets their local data and the recompose-on-config rule, and runs `LateRedraw` once per
+  drawing, before the composition (Responsive mode composes once per size). `WidgetSchedule`
+  re-applies the sync schedule when a receiver gets its first or last widget, and `WidgetLook<S>`
+  holds the sizes `S` and the colours of one drawing. `GlanceWidgetRefresher` redraws both widgets,
+  then runs `LateRedraw` (a live session redraws without `provideGlance`).
   `BatteryWidget` composes `BatteryWidgetContent`: settings → font percents,
   `WidgetColors(theme)`, `HomeScale.factor` and the open-app action with the tapped id.
   The home-screen scale (`Settings.homeScalePercent`, 80–200 %, default 100; spec 0007) goes

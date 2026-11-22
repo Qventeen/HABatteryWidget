@@ -19,6 +19,7 @@ import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import io.lumensync.habattery.data.store.settingsDataStore
+import io.lumensync.habattery.domain.LateRedraw
 import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.UnlockRefresh
 import io.lumensync.habattery.domain.port.BatterySource
@@ -78,8 +79,6 @@ class AppContainer(context: Context) {
       KeystoreCrypto(),
     )
 
-  val widgetRefresher: WidgetRefresher = GlanceWidgetRefresher(appContext)
-
   private val hasWidgets: suspend () -> Boolean = {
     val manager = GlanceAppWidgetManager(appContext)
     listOf(BatteryWidget::class.java, InverterWidget::class.java).any {
@@ -88,6 +87,17 @@ class AppContainer(context: Context) {
   }
 
   val syncScheduler: SyncScheduler = WorkManagerSyncScheduler(appContext, hasWidgets)
+
+  val lateRedraw: LateRedraw =
+    LateRedraw(
+      settings = settingsRepository,
+      cache = readingCache,
+      tokens = tokenStore,
+      scheduler = syncScheduler,
+      clock = System::currentTimeMillis,
+    )
+
+  val widgetRefresher: WidgetRefresher = GlanceWidgetRefresher(appContext, lateRedraw)
 
   val unlockRefresh: UnlockRefresh =
     UnlockRefresh(
