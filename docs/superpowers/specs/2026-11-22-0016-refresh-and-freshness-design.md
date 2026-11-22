@@ -113,7 +113,9 @@ events are hourly statistics).
   each widget drawing (my call). The app's preview draws the same content
   but never schedules it (no side effects in the preview).
 - **TalkBack:** the dot has no own focus; the ↻ description carries the
-  age: "Refresh. Data is 3 min old." (my call; EN and UK strings).
+  age: "Refresh. Data is 3 minutes old." (my call; EN and UK strings).
+  The age is spoken in full words: minutes under an hour, whole hours
+  under a day, else whole days.
 
 ### 3.3 The widgets
 
