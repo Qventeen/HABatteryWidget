@@ -27,8 +27,8 @@ class BatteryWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
   override val sizeMode: SizeMode = SizeMode.Responsive(LayoutSpec.all.map { it.bucket }.toSet())
 
   override suspend fun provideGlance(context: Context, id: GlanceId) =
-    provideStoredContent(context, id) { cache, settings, hasToken, appWidgetId ->
-      BatteryWidgetContent(cache, settings, hasToken, System.currentTimeMillis(), appWidgetId)
+    provideStoredContent(context, id) { cache, settings, hasToken, nowMillis, appWidgetId ->
+      BatteryWidgetContent(cache, settings, hasToken, nowMillis, appWidgetId)
     }
 }
 

@@ -112,7 +112,7 @@ class InverterWidgetContentTest {
     InverterLayoutSpec.entries.forEach { spec ->
       render(model(), spec) {
         onNode(hasRunCallbackClickAction<NoOpRefresh>())
-          .assert(hasContentDescriptionEqualTo(text(R.string.widget_refresh_age, 1)))
+          .assert(hasContentDescriptionEqualTo(WidgetTexts.refreshDescription(context, false, 1)))
         onNode(hasTestTag("dot_fresh")).assertExists()
       }
     }
@@ -144,7 +144,7 @@ class InverterWidgetContentTest {
     listOf(53f, 59f, 70f).forEach { height ->
       val spec = InverterLayoutSpec.S3X1
       val card = layOut(model(cache(error = SyncError.Unreachable)), spec, height)
-      val refresh = card.find(text(R.string.widget_refresh_age, 1))!!
+      val refresh = card.find(WidgetTexts.refreshDescription(context, false, 1))!!
       val alert = card.find("Sync error: Home Assistant is unreachable")!!
       val at = "at $height dp"
       assertEquals(at, card.height / 2f, refresh.topIn(card) + refresh.height / 2f, 1f)
@@ -158,7 +158,7 @@ class InverterWidgetContentTest {
   fun refreshing_describedWithAge() =
     render(model(cache(updated = NOW - 3 * 60_000L).copy(refreshingSinceMillis = NOW - 1_000L))) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescriptionEqualTo("Refreshing… Data is 3 min old"))
+        .assert(hasContentDescriptionEqualTo("Refreshing… Data is 3 minutes old"))
     }
 
   @Test
@@ -178,7 +178,7 @@ class InverterWidgetContentTest {
       onNode(hasImage(R.drawable.ic_refresh)).assertExists()
       onNode(hasTestTag("dot_fresh")).assertExists()
       onAllNodes(hasClickAction()).assertCountEquals(1)
-      onAllNodes(hasContentDescription(text(R.string.widget_refresh_age, 1))).assertCountEquals(0)
+      onAllNodes(hasContentDescription(WidgetTexts.refreshDescription(context, false, 1))).assertCountEquals(0)
     }
 
   @Test

@@ -68,11 +68,15 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `InverterLayoutSpec` (three sizes, 3×1, 4×1, 5×1, with `StripSizes`), `InverterWidgetContent`
   (mode pill, two voltage pills), `InverterFonts` (fits its texts like `WidgetFonts`) and
   `InverterIcons` (icon → drawable and name). `StoredContent` (`provideStoredContent`) gives both
-  widgets their local data and the recompose-on-config rule, and runs `LateRedraw` once per
-  drawing, before the composition (Responsive mode composes once per size). `WidgetSchedule`
+  widgets their local data and the recompose-on-config rule, draws with `nowMillis` = max of
+  `AppContainer.clockTick` and the session's start (`drawingNow`; a live session skips content
+  that reads no changed state, so the content never reads the clock), and runs `LateRedraw` once
+  per drawing, before the composition (Responsive mode composes once per size). `WidgetSchedule`
   re-applies the sync schedule when a receiver gets its first or last widget, and `WidgetLook<S>`
-  holds the sizes `S` and the colours of one drawing. `GlanceWidgetRefresher` redraws both widgets,
-  then runs `LateRedraw` (a live session redraws without `provideGlance`).
+  holds the sizes `S` and the colours of one drawing. `GlanceWidgetRefresher` sets the clock tick,
+  redraws both widgets, then runs `LateRedraw` (a live session redraws without `provideGlance`).
+  The ↻ circle and its freshness dot are one drawing, `RefreshFace` in `WidgetParts`; the battery
+  `RefreshButton` and the strip's `RefreshColumn` keep their own touch area and description.
   `BatteryWidget` composes `BatteryWidgetContent`: settings → font percents,
   `WidgetColors(theme)`, `HomeScale.factor` and the open-app action with the tapped id.
   The home-screen scale (`Settings.homeScalePercent`, 80–200 %, default 100; spec 0007) goes

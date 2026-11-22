@@ -75,7 +75,7 @@ class WidgetContentTest {
           text(R.string.delta_label, formatters.deltaMv(12)),
           formatters.temperature(25.0),
           formatters.temperature(27.0),
-          formatters.updatedAt(UPDATED),
+          formatters.updatedAt(UPDATED, NOW),
           formatters.duration(sampleTimeLeft()),
         )
         .forEach { onNode(hasTextEqualTo(it)).assertExists() }
@@ -127,6 +127,18 @@ class WidgetContentTest {
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
+  /** The update time is the time on the drawing's day, else the date: the clock is not read. */
+  @Test
+  fun updateTime_followsTheDrawingsTime() {
+    val nextDay = UPDATED + 24 * 3_600_000L
+    render(model(now = UPDATED + 60_000L)) {
+      onNode(hasTextEqualTo(formatters.updatedAt(UPDATED, UPDATED + 60_000L))).assertExists()
+    }
+    render(model(now = nextDay)) {
+      onNode(hasTextEqualTo(formatters.updatedAt(UPDATED, nextDay))).assertExists()
+    }
+  }
+
   /** Spec 0005, 5.3: a red icon only, the reason in its content description, no error text. */
   @Test
   fun error_showsIconOnly() =
@@ -134,7 +146,7 @@ class WidgetContentTest {
       render(model(error = SyncError.Unreachable), spec.bucketWidth, spec.bucketHeight) {
         onNode(hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable")).assertExists()
         onAllNodes(hasText(text(R.string.error_unreachable))).assertCountEquals(0)
-        onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
+        onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED, NOW))).assertCountEquals(0)
         onNode(hasTextEqualTo("55")).assertExists()
       }
     }
@@ -143,11 +155,11 @@ class WidgetContentTest {
   fun refreshing_keepsButtonWithRefreshingDescription() {
     render(model()) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refresh_age, 1)))
+        .assert(hasContentDescription(WidgetTexts.refreshDescription(context, false, 1)))
     }
     render(model(refreshingSince = NOW - 1_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refreshing_age, 1)))
+        .assert(hasContentDescription(WidgetTexts.refreshDescription(context, true, 1)))
     }
   }
 
@@ -155,11 +167,11 @@ class WidgetContentTest {
   fun refreshDescription_saysAge() {
     render(model(updated = NOW - 3 * 60_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription("Refresh. Data is 3 min old"))
+        .assert(hasContentDescription("Refresh. Data is 3 minutes old"))
     }
     render(model(updated = NOW - 3 * 60_000L, refreshingSince = NOW - 1_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription("Refreshing… Data is 3 min old"))
+        .assert(hasContentDescription("Refreshing… Data is 3 minutes old"))
     }
   }
 
@@ -281,7 +293,7 @@ class WidgetContentTest {
   fun noActions_eachBucket_buttonsAreNotDescribed() =
     LayoutSpec.all.forEach { spec ->
       render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
-        onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_refresh_age, 1)))
+        onAllNodes(hasContentDescriptionEqualTo(WidgetTexts.refreshDescription(context, false, 1)))
           .assertCountEquals(0)
         onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
         onNode(hasTextEqualTo("55")).assertExists()
@@ -465,13 +477,14 @@ class WidgetContentTest {
     hasToken: Boolean = true,
     refreshingSince: Long? = null,
     updated: Long = UPDATED,
+    now: Long = NOW,
   ): WidgetModel =
     WidgetModel.build(
       BatteryOverview.build(
         CacheState(reading?.copy(updatedAtMillis = updated), error, refreshingSince),
         settings,
         hasToken,
-        NOW,
+        now,
       ),
       settings,
     )
