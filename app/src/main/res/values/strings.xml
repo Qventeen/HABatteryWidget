@@ -42,8 +42,6 @@
     <string name="widget_average_temperature">Average battery temperature</string>
     <string name="widget_mosfet_temperature">MOSFET temperature</string>
     <string name="widget_average_cell">Average cell voltage</string>
-    <string name="widget_auto_on">Auto refresh on</string>
-    <string name="widget_auto_off">Auto refresh off</string>
     <string name="widget_open_app">Open app</string>
 
     <string name="notification_channel_critical">Critical</string>

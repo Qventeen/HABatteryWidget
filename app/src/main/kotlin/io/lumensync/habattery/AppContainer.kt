@@ -20,7 +20,6 @@ import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import io.lumensync.habattery.data.store.settingsDataStore
 import io.lumensync.habattery.domain.SyncBattery
-import io.lumensync.habattery.domain.ToggleAutoRefresh
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
@@ -103,9 +102,6 @@ class AppContainer(context: Context) {
       notifier = AndroidLevelNotifier(appContext),
       widgets = widgetRefresher,
     )
-
-  val toggleAutoRefresh: ToggleAutoRefresh =
-    ToggleAutoRefresh(settingsRepository, syncScheduler, widgetRefresher)
 
   private companion object {
     const val TAG = "HaBattery"

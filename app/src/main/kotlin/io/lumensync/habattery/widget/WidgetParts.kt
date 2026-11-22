@@ -78,15 +78,6 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
         Text(d.texts.updatedAt, style = textStyle(small, c.sub), maxLines = 1)
       }
     }
-    CircleButton(
-      d,
-      icon = if (model.autoRefresh) R.drawable.ic_auto_refresh else R.drawable.ic_auto_refresh_off,
-      iconColor = if (model.autoRefresh) c.accent else c.dim,
-      face = if (model.autoRefresh) c.okBg else c.tile,
-      description = context.getString(WidgetTexts.autoDescription(model.autoRefresh)),
-      action = actions?.toggleAuto,
-      growEnd = s.buttonGap / 2,
-    )
     // While a sync runs, ↻ stays in place and only dims.
     CircleButton(
       d,
@@ -95,15 +86,13 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
       face = c.tile,
       description = context.getString(WidgetTexts.refreshDescription(model.refreshing)),
       action = actions?.refresh,
-      growStart = s.buttonGap / 2,
     )
   }
 }
 
 /**
- * A circle in its touch area. The touch area grows by [growStart] / [growEnd] toward the other
- * button, so the two touch areas touch while the circles stay where the design has them. Without
- * [action] (the app's preview) the circle does nothing, so TalkBack does not announce it.
+ * A circle in its touch area. Without [action] (the app's preview) the circle does nothing, so
+ * TalkBack does not announce it.
  */
 @Composable
 private fun CircleButton(
@@ -113,18 +102,15 @@ private fun CircleButton(
   face: ColorProvider,
   description: String,
   action: Action?,
-  growStart: Float = 0f,
-  growEnd: Float = 0f,
 ) {
   val s = d.spec
   val described =
     if (action == null) GlanceModifier else GlanceModifier.semantics { contentDescription = description }
   Box(
-    GlanceModifier.width((s.buttonTouch + growStart + growEnd).dp)
+    GlanceModifier.width(s.buttonTouch.dp)
       .height(s.buttonTouch.dp)
       .tapAction(action)
-      .then(described)
-      .padding(start = growStart.dp, end = growEnd.dp),
+      .then(described),
     contentAlignment = Alignment.Center,
   ) {
     Box(

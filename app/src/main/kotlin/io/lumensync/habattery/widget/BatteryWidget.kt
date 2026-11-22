@@ -55,7 +55,6 @@ internal fun BatteryWidgetContent(
         // Glance puts each parameter into the activity intent as an extra named by the key.
         openApp = actionStartActivity<MainActivity>(actionParametersOf(TappedWidgetKey to appWidgetId)),
         refresh = actionRunCallback<RefreshAction>(),
-        toggleAuto = actionRunCallback<ToggleAutoRefreshAction>(),
       ),
     hostScale = HomeScale.factor(settings.homeScalePercent),
     measurer = measurer,

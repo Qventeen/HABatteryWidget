@@ -61,7 +61,6 @@ sealed interface WidgetModel {
     val updatedAtMillis: Long,
     val error: SyncError?,
     val refreshing: Boolean,
-    val autoRefresh: Boolean,
     val averageCellVoltage: Double?,
     val averageCellLook: LevelLook,
     val deltaMv: Int?,
@@ -115,7 +114,6 @@ sealed interface WidgetModel {
         updatedAtMillis = r.updatedAtMillis,
         error = overview.error,
         refreshing = overview.refreshing,
-        autoRefresh = settings.refresh.auto,
         averageCellVoltage = r.averageCellVoltageV,
         averageCellLook =
           averageCellLook(r.averageCellVoltageV, basis.cells, levels(LevelValue.VOLTAGE)),

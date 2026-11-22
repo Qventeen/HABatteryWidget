@@ -38,8 +38,6 @@
     <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
     <string name="widget_average_cell">Середня напруга комірки</string>
-    <string name="widget_auto_on">Автооновлення увімкнено</string>
-    <string name="widget_auto_off">Автооновлення вимкнено</string>
     <string name="widget_open_app">Відкрити застосунок</string>
     <string name="delta_label">Δ %1$s</string>
 

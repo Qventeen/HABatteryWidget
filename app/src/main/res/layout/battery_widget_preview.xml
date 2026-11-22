@@ -64,22 +64,6 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:background="@drawable/preview_button_on_bg"
-                    android:importantForAccessibility="no"
-                    android:padding="7dp"
-                    android:src="@drawable/ic_auto_refresh"
-                    android:tint="#2E7D32" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="6dp">
-
-                <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="center"
                     android:background="@drawable/preview_button_bg"
                     android:importantForAccessibility="no"
                     android:padding="7dp"

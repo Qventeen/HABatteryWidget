@@ -23,8 +23,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `DefaultLevels`, `LevelBasis` (capacity, cells and battery type), `BatteryPreset` (volts per
   cell and charge / discharge C-rates per `BatteryType`), `LevelPicker` and `LevelSpans` (value
   levels and alerts), `DefaultTextLevels` and `TextLevelPicker` (text levels, spec 0014: the
-  built-in mode list, the match of a text to its mode, and the one own-list check),
-  `ToggleAutoRefresh`. `model/` holds `BatteryType`, `InverterSettings`, `InverterReading`,
+  built-in mode list, the match of a text to its mode, and the one own-list check).
+  `model/` holds `BatteryType`, `InverterSettings`, `InverterReading`,
   `TextLevels` (`TextValue`, `TextLevel`, `CustomTextLevels`, `ModeText`), and `FetchRequest` /
   `PartResult` / `FetchResult` (what a sync asks and gets back, one result per part).
 - `data/`: `ha/` (`HaHttp`: shared request helper; `HomeAssistantSource`: Admin,
@@ -50,8 +50,8 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `LayoutSpec` holds each layout's design numbers and bucket, `WidgetLayouts` /
   `WidgetParts` draw them, `WidgetFonts` fits every text to its box (`TextFit`,
   measured by `PaintTextMeasurer`), `RingLayout` (the ring's three text lines, placed
-  by their visible ink, `ringTextGap` apart), ring bitmaps, `BatteryWidgetReceiver`, ↻ and
-  auto-toggle actions, refresher, `WidgetPalette` / `WidgetTexts`, and
+  by their visible ink, `ringTextGap` apart), ring bitmaps, `BatteryWidgetReceiver`, ↻
+  action, refresher, `WidgetPalette` / `WidgetTexts`, and
   `PreviewWidget` (spec 0006): the app's preview composes the same `WidgetContent` (or
   `InverterWidgetContent`) with `GlanceAppWidget.compose()` at the layout's bucket, without
   actions and at home-screen scale 1, and applies the `RemoteViews` fresh for each drawing (never

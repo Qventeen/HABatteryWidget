@@ -44,8 +44,8 @@ class LayoutSpecTest {
     // (247 − 8 − 8 − 56) / 2
     assertEquals(Box(87.5f, 35f), b.packPill)
     assertEquals(Box(56f, 16f), b.cellPill)
-    // 247 − (2 + 12 + 4) − 6 − 15 − 6 − 6 − 32 − 6 − 32
-    assertEquals(Box(126f, 32f), b.topTexts)
+    // 247 − (2 + 12 + 4) − 6 − 15 − 6 − 6 − 32
+    assertEquals(Box(164f, 32f), b.topTexts)
   }
 
   @Test
@@ -54,7 +54,7 @@ class LayoutSpecTest {
     // The top row beside the ring: 320 − 112 − 8 = 200; the pack takes what the cells leave.
     assertEquals(Box(200f - 8f - 74f, 35f), b.packPill)
     assertEquals(Box(74f, 16f), b.cellPill)
-    assertEquals(200f - 121f, b.topTexts.width, 0f)
+    assertEquals(200f - 83f, b.topTexts.width, 0f)
   }
 
   @Test

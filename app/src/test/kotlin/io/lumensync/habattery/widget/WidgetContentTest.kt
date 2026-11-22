@@ -152,16 +152,14 @@ class WidgetContentTest {
   }
 
   @Test
-  fun autoToggle_describesItsState() {
-    render(model()) {
-      onNode(hasRunCallbackClickAction<NoOpToggle>())
-        .assert(hasContentDescription(text(R.string.widget_auto_off)))
+  fun topRow_hasNoAutoToggle() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight) {
+        onAllNodes(hasContentDescriptionEqualTo("Auto refresh off")).assertCountEquals(0)
+        onAllNodes(hasContentDescriptionEqualTo("Auto refresh on")).assertCountEquals(0)
+        onNode(hasRunCallbackClickAction<NoOpRefresh>()).assertExists()
+      }
     }
-    render(model(settings = settings(refresh = RefreshSettings(true, 30)))) {
-      onNode(hasRunCallbackClickAction<NoOpToggle>())
-        .assert(hasContentDescription(text(R.string.widget_auto_on)))
-    }
-  }
 
   @Test
   fun averageCellPill_iconInsteadOfLabel() =
@@ -212,7 +210,6 @@ class WidgetContentTest {
       onNode(hasTextEqualTo(text(R.string.error_not_configured))).assertExists()
       onNode(hasTextEqualTo(text(R.string.widget_open_app))).assertExists()
       onAllNodes(hasRunCallbackClickAction<NoOpRefresh>()).assertCountEquals(0)
-      onAllNodes(hasRunCallbackClickAction<NoOpToggle>()).assertCountEquals(0)
       onAllNodes(hasStartActivityClickAction(openAppComponent)).assertCountEquals(2)
     }
 
@@ -250,7 +247,7 @@ class WidgetContentTest {
   fun noActions_eachBucket_buttonsAreNotDescribed() =
     LayoutSpec.all.forEach { spec ->
       render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
-        listOf(R.string.widget_refresh_action, R.string.widget_auto_off).forEach {
+        listOf(R.string.widget_refresh_action).forEach {
           onAllNodes(hasContentDescriptionEqualTo(text(it))).assertCountEquals(0)
         }
         onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
@@ -391,7 +388,6 @@ class WidgetContentTest {
       WidgetActions(
           openApp = actionStartActivity(openAppComponent),
           refresh = actionRunCallback<NoOpRefresh>(),
-          toggleAuto = actionRunCallback<NoOpToggle>(),
         )
         .takeIf { withActions }
     provideComposable { WidgetContent(model, fontPercents, colors, actions, hostScale, FakeMeasurer) }
@@ -442,11 +438,6 @@ class WidgetContentTest {
     )
 
   class NoOpRefresh : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) =
-      Unit
-  }
-
-  class NoOpToggle : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) =
       Unit
   }

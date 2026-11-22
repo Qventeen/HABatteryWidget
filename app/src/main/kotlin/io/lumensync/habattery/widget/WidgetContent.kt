@@ -41,7 +41,7 @@ import io.lumensync.habattery.domain.model.FontPercents
 import io.lumensync.habattery.format.Formatters
 
 /** What the widget's tap targets do. */
-data class WidgetActions(val openApp: Action, val refresh: Action, val toggleAuto: Action)
+data class WidgetActions(val openApp: Action, val refresh: Action)
 
 /** Taps run [action]; without one (the app's preview) this part takes no taps. */
 internal fun GlanceModifier.tapAction(action: Action?): GlanceModifier =

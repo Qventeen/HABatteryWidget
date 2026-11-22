@@ -391,12 +391,10 @@ class WidgetModelTest {
   }
 
   @Test
-  fun `refreshing and auto refresh`() {
+  fun `refreshing`() {
     val on = build(settings = settings(refresh = RefreshSettings(true, 30)), refreshingSince = 1_500L) as Data
     assertTrue(on.refreshing)
-    assertTrue(on.autoRefresh)
     val off = data()
     assertFalse(off.refreshing)
-    assertFalse(off.autoRefresh)
   }
 }

@@ -85,9 +85,6 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
       }
 
     @StringRes
-    fun autoDescription(on: Boolean): Int = if (on) R.string.widget_auto_on else R.string.widget_auto_off
-
-    @StringRes
     fun refreshDescription(refreshing: Boolean): Int =
       if (refreshing) R.string.widget_refreshing else R.string.widget_refresh_action
   }

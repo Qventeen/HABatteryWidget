@@ -60,12 +60,10 @@ data class LayoutSpec(
   val columnGap: Float = 8f,
   /** Under the top row. */
   val bodyTop: Float = 4f,
-  // Top row: [hourglass, time left] gap [balancing] gap [update time or error] toButtons [⟳] buttonGap [↻]
+  // Top row: [hourglass, time left] gap [balancing] gap [update time or error] toButtons [↻]
   val topRow: Float,
   val topGap: Float,
   val toButtons: Float,
-  /** Space between the two circles; the touch areas grow by half of it each, so they touch. */
-  val buttonGap: Float,
   val timeStart: Float = 2f,
   val hourglass: Float,
   val hourglassGap: Float = 4f,
@@ -129,7 +127,7 @@ data class LayoutSpec(
     val topRowWidth = if (ringFullHeight) innerW - ringColumn - columnGap else innerW
     val topFixed =
       timeStart + hourglass + hourglassGap + topGap + statusIcon + topGap + toButtons +
-        2 * buttonTouch + buttonGap
+        buttonTouch
     val body = innerH - topRow - bodyTop - if (cellGrid) gridGap + gridHeight else 0f
     val packWidth =
       when {
@@ -168,7 +166,6 @@ data class LayoutSpec(
       topRow = topRow * k,
       topGap = topGap * k,
       toButtons = toButtons * k,
-      buttonGap = buttonGap * k,
       timeStart = timeStart * k,
       hourglass = hourglass * k,
       hourglassGap = hourglassGap * k,
@@ -228,7 +225,6 @@ data class LayoutSpec(
         topRow = 32f,
         topGap = 6f,
         toButtons = 6f,
-        buttonGap = 6f,
         hourglass = 12f,
         statusIcon = 15f,
         buttonTouch = 32f,
@@ -273,7 +269,6 @@ data class LayoutSpec(
         topRow = 44f,
         topGap = 8f,
         toButtons = 4f,
-        buttonGap = 0f,
         hourglass = 12f,
         statusIcon = 16f,
         buttonTouch = 44f,
@@ -305,7 +300,6 @@ data class LayoutSpec(
         topRow = 48f,
         topGap = 10f,
         toButtons = 6f,
-        buttonGap = 0f,
         hourglass = 13f,
         statusIcon = 17f,
         buttonTouch = 48f,
