@@ -59,6 +59,8 @@ sealed interface WidgetModel {
     val timeLeft: Duration?,
     val balancing: Boolean?,
     val updatedAtMillis: Long,
+    /** The time the model was built for; the update time is told against it, not the clock. */
+    val nowMillis: Long,
     val error: SyncError?,
     val refreshing: Boolean,
     /** The freshness dot turns amber ([Freshness.isLate]). */
@@ -115,6 +117,7 @@ sealed interface WidgetModel {
         timeLeft = overview.timeRemaining?.duration,
         balancing = r.balancing,
         updatedAtMillis = r.updatedAtMillis,
+        nowMillis = overview.nowMillis,
         error = overview.error,
         refreshing = overview.refreshing,
         dataLate = Freshness.isLate(r.updatedAtMillis, overview.nowMillis, overview.refresh),

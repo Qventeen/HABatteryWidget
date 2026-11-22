@@ -34,7 +34,7 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
 
   fun timeLeft(m: WidgetModel.Data): String = m.timeLeft?.let(formatters::duration) ?: missing
 
-  fun updatedAt(m: WidgetModel.Data): String = formatters.updatedAt(m.updatedAtMillis)
+  fun updatedAt(m: WidgetModel.Data): String = formatters.updatedAt(m.updatedAtMillis, m.nowMillis)
 
   fun soc(m: WidgetModel.Data): String = formatters.socNumber(m.socPercent)
 
