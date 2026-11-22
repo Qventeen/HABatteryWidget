@@ -55,14 +55,15 @@ class WidgetTextsTest {
   @Test
   @Config(qualifiers = "uk")
   fun refreshDescription_uk_usesThePluralForm() {
-    assertEquals("Оновити. Дані 3 хвилини тому", refresh(3))
-    assertEquals("Оновити. Дані 59 хвилин тому", refresh(59))
-    assertEquals("Оновити. Дані 1 година тому", refresh(60))
-    assertEquals("Оновити. Дані 23 години тому", refresh(23 * 60L + 59))
-    assertEquals("Оновити. Дані 1 день тому", refresh(24 * 60L))
-    assertEquals("Оновити. Дані 2 дні тому", refresh(2880))
-    assertEquals("Оновити. Дані 5 днів тому", refresh(5 * 24 * 60L))
-    assertEquals("Оновлення… Дані 2 дні тому", refresh(2880, refreshing = true))
+    assertEquals("Оновити. Вік даних: 3 хвилини", refresh(3))
+    assertEquals("Оновити. Вік даних: 21 хвилина", refresh(21))
+    assertEquals("Оновити. Вік даних: 59 хвилин", refresh(59))
+    assertEquals("Оновити. Вік даних: 1 година", refresh(60))
+    assertEquals("Оновити. Вік даних: 23 години", refresh(23 * 60L + 59))
+    assertEquals("Оновити. Вік даних: 1 день", refresh(24 * 60L))
+    assertEquals("Оновити. Вік даних: 2 дні", refresh(2880))
+    assertEquals("Оновити. Вік даних: 5 днів", refresh(5 * 24 * 60L))
+    assertEquals("Оновлення… Вік даних: 2 дні", refresh(2880, refreshing = true))
   }
 
   @Test

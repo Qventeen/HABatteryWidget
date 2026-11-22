@@ -18,10 +18,10 @@
 
     <string name="widget_name">Батарея HA</string>
     <string name="widget_description">Заряд, потужність, струм, напруга та залишок часу з Home Assistant</string>
-    <string name="widget_refreshing_age">Оновлення… Дані %1$s тому</string>
+    <string name="widget_refreshing_age">Оновлення… Вік даних: %1$s</string>
     <string name="widget_no_data">Немає даних від Home Assistant</string>
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
-    <string name="widget_refresh_age">Оновити. Дані %1$s тому</string>
+    <string name="widget_refresh_age">Оновити. Вік даних: %1$s</string>
     <plurals name="widget_soc_description">
         <item quantity="one">Рівень заряду %1$d відсоток</item>
         <item quantity="few">Рівень заряду %1$d відсотки</item>
