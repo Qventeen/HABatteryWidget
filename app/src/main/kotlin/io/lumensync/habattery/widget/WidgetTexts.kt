@@ -88,7 +88,18 @@ class WidgetTexts(private val context: Context, val formatters: Formatters) {
     fun refreshDescription(context: Context, refreshing: Boolean, ageMinutes: Long): String =
       context.getString(
         if (refreshing) R.string.widget_refreshing_age else R.string.widget_refresh_age,
-        ageMinutes,
+        age(context, ageMinutes),
       )
+
+    /** Minutes under an hour, whole hours under a day, else whole days; each rounded down. */
+    private fun age(context: Context, minutes: Long): String =
+      when {
+        minutes < MINUTES_PER_HOUR -> context.getString(R.string.widget_age_minutes, minutes)
+        minutes < MINUTES_PER_DAY -> context.getString(R.string.widget_age_hours, minutes / MINUTES_PER_HOUR)
+        else -> context.getString(R.string.widget_age_days, minutes / MINUTES_PER_DAY)
+      }
+
+    private const val MINUTES_PER_HOUR = 60L
+    private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
   }
 }

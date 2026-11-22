@@ -120,7 +120,7 @@ class InverterWidgetFitTest {
         context.getString(R.string.inverter_grid_voltage),
         context.getString(R.string.inverter_output_voltage),
         // The reading is taken just before the model, so it is 0 min old.
-        context.getString(R.string.widget_refresh_age, 0),
+        WidgetTexts.refreshDescription(context, false, 0),
         context.getString(R.string.widget_sync_error, Formatters(context).error(SyncError.Unreachable)),
       )
     val model = model(reading("Mains", 228.0, 228.0), ModeStyle.BIG_ICON, SyncError.Unreachable)

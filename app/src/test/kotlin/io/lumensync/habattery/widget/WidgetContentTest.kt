@@ -143,11 +143,11 @@ class WidgetContentTest {
   fun refreshing_keepsButtonWithRefreshingDescription() {
     render(model()) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refresh_age, 1)))
+        .assert(hasContentDescription(WidgetTexts.refreshDescription(context, false, 1)))
     }
     render(model(refreshingSince = NOW - 1_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refreshing_age, 1)))
+        .assert(hasContentDescription(WidgetTexts.refreshDescription(context, true, 1)))
     }
   }
 
@@ -281,7 +281,7 @@ class WidgetContentTest {
   fun noActions_eachBucket_buttonsAreNotDescribed() =
     LayoutSpec.all.forEach { spec ->
       render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
-        onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_refresh_age, 1)))
+        onAllNodes(hasContentDescriptionEqualTo(WidgetTexts.refreshDescription(context, false, 1)))
           .assertCountEquals(0)
         onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
         onNode(hasTextEqualTo("55")).assertExists()

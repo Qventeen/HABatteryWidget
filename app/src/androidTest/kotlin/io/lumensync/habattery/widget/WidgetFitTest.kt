@@ -194,7 +194,7 @@ class WidgetFitTest {
     val wanted =
       listOf(
         // The typical reading is 1 min old.
-        context.getString(io.lumensync.habattery.R.string.widget_refresh_age, 1),
+        WidgetTexts.refreshDescription(context, false, 1),
         context.getString(io.lumensync.habattery.R.string.widget_balancing_off),
         context.getString(io.lumensync.habattery.R.string.widget_battery_temperature),
         context.getString(io.lumensync.habattery.R.string.widget_mosfet_temperature),
