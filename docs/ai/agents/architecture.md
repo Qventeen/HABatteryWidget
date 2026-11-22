@@ -3,7 +3,7 @@
 Design authority: `docs/superpowers/specs/2026-11-14-0001-clean-rewrite-design.md`
 (§8 architecture, §9 battery math, §12 strings, §13 refresh and widget,
 §14 stored data). Later specs in `docs/superpowers/specs/` change parts of it
-(0002 corrections, 0003 widget v4, 0004–0008 widget v5, 0012 inverter widget); on one topic the
+(0002 corrections, 0003 widget v4, 0004–0008 widget v5, 0012 inverter widget, 0016 refresh and freshness); on one topic the
 newest spec wins. Read the sections you touch before you change code.
 
 ## Packages
@@ -18,7 +18,9 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   first placed, 4×2; `StripRequest.first` does the same for the strip, ending on 3×1.
 - `domain/`: pure Kotlin, no `android.*`. `model/`, `port/`, `SyncBattery`,
   `BatteryMath`, `BatteryOverview`, `EntityFill`, `LevelAlerts` (which level notifications to post, and
-  the per-value alert state), `ModeAlerts` (the inverter mode change to post: compares the modes of the new and the stored text), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy`,
+  the per-value alert state), `ModeAlerts` (the inverter mode change to post: compares the modes of the new and the stored text), `ShownNumber` (the number a level is picked by; widget and alerts), `RefreshPolicy` (also `unlockSyncWanted`, the unlock gate),
+  `Freshness` (when a reading is late, its age, the "refreshing" limit; the dot's rules),
+  `UnlockRefresh` (on unlock: marks refreshing, redraws, queues the unlock sync),
   `Validation`, `UrlPolicy`, `WidgetModel` and `InverterWidgetModel` (what each widget and its app preview show),
   `DefaultLevels`, `LevelBasis` (capacity, cells and battery type), `BatteryPreset` (volts per
   cell and charge / discharge C-rates per `BatteryType`), `LevelPicker` and `LevelSpans` (value
@@ -38,7 +40,10 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   `LevelLabels` (level name, type word, unit and notification value labels), `InverterLabels`
   (`modeWord`: the one mode word for strip, notification and app; icon slot names); one formatter for
   widget, screen and notification.
-- `system/`: `SyncWorker`, `WorkManagerSyncScheduler`, `AndroidLevelNotifier` (one channel per level
+- `system/`: `SyncWorker`, `RedrawWorker` (redraws both widgets from local data, no network, so a
+  green dot can turn amber; queued by `SyncScheduler.redrawAt`), `WorkManagerSyncScheduler`
+  (`syncNow`, `syncWhenOnline`: waits for a network, `redrawAt`), `UnlockReceiver` (`USER_PRESENT`,
+  registered in `App.onCreate`; calls `UnlockRefresh`), `AndroidLevelNotifier` (one channel per level
   type; also posts mode changes; notification ids: 100 + `LevelValue` ordinal, so 107 and 108 for
   the grid and output voltage, and 150 for the mode; each is also its content intent's request
   code, and the inverter ones carry `AppTab.EXTRA_OPEN_TAB` to open the Inverter tab),
@@ -97,7 +102,7 @@ when it has a second implementation or a test fake.
 
 ## One sync path
 
-- Every trigger (worker, widget ↻, "Refresh now", app start) runs `SyncBattery`.
+- Every trigger (worker, widget ↻, "Refresh now", app start, phone unlock) runs `SyncBattery`.
 - `SyncBattery` serves two independent parts, battery and inverter:
   - Each part is checked as configured on its own. A part that is not configured is not fetched
     and gets `Failed(NotConfigured)`; its last reading stays in the cache. The sync runs when at
@@ -115,6 +120,8 @@ when it has a second implementation or a test fake.
   - Then `LevelNotifier.post` for each level alert, `LevelNotifier.postMode` for a mode change,
     and `WidgetRefresher.refreshAll()`.
 - Widget ↻ only marks "refreshing" and enqueues unique one-time work.
+- Unlock (spec 0016): `UnlockRefresh` asks `RefreshPolicy.unlockSyncWanted`; if yes it marks
+  refreshing and enqueues the unlock sync, which waits for a network.
 - The widget renders from local data only (`ReadingCache`,
   `SettingsRepository`, `TokenStore.savedTypes`). No network call in
   `provideGlance`.
@@ -133,7 +140,7 @@ when it has a second implementation or a test fake.
   design values (specs 0003, 0007, 0008), and so do the inverter mode style, icons and strip
   font sizes (spec 0012), and a level's or a text level's type defaults to `NORMAL`
   and its side to `MIDDLE`, the level with no edge (`ColorLevel.type`, `ColorLevel.side`,
-  spec 0010).
+  spec 0010), and `RefreshSettings.onUnlock` defaults to on (spec 0016).
 - The pack fields (spec 0013): `Settings.batteryType` `null` reads as LiFePO4, and a type name
   from a later build reads as `null`; `Settings.cellCount` is used only when the reading cannot
   count the cells, like `capacityAh` for the capacity.
