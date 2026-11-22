@@ -1,9 +1,18 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelValue
+import io.lumensync.habattery.domain.model.MAX_LEVELS
+import io.lumensync.habattery.domain.model.MAX_TEXT_LEVELS
+import io.lumensync.habattery.domain.model.ModeText
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TextLevel
+import java.util.Locale
 
 enum class Field {
   URL,
@@ -22,6 +31,14 @@ enum class Field {
   BALANCING,
   INTERVAL,
   CAPACITY,
+  CELLS,
+  LEVEL_EDGE,
+  LEVEL_MARGIN,
+  INVERTER_PREFIX,
+  INVERTER_MODE,
+  INVERTER_GRID,
+  INVERTER_OUTPUT,
+  TEXT_LEVEL_TEXTS,
 }
 
 enum class Problem {
@@ -29,6 +46,8 @@ enum class Problem {
   INVALID,
   OUT_OF_RANGE,
   TOO_MANY,
+  DUPLICATE,
+  OVERLAP,
 }
 
 data class FieldError(val field: Field, val problem: Problem, val index: Int? = null)
@@ -39,10 +58,15 @@ object Validation {
   private val ENTITY_ID = Regex("^[a-zA-Z0-9_]+\\.[a-zA-Z0-9_]+$")
   const val MAX_CAPACITY_AH = 10_000.0
 
+  /** JK-BMS boards take up to 24 cells; 32 leaves room for other boards. */
+  const val MAX_CELLS = 32
+
   fun connection(c: ConnectionSettings): List<FieldError> =
     listOfNotNull(urlError(c.url))
 
   fun isPrefixValid(prefix: String): Boolean = PREFIX.matches(prefix.trim())
+
+  fun isEntityId(id: String): Boolean = ENTITY_ID.matches(id)
 
   fun entities(e: EntitySettings): List<FieldError> =
     listOfNotNull(
@@ -68,6 +92,18 @@ object Validation {
         entityError(Field.BALANCING, e.balancing, required = false),
       )
 
+  /** All three ids blank is "no inverter" (no error); a partly filled set needs the blank ones. */
+  fun inverterEntities(e: InverterEntitySettings): List<FieldError> {
+    val noneSet = e.mode.isBlank() && e.gridVoltage.isBlank() && e.outputVoltage.isBlank()
+    return listOfNotNull(
+      if (e.prefix.isNotBlank() && !isPrefixValid(e.prefix)) FieldError(Field.INVERTER_PREFIX, Problem.INVALID)
+      else null,
+      entityError(Field.INVERTER_MODE, e.mode, required = !noneSet),
+      entityError(Field.INVERTER_GRID, e.gridVoltage, required = !noneSet),
+      entityError(Field.INVERTER_OUTPUT, e.outputVoltage, required = !noneSet),
+    )
+  }
+
   fun refresh(r: RefreshSettings): List<FieldError> {
     if (!r.auto) return emptyList()
     val minutes = r.intervalMinutes ?: return listOf(FieldError(Field.INTERVAL, Problem.REQUIRED))
@@ -81,8 +117,87 @@ object Validation {
     else listOf(FieldError(Field.CAPACITY, Problem.OUT_OF_RANGE))
   }
 
-  fun isConfigured(s: Settings, hasToken: Boolean): Boolean =
+  fun cells(count: Int?): List<FieldError> =
+    if (count == null || count in 1..MAX_CELLS) emptyList()
+    else listOf(FieldError(Field.CELLS, Problem.OUT_OF_RANGE))
+
+  /**
+   * Checks the levels of one [value]. At most one error per index, the first found: a missing or
+   * stray edge, the same edge twice on one side, or a ↓ and an ↑ edge less than two steps apart
+   * (the middle level would be empty). Errors with no index: more than [MAX_LEVELS] levels, and a
+   * list without exactly one middle level.
+   */
+  fun levels(value: LevelValue, levels: List<ColorLevel>): List<FieldError> {
+    val errors = mutableListOf<FieldError>()
+    if (levels.size > MAX_LEVELS) errors += FieldError(Field.LEVEL_EDGE, Problem.TOO_MANY)
+    if (levels.count { it.side == LevelSide.MIDDLE } != 1) {
+      errors += FieldError(Field.LEVEL_EDGE, Problem.INVALID)
+    }
+    val atIndex = mutableMapOf<Int, Problem>()
+    val seen = mutableSetOf<Pair<LevelSide, Long>>()
+    levels.forEachIndexed { i, level ->
+      val edge = level.edge
+      when {
+        level.side == LevelSide.MIDDLE -> if (edge != null) atIndex[i] = Problem.INVALID
+        edge == null || !edge.isFinite() -> atIndex[i] = Problem.REQUIRED
+        !seen.add(level.side to edge.toSteps(value.decimals)) -> atIndex[i] = Problem.DUPLICATE
+      }
+    }
+    for ((i, below) in levels.withIndex()) {
+      if (below.side != LevelSide.BELOW || below.edge == null || !below.edge.isFinite()) continue
+      for ((k, above) in levels.withIndex()) {
+        if (above.side != LevelSide.ABOVE || above.edge == null || !above.edge.isFinite()) continue
+        val gap = above.edge.toSteps(value.decimals) - below.edge.toSteps(value.decimals)
+        if (gap < 2) {
+          atIndex.putIfAbsent(i, Problem.OVERLAP)
+          atIndex.putIfAbsent(k, Problem.OVERLAP)
+        }
+      }
+    }
+    return errors + atIndex.toSortedMap().map { (i, problem) -> FieldError(Field.LEVEL_EDGE, problem, i) }
+  }
+
+  /**
+   * Checks the items of one text value. At most one error per index, the first found: an item
+   * with no texts, a blank or no-value text (`unavailable`, `unknown`), or a text an earlier item
+   * or the same item already has (trimmed, ignoring case). Errors with no index: more than
+   * [MAX_TEXT_LEVELS] items, and a list without exactly one "other" item that has no texts.
+   */
+  fun textLevels(levels: List<TextLevel>): List<FieldError> {
+    val errors = mutableListOf<FieldError>()
+    if (levels.size > MAX_TEXT_LEVELS) errors += FieldError(Field.TEXT_LEVEL_TEXTS, Problem.TOO_MANY)
+    val others = levels.filter { it.other }
+    if (others.size != 1 || others.single().texts.isNotEmpty()) {
+      errors += FieldError(Field.TEXT_LEVEL_TEXTS, Problem.INVALID)
+    }
+    val seen = mutableSetOf<String>()
+    levels.forEachIndexed { i, level ->
+      if (level.other) return@forEachIndexed
+      val keys = level.texts.map(::textKey)
+      val problem =
+        when {
+          keys.isEmpty() -> Problem.REQUIRED
+          keys.any { it.isEmpty() || ModeText.isNoValue(it) } -> Problem.INVALID
+          !keys.all(seen::add) -> Problem.DUPLICATE
+          else -> null
+        }
+      if (problem != null) errors += FieldError(Field.TEXT_LEVEL_TEXTS, problem, i)
+    }
+    return errors
+  }
+
+  /** The form in which two texts of the items are the same: trimmed, case ignored. */
+  fun textKey(text: String): String = text.trim().lowercase(Locale.ROOT)
+
+  fun isBatteryConfigured(s: Settings, hasToken: Boolean): Boolean =
     hasToken && s.connection.url.isNotBlank() && s.entities.charge.isNotBlank()
+
+  fun isInverterConfigured(s: Settings, hasToken: Boolean): Boolean =
+    hasToken &&
+      s.connection.url.isNotBlank() &&
+      s.inverter.entities.let {
+        it.mode.isNotBlank() && it.gridVoltage.isNotBlank() && it.outputVoltage.isNotBlank()
+      }
 
   private fun urlError(url: String): FieldError? =
     when {

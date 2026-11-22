@@ -1,6 +1,7 @@
 package io.lumensync.habattery.format
 
 import android.content.Context
+import android.icu.util.TimeZone as IcuTimeZone
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.model.SyncError.BadResponse
@@ -59,6 +60,14 @@ class FormattersTest {
     }
 
     @Test
+    fun wholeVolts() {
+        val f = Formatters(context)
+        assertEquals("230 V", f.wholeVolts(230.0))
+        // Half-even, as ShownNumber rounds the inverter voltages.
+        assertEquals("206 V", f.wholeVolts(206.5))
+    }
+
+    @Test
     fun power_roundsBeforePickingUnit() {
         val f = Formatters(context)
         assertEquals("999 W", f.power(999.4))
@@ -71,6 +80,7 @@ class FormattersTest {
     fun numbers_uk() {
         val f = Formatters(context)
         assertEquals("26,46 В", f.voltage(26.456))
+        assertEquals("230 В", f.wholeVolts(230.0))
         assertEquals("1,23 кВт", f.power(1234.0))
     }
 
@@ -99,6 +109,16 @@ class FormattersTest {
         // One minute before midnight is already "yesterday".
         assertEquals("Jan 14", f.updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING))
     }
+
+    /**
+     * The date is written in the zone that picks the day. ICU keeps its own default zone from its
+     * first use, and on the JVM `TimeZone.setDefault` does not clear it.
+     */
+    @Test
+    fun updatedAt_olderDay_ignoresIcusOwnDefaultZone() =
+        withIcuDefaultZone("Asia/Tokyo") {
+            assertEquals("Jan 14", Formatters(context).updatedAt(MORNING - 8 * HOUR - 60_000L, nowMillis = MORNING))
+        }
 
     @Test
     fun updatedAt_otherYear_showsTheYear() =
@@ -151,6 +171,17 @@ class FormattersTest {
         val minuteUnit = f.duration(1.minutes).filterNot { it.isDigit() }.trim()
         assertTrue(text, text.contains("2") && text.contains("7") && !text.contains("20"))
         assertFalse(text, text.contains(minuteUnit))
+    }
+
+    /** ICU's setter is hidden from apps; clearing it makes ICU read the JVM's zone again. */
+    private fun withIcuDefaultZone(id: String, block: () -> Unit) {
+        val setIcuDefault = IcuTimeZone::class.java.getMethod("setICUDefault", IcuTimeZone::class.java)
+        setIcuDefault.invoke(null, IcuTimeZone.getTimeZone(id))
+        try {
+            block()
+        } finally {
+            setIcuDefault.invoke(null, null)
+        }
     }
 
     private companion object {

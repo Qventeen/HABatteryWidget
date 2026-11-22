@@ -1,14 +1,22 @@
 package io.lumensync.habattery.testing
 
+import io.lumensync.habattery.domain.LevelAlert
+import io.lumensync.habattery.domain.ModeAlert
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.FetchRequest
+import io.lumensync.habattery.domain.model.FetchResult
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.InverterSettings
+import io.lumensync.habattery.domain.model.PartResult
 import io.lumensync.habattery.domain.model.SensorList
 import io.lumensync.habattery.domain.model.Settings
-import io.lumensync.habattery.domain.model.SyncResult
+import io.lumensync.habattery.domain.model.TokenType
 import io.lumensync.habattery.domain.port.BatterySource
-import io.lumensync.habattery.domain.port.FullChargeNotifier
+import io.lumensync.habattery.domain.port.LevelNotifier
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
@@ -32,34 +40,51 @@ class FakeSettingsRepository(initial: Settings = Settings()) : SettingsRepositor
   }
 }
 
-class FakeTokenStore(initial: String? = null) : TokenStore {
-  private val token = MutableStateFlow(initial?.trim()?.takeIf { it.isNotEmpty() })
-  override val hasToken = token.map { it != null }
+/** [initial] is the Admin slot's token, [user] the User slot's. */
+class FakeTokenStore(initial: String? = null, user: String? = null) : TokenStore {
+  private val slots =
+    MutableStateFlow(
+      buildMap<TokenType, String> {
+        clean(initial)?.let { put(TokenType.ADMIN, it) }
+        clean(user)?.let { put(TokenType.USER, it) }
+      }
+    )
+  override val savedTypes = slots.map { it.keys }
 
   /** When set, [get] throws it, like a failing Keystore. */
   var getFailure: Throwable? = null
 
-  override suspend fun get(): String? {
+  override suspend fun get(type: TokenType): String? {
     getFailure?.let { throw it }
-    return token.value
+    return slots.value[type]
   }
 
   /** When set, [set] throws it, like a failing Keystore. */
   var setFailure: Throwable? = null
 
-  override suspend fun set(token: String) {
+  override suspend fun set(type: TokenType, token: String) {
     setFailure?.let { throw it }
-    this.token.value = token.trim().takeIf { it.isNotEmpty() }
+    val cleaned = clean(token)
+    slots.update { if (cleaned == null) it - type else it + (type to cleaned) }
   }
 
-  override suspend fun clear() {
-    token.value = null
+  override suspend fun clear(type: TokenType) {
+    slots.update { it - type }
   }
+
+  private fun clean(token: String?): String? = token?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 /** Returns [results] in order; the last one repeats. Suspends once per call, so parallel runs interleave. */
-class FakeBatterySource(private vararg val results: SyncResult) : BatterySource {
+class FakeBatterySource(private vararg val results: FetchResult) : BatterySource {
   var calls = 0
+    private set
+
+  /** The token of the last [fetch] or [listTemperatureSensors] call. */
+  var lastToken: String? = null
+    private set
+
+  var lastRequest: FetchRequest? = null
     private set
 
   /** When set, [fetch] throws it instead of returning a result. */
@@ -67,11 +92,13 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
 
   override suspend fun fetch(
     connection: ConnectionSettings,
-    entities: EntitySettings,
+    request: FetchRequest,
     token: String,
-  ): SyncResult {
+  ): FetchResult {
     val result = results[minOf(calls, results.lastIndex)]
     calls++
+    lastToken = token
+    lastRequest = request
     yield()
     failWith?.let { throw it }
     return result
@@ -93,6 +120,7 @@ class FakeBatterySource(private vararg val results: SyncResult) : BatterySource 
     token: String,
   ): SensorList {
     sensorCalls += prefix
+    lastToken = token
     sensorGate?.await()
     sensorFailure?.let { throw it }
     return sensors
@@ -110,12 +138,23 @@ class FakeReadingCache(initial: CacheState = CacheState()) : ReadingCache {
   }
 }
 
-class FakeNotifier : FullChargeNotifier {
-  var shown = 0
-    private set
+class FakeLevelNotifier(private val canPost: Boolean = true) : LevelNotifier {
+  private val _posted = mutableListOf<LevelAlert>()
+  val posted: List<LevelAlert>
+    get() = _posted
 
-  override fun showFullCharge() {
-    shown++
+  private val _postedModes = mutableListOf<ModeAlert>()
+  val postedModes: List<ModeAlert>
+    get() = _postedModes
+
+  override fun canPost(): Boolean = canPost
+
+  override fun post(alert: LevelAlert) {
+    _posted += alert
+  }
+
+  override fun postMode(alert: ModeAlert) {
+    _postedModes += alert
   }
 }
 
@@ -130,6 +169,7 @@ class FakeWidgetRefresher : WidgetRefresher {
 
 class FakeSyncScheduler : SyncScheduler {
   val applied = mutableListOf<Pair<Settings, Boolean>>()
+  val redraws = mutableListOf<Long>()
   var syncNowCalls = 0
     private set
 
@@ -140,14 +180,49 @@ class FakeSyncScheduler : SyncScheduler {
   override fun syncNow() {
     syncNowCalls++
   }
+
+  var syncWhenOnlineCalls = 0
+    private set
+
+  override fun syncWhenOnline() {
+    syncWhenOnlineCalls++
+  }
+
+  override fun redrawAt(atMillis: Long) {
+    redraws += atMillis
+  }
 }
 
-fun configuredSettings(notifyOnFull: Boolean = false): Settings =
+val inverterEntities =
+  InverterEntitySettings(
+    mode = "sensor.inv_operation_mode",
+    gridVoltage = "sensor.inv_main_voltage",
+    outputVoltage = "sensor.inv_output_voltage",
+  )
+
+/** [battery] and [inverter] say which parts have their entities set. */
+fun configuredSettings(
+  notificationsOn: Boolean = false,
+  tokenType: TokenType = TokenType.ADMIN,
+  battery: Boolean = true,
+  inverter: Boolean = false,
+): Settings =
   Settings(
-    connection = ConnectionSettings(url = "http://ha.local:8123"),
-    entities = EntitySettings(charge = "sensor.soc"),
-    notifyOnFull = notifyOnFull,
+    connection = ConnectionSettings(url = "http://ha.local:8123", tokenType = tokenType),
+    entities = if (battery) EntitySettings(charge = "sensor.soc") else EntitySettings(),
+    inverter = if (inverter) InverterSettings(entities = inverterEntities) else InverterSettings(),
+    notificationsOn = notificationsOn,
   )
 
 fun reading(charge: Double = 50.0, current: Double? = 0.0): BatteryReading =
   BatteryReading(chargePercent = charge, currentA = current, updatedAtMillis = 1_000L)
+
+fun inverterReading(): InverterReading =
+  InverterReading(
+    mode = "Mains",
+    gridVoltageV = 230.0,
+    outputVoltageV = 230.0,
+    updatedAtMillis = 1_000L,
+  )
+
+fun batteryOk(r: BatteryReading): FetchResult = FetchResult(PartResult.Ok(r), null)

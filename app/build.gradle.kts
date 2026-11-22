@@ -28,8 +28,8 @@ android {
     applicationId = "io.lumensync.habattery"
     minSdk = 26
     targetSdk = 36
-    versionCode = 2
-    versionName = "0.2.0"
+    versionCode = 5
+    versionName = "0.3.2"
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -125,6 +125,7 @@ dependencies {
   testImplementation(libs.okhttp.mockwebserver3)
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.test.core)
+  testImplementation(libs.androidx.work.testing)
   testImplementation(libs.androidx.glance.appwidget.testing)
 
   // Instrumented tests

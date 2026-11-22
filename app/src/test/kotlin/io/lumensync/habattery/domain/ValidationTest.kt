@@ -1,23 +1,39 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.Field.CAPACITY
+import io.lumensync.habattery.domain.Field.CELLS
 import io.lumensync.habattery.domain.Field.CHARGE
 import io.lumensync.habattery.domain.Field.INTERVAL
+import io.lumensync.habattery.domain.Field.INVERTER_GRID
+import io.lumensync.habattery.domain.Field.INVERTER_MODE
+import io.lumensync.habattery.domain.Field.INVERTER_OUTPUT
+import io.lumensync.habattery.domain.Field.INVERTER_PREFIX
+import io.lumensync.habattery.domain.Field.LEVEL_EDGE
 import io.lumensync.habattery.domain.Field.MOSFET_TEMPERATURE
 import io.lumensync.habattery.domain.Field.POWER
 import io.lumensync.habattery.domain.Field.PREFIX
 import io.lumensync.habattery.domain.Field.URL
 import io.lumensync.habattery.domain.Field.TEMPERATURES
+import io.lumensync.habattery.domain.Field.TEXT_LEVEL_TEXTS
 import io.lumensync.habattery.domain.Field.TOTAL_CAPACITY
+import io.lumensync.habattery.domain.Problem.DUPLICATE
 import io.lumensync.habattery.domain.Problem.INVALID
 import io.lumensync.habattery.domain.Problem.OUT_OF_RANGE
+import io.lumensync.habattery.domain.Problem.OVERLAP
 import io.lumensync.habattery.domain.Problem.REQUIRED
 import io.lumensync.habattery.domain.Problem.TOO_MANY
 import io.lumensync.habattery.domain.Validation.isPrefixValid
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.InverterEntitySettings
+import io.lumensync.habattery.domain.model.InverterSettings
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
+import io.lumensync.habattery.domain.model.TextLevel
+import io.lumensync.habattery.domain.model.TextValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -85,11 +101,49 @@ class ValidationTest {
   }
 
   @Test
-  fun isConfigured_needsUrlChargeAndToken() {
+  fun cells_rules() {
+    assertEquals(emptyList<FieldError>(), Validation.cells(null))
+    assertEquals(emptyList<FieldError>(), Validation.cells(1))
+    assertEquals(emptyList<FieldError>(), Validation.cells(32))
+    assertEquals(listOf(FieldError(CELLS, OUT_OF_RANGE)), Validation.cells(0))
+    assertEquals(listOf(FieldError(CELLS, OUT_OF_RANGE)), Validation.cells(33))
+  }
+
+  @Test
+  fun isBatteryConfigured_needsUrlChargeAndToken() {
     val s = Settings(ConnectionSettings("http://ha.local:8123"), EntitySettings(charge = "sensor.soc"))
-    assertTrue(Validation.isConfigured(s, hasToken = true))
-    assertFalse(Validation.isConfigured(s, hasToken = false))
-    assertFalse(Validation.isConfigured(Settings(), hasToken = true))
+    assertTrue(Validation.isBatteryConfigured(s, hasToken = true))
+    assertFalse(Validation.isBatteryConfigured(s, hasToken = false))
+    assertFalse(Validation.isBatteryConfigured(Settings(), hasToken = true))
+  }
+
+  @Test
+  fun inverterEntities() {
+    assertEquals(emptyList<FieldError>(), Validation.inverterEntities(InverterEntitySettings()))
+    assertEquals(
+      listOf(FieldError(INVERTER_GRID, REQUIRED), FieldError(INVERTER_OUTPUT, REQUIRED)),
+      Validation.inverterEntities(InverterEntitySettings(mode = "sensor.mode")),
+    )
+    assertEquals(
+      listOf(FieldError(INVERTER_MODE, INVALID)),
+      Validation.inverterEntities(
+        InverterEntitySettings(mode = "sensor.a b", gridVoltage = "sensor.g", outputVoltage = "sensor.o")
+      ),
+    )
+    assertEquals(
+      listOf(FieldError(INVERTER_PREFIX, INVALID)),
+      Validation.inverterEntities(InverterEntitySettings(prefix = "Bad-Prefix")),
+    )
+  }
+
+  @Test
+  fun isInverterConfigured_needsUrlThreeIdsAndToken() {
+    val full = InverterEntitySettings(mode = "sensor.m", gridVoltage = "sensor.g", outputVoltage = "sensor.o")
+    val s = Settings(ConnectionSettings("http://ha.local:8123"), inverter = InverterSettings(full))
+    assertTrue(Validation.isInverterConfigured(s, hasToken = true))
+    assertFalse(Validation.isInverterConfigured(s, hasToken = false))
+    val blank = s.copy(inverter = InverterSettings(full.copy(gridVoltage = "")))
+    assertFalse(Validation.isInverterConfigured(blank, hasToken = true))
   }
 
   private fun entities(e: EntitySettings) = Validation.entities(e)
@@ -124,9 +178,176 @@ class ValidationTest {
     )
 
   @Test
+  fun `entity id rules`() {
+    assertTrue(Validation.isEntityId("sensor.bms_soc"))
+    listOf("", "sensor", "sensor.", ".soc", "sensor.a b", "sensor.a/../b", "..").forEach {
+      assertFalse(it, Validation.isEntityId(it))
+    }
+  }
+
+  @Test
   fun `new single field checks the id`() =
     assertEquals(
       listOf(FieldError(MOSFET_TEMPERATURE, INVALID)),
       entities(EntitySettings(charge = "sensor.soc", mosfetTemperature = "bad id")),
     )
+
+  private fun lv(side: LevelSide, edge: Double? = null, id: Int = 0) =
+    ColorLevel(id = id, side = side, edge = edge)
+
+  private val m = lv(LevelSide.MIDDLE)
+
+  private fun b(edge: Double?) = lv(LevelSide.BELOW, edge)
+
+  private fun a(edge: Double?) = lv(LevelSide.ABOVE, edge)
+
+  @Test
+  fun levels_defaults_areValid() {
+    for (value in LevelValue.entries) {
+      assertEquals(
+        emptyList<FieldError>(),
+        Validation.levels(value, DefaultLevels.of(value, LevelBasis(100.0, 16))),
+      )
+    }
+  }
+
+  @Test
+  fun levels_tooMany() {
+    val seven = listOf(m) + (1..6).map { a(it.toDouble()) }
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, TOO_MANY)),
+      Validation.levels(LevelValue.SOC, seven),
+    )
+  }
+
+  @Test
+  fun levels_middleCount_isInvalidWithoutIndex() {
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, INVALID)),
+      Validation.levels(LevelValue.SOC, listOf(m, m)),
+    )
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, INVALID)),
+      Validation.levels(LevelValue.SOC, listOf(b(20.0), a(50.0))),
+    )
+  }
+
+  @Test
+  fun levels_middleWithEdge_isInvalidAtIt() =
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, INVALID, 1)),
+      Validation.levels(LevelValue.SOC, listOf(b(20.0), lv(LevelSide.MIDDLE, 30.0))),
+    )
+
+  @Test
+  fun levels_sideWithoutEdge_isRequired() =
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, REQUIRED, 0)),
+      Validation.levels(LevelValue.SOC, listOf(b(null), m)),
+    )
+
+  @Test
+  fun levels_sameEdgeOnTheSameSide_isDuplicateAtTheLaterIndex() =
+    assertEquals(
+      listOf(FieldError(LEVEL_EDGE, DUPLICATE, 2)),
+      Validation.levels(LevelValue.SOC, listOf(m, a(50.0), a(50.0))),
+    )
+
+  @Test
+  fun levels_noGap_isOverlapAtBoth() {
+    assertEquals(
+      setOf(FieldError(LEVEL_EDGE, OVERLAP, 0), FieldError(LEVEL_EDGE, OVERLAP, 2)),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(41.0))).toSet(),
+    )
+    assertEquals(
+      emptyList<FieldError>(),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(42.0))),
+    )
+  }
+
+  @Test
+  fun levels_duplicateBeatsOverlapAtOneIndex() =
+    assertEquals(
+      setOf(
+        FieldError(LEVEL_EDGE, OVERLAP, 0),
+        FieldError(LEVEL_EDGE, OVERLAP, 2),
+        FieldError(LEVEL_EDGE, DUPLICATE, 3),
+      ),
+      Validation.levels(LevelValue.SOC, listOf(b(40.0), m, a(41.0), a(41.0))).toSet(),
+    )
+
+  @Test
+  fun levels_overlapUsesTheValuesStep() {
+    assertEquals(
+      setOf(FieldError(LEVEL_EDGE, OVERLAP, 0), FieldError(LEVEL_EDGE, OVERLAP, 2)),
+      Validation.levels(LevelValue.VOLTAGE, listOf(b(51.2), m, a(51.21))).toSet(),
+    )
+    assertEquals(
+      emptyList<FieldError>(),
+      Validation.levels(LevelValue.VOLTAGE, listOf(b(51.2), m, a(51.22))),
+    )
+  }
+
+  @Test
+  fun levels_negativeEdges() =
+    assertEquals(
+      emptyList<FieldError>(),
+      Validation.levels(LevelValue.BATTERY_TEMPERATURE, listOf(b(-10.0), b(0.0), m, a(45.0))),
+    )
+
+  private val modes = DefaultTextLevels.of(TextValue.MODE)
+
+  private fun modesWith(index: Int, vararg texts: String): List<TextLevel> =
+    modes.mapIndexed { i, level -> if (i == index) level.copy(texts = texts.toList()) else level }
+
+  @Test
+  fun textLevels_tooMany() {
+    val many = (1..12).map { TextLevel(id = it, texts = listOf("Mode $it")) } + modes.last()
+
+    assertTrue(FieldError(TEXT_LEVEL_TEXTS, TOO_MANY) in Validation.textLevels(many))
+  }
+
+  @Test
+  fun textLevels_noTexts_required() =
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, REQUIRED, 4)),
+      Validation.textLevels(modesWith(4)),
+    )
+
+  @Test
+  fun textLevels_noValueText_invalid() {
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, INVALID, 1)),
+      Validation.textLevels(modesWith(1, "unknown")),
+    )
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, INVALID, 1)),
+      Validation.textLevels(modesWith(1, " ")),
+    )
+  }
+
+  @Test
+  fun textLevels_duplicate_atTheRepeatingRow() {
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, DUPLICATE, 4)),
+      Validation.textLevels(modesWith(4, "mains")),
+    )
+    assertEquals(
+      listOf(FieldError(TEXT_LEVEL_TEXTS, DUPLICATE, 2)),
+      Validation.textLevels(modesWith(2, "Line", "line")),
+    )
+  }
+
+  @Test
+  fun textLevels_otherMissingOrTwice_invalidWithoutIndex() {
+    val broken =
+      listOf(
+        modes.dropLast(1),
+        modes + modes.last().copy(id = 9),
+        modes.dropLast(1) + modes.last().copy(texts = listOf("Eco")),
+      )
+    broken.forEach {
+      assertTrue(FieldError(TEXT_LEVEL_TEXTS, INVALID) in Validation.textLevels(it))
+    }
+  }
 }

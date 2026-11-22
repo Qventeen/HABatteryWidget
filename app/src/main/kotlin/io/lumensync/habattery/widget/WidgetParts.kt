@@ -27,12 +27,14 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
+import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.unit.ColorProvider
 import io.lumensync.habattery.R
-import io.lumensync.habattery.domain.Level
 import io.lumensync.habattery.domain.WidgetModel.Flow
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
 import kotlin.math.roundToInt
 
 /** Cell pills keep fully round ends; Android clamps the radius to half the pill's height. */
@@ -42,8 +44,8 @@ private val CELL_RADIUS = 999.dp
 private const val RING_RENDER_SCALE = 1.25f
 
 /**
- * Time left, balancing, the update time (or the red sync error icon in its place), the auto-refresh
- * toggle and ↻ (spec 0005, 5.3). The error takes the update time's place, so nothing else moves.
+ * Time left, balancing, the update time (or the red sync error icon in its place) and ↻ with the
+ * freshness dot (specs 0005, 0016). The error takes the update time's place, so nothing else moves.
  */
 @Composable
 internal fun TopRow(d: DataLook, actions: WidgetActions?) {
@@ -71,67 +73,100 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
       GlanceModifier.defaultWeight().padding(start = s.topGap.dp, end = s.toButtons.dp),
       contentAlignment = Alignment.CenterEnd,
     ) {
-      if (d.texts.showError) {
-        WidgetIcon(R.drawable.ic_alert, s.statusIcon.dp, c.bad, d.texts.errorDescription)
-      } else {
-        Text(d.texts.updatedAt, style = textStyle(small, c.sub), maxLines = 1)
-      }
+      ShownIcon(d.texts.showError, R.drawable.ic_alert, s.statusIcon.dp, c.bad, d.texts.errorDescription)
+      Text(
+        d.texts.updatedAt,
+        style = textStyle(small, c.sub),
+        maxLines = 1,
+        modifier = GlanceModifier.shownIf(!d.texts.showError),
+      )
     }
-    CircleButton(
+    // While a sync runs, ↻ stays in place and only dims; the dot still shows the data's age.
+    RefreshButton(
       d,
-      icon = if (model.autoRefresh) R.drawable.ic_auto_refresh else R.drawable.ic_auto_refresh_off,
-      iconColor = if (model.autoRefresh) c.accent else c.dim,
-      face = if (model.autoRefresh) c.okBg else c.tile,
-      description = context.getString(WidgetTexts.autoDescription(model.autoRefresh)),
-      action = actions?.toggleAuto,
-      growEnd = s.buttonGap / 2,
-    )
-    // While a sync runs, ↻ stays in place and only dims.
-    CircleButton(
-      d,
-      icon = R.drawable.ic_refresh,
       iconColor = if (model.refreshing) c.dim else c.sub,
-      face = c.tile,
-      description = context.getString(WidgetTexts.refreshDescription(model.refreshing)),
+      description = WidgetTexts.refreshDescription(context, model.refreshing, model.dataAgeMinutes),
       action = actions?.refresh,
-      growStart = s.buttonGap / 2,
     )
   }
 }
 
 /**
- * A circle in its touch area. The touch area grows by [growStart] / [growEnd] toward the other
- * button, so the two touch areas touch while the circles stay where the design has them. Without
- * [action] (the app's preview) the circle does nothing, so TalkBack does not announce it.
+ * ↻ in its touch area. Without [action] (the app's preview) it does nothing, so TalkBack does not
+ * announce it.
  */
 @Composable
-private fun CircleButton(
-  d: DataLook,
-  @DrawableRes icon: Int,
-  iconColor: ColorProvider,
-  face: ColorProvider,
-  description: String,
-  action: Action?,
-  growStart: Float = 0f,
-  growEnd: Float = 0f,
-) {
+private fun RefreshButton(d: DataLook, iconColor: ColorProvider, description: String, action: Action?) {
   val s = d.spec
   val described =
     if (action == null) GlanceModifier else GlanceModifier.semantics { contentDescription = description }
   Box(
-    GlanceModifier.width((s.buttonTouch + growStart + growEnd).dp)
+    GlanceModifier.width(s.buttonTouch.dp)
       .height(s.buttonTouch.dp)
       .tapAction(action)
-      .then(described)
-      .padding(start = growStart.dp, end = growEnd.dp),
+      .then(described),
     contentAlignment = Alignment.Center,
   ) {
-    Box(
-      GlanceModifier.size(s.buttonFace.dp).background(face).cornerRadius((s.buttonFace / 2).dp),
-      contentAlignment = Alignment.Center,
-    ) {
-      WidgetIcon(icon, s.buttonIcon.dp, iconColor, null)
+    RefreshFace(
+      faceSize = s.buttonFace,
+      iconSize = s.buttonIcon,
+      overhang = s.dotOverhang,
+      dot = s.dot,
+      dotRing = s.dotRing,
+      iconColor = iconColor,
+      faceColor = d.colors.tile,
+      late = d.model.dataLate,
+      colors = d.colors,
+    )
+  }
+}
+
+/**
+ * The ↻ circle with the freshness dot on its top-right edge, for both widgets; [late] colours the
+ * dot. No touch area: each widget sizes its own and describes it.
+ */
+@Composable
+internal fun RefreshFace(
+  faceSize: Float,
+  iconSize: Float,
+  overhang: Float,
+  dot: Float,
+  dotRing: Float,
+  iconColor: ColorProvider,
+  faceColor: ColorProvider,
+  late: Boolean,
+  colors: WidgetColors,
+) {
+  // Glance aligns all children of a Box alike, so the face and the dot each get a full-size box
+  // with its own alignment. The overhang puts the dot on the circle's edge.
+  Box(GlanceModifier.size((faceSize + overhang).dp)) {
+    Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
+      Box(
+        GlanceModifier.size(faceSize.dp).background(faceColor).cornerRadius((faceSize / 2).dp),
+        contentAlignment = Alignment.Center,
+      ) {
+        WidgetIcon(R.drawable.ic_refresh, iconSize.dp, iconColor, null)
+      }
     }
+    Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+      FreshnessBadge(late, dot, dotRing, colors)
+    }
+  }
+}
+
+/**
+ * The freshness dot: green, or amber when [late], in a [ring] of the card colour that sets it off
+ * from the circle under it. It has no description: ↻ says the data's age.
+ */
+@Composable
+private fun FreshnessBadge(late: Boolean, dot: Float, ring: Float, colors: WidgetColors) {
+  val outer = dot + 2 * ring
+  Box(
+    GlanceModifier.size(outer.dp).semantics { testTag = if (late) "dot_late" else "dot_fresh" },
+    contentAlignment = Alignment.Center,
+  ) {
+    WidgetIcon(R.drawable.widget_dot, outer.dp, colors.card, null)
+    WidgetIcon(R.drawable.widget_dot, dot.dp, if (late) colors.late else colors.fresh, null)
   }
 }
 
@@ -167,7 +202,7 @@ internal fun Ring(d: DataLook, modifier: GlanceModifier) {
       contentDescription = null,
       modifier = GlanceModifier.fillMaxSize(),
       contentScale = ContentScale.Fit,
-      colorFilter = ColorFilter.tint(c.ring(d.model.ringLevel)),
+      colorFilter = ColorFilter.tint(c.ring(d.model.ringLook.color)),
     )
     val f = d.fonts
     RingText(d.texts.socLabel, d.look.sp(f.ringLabel), c.sub, FontWeight.Normal, f.ringCenters[0])
@@ -199,9 +234,12 @@ private fun RingText(
 internal fun PackColumn(d: DataLook, modifier: GlanceModifier) {
   Column(modifier) {
     val fill = GlanceModifier.defaultWeight().fillMaxWidth()
-    PackPill(d, d.texts.voltage, d.fonts.voltage, Level.PLAIN, Flow.NONE, fill)
+    val flow = d.model.flow
+    // Both pills show the current's arrow; only the main pill's arrow is described, so TalkBack
+    // says the direction once.
+    PackPill(d, d.texts.voltage, d.fonts.voltage, d.model.voltageLook.color, flow, describeArrow = false, fill)
     Spacer(GlanceModifier.height(d.spec.packGap.dp))
-    PackPill(d, d.texts.main, d.fonts.main, d.model.mainLevel, d.model.flow, fill)
+    PackPill(d, d.texts.main, d.fonts.main, d.model.mainLook.color, flow, describeArrow = true, fill)
   }
 }
 
@@ -210,30 +248,31 @@ private fun PackPill(
   d: DataLook,
   text: String,
   sizeDp: Float,
-  level: Level,
+  levelColor: LevelColor,
   flow: Flow,
+  describeArrow: Boolean,
   modifier: GlanceModifier,
 ) {
   val context = LocalContext.current
   val s = d.spec
-  val color = d.colors.pillText(level)
+  val color = d.colors.pillText(levelColor)
   Box(
     modifier
-      .background(d.colors.pillBackground(level))
+      .background(d.colors.pillBackground(levelColor))
       .cornerRadius(s.packRadius.dp)
       .padding(horizontal = s.packPadding.dp),
     contentAlignment = Alignment.Center,
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-      WidgetTexts.flowDescription(flow)?.let { description ->
-        WidgetIcon(
-          if (flow == Flow.UP) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
-          s.arrow.dp,
-          color,
-          context.getString(description),
-        )
-        Spacer(GlanceModifier.width(s.arrowGap.dp))
-      }
+      val description = WidgetTexts.flowDescription(flow)
+      ShownIcon(
+        shown = description != null,
+        id = if (flow == Flow.DOWN) R.drawable.ic_arrow_down else R.drawable.ic_arrow_up,
+        size = s.arrow.dp,
+        tint = color,
+        description = if (describeArrow) description?.let(context::getString) else null,
+      )
+      Spacer(GlanceModifier.shownIf(description != null).width(s.arrowGap.dp))
       Text(text, style = textStyle(d.look.sp(sizeDp), color, FontWeight.Medium), maxLines = 1)
     }
   }
@@ -275,10 +314,10 @@ internal fun CellGrid(d: DataLook) {
 private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: GlanceModifier) {
   val context = LocalContext.current
   val s = d.spec
-  val color = d.colors.pillText(pill.level)
+  val color = d.colors.pillText(pill.color)
   Box(
     modifier
-      .background(d.colors.pillBackground(pill.level))
+      .background(d.colors.pillBackground(pill.color))
       .cornerRadius(CELL_RADIUS)
       .padding(horizontal = s.cellPadding.dp),
     contentAlignment = Alignment.Center,
@@ -288,6 +327,10 @@ private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: Glan
         WidgetIcon(pill.icon, s.tempIcon.dp, color, pill.iconDescription?.let(context::getString))
         Spacer(GlanceModifier.width(s.tempIconGap.dp))
       }
+      // Not described: TalkBack reads the temperature, which already tells the level.
+      val level = pill.levelIcon
+      ShownIcon(level != null, levelIconRes(level ?: LevelIcon.LEAF), s.tempIcon.dp, color)
+      Spacer(GlanceModifier.shownIf(level != null).width(s.tempIconGap.dp))
       Text(
         pill.text,
         style = textStyle(d.look.sp(d.fonts.cells[index]), color, FontWeight.Medium),
@@ -296,3 +339,12 @@ private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: Glan
     }
   }
 }
+
+@DrawableRes
+internal fun levelIconRes(icon: LevelIcon): Int =
+  when (icon) {
+    LevelIcon.SNOWFLAKE -> R.drawable.ic_level_snowflake
+    LevelIcon.LEAF -> R.drawable.ic_level_leaf
+    LevelIcon.FLAME -> R.drawable.ic_level_flame
+    LevelIcon.FLAME_ALERT -> R.drawable.ic_level_flame_alert
+  }

@@ -1,12 +1,15 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.BatteryReading
+import io.lumensync.habattery.domain.model.ColorLevel
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelLook
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.UnderSoc
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 /**
@@ -28,14 +31,15 @@ sealed interface WidgetModel {
 
   /**
    * The battery temperature pill (spec 0004). [Battery.celsius] is the mean of the sensors that have
-   * a value; [Battery.level] is the worst level of those sensors, so one hot sensor is not hidden.
+   * a value; [Battery.look] comes from the worst level of those sensors, so one hot sensor is not
+   * hidden.
    */
   sealed interface Temperatures {
     /** No battery sensor configured: no battery pill. */
     data object None : Temperatures
 
     /** [sensors] is the number of configured sensors, not of those that have a value. */
-    data class Battery(val celsius: Double?, val level: Level, val sensors: Int) : Temperatures
+    data class Battery(val celsius: Double?, val look: LevelLook, val sensors: Int) : Temperatures
   }
 
   data class Empty(val kind: EmptyKind, val error: SyncError?) : WidgetModel
@@ -43,73 +47,113 @@ sealed interface WidgetModel {
   data class Data(
     val socPercent: Int,
     val ringFraction: Float,
-    val ringLevel: Level,
+    val ringLook: LevelLook,
     val underSoc: UnderSoc,
     val underSocValue: Double?,
     val voltage: Double?,
+    val voltageLook: LevelLook,
     val main: MainValue,
     val mainValue: Double?,
     val flow: Flow,
-    val mainLevel: Level,
+    val mainLook: LevelLook,
     val timeLeft: Duration?,
     val balancing: Boolean?,
     val updatedAtMillis: Long,
+    /** The time the model was built for; the update time is told against it, not the clock. */
+    val nowMillis: Long,
     val error: SyncError?,
     val refreshing: Boolean,
-    val autoRefresh: Boolean,
+    /** The freshness dot turns amber ([Freshness.isLate]). */
+    val dataLate: Boolean,
+    val dataAgeMinutes: Long,
     val averageCellVoltage: Double?,
+    val averageCellLook: LevelLook,
     val deltaMv: Int?,
-    val deltaLevel: Level,
+    val deltaLook: LevelLook,
     val temperatures: Temperatures,
     val mosfet: Double?,
-    val mosfetLevel: Level,
+    val mosfetLook: LevelLook,
   ) : WidgetModel
 
   companion object {
     fun build(overview: BatteryOverview, settings: Settings): WidgetModel {
       if (overview.setupNeeded) return Empty(EmptyKind.SETUP, null)
       val r = overview.reading ?: return Empty(EmptyKind.NO_DATA, overview.error)
-      val soc = r.chargePercent.roundToInt()
+      val soc = ShownNumber.soc(r)
       val flow = flow(r.currentA)
       val deltaMv = BatteryMath.deltaMv(r)
       val display = settings.display
+      val basis = LevelBasis.of(r, settings)
+      fun levels(value: LevelValue) = LevelPicker.effective(value, settings, basis)
+      fun look(value: LevelValue): LevelLook {
+        val levels = levels(value)
+        return ShownNumber.of(value, r, levels)?.let { LevelPicker.pick(levels, it).toLook(value) }
+          ?: PLAIN
+      }
+      val mainValue =
+        when (display.mainValue) {
+          MainValue.CURRENT -> r.currentA
+          MainValue.POWER -> r.powerW
+        }?.let(::abs)
       return Data(
         socPercent = soc,
         ringFraction = BatteryMath.progress(r.chargePercent),
-        ringLevel = WidgetLevels.charge(soc),
+        ringLook = look(LevelValue.SOC),
         underSoc = display.underSoc,
         underSocValue = underSocValue(r, display.underSoc),
         voltage = r.totalVoltageV,
+        voltageLook = look(LevelValue.VOLTAGE),
         main = display.mainValue,
-        mainValue =
-          when (display.mainValue) {
-            MainValue.CURRENT -> r.currentA
-            MainValue.POWER -> r.powerW
-          }?.let(::abs),
+        mainValue = mainValue,
         flow = flow,
-        mainLevel =
-          when (flow) {
-            Flow.UP -> Level.OK
-            Flow.DOWN -> Level.WARN
-            Flow.NONE -> Level.IDLE
+        mainLook =
+          when {
+            mainValue == null -> PLAIN
+            flow == Flow.NONE -> LevelLook(LevelColor.GREY)
+            // The pill may show watts; its levels are in amps either way.
+            flow == Flow.UP -> look(LevelValue.CHARGE_CURRENT)
+            else -> look(LevelValue.DISCHARGE_CURRENT)
           },
         timeLeft = overview.timeRemaining?.duration,
         balancing = r.balancing,
         updatedAtMillis = r.updatedAtMillis,
+        nowMillis = overview.nowMillis,
         error = overview.error,
         refreshing = overview.refreshing,
-        autoRefresh = settings.refresh.auto,
+        dataLate = Freshness.isLate(r.updatedAtMillis, overview.nowMillis, overview.refresh),
+        dataAgeMinutes = Freshness.ageMinutes(r.updatedAtMillis, overview.nowMillis),
         averageCellVoltage = r.averageCellVoltageV,
+        averageCellLook =
+          averageCellLook(r.averageCellVoltageV, basis.cells, levels(LevelValue.VOLTAGE)),
         deltaMv = deltaMv,
-        deltaLevel = deltaMv?.let(WidgetLevels::delta) ?: Level.PLAIN,
-        temperatures = temperatures(r.temperaturesC, settings.entities.temperatures.size),
+        deltaLook = look(LevelValue.DELTA),
+        temperatures =
+          temperatures(
+            r.temperaturesC,
+            settings.entities.temperatures.size,
+            look(LevelValue.BATTERY_TEMPERATURE),
+          ),
         mosfet = r.mosfetTemperatureC,
-        mosfetLevel = r.mosfetTemperatureC?.let { WidgetLevels.mosfet(shown(it)) } ?: Level.PLAIN,
+        mosfetLook = look(LevelValue.MOSFET_TEMPERATURE),
       )
     }
 
-    /** Temperatures show in whole degrees; levels use the same value, so colour and number agree. */
-    private fun shown(celsius: Double): Double = celsius.roundToInt().toDouble()
+    private val PLAIN = LevelLook(LevelColor.PLAIN)
+
+    private fun ColorLevel.toLook(value: LevelValue): LevelLook =
+      LevelLook(shownColor, icon.takeIf { value.hasIcons })
+
+    /** The voltage levels per cell; plain without a cell count. */
+    private fun averageCellLook(
+      average: Double?,
+      cells: Int?,
+      voltageLevels: List<ColorLevel>,
+    ): LevelLook {
+      if (average == null || cells == null) return PLAIN
+      val perCell = LevelPicker.perCell(voltageLevels, cells)
+      return LevelPicker.pick(perCell, average.roundTo(LevelPicker.CELL_DECIMALS))
+        .toLook(LevelValue.VOLTAGE)
+    }
 
     private fun flow(currentA: Double?): Flow =
       when {
@@ -127,19 +171,14 @@ sealed interface WidgetModel {
       }
     }
 
-    private fun temperatures(values: List<Double?>, configured: Int): Temperatures {
+    private fun temperatures(
+      values: List<Double?>,
+      configured: Int,
+      look: LevelLook,
+    ): Temperatures {
       if (configured == 0) return Temperatures.None
       val known = values.filterNotNull()
-      val worst =
-        known.map { WidgetLevels.battery(shown(it)) }.maxByOrNull(::severity) ?: Level.PLAIN
-      return Temperatures.Battery(known.takeIf { it.isNotEmpty() }?.average(), worst, configured)
+      return Temperatures.Battery(known.takeIf { it.isNotEmpty() }?.average(), look, configured)
     }
-
-    private fun severity(level: Level): Int =
-      when (level) {
-        Level.BAD -> 2
-        Level.WARN -> 1
-        else -> 0
-      }
   }
 }

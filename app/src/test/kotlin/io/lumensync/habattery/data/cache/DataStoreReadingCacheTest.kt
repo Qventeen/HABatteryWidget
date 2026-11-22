@@ -26,7 +26,7 @@ class DataStoreReadingCacheTest {
 
   private fun cacheIn(scope: CoroutineScope) =
     DataStoreReadingCache(
-      jsonDataStore(JsonSerializer(CacheRecord(), CacheRecord.serializer()), scope, { file })
+      jsonDataStore(JsonSerializer(CacheRecord(), CacheRecord.serializer()), scope) { file }
     )
 
   /**

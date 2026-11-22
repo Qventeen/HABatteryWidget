@@ -45,7 +45,7 @@ class BatteryWidgetContentTest {
   @Test
   fun tap_carriesTheTappedWidgetId() {
     val id = ActionParameters.Key<Int>(EXTRA_TAPPED_WIDGET_ID)
-    render({ widget(configuredSettings(), appWidgetId = 42) }) {
+    render({ Widget(configuredSettings(), appWidgetId = 42) }) {
       onNode(hasStartActivityClickAction<MainActivity>(actionParametersOf(id to 42))).assertExists()
     }
   }
@@ -53,33 +53,33 @@ class BatteryWidgetContentTest {
   @Test
   fun homeScale128_drawsAtScale1_28() {
     val settings = configuredSettings().copy(homeScalePercent = 128)
-    val scaled = socStyle { widget(settings) }
-    assertEquals(socStyle { content(settings, hostScale = 1.28f) }.fontSize, scaled.fontSize)
-    assertNotEquals(socStyle { content(settings, hostScale = 1f) }.fontSize, scaled.fontSize)
+    val scaled = socStyle { Widget(settings) }
+    assertEquals(socStyle { Content(settings, hostScale = 1.28f) }.fontSize, scaled.fontSize)
+    assertNotEquals(socStyle { Content(settings, hostScale = 1f) }.fontSize, scaled.fontSize)
   }
 
   @Test
   fun fontPercents_reachTheDrawing() {
     val settings = configuredSettings().copy(fontPercents = FontPercents(soc = 30))
-    val shown = socStyle { widget(settings) }
-    assertEquals(socStyle { content(settings, FontPercents(soc = 30)) }.fontSize, shown.fontSize)
-    assertNotEquals(socStyle { content(settings, FontPercents()) }.fontSize, shown.fontSize)
+    val shown = socStyle { Widget(settings) }
+    assertEquals(socStyle { Content(settings, FontPercents(soc = 30)) }.fontSize, shown.fontSize)
+    assertNotEquals(socStyle { Content(settings, FontPercents()) }.fontSize, shown.fontSize)
   }
 
   /** By day the stored Dark theme still draws the dark palette. */
   @Test
   fun theme_reachesTheColours() {
     val settings = configuredSettings().copy(appearance = AppearanceSettings(ThemeChoice.DARK))
-    assertEquals(WidgetPalette.Dark.text, socStyle { widget(settings) }.color)
+    assertEquals(WidgetPalette.Dark.text, socStyle { Widget(settings) }.color)
   }
 
   @Composable
-  private fun widget(settings: Settings, appWidgetId: Int = 1) =
+  private fun Widget(settings: Settings, appWidgetId: Int = 1) =
     BatteryWidgetContent(cache, settings, hasToken = true, NOW, appWidgetId, FakeMeasurer)
 
   /** [WidgetContent] as the widget would call it, with the given font percents and scale. */
   @Composable
-  private fun content(settings: Settings, fontPercents: FontPercents = FontPercents(), hostScale: Float = 1f) {
+  private fun Content(settings: Settings, fontPercents: FontPercents = FontPercents(), hostScale: Float = 1f) {
     val model = WidgetModel.build(BatteryOverview.build(cache, settings, hasToken = true, NOW), settings)
     WidgetContent(model, fontPercents, WidgetColors(ThemeChoice.SYSTEM), null, hostScale, FakeMeasurer)
   }

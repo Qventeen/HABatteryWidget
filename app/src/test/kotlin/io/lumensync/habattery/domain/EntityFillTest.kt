@@ -1,6 +1,7 @@
 package io.lumensync.habattery.domain
 
 import io.lumensync.habattery.domain.model.EntitySettings
+import io.lumensync.habattery.domain.model.InverterEntitySettings
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -40,5 +41,14 @@ class EntityFillTest {
     val e = EntityFill.fromPrefix(" bps_bms_ ", EntitySettings())
     assertEquals("bps_bms", e.prefix)
     assertEquals("sensor.bps_bms_state_of_charge", e.charge)
+  }
+
+  @Test
+  fun inverterFromPrefix() {
+    val e = EntityFill.inverterFromPrefix("bps_inverter_", InverterEntitySettings())
+    assertEquals("bps_inverter", e.prefix)
+    assertEquals("sensor.bps_inverter_operation_mode", e.mode)
+    assertEquals("sensor.bps_inverter_main_voltage", e.gridVoltage)
+    assertEquals("sensor.bps_inverter_output_voltage", e.outputVoltage)
   }
 }

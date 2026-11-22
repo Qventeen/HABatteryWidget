@@ -13,7 +13,7 @@ import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.port.SyncScheduler
 import java.util.concurrent.TimeUnit
 
-/** Periodic sync in auto mode, and the one-time sync behind ↻. */
+/** Periodic sync in auto mode, the one-time syncs behind ↻ and unlock, and the redraw when a dot turns amber. */
 class WorkManagerSyncScheduler(
   context: Context,
   private val hasWidgets: suspend () -> Boolean,
@@ -45,8 +45,30 @@ class WorkManagerSyncScheduler(
       .enqueueUniqueWork(NOW_WORK, ExistingWorkPolicy.REPLACE, request)
   }
 
+  override fun syncWhenOnline() {
+    val request =
+      OneTimeWorkRequestBuilder<SyncWorker>()
+        .setConstraints(
+          Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+        )
+        .build()
+    WorkManager.getInstance(context)
+      .enqueueUniqueWork(UNLOCK_WORK, ExistingWorkPolicy.REPLACE, request)
+  }
+
+  /** Both widgets ask for the same moment, so one work with REPLACE is enough. */
+  override fun redrawAt(atMillis: Long) {
+    val delay = maxOf(0L, atMillis - System.currentTimeMillis())
+    val request =
+      OneTimeWorkRequestBuilder<RedrawWorker>().setInitialDelay(delay, TimeUnit.MILLISECONDS).build()
+    WorkManager.getInstance(context)
+      .enqueueUniqueWork(REDRAW_WORK, ExistingWorkPolicy.REPLACE, request)
+  }
+
   private companion object {
     const val PERIODIC_WORK = "battery_sync_periodic"
     const val NOW_WORK = "battery_sync_now"
+    const val UNLOCK_WORK = "battery_sync_unlock"
+    const val REDRAW_WORK = "widget_redraw_late"
   }
 }

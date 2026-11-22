@@ -17,10 +17,9 @@ data class BatteryOverview(
   val error: SyncError?,
   val refreshing: Boolean,
   val refresh: RefreshSettings,
+  val nowMillis: Long,
 ) {
   companion object {
-    const val REFRESHING_LIMIT_MS = 120_000L
-
     fun build(
       cache: CacheState,
       settings: Settings,
@@ -30,7 +29,7 @@ data class BatteryOverview(
       val reading = cache.reading
       val since = cache.refreshingSinceMillis
       return BatteryOverview(
-        setupNeeded = !Validation.isConfigured(settings, hasToken),
+        setupNeeded = !Validation.isBatteryConfigured(settings, hasToken),
         reading = reading,
         state = reading?.let { BatteryMath.state(it.chargePercent, it.currentA) },
         timeRemaining =
@@ -38,8 +37,9 @@ data class BatteryOverview(
             BatteryMath.timeRemaining(it, BatteryMath.fullCapacityAh(it, settings.capacityAh))
           },
         error = cache.error,
-        refreshing = since != null && nowMillis - since in 0 until REFRESHING_LIMIT_MS,
+        refreshing = Freshness.isRefreshing(since, nowMillis),
         refresh = settings.refresh,
+        nowMillis = nowMillis,
       )
     }
   }

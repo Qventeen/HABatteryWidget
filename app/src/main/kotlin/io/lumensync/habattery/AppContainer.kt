@@ -6,6 +6,8 @@ import androidx.datastore.dataStoreFile
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import io.lumensync.habattery.data.cache.DataStoreReadingCache
 import io.lumensync.habattery.data.ha.HomeAssistantSource
+import io.lumensync.habattery.data.ha.StatesSource
+import io.lumensync.habattery.data.ha.TokenTypeSource
 import io.lumensync.habattery.data.ha.defaultHttpClient
 import io.lumensync.habattery.data.secure.EncryptedTokenStore
 import io.lumensync.habattery.data.secure.KeystoreCrypto
@@ -16,25 +18,30 @@ import io.lumensync.habattery.data.store.JsonSerializer
 import io.lumensync.habattery.data.store.SettingsRecord
 import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
+import io.lumensync.habattery.data.store.settingsDataStore
+import io.lumensync.habattery.domain.LateRedraw
 import io.lumensync.habattery.domain.SyncBattery
-import io.lumensync.habattery.domain.ToggleAutoRefresh
+import io.lumensync.habattery.domain.UnlockRefresh
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
 import io.lumensync.habattery.domain.port.SyncScheduler
 import io.lumensync.habattery.domain.port.TokenStore
 import io.lumensync.habattery.domain.port.WidgetRefresher
-import io.lumensync.habattery.system.AndroidFullChargeNotifier
+import io.lumensync.habattery.system.AndroidLevelNotifier
 import io.lumensync.habattery.system.AppLanguage
 import io.lumensync.habattery.system.ConfigWatcher
 import io.lumensync.habattery.system.TextConfig
 import io.lumensync.habattery.system.WorkManagerSyncScheduler
 import io.lumensync.habattery.widget.BatteryWidget
 import io.lumensync.habattery.widget.GlanceWidgetRefresher
+import io.lumensync.habattery.widget.InverterWidget
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /** Manual DI: builds every object once per process, so each DataStore file has one instance. */
 class AppContainer(context: Context) {
@@ -56,9 +63,7 @@ class AppContainer(context: Context) {
 
   val settingsRepository: SettingsRepository =
     DataStoreSettingsRepository(
-      jsonDataStore(JsonSerializer(SettingsRecord(), SettingsRecord.serializer()), storeScope) {
-        appContext.dataStoreFile(SETTINGS_FILE)
-      }
+      settingsDataStore(storeScope) { appContext.dataStoreFile(SETTINGS_FILE) }
     )
 
   val readingCache: ReadingCache =
@@ -76,14 +81,44 @@ class AppContainer(context: Context) {
       KeystoreCrypto(),
     )
 
-  val widgetRefresher: WidgetRefresher = GlanceWidgetRefresher(appContext)
-
-  val syncScheduler: SyncScheduler =
-    WorkManagerSyncScheduler(appContext) {
-      GlanceAppWidgetManager(appContext).getGlanceIds(BatteryWidget::class.java).isNotEmpty()
+  private val hasWidgets: suspend () -> Boolean = {
+    val manager = GlanceAppWidgetManager(appContext)
+    listOf(BatteryWidget::class.java, InverterWidget::class.java).any {
+      manager.getGlanceIds(it).isNotEmpty()
     }
+  }
 
-  val batterySource: BatterySource = HomeAssistantSource(defaultHttpClient())
+  val syncScheduler: SyncScheduler = WorkManagerSyncScheduler(appContext, hasWidgets)
+
+  val lateRedraw: LateRedraw =
+    LateRedraw(
+      settings = settingsRepository,
+      cache = readingCache,
+      tokens = tokenStore,
+      scheduler = syncScheduler,
+      clock = System::currentTimeMillis,
+    )
+
+  private val tick = MutableStateFlow(System.currentTimeMillis())
+
+  /** The time widget drawings age their data against; [widgetRefresher] moves it at each redraw. */
+  val clockTick: StateFlow<Long> = tick
+
+  val widgetRefresher: WidgetRefresher =
+    GlanceWidgetRefresher(appContext, lateRedraw, tick, System::currentTimeMillis)
+
+  val unlockRefresh: UnlockRefresh =
+    UnlockRefresh(
+      settings = settingsRepository,
+      cache = readingCache,
+      tokens = tokenStore,
+      scheduler = syncScheduler,
+      widgets = widgetRefresher,
+      hasWidgets = hasWidgets,
+      clock = System::currentTimeMillis,
+    )
+
+  val batterySource: BatterySource = defaultHttpClient().let { TokenTypeSource(HomeAssistantSource(it), StatesSource(it)) }
 
   val appLanguage = AppLanguage(appContext)
 
@@ -95,12 +130,9 @@ class AppContainer(context: Context) {
       tokens = tokenStore,
       source = batterySource,
       cache = readingCache,
-      notifier = AndroidFullChargeNotifier(appContext),
+      notifier = AndroidLevelNotifier(appContext),
       widgets = widgetRefresher,
     )
-
-  val toggleAutoRefresh: ToggleAutoRefresh =
-    ToggleAutoRefresh(settingsRepository, syncScheduler, widgetRefresher)
 
   private companion object {
     const val TAG = "HaBattery"

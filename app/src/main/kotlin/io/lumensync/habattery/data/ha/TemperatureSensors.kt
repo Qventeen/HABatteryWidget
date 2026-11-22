@@ -21,6 +21,11 @@ internal object TemperatureSensors {
       } catch (_: IllegalArgumentException) {
         return null
       }
+    return select(ids, prefix)
+  }
+
+  /** The ids of this prefix's temperature sensors: no duplicates, by sensor number, at most 8. */
+  fun select(ids: List<String>, prefix: String): List<String> {
     val match = Regex("sensor\\.${Regex.escape(prefix)}_temperature_sensor_([0-9]+)")
     return ids
       .mapNotNull { id -> match.matchEntire(id)?.groupValues?.get(1)?.toLongOrNull()?.let { it to id } }

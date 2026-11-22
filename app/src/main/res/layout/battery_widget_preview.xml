@@ -64,22 +64,6 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:layout_gravity="center"
-                    android:background="@drawable/preview_button_on_bg"
-                    android:importantForAccessibility="no"
-                    android:padding="7dp"
-                    android:src="@drawable/ic_auto_refresh"
-                    android:tint="#2E7D32" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="6dp">
-
-                <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="center"
                     android:background="@drawable/preview_button_bg"
                     android:importantForAccessibility="no"
                     android:padding="7dp"
@@ -88,11 +72,13 @@
             </FrameLayout>
         </LinearLayout>
 
+        <!-- Fixed heights, from the fixed card: the body is its inner height (126 - 2 x 10) less the
+             top row and its gap, and each pack pill half of it less their gap. With no weight
+             nested in another, the picker draws the preview in one pass. -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="70dp"
             android:layout_marginTop="4dp"
-            android:layout_weight="1"
             android:baselineAligned="false"
             android:orientation="horizontal">
             <FrameLayout
@@ -149,8 +135,7 @@
                 android:orientation="vertical">
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="32dp"
                     android:background="@drawable/preview_big_pill_bg"
                     android:gravity="center"
                     android:orientation="horizontal"
@@ -167,9 +152,8 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="32dp"
                     android:layout_marginTop="6dp"
-                    android:layout_weight="1"
                     android:background="@drawable/preview_warn_pill_bg"
                     android:gravity="center"
                     android:orientation="horizontal"
@@ -205,9 +189,16 @@
                     android:gravity="center"
                     android:orientation="horizontal"
                     android:paddingHorizontal="4dp">
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_battery"
+                        android:tint="#1B1D1C" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
                         android:maxLines="1"
                         android:text="@string/preview_cell"
                         android:textColor="#1B1D1C"

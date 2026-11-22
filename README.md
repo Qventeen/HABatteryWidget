@@ -3,30 +3,41 @@
 An Android home-screen widget (Jetpack Glance) and a settings screen. They show
 a JK-BMS battery read from Home Assistant (HA): state of charge, total voltage, current, power, Ah left, average cell
 voltage, cell delta, MOSFET temperature, battery temperatures, balancing. The
-app calls `POST {baseUrl}/api/template` with a
-long-lived HA token. The widget draws from the local cache only.
+app reads HA with a long-lived HA token (see "Token type"). The widget draws from the local cache only.
 
-The widget follows design v5 (`docs/design/`): a SOC ring, two big pack values,
-cell and temperature pills, time left, and an auto-refresh toggle. The app
-shows a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3). The
-"Widget" settings section picks kWh or Ah under SOC, current or power, the
-home-screen scale and the font sizes.
-The "Appearance" section sets the theme (system, light, dark) and, on
-Android 13+, the app language.
+The battery widget follows design v5 (`docs/design/`): a SOC ring, two big pack
+values, cell and temperature pills, time left, and an auto-refresh toggle. A second
+widget, the inverter strip, is a one-row strip with the inverter mode, the grid input
+voltage and the output voltage, read from the same HA. The app has three tabs:
 
-## The widget on the home screen
+- **Battery**: a preview of the real widget for each size (4×2, 5×2, 4×3, 5×3),
+  "Add to home screen", the "Widget" settings (kWh or Ah under SOC, current or
+  power, font sizes), colour levels and alerts, entities and the pack: type,
+  cells, capacity.
+- **Inverter**: a preview of the strip for each size (3×1, 4×1, 5×1), "Add to home
+  screen", the display (mode as a big icon or icon + word, font sizes), the icons,
+  colour levels and alerts for the two voltages, and the inverter entities. Blank
+  entities mean the strip is not used.
+- **Common**: the theme (system, light, dark), on Android 13+ the app language, the
+  HA address and token, auto-refresh, notifications and the home-screen scale.
 
-- Add it from the launcher's widget list or with "Add widget" in the app. The
-  home screen adds it as 4×2; resize it there to 5×2, 4×3 or 5×3. Each size has
-  its own layout.
-- Tap the widget to open the app on that widget's size tab. ↻ syncs now; the
-  toggle turns auto refresh on or off.
+## The widgets on the home screen
+
+- Add a widget from the launcher's widget list or with "Add to home screen" on its
+  tab. The battery widget is added as 4×2; resize it there to 5×2, 4×3 or 5×3. Each
+  size has its own layout. The strip is added at 3×1; resize it to 4×1 or 5×1.
+- Tap a widget to open the app on its own tab. On the battery widget, ↻ syncs now and
+  the toggle turns auto refresh on or off. The strip has neither.
+- One sync reads both widgets. Each one is judged alone: when one fails, the other
+  still updates. A widget with no entities set shows "set up".
+- Inverter mode changes send a notification, like the colour levels with a bell, when
+  notifications are on in Common.
 - Some launchers draw widgets smaller than their size (HyperOS: about 78 %).
-  Set "Home-screen scale" (80–200 %, default 100) to make up for it; about
-  128 % on HyperOS. The app preview always shows 100 %.
+  Set "Home-screen scale" on Common (80–200 %, default 100) to make up for it; about
+  128 % on HyperOS. It has its own "Reset scale". The app preview always shows 100 %.
 - Font sizes are set per group from 10 to 100 %; 50 % is the design size. A
   text that does not fit its box at the chosen size is shown smaller. "Reset
-  sizes" restores the font sizes and the scale.
+  sizes" on the Battery tab restores the battery font sizes only, not the scale.
 
 ## Requirements
 
@@ -76,7 +87,8 @@ cannot update installed apps.
 
 ## Try it with the mock HA
 
-`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`.
+`tools/mock_ha.py` (Python 3, standard library only) serves `/api/template`,
+`/api/states` and `/api/states/<id>`.
 Local testing only — it accepts any token:
 
 ```bash
@@ -87,9 +99,35 @@ python3 tools/mock_ha.py --port 8123 --soc 55 --power -500 --current -10 \
 
 Options you leave out are returned as `null`. For Fill, the mock also lists
 `sensor.<prefix>_temperature_sensor_N` for each value of `--temps`
-(`--prefix`, default `bps_bms`; another prefix gets an empty list). In the app on the Android
+(`--prefix`, default `bps_bms`; another prefix gets an empty list).
+`GET /api/states/<id>` answers for the entity ids that Fill makes from
+`--prefix`, with the option value as the state (`unknown` if you left the option out);
+other ids get 404. `GET /api/states` lists them all. Add `--user-token` to
+make `POST /api/template` return 401, like a non-admin token. `--status` wins
+over everything. In the app on the Android
 emulator, set the HA URL to `http://10.0.2.2:8123` (the emulator's address for
 the host) and use any token.
+
+## Token type
+
+Choose the type of your token in the app's token section.
+
+- **Admin**: one `POST {baseUrl}/api/template` request for each sync.
+- **User**: a token of a non-admin HA user. The app sends one
+  `GET {baseUrl}/api/states/<entity_id>` for each configured entity, at most 4 at
+  a time. Fill uses one `GET {baseUrl}/api/states` (30 s timeout).
+
+The app keeps one saved token for each type. "Remove token" clears the token of
+the selected type only.
+
+To make a non-admin token:
+
+1. In HA, open Settings, People, and add a person without "Administrator".
+2. Log in to HA as that user.
+3. Open Profile, Security, Long-lived access tokens, and create a token.
+
+A non-admin token is not read-only: it can still change states in HA. The app
+itself only reads.
 
 ## Power sign in HA
 
@@ -103,6 +141,14 @@ owner's BMS, 2026-11-15); another BMS integration may use the opposite sign.
 English (default) and Ukrainian. On Android 13+ you can set the app language
 in the app ("Appearance") or in the system settings. The widget follows it,
 also when the app is closed.
+
+## Design, specs and ideas
+
+- `docs/design/`: the current design of both widgets and the app icon, with
+  pictures.
+- `docs/superpowers/specs/` and `plans/`: one design and one build plan per
+  feature, numbered `NNNN`.
+- `docs/ideas.md`: ideas for later that are not specs yet.
 
 ## License
 

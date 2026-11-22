@@ -1,11 +1,22 @@
 package io.lumensync.habattery.data.store
 
+import io.lumensync.habattery.domain.LevelPicker
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.BatteryReading
 import io.lumensync.habattery.domain.model.CacheState
+import io.lumensync.habattery.domain.model.ColorLevel
 import io.lumensync.habattery.domain.model.ConnectionSettings
+import io.lumensync.habattery.domain.model.CustomLevels
 import io.lumensync.habattery.domain.model.DisplaySettings
 import io.lumensync.habattery.domain.model.FontPercents
+import io.lumensync.habattery.domain.model.InverterReading
+import io.lumensync.habattery.domain.model.LevelAlertState
+import io.lumensync.habattery.domain.model.LevelColor
+import io.lumensync.habattery.domain.model.LevelIcon
+import io.lumensync.habattery.domain.model.LevelName
+import io.lumensync.habattery.domain.model.LevelSide
+import io.lumensync.habattery.domain.model.LevelType
+import io.lumensync.habattery.domain.model.LevelValue
 import io.lumensync.habattery.domain.model.MainValue
 import io.lumensync.habattery.domain.model.UnderSoc
 import io.lumensync.habattery.domain.model.EntitySettings
@@ -13,9 +24,12 @@ import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.Settings
 import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
+import io.lumensync.habattery.domain.model.TokenType
+import io.lumensync.habattery.domain.model.customLevels
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
@@ -40,7 +54,8 @@ class StoredJsonV1Test {
         "schemaVersion": 1,
         "settings": {
           "connection": {
-            "url": "http://ha.local:8123"
+            "url": "http://ha.local:8123",
+            "tokenType": "USER"
           },
           "entities": {
             "prefix": "bps_bms",
@@ -62,7 +77,8 @@ class StoredJsonV1Test {
           "display": { "underSoc": "AH", "mainValue": "POWER" },
           "fontPercents": { "soc": 45, "underSoc": 30, "main": 75, "cell": 60, "small": 100 },
           "homeScalePercent": 128,
-          "appearance": { "theme": "DARK" }
+          "appearance": { "theme": "DARK" },
+          "colorLevels": {}
         }
       }
       """
@@ -73,7 +89,7 @@ class StoredJsonV1Test {
         settings =
           Settings(
             connection =
-              ConnectionSettings(url = "http://ha.local:8123"),
+              ConnectionSettings(url = "http://ha.local:8123", tokenType = TokenType.USER),
             entities =
               EntitySettings(
                 prefix = "bps_bms",
@@ -90,7 +106,7 @@ class StoredJsonV1Test {
                 balancing = "sensor.bal",
               ),
             refresh = RefreshSettings(auto = true, intervalMinutes = 30),
-            notifyOnFull = true,
+            notificationsOn = true,
             capacityAh = 314.5,
             display = DisplaySettings(underSoc = UnderSoc.AH, mainValue = MainValue.POWER),
             fontPercents = FontPercents(soc = 45, underSoc = 30, main = 75, cell = 60, small = 100),
@@ -98,7 +114,93 @@ class StoredJsonV1Test {
             appearance = AppearanceSettings(ThemeChoice.DARK),
           ),
       )
-    assertV1(json, expected, SettingsRecord.serializer())
+    assertEquals(expected, StoreJson.decodeFromString(SettingsRecord.serializer(), json))
+  }
+
+  @Test
+  fun customLevels_v1() {
+    val json =
+      """
+      {
+        "on": true,
+        "levels": [
+          {"id": 1, "side": "MIDDLE", "edge": null, "type": "INFO", "color": null, "icon": null, "name": "", "defaultName": "BALANCED", "notify": false},
+          {"id": 2, "side": "ABOVE", "edge": 12.0, "type": "WARNING", "color": "ORANGE", "icon": "FLAME", "name": "Drift", "defaultName": null, "notify": true}
+        ],
+        "margin": 4.0
+      }
+      """
+    val expected =
+      CustomLevels(
+        true,
+        listOf(
+          ColorLevel(1, LevelSide.MIDDLE, null, LevelType.INFO, defaultName = LevelName.BALANCED),
+          ColorLevel(2, LevelSide.ABOVE, 12.0, LevelType.WARNING, LevelColor.ORANGE, LevelIcon.FLAME, "Drift", notify = true),
+        ),
+        margin = 4.0,
+      )
+    assertV1(json, expected, CustomLevels.serializer())
+  }
+
+  @Test
+  fun customLevels_withoutMargin_decodesNull() {
+    val json = """{"on": true, "levels": [{"id": 1, "notify": true}]}"""
+    val decoded = StoreJson.decodeFromString(CustomLevels.serializer(), json)
+    assertEquals(null, decoded.margin)
+    assertEquals(true, decoded.levels.single().notify)
+  }
+
+  @Test
+  fun oldSettings_withoutColorLevels_loadEmpty() {
+    val record =
+      StoreJson.decodeFromString(SettingsRecord.serializer(), """{"schemaVersion":1,"settings":{}}""")
+    assertEquals(emptyMap<String, CustomLevels>(), record.settings.colorLevels)
+  }
+
+  @Test
+  fun unknownColorLevelsKey_isKeptOutOfTheWay() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"colorLevels":{"INVERTER_VOLTAGE":{"on":true,"levels":[]},"DELTA":{"on":true,"levels":[]}}}}""",
+      )
+    assertEquals(true, record.settings.customLevels(LevelValue.DELTA).on)
+    assertEquals(CustomLevels(), record.settings.customLevels(LevelValue.SOC))
+  }
+
+  /** A later build may store enum values this one lacks (spec 0012): they read as defaults, the file survives. */
+  @Test
+  fun unknownEnumValuesInColorLevels_loadAsDefaults_andKeepTheRestOfTheSettings() {
+    val json =
+      """{"schemaVersion":1,"settings":{"connection":{"url":"http://ha.local:8123"},"colorLevels":{""" +
+        """"GRID_VOLTAGE":{"on":true,"levels":[{"defaultName":"NO_GRID"}]},""" +
+        """"DELTA":{"on":true,"levels":[{"id":3,"side":"ABOVE","edge":5.0,"icon":"BOLT","color":"PINK","type":"FATAL","name":"X"}]}}}}"""
+    val record = StoreJson.decodeFromString(SettingsRecord.serializer(), json)
+    assertEquals("http://ha.local:8123", record.settings.connection.url)
+    assertEquals(
+      listOf(ColorLevel(3, LevelSide.ABOVE, 5.0, LevelType.NORMAL, null, null, "X")),
+      record.settings.customLevels(LevelValue.DELTA).levels,
+    )
+  }
+
+  /** A list stored by a round-2 build has the key `from`; every level decodes as a middle level. */
+  @Test
+  fun roundTwoLevels_decode_andAreNotOwnLevels() {
+    val json =
+      """{"on":true,"levels":[{"id":1,"type":"CRITICAL"},{"id":2,"from":20.0,"type":"WARNING"}]}"""
+    val custom = StoreJson.decodeFromString(CustomLevels.serializer(), json)
+    assertEquals(2, custom.levels.size)
+    assertNull(LevelPicker.ownLevels(LevelValue.SOC, custom))
+  }
+
+  @Test
+  fun settingsWithoutTokenType_loadAsAdmin() {
+    val record =
+      StoreJson.decodeFromString(
+        SettingsRecord.serializer(),
+        """{"schemaVersion":1,"settings":{"connection":{"url":"http://ha.local:8123"}}}""",
+      )
+    assertEquals(TokenType.ADMIN, record.settings.connection.tokenType)
   }
 
   @Test
@@ -115,6 +217,12 @@ class StoredJsonV1Test {
         """{"schemaVersion":1,"state":{"reading":{"chargePercent":50.0,"cellVoltagesV":[3.3],"updatedAtMillis":1}}}""",
       )
     assertEquals(BatteryReading(chargePercent = 50.0, updatedAtMillis = 1), cache.state.reading)
+    val oldCache =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """{"schemaVersion":1,"state":{"fullChargeNotified":true}}""",
+      )
+    assertEquals(CacheState(), oldCache.state)
   }
 
   /** Spec 0005: the sp sizes of 0003 are dropped, so everyone starts at the design size (50 %). */
@@ -191,7 +299,15 @@ class StoredJsonV1Test {
           },
           "error": { "type": "http", "code": 503 },
           "refreshingSinceMillis": 1800000001000,
-          "fullChargeNotified": true
+          "levelAlerts": { "SOC": { "current": 2, "disarmed": [1] } },
+          "inverterReading": {
+            "mode": "Off-Grid",
+            "gridVoltageV": 0.0,
+            "outputVoltageV": 230.5,
+            "updatedAtMillis": 1800000000000
+          },
+          "inverterError": { "type": "bad_response" },
+          "inverterMode": "Off-Grid"
         }
       }
       """
@@ -218,10 +334,39 @@ class StoredJsonV1Test {
               ),
             error = SyncError.HttpError(503),
             refreshingSinceMillis = 1_800_000_001_000L,
-            fullChargeNotified = true,
+            levelAlerts = mapOf("SOC" to LevelAlertState(current = 2, disarmed = listOf(1))),
+            inverterReading =
+              InverterReading(
+                mode = "Off-Grid",
+                gridVoltageV = 0.0,
+                outputVoltageV = 230.5,
+                updatedAtMillis = 1_800_000_000_000L,
+              ),
+            inverterError = SyncError.BadResponse,
+            inverterMode = "Off-Grid",
           ),
       )
     assertV1(json, expected, CacheRecord.serializer())
+  }
+
+  @Test
+  fun cacheRecordWithoutInverter_loadsWithoutInverterPart() {
+    val record =
+      StoreJson.decodeFromString(
+        CacheRecord.serializer(),
+        """
+        {
+          "schemaVersion": 1,
+          "state": {
+            "reading": { "chargePercent": 54.6, "updatedAtMillis": 1800000000000 },
+            "error": { "type": "unreachable" }
+          }
+        }
+        """,
+      )
+    assertEquals(SyncError.Unreachable, record.state.error)
+    assertNull(record.state.inverterReading)
+    assertNull(record.state.inverterError)
   }
 
   @Test
@@ -243,8 +388,22 @@ class StoredJsonV1Test {
 
   @Test
   fun tokenRecord_v1() {
-    val json = """{ "schemaVersion": 1, "encrypted": "AAECAwQF" }"""
+    val json = """{ "schemaVersion": 1, "encrypted": "AAECAwQF", "userEncrypted": "BgcICQoL" }"""
 
-    assertV1(json, TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF"), TokenRecord.serializer())
+    assertV1(
+      json,
+      TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF", userEncrypted = "BgcICQoL"),
+      TokenRecord.serializer(),
+    )
+  }
+
+  @Test
+  fun tokenRecordWithoutUserSlot_loadsAsAdminSlot() {
+    val record =
+      StoreJson.decodeFromString(
+        TokenRecord.serializer(),
+        """{ "schemaVersion": 1, "encrypted": "AAECAwQF" }""",
+      )
+    assertEquals(TokenRecord(schemaVersion = 1, encrypted = "AAECAwQF"), record)
   }
 }

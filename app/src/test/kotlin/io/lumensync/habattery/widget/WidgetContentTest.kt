@@ -6,6 +6,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.Visibility
+import androidx.glance.visibility
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.action.ActionCallback
@@ -75,7 +78,7 @@ class WidgetContentTest {
           text(R.string.delta_label, formatters.deltaMv(12)),
           formatters.temperature(25.0),
           formatters.temperature(27.0),
-          formatters.updatedAt(UPDATED),
+          formatters.updatedAt(UPDATED, NOW),
           formatters.duration(sampleTimeLeft()),
         )
         .forEach { onNode(hasTextEqualTo(it)).assertExists() }
@@ -127,6 +130,18 @@ class WidgetContentTest {
       onNode(hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))).assertExists()
     }
 
+  /** The update time is the time on the drawing's day, else the date: the clock is not read. */
+  @Test
+  fun updateTime_followsTheDrawingsTime() {
+    val nextDay = UPDATED + 24 * 3_600_000L
+    render(model(now = UPDATED + 60_000L)) {
+      onNode(hasTextEqualTo(formatters.updatedAt(UPDATED, UPDATED + 60_000L))).assertExists()
+    }
+    render(model(now = nextDay)) {
+      onNode(hasTextEqualTo(formatters.updatedAt(UPDATED, nextDay))).assertExists()
+    }
+  }
+
   /** Spec 0005, 5.3: a red icon only, the reason in its content description, no error text. */
   @Test
   fun error_showsIconOnly() =
@@ -134,7 +149,7 @@ class WidgetContentTest {
       render(model(error = SyncError.Unreachable), spec.bucketWidth, spec.bucketHeight) {
         onNode(hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable")).assertExists()
         onAllNodes(hasText(text(R.string.error_unreachable))).assertCountEquals(0)
-        onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED))).assertCountEquals(0)
+        onNode(hasTextEqualTo(formatters.updatedAt(UPDATED, NOW))).assert(isGone())
         onNode(hasTextEqualTo("55")).assertExists()
       }
     }
@@ -143,25 +158,71 @@ class WidgetContentTest {
   fun refreshing_keepsButtonWithRefreshingDescription() {
     render(model()) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refresh_action)))
+        .assert(hasContentDescription(WidgetTexts.refreshDescription(context, false, 1)))
     }
     render(model(refreshingSince = NOW - 1_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription(text(R.string.widget_refreshing)))
+        .assert(hasContentDescription(WidgetTexts.refreshDescription(context, true, 1)))
     }
   }
 
   @Test
-  fun autoToggle_describesItsState() {
-    render(model()) {
-      onNode(hasRunCallbackClickAction<NoOpToggle>())
-        .assert(hasContentDescription(text(R.string.widget_auto_off)))
+  fun refreshDescription_saysAge() {
+    render(model(updated = NOW - 3 * 60_000L)) {
+      onNode(hasRunCallbackClickAction<NoOpRefresh>())
+        .assert(hasContentDescription("Refresh. Data is 3 minutes old"))
     }
-    render(model(settings = settings(refresh = RefreshSettings(true, 30)))) {
-      onNode(hasRunCallbackClickAction<NoOpToggle>())
-        .assert(hasContentDescription(text(R.string.widget_auto_on)))
+    render(model(updated = NOW - 3 * 60_000L, refreshingSince = NOW - 1_000L)) {
+      onNode(hasRunCallbackClickAction<NoOpRefresh>())
+        .assert(hasContentDescription("Refreshing… Data is 3 minutes old"))
     }
   }
+
+  /** With the timed sync off, data turns late after 20 min (spec 0016). */
+  @Test
+  fun dot_freshThenLate() {
+    render(model(updated = NOW - 3 * 60_000L)) {
+      onNode(hasTestTag("dot_fresh")).assertExists()
+      onAllNodes(hasTestTag("dot_late")).assertCountEquals(0)
+    }
+    render(model(updated = NOW - 25 * 60_000L)) {
+      onNode(hasTestTag("dot_late")).assertExists()
+      onAllNodes(hasTestTag("dot_fresh")).assertCountEquals(0)
+    }
+  }
+
+  @Test
+  fun emptyStates_haveNoDot() =
+    listOf(model(hasToken = false), model(reading = null)).forEach { empty ->
+      render(empty) {
+        onAllNodes(hasTestTag("dot_fresh")).assertCountEquals(0)
+        onAllNodes(hasTestTag("dot_late")).assertCountEquals(0)
+      }
+    }
+
+  @Test
+  fun topRow_hasNoAutoToggle() =
+    LayoutSpec.all.forEach { spec ->
+      render(model(), spec.bucketWidth, spec.bucketHeight) {
+        onAllNodes(hasContentDescriptionEqualTo("Auto refresh off")).assertCountEquals(0)
+        onAllNodes(hasContentDescriptionEqualTo("Auto refresh on")).assertCountEquals(0)
+        onNode(hasRunCallbackClickAction<NoOpRefresh>()).assertExists()
+      }
+    }
+
+  @Test
+  fun averageCellPill_iconInsteadOfLabel() =
+    render(model()) {
+      onAllNodes(hasContentDescriptionEqualTo(text(R.string.widget_average_cell)))
+        .assertCountEquals(1)
+      onNode(hasTextEqualTo(formatters.cellVoltage(3.312))).assertExists()
+    }
+
+  @Test
+  fun missingAverageCell_showsDash() =
+    render(model(sample.copy(averageCellVoltageV = null))) {
+      onNode(hasTextEqualTo(text(R.string.value_missing))).assertExists()
+    }
 
   @Test
   fun missingDelta_showsDash() =
@@ -198,7 +259,6 @@ class WidgetContentTest {
       onNode(hasTextEqualTo(text(R.string.error_not_configured))).assertExists()
       onNode(hasTextEqualTo(text(R.string.widget_open_app))).assertExists()
       onAllNodes(hasRunCallbackClickAction<NoOpRefresh>()).assertCountEquals(0)
-      onAllNodes(hasRunCallbackClickAction<NoOpToggle>()).assertCountEquals(0)
       onAllNodes(hasStartActivityClickAction(openAppComponent)).assertCountEquals(2)
     }
 
@@ -236,9 +296,8 @@ class WidgetContentTest {
   fun noActions_eachBucket_buttonsAreNotDescribed() =
     LayoutSpec.all.forEach { spec ->
       render(model(), spec.bucketWidth, spec.bucketHeight, withActions = false) {
-        listOf(R.string.widget_refresh_action, R.string.widget_auto_off).forEach {
-          onAllNodes(hasContentDescriptionEqualTo(text(it))).assertCountEquals(0)
-        }
+        onAllNodes(hasContentDescriptionEqualTo(WidgetTexts.refreshDescription(context, false, 1)))
+          .assertCountEquals(0)
         onNode(hasContentDescriptionEqualTo(text(R.string.widget_balancing_off))).assertExists()
         onNode(hasTextEqualTo("55")).assertExists()
       }
@@ -299,7 +358,9 @@ class WidgetContentTest {
     render(model(settings = settings(sensors = 0)), LayoutSpec.L4x3.bucketWidth, LayoutSpec.L4x3.bucketHeight) {
       val mosfet = hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))
       onNode(rowWithChildren(1) and hasAnyDescendant(mosfet)).assertExists()
-      onAllNodes(rowWithChildren(3) and hasAnyDescendant(hasText("mV"))).assertCountEquals(1)
+      val average = hasContentDescriptionEqualTo(text(R.string.widget_average_cell))
+      onAllNodes(rowWithChildren(3) and hasAnyDescendant(hasText("mV")) and hasAnyDescendant(average))
+        .assertCountEquals(1)
     }
 
   @Test
@@ -351,6 +412,9 @@ class WidgetContentTest {
       ((e as? EmittableWithChildren)?.children?.joinToString(",", "(", ")", transform = ::shapeOf) ?: "")
 
   /** A Row with [n] children (pills and the spacers between them). */
+  private fun isGone() =
+    GlanceNodeMatcher<MappedNode>("is gone") { node -> node.value.emittable.modifier.any { it == GONE } }
+
   private fun rowWithChildren(n: Int) =
     GlanceNodeMatcher<MappedNode>("row with $n children") { node ->
       (node.value.emittable as? EmittableRow)?.children?.size == n
@@ -377,7 +441,6 @@ class WidgetContentTest {
       WidgetActions(
           openApp = actionStartActivity(openAppComponent),
           refresh = actionRunCallback<NoOpRefresh>(),
-          toggleAuto = actionRunCallback<NoOpToggle>(),
         )
         .takeIf { withActions }
     provideComposable { WidgetContent(model, fontPercents, colors, actions, hostScale, FakeMeasurer) }
@@ -421,9 +484,16 @@ class WidgetContentTest {
     error: SyncError? = null,
     hasToken: Boolean = true,
     refreshingSince: Long? = null,
+    updated: Long = UPDATED,
+    now: Long = NOW,
   ): WidgetModel =
     WidgetModel.build(
-      BatteryOverview.build(CacheState(reading, error, refreshingSince), settings, hasToken, NOW),
+      BatteryOverview.build(
+        CacheState(reading?.copy(updatedAtMillis = updated), error, refreshingSince),
+        settings,
+        hasToken,
+        now,
+      ),
       settings,
     )
 
@@ -432,13 +502,11 @@ class WidgetContentTest {
       Unit
   }
 
-  class NoOpToggle : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) =
-      Unit
-  }
-
   private companion object {
     const val NOW = 1_800_000_000_000L
     const val UPDATED = NOW - 60_000L
+
+    /** Equal to the element `visibility(Gone)` adds; its class is Glance-internal. */
+    val GONE = GlanceModifier.visibility(Visibility.Gone)
   }
 }
