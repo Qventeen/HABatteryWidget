@@ -142,6 +142,14 @@ English (default) and Ukrainian. On Android 13+ you can set the app language
 in the app ("Appearance") or in the system settings. The widget follows it,
 also when the app is closed.
 
+## Design, specs and ideas
+
+- `docs/design/`: the current design of both widgets and the app icon, with
+  pictures.
+- `docs/superpowers/specs/` and `plans/`: one design and one build plan per
+  feature, numbered `NNNN`.
+- `docs/ideas.md`: ideas for later that are not specs yet.
+
 ## License
 
 Copyright 2026 the HA Battery Widget authors.
