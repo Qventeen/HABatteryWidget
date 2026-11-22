@@ -23,8 +23,8 @@ class InverterWidget : GlanceAppWidget(errorUiLayout = R.layout.widget_error) {
     SizeMode.Responsive(InverterLayoutSpec.entries.map { it.bucket }.toSet())
 
   override suspend fun provideGlance(context: Context, id: GlanceId) =
-    provideStoredContent(context, id) { cache, settings, hasToken, appWidgetId ->
-      InverterStrip(cache, settings, hasToken, System.currentTimeMillis(), appWidgetId)
+    provideStoredContent(context, id) { cache, settings, hasToken, nowMillis, appWidgetId ->
+      InverterStrip(cache, settings, hasToken, nowMillis, appWidgetId)
     }
 }
 

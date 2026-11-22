@@ -40,6 +40,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /** Manual DI: builds every object once per process, so each DataStore file has one instance. */
 class AppContainer(context: Context) {
@@ -97,7 +99,13 @@ class AppContainer(context: Context) {
       clock = System::currentTimeMillis,
     )
 
-  val widgetRefresher: WidgetRefresher = GlanceWidgetRefresher(appContext, lateRedraw)
+  private val tick = MutableStateFlow(System.currentTimeMillis())
+
+  /** The time widget drawings age their data against; [widgetRefresher] moves it at each redraw. */
+  val clockTick: StateFlow<Long> = tick
+
+  val widgetRefresher: WidgetRefresher =
+    GlanceWidgetRefresher(appContext, lateRedraw, tick, System::currentTimeMillis)
 
   val unlockRefresh: UnlockRefresh =
     UnlockRefresh(
