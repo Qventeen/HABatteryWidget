@@ -72,11 +72,13 @@
             </FrameLayout>
         </LinearLayout>
 
+        <!-- Fixed heights, from the fixed card: the body is its inner height (126 - 2 x 10) less the
+             top row and its gap, and each pack pill half of it less their gap. With no weight
+             nested in another, the picker draws the preview in one pass. -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="70dp"
             android:layout_marginTop="4dp"
-            android:layout_weight="1"
             android:baselineAligned="false"
             android:orientation="horizontal">
             <FrameLayout
@@ -133,8 +135,7 @@
                 android:orientation="vertical">
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="32dp"
                     android:background="@drawable/preview_big_pill_bg"
                     android:gravity="center"
                     android:orientation="horizontal"
@@ -151,9 +152,8 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
+                    android:layout_height="32dp"
                     android:layout_marginTop="6dp"
-                    android:layout_weight="1"
                     android:background="@drawable/preview_warn_pill_bg"
                     android:gravity="center"
                     android:orientation="horizontal"

@@ -2,7 +2,9 @@
 <!-- Minimum = the 4x2 bucket (spec 0005, 5.1): the owner's 4x2 card (267 x 132 dp) minus 6 dp each way.
      No target cells: the launcher picks the cells (spec 0003, 5.1). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:configure="io.lumensync.habattery.MainActivity"
+    tools:targetApi="31"
     android:description="@string/widget_description"
     android:initialLayout="@layout/glance_default_loading_layout"
     android:maxResizeHeight="460dp"
