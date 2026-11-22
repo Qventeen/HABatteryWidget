@@ -20,6 +20,7 @@ import io.lumensync.habattery.data.store.TokenRecord
 import io.lumensync.habattery.data.store.jsonDataStore
 import io.lumensync.habattery.data.store.settingsDataStore
 import io.lumensync.habattery.domain.SyncBattery
+import io.lumensync.habattery.domain.UnlockRefresh
 import io.lumensync.habattery.domain.port.BatterySource
 import io.lumensync.habattery.domain.port.ReadingCache
 import io.lumensync.habattery.domain.port.SettingsRepository
@@ -79,13 +80,25 @@ class AppContainer(context: Context) {
 
   val widgetRefresher: WidgetRefresher = GlanceWidgetRefresher(appContext)
 
-  val syncScheduler: SyncScheduler =
-    WorkManagerSyncScheduler(appContext) {
-      val manager = GlanceAppWidgetManager(appContext)
-      listOf(BatteryWidget::class.java, InverterWidget::class.java).any {
-        manager.getGlanceIds(it).isNotEmpty()
-      }
+  private val hasWidgets: suspend () -> Boolean = {
+    val manager = GlanceAppWidgetManager(appContext)
+    listOf(BatteryWidget::class.java, InverterWidget::class.java).any {
+      manager.getGlanceIds(it).isNotEmpty()
     }
+  }
+
+  val syncScheduler: SyncScheduler = WorkManagerSyncScheduler(appContext, hasWidgets)
+
+  val unlockRefresh: UnlockRefresh =
+    UnlockRefresh(
+      settings = settingsRepository,
+      cache = readingCache,
+      tokens = tokenStore,
+      scheduler = syncScheduler,
+      widgets = widgetRefresher,
+      hasWidgets = hasWidgets,
+      clock = System::currentTimeMillis,
+    )
 
   val batterySource: BatterySource = defaultHttpClient().let { TokenTypeSource(HomeAssistantSource(it), StatesSource(it)) }
 

@@ -78,6 +78,9 @@ interface SyncScheduler {
 
   fun syncNow()
 
+  /** Runs one sync as soon as a network is there; a new call replaces the earlier one. */
+  fun syncWhenOnline()
+
   /** Redraws the widgets from local data at [atMillis]; a new call replaces the earlier one. */
   fun redrawAt(atMillis: Long)
 }

@@ -181,6 +181,13 @@ class FakeSyncScheduler : SyncScheduler {
     syncNowCalls++
   }
 
+  var syncWhenOnlineCalls = 0
+    private set
+
+  override fun syncWhenOnline() {
+    syncWhenOnlineCalls++
+  }
+
   override fun redrawAt(atMillis: Long) {
     redraws += atMillis
   }

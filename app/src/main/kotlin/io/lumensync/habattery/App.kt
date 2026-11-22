@@ -2,8 +2,12 @@ package io.lumensync.habattery
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
+import androidx.core.content.ContextCompat
 import io.lumensync.habattery.system.TextConfig
+import io.lumensync.habattery.system.UnlockReceiver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -24,6 +28,12 @@ class App : Application() {
 
   override fun onCreate() {
     super.onCreate()
+    ContextCompat.registerReceiver(
+      this,
+      UnlockReceiver { container.appScope.launch { container.unlockRefresh() } },
+      IntentFilter(Intent.ACTION_USER_PRESENT),
+      ContextCompat.RECEIVER_NOT_EXPORTED,
+    )
     // KEEP on app start: an existing periodic work keeps its timing.
     container.appScope.launch {
       container.syncScheduler.apply(
