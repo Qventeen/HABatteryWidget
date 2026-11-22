@@ -19,7 +19,9 @@ object RefreshPolicy {
 
   /**
    * Whether unlocking the phone should start a sync: the setting is on, a widget is placed, a part
-   * is configured, no sync runs now, and at least one configured part has no reading or an old one.
+   * is configured, no sync runs now, and at least one configured part has no reading or one not
+   * read in the last minute. A reading dated in the future (the clock was set back) counts as not
+   * read in the last minute: else unlock refresh would stay off until the clock catches up.
    */
   fun unlockSyncWanted(
     settings: Settings,
@@ -31,6 +33,6 @@ object RefreshPolicy {
     if (!settings.refresh.onUnlock || !hasWidgets) return false
     if (Freshness.isRefreshing(cache.refreshingSinceMillis, nowMillis)) return false
     val times = Freshness.configuredUpdateTimes(cache, settings, hasToken)
-    return times.any { it == null || nowMillis - it >= Freshness.UNLOCK_MIN_AGE_MS }
+    return times.any { it == null || nowMillis - it !in 0 until Freshness.UNLOCK_MIN_AGE_MS }
   }
 }

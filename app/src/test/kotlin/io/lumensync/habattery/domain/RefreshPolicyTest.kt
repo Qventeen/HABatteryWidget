@@ -73,6 +73,13 @@ class RefreshPolicyTest {
       wanted(cache = CacheState(reading = reading().copy(updatedAtMillis = now - 30_000L)))
     )
 
+  /** The clock was set back: waiting until it catches up would keep unlock refresh off. */
+  @Test
+  fun unlock_readingDatedInTheFuture_isWanted() =
+    assertTrue(
+      wanted(cache = CacheState(reading = reading().copy(updatedAtMillis = now + 600_000L)))
+    )
+
   @Test
   fun unlock_refreshingOlderThan2Min_doesNotBlock() =
     assertTrue(
@@ -88,13 +95,13 @@ class RefreshPolicyTest {
   @Test
   fun unlock_inverterOnly_usesInverterReading() {
     val inverterOnly = configuredSettings(battery = false, inverter = true)
-    val batteryStale = reading().copy(updatedAtMillis = now - 30_000L)
+    val batteryOld = reading().copy(updatedAtMillis = now - 600_000L)
     fun inverterAge(ms: Long?) =
       wanted(
         settings = inverterOnly,
         cache =
           CacheState(
-            reading = batteryStale,
+            reading = batteryOld,
             inverterReading = ms?.let { inverterReading().copy(updatedAtMillis = now - it) },
           ),
       )

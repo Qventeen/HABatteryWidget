@@ -9,7 +9,7 @@ object Freshness {
   /** Extra time past the sync interval before a reading counts as late. */
   const val GRACE_MS = 300_000L
 
-  /** A reading younger than this does not need a sync on unlock. */
+  /** A reading read less than this long ago needs no sync on unlock. */
   const val UNLOCK_MIN_AGE_MS = 60_000L
 
   /** A "refreshing" mark older than this is stale: the work died without clearing it. */
