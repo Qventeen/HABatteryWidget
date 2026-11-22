@@ -165,27 +165,18 @@ private fun RefreshColumn(
         .tapAction(refresh)
         .then(described)
     ) {
-      // Glance aligns all children of a Box alike, so the circle and the dot each get a
-      // full-size box with its own alignment, as on the battery widget's ↻.
-      Box(GlanceModifier.size((s.refresh + s.dotOverhang).dp)) {
-        Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
-          Box(
-            GlanceModifier.size(s.refresh.dp).background(c.tile).cornerRadius((s.refresh / 2).dp),
-            contentAlignment = Alignment.Center,
-          ) {
-            // While a sync runs, ↻ only dims; the dot still shows the data's age.
-            WidgetIcon(
-              R.drawable.ic_refresh,
-              s.refreshIcon.dp,
-              if (model.refreshing) c.dim else c.sub,
-              null,
-            )
-          }
-        }
-        Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-          FreshnessBadge(model.dataLate, s.dot, s.dotRing, c)
-        }
-      }
+      // While a sync runs, ↻ only dims; the dot still shows the data's age.
+      RefreshFace(
+        faceSize = s.refresh,
+        iconSize = s.refreshIcon,
+        overhang = s.dotOverhang,
+        dot = s.dot,
+        dotRing = s.dotRing,
+        iconColor = if (model.refreshing) c.dim else c.sub,
+        faceColor = c.tile,
+        late = model.dataLate,
+        colors = c,
+      )
     }
     Spacer(GlanceModifier.defaultWeight())
   }

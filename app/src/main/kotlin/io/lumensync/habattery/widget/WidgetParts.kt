@@ -80,32 +80,21 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
       }
     }
     // While a sync runs, ↻ stays in place and only dims; the dot still shows the data's age.
-    CircleButton(
+    RefreshButton(
       d,
-      icon = R.drawable.ic_refresh,
       iconColor = if (model.refreshing) c.dim else c.sub,
-      face = c.tile,
       description = WidgetTexts.refreshDescription(context, model.refreshing, model.dataAgeMinutes),
       action = actions?.refresh,
-      badge = { FreshnessBadge(model.dataLate, s.dot, s.dotRing, c) },
     )
   }
 }
 
 /**
- * A circle in its touch area, with [badge] on its top-right edge. Without [action] (the app's
- * preview) the circle does nothing, so TalkBack does not announce it.
+ * ↻ in its touch area. Without [action] (the app's preview) it does nothing, so TalkBack does not
+ * announce it.
  */
 @Composable
-private fun CircleButton(
-  d: DataLook,
-  @DrawableRes icon: Int,
-  iconColor: ColorProvider,
-  face: ColorProvider,
-  description: String,
-  action: Action?,
-  badge: (@Composable () -> Unit)?,
-) {
+private fun RefreshButton(d: DataLook, iconColor: ColorProvider, description: String, action: Action?) {
   val s = d.spec
   val described =
     if (action == null) GlanceModifier else GlanceModifier.semantics { contentDescription = description }
@@ -116,20 +105,49 @@ private fun CircleButton(
       .then(described),
     contentAlignment = Alignment.Center,
   ) {
-    // Glance aligns all children of a Box alike, so the face and the badge each get a full-size
-    // box with its own alignment. The overhang puts the badge on the circle's edge.
-    Box(GlanceModifier.size((s.buttonFace + s.dotOverhang).dp)) {
-      Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
-        Box(
-          GlanceModifier.size(s.buttonFace.dp).background(face).cornerRadius((s.buttonFace / 2).dp),
-          contentAlignment = Alignment.Center,
-        ) {
-          WidgetIcon(icon, s.buttonIcon.dp, iconColor, null)
-        }
+    RefreshFace(
+      faceSize = s.buttonFace,
+      iconSize = s.buttonIcon,
+      overhang = s.dotOverhang,
+      dot = s.dot,
+      dotRing = s.dotRing,
+      iconColor = iconColor,
+      faceColor = d.colors.tile,
+      late = d.model.dataLate,
+      colors = d.colors,
+    )
+  }
+}
+
+/**
+ * The ↻ circle with the freshness dot on its top-right edge, for both widgets; [late] colours the
+ * dot. No touch area: each widget sizes its own and describes it.
+ */
+@Composable
+internal fun RefreshFace(
+  faceSize: Float,
+  iconSize: Float,
+  overhang: Float,
+  dot: Float,
+  dotRing: Float,
+  iconColor: ColorProvider,
+  faceColor: ColorProvider,
+  late: Boolean,
+  colors: WidgetColors,
+) {
+  // Glance aligns all children of a Box alike, so the face and the dot each get a full-size box
+  // with its own alignment. The overhang puts the dot on the circle's edge.
+  Box(GlanceModifier.size((faceSize + overhang).dp)) {
+    Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
+      Box(
+        GlanceModifier.size(faceSize.dp).background(faceColor).cornerRadius((faceSize / 2).dp),
+        contentAlignment = Alignment.Center,
+      ) {
+        WidgetIcon(R.drawable.ic_refresh, iconSize.dp, iconColor, null)
       }
-      if (badge != null) {
-        Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) { badge() }
-      }
+    }
+    Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+      FreshnessBadge(late, dot, dotRing, colors)
     }
   }
 }
