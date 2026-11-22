@@ -155,7 +155,7 @@ private fun RefreshColumn(
         .padding(end = s.padding.dp, bottom = s.dotOverhang.dp),
       contentAlignment = Alignment.BottomCenter,
     ) {
-      if (error != null) WidgetIcon(R.drawable.ic_alert, s.alertIcon.dp, c.bad, error)
+      ShownIcon(error != null, R.drawable.ic_alert, s.alertIcon.dp, c.bad, error)
     }
     // The overhang below the circle matches the one above, so the circle is the group's centre.
     Box(
