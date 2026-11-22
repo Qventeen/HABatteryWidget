@@ -158,6 +158,8 @@
     <string name="refresh_title">Auto-refresh</string>
     <string name="refresh_auto">Refresh in the background</string>
     <string name="refresh_interval">Refresh interval (min)</string>
+    <string name="refresh_on_unlock">Refresh when the phone is unlocked</string>
+    <string name="refresh_on_unlock_hint">Gets fresh data when you look. Works while Android keeps the app running; opening the app or the next timed sync starts it again.</string>
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>

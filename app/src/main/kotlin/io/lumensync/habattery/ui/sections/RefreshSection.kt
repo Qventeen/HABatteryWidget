@@ -1,6 +1,8 @@
 package io.lumensync.habattery.ui.sections
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,16 +17,17 @@ import io.lumensync.habattery.domain.Field
 import io.lumensync.habattery.domain.FieldError
 import io.lumensync.habattery.domain.model.RefreshSettings
 
-/** Auto-refresh switch and interval. Both are saved together with the Save button. */
+/** Auto-refresh switch, interval and refresh-on-unlock switch, saved with the Save button. */
 @Composable
 fun RefreshSection(
   refresh: RefreshSettings,
   errors: List<FieldError>,
-  onSave: (auto: Boolean, intervalText: String) -> Unit,
+  onSave: (auto: Boolean, intervalText: String, onUnlock: Boolean) -> Unit,
   modifier: Modifier = Modifier,
   initiallyExpanded: Boolean = false,
 ) {
   var auto by rememberSaveable(refresh) { mutableStateOf(refresh.auto) }
+  var onUnlock by rememberSaveable(refresh) { mutableStateOf(refresh.onUnlock) }
   var interval by
     rememberSaveable(refresh) { mutableStateOf(refresh.intervalMinutes?.toString().orEmpty()) }
 
@@ -51,6 +54,16 @@ fun RefreshSection(
         ),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
     )
-    SaveButton { onSave(auto, interval) }
+    SwitchRow(
+      stringResource(R.string.refresh_on_unlock),
+      checked = onUnlock,
+      onCheckedChange = { onUnlock = it },
+    )
+    Text(
+      stringResource(R.string.refresh_on_unlock_hint),
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      style = MaterialTheme.typography.bodySmall,
+    )
+    SaveButton { onSave(auto, interval, onUnlock) }
   }
 }

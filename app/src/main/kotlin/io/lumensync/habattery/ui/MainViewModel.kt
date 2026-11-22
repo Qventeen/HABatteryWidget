@@ -214,13 +214,13 @@ class MainViewModel(
       SensorSearch.Skipped
     }
 
-  fun saveRefresh(auto: Boolean, intervalText: String) {
+  fun saveRefresh(auto: Boolean, intervalText: String, onUnlock: Boolean) {
     val text = intervalText.trim()
     val minutes = if (text.isEmpty()) null else text.toIntOrNull()
     if (text.isNotEmpty() && minutes == null) {
       return fail(FieldError(Field.INTERVAL, Problem.INVALID))
     }
-    val refresh = RefreshSettings(auto, minutes)
+    val refresh = RefreshSettings(auto, minutes, onUnlock)
     save(Validation.refresh(refresh), syncAfter = false) { it.copy(refresh = refresh) }
   }
 

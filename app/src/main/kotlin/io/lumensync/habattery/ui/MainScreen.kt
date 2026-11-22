@@ -93,7 +93,7 @@ data class MainActions(
   val saveEntities: (EntitySettings) -> Unit,
   val saveInverterEntities: (InverterEntitySettings) -> Unit,
   val findTemperatureSensors: suspend (prefix: String, stillCurrent: () -> Boolean) -> SensorSearch,
-  val saveRefresh: (auto: Boolean, intervalText: String) -> Unit,
+  val saveRefresh: (auto: Boolean, intervalText: String, onUnlock: Boolean) -> Unit,
   val setNotificationsOn: (Boolean) -> Unit,
   val saveBatteryType: (BatteryType) -> Unit,
   val savePack: (cells: String, capacity: String, locale: Locale) -> Unit,

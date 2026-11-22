@@ -149,6 +149,8 @@
     <string name="refresh_title">Автооновлення</string>
     <string name="refresh_auto">Оновлювати у фоновому режимі</string>
     <string name="refresh_interval">Інтервал оновлення (хв)</string>
+    <string name="refresh_on_unlock">Оновлювати після розблокування</string>
+    <string name="refresh_on_unlock_hint">Свіжі дані, коли ви дивитеся. Працює, поки Android тримає застосунок запущеним; його знову запускає відкриття застосунку або наступне оновлення за таймером.</string>
     <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
 
     <string name="notify_title">Сповіщення</string>
