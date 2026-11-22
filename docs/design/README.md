@@ -22,7 +22,9 @@ keeps the older versions of this folder (v4 up to commit d1cf5fc:
 | `widget-4x3.png` | 4×3, card 267 × 205 dp: the same four frames |
 | `widget-5x3.png` | 5×3, card 340 × 205 dp: the same four frames |
 
-The PNGs are rendered at 2× scale; 1 px of the design = 1 dp.
+The PNGs are rendered at 2× scale; 1 px of the design = 1 dp. Since
+spec 0016 they show the v14 top row (one ↻ with the freshness dot, see
+"Refresh"); the rest is v5.
 
 ![Widget 4×2](widget-4x2.png)
 ![Widget 5×2](widget-5x2.png)
@@ -211,10 +213,10 @@ light and dark, icon + word in English and Ukrainian) and at 3×1
 
 | File | What it is |
 |---|---|
-| `inverter-3x1.png` | 3×1, card 194 × 59 dp: eight frames (see the captions) |
+| `inverter-3x1.png` | 3×1, card 194 × 59 dp: eight frames (see the captions), with ↻ and the freshness dot (v14) |
 | `inverter-4x1.png` | 4×1, card 267 × 59 dp: the same eight frames |
 | `inverter-5x1.png` | 5×1, card 340 × 59 dp: the same eight frames |
-| `inverter-modes.png` | Every mode (rows) in five looks (columns), cards only |
+| `inverter-modes.png` | Every mode (rows) in five looks (columns), cards only; drawn before ↻ (v7): it shows the modes, not the layout |
 
 Rendered at 2× scale, like the battery pictures.
 
