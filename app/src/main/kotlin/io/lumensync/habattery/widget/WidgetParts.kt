@@ -117,8 +117,8 @@ private fun CircleButton(
     contentAlignment = Alignment.Center,
   ) {
     // Glance aligns all children of a Box alike, so the face and the badge each get a full-size
-    // box with its own alignment. The 1 dp extra puts the badge on the circle's edge.
-    Box(GlanceModifier.size((s.buttonFace + 1).dp)) {
+    // box with its own alignment. The overhang puts the badge on the circle's edge.
+    Box(GlanceModifier.size((s.buttonFace + s.dotOverhang).dp)) {
       Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
         Box(
           GlanceModifier.size(s.buttonFace.dp).background(face).cornerRadius((s.buttonFace / 2).dp),
