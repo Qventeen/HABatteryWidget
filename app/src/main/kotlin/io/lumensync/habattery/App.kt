@@ -32,7 +32,8 @@ class App : Application() {
       this,
       UnlockReceiver { container.appScope.launch { container.unlockRefresh() } },
       IntentFilter(Intent.ACTION_USER_PRESENT),
-      ContextCompat.RECEIVER_NOT_EXPORTED,
+      // USER_PRESENT is protected (only the system may send it), and the receiver checks the action.
+      ContextCompat.RECEIVER_EXPORTED,
     )
     // KEEP on app start: an existing periodic work keeps its timing.
     container.appScope.launch {
