@@ -6,13 +6,13 @@ end, "Inverter strip". The app's Modes section (spec 0014) follows it,
 next, "App icon". The refresh controls of both widgets (↻ and the freshness
 dot, spec 0016) come last, "Refresh".
 
-Status: approved (v5), built in spec 0005 (layouts); temperatures in
-spec 0004. Built before: v4 (one 4×2 layout, spec 0003).
+Status: built (layouts spec 0005, temperatures 0004, value colours and
+levels 0010–0013, ↻ and the freshness dot 0016).
 
-The design was made on a design canvas; this folder keeps the latest
-version in the repo. Current version: **v5**. On the canvas the v5 row has
-one column per size: light, dark, sync error light, sync error dark. Git
-keeps the older versions of this folder (v4 up to commit d1cf5fc:
+The design lives on a design canvas that holds only the current design, in
+sections: Battery widget, Inverter strip, Inverter modes, Mode editor (app),
+App icon, Icon ideas, Widget family. This folder keeps its copy in the
+repo; git keeps the older versions (v4 up to commit d1cf5fc:
 `widget-4x2.html` and an older `widget-4x2.png`).
 
 | File | What it is |
@@ -22,9 +22,10 @@ keeps the older versions of this folder (v4 up to commit d1cf5fc:
 | `widget-4x3.png` | 4×3, card 267 × 205 dp: the same four frames |
 | `widget-5x3.png` | 5×3, card 340 × 205 dp: the same four frames |
 
-The PNGs are rendered at 2× scale; 1 px of the design = 1 dp. Since
-spec 0016 they show the v14 top row (one ↻ with the freshness dot, see
-"Refresh"); the rest is v5.
+The PNGs are rendered at 2× scale from the canvas boards; 1 px of the
+design = 1 dp. They show the widget as built: the top row with one ↻ and
+the freshness dot ("Refresh"), and the default level colours ("Colours and
+levels") for a LiFePO4 pack of 8 cells and 314 Ah.
 
 ![Widget 4×2](widget-4x2.png)
 ![Widget 5×2](widget-5x2.png)
@@ -59,7 +60,7 @@ current, then cell details.
 All sizes in dp. Gaps: 8 between ring, pack and cells; 4 under the top row
 (4×3: 7 between the upper part and the cell grid). Except in 5×2, ring and
 pack share the width the cells leave equally, and the ring fills its column
-up to the row height (owner, 2026-11-16; the PNGs show the older widths).
+up to the row height (owner, 2026-11-16).
 4×2 is too narrow for the 5×2 layout (the top row needs about 200 dp beside
 the ring), so its top row spans the full width and the ring sits below it.
 
@@ -157,17 +158,114 @@ every id can also be typed by hand.
 
 ## Colours and levels
 
+Each value has **levels** (specs 0010, 0013). A level has a side, an edge,
+a type and a colour; temperature levels also have an icon. A **↓ level**
+covers its edge and everything below it, an **↑ level** its edge and
+everything above it, and the one **middle level** (no edge) what is left.
+The widget picks the level by the number as it shows it: the ↓ level with
+the smallest edge at or above the number, else the ↑ level with the largest
+edge at or below it, else the middle level. The owner can replace a value's
+levels in the app (Battery tab, "Levels and alerts", Edit); "Default" brings
+back the built-in ones below.
+
 | Element | Rule |
 |---|---|
-| SOC ring | green ≥ 25 %, amber < 25 %, red < 15 % |
-| Current / power pill | amber when discharging, green when charging, grey when idle |
-| Delta pill | plain ≤ 15 mV, amber > 15 mV, red > 40 mV |
-| Battery temperature pill | shows the average; the colour comes from the worst sensor (spec 0004): amber below 5 °C or above 45 °C; red at 0 °C or below, or above 55 °C |
-| MOSFET pill | amber above 65 °C, red above 80 °C |
-| Sync error icon | red ⚠ |
-| Balancing icon | green when on, grey when off |
-| Freshness dot | 8 dp with a 2 dp ring in the card colour, on the ↻ circle's top-right edge: ring-bar green while fresh, amber ring colour when late |
-| Refresh button | grey; dimmed while refreshing |
+| SOC ring | The arc takes the ring shade of the SOC level. The number stays in the text colour |
+| Voltage pill | Voltage levels. The current's arrow (↑ charging, ↓ discharging) shows here too |
+| Current / power pill | Idle (\|I\| ≤ 0.1 A): grey, no arrow. Charging: the charge levels; discharging: the discharge levels. Picked in amps, also when the pill shows watts |
+| Average cell pill | A battery outline icon before the value. The voltage levels with each edge ÷ the cells, rounded to 3 decimals; no own list |
+| Delta pill | Delta levels; no icon |
+| Battery temperature pill | Thermometer, then the level icon. Shows the average of the sensors; colour and icon come from the sensor whose level ranks worst |
+| MOSFET pill | Chip, then the level icon |
+| kWh / Ah under SOC | Plain (it repeats SOC) |
+| A missing value | "—" in plain, e.g. "Δ —" |
+| Sync error icon | Red ⚠ (the `bad` token) in the update time's place |
+| Balancing icon | Accent green when on; dim when off or unknown |
+| Refresh button (↻) | Secondary grey; dim while refreshing |
+| Freshness dot | 8 dp with a 2 dp ring in the card colour, on the ↻ circle's top-right edge: the green ring shade while fresh, the amber ring shade when late (spec 0016) |
+
+**Colour by type:** Critical red, Warning amber, Normal green, Info blue.
+A level can take another colour instead: plain (no colour) or one of the
+palette below. The level editor offers every colour but teal, which is for
+the inverter modes (Standby by default).
+
+| Colour | Light text / background / ring | Dark text / background / ring |
+|---|---|---|
+| Plain | `#1B1D1C` / `#F1F4F1` / `#43A047` | `#F1F4F1` / `#242926` / `#66BB6A` |
+| Red | `#D32F2F` / `#FDE7E7` / `#D32F2F` | `#EF7070` / `#3D1E1E` / `#EF7070` |
+| Orange | `#C2410C` / `#FFE9DD` / `#E8590C` | `#FF9A66` / `#3D2215` / `#FB8C4A` |
+| Amber | `#A05A00` / `#FFF1E0` / `#F59E0B` | `#FFB869` / `#3A2A12` / `#FFB74D` |
+| Green | `#2E7D32` / `#E5F3E6` / `#43A047` | `#7BC67E` / `#1E3320` / `#66BB6A` |
+| Teal | `#00796B` / `#E0F2F1` / `#26A69A` | `#5FC4B8` / `#15302D` / `#4DB6AC` |
+| Blue | `#1565C0` / `#E3EEFB` / `#1E88E5` | `#8AB4F8` / `#1B2A3E` / `#64B5F6` |
+| Violet | `#6B3FB8` / `#EFE7FB` / `#8E5CD9` | `#B99CF2` / `#2B2240` / `#A788EC` |
+| Grey | `#5C625E` / `#F1F4F1` / `#858C87` | `#A3ABA5` / `#242926` / `#6B736D` |
+
+**Temperature level icons** (Material Symbols Rounded, in the pill's text
+colour, 11–14 dp as the thermometer): snowflake (`ac_unit`) for cold levels,
+leaf (`eco`) for normal, flame (`local_fire_department`) for warm, flame
+with alert (`emergency_heat`) for hot. The icon shows the side, the colour
+how bad it is. A temperature pill always shows two icons.
+
+### Default levels
+
+The pictures show the default setup: battery type LiFePO4 (the app's
+default), the preview pack of 8 cells (26.50 V, 3.312 V average cell) and
+314 Ah. "Covers" uses the numbers as shown.
+
+| Value | Level | Covers | Name | Type (colour) | Icon |
+|---|---|---|---|---|---|
+| SOC | ↓20 % | 20 % and below | Low | Critical (red) | |
+| | ↓40 % | 21–40 % | Getting low | Warning (amber) | |
+| | middle | 41–99 % | Normal | Normal (green) | |
+| | ↑100 % | 100 % | Full | Info (blue) | |
+| Voltage (8 cells) | ↓24.00 V | 24.00 V and below | Low | Critical (red) | |
+| | ↓25.60 V | 24.01–25.60 V | Getting low | Warning (amber) | |
+| | middle | 25.61–27.59 V | Normal | Normal (green) | |
+| | ↑27.60 V | 27.60–28.39 V | Full | Info (blue) | |
+| | ↑28.40 V | 28.40–29.19 V | High | Warning (amber) | |
+| | ↑29.20 V | 29.20 V and above | Very high | Critical (red) | |
+| Average cell | ↓3.000 / ↓3.200 / middle / ↑3.450 / ↑3.550 / ↑3.650 V | the voltage levels ÷ 8 | as voltage | as voltage | |
+| Charge and discharge current (314 Ah) | ↓62.8 A | 62.8 A and below | Light | Info (blue) | |
+| | middle | 62.9–156.9 A | Normal | Normal (green) | |
+| | ↑157.0 A | 157.0–251.1 A | High | Warning (amber) | |
+| | ↑251.2 A | 251.2 A and above | Very high | Critical (red) | |
+| Cell delta | ↓9 mV | 9 mV and below | Balanced | Info (blue) | |
+| | middle | 10–19 mV | Normal | Normal (green) | |
+| | ↑20 mV | 20–49 mV | High | Warning (amber) | |
+| | ↑50 mV | 50 mV and above | Very high | Critical (red) | |
+| Battery temperature | ↓0 °C | 0 °C and below | Freezing | Critical (red) | snowflake |
+| | ↓5 °C | 1–5 °C | Cool | Info (blue) | snowflake |
+| | middle | 6–44 °C | Normal | Normal (green) | leaf |
+| | ↑45 °C | 45–54 °C | Warm | Warning (amber) | flame |
+| | ↑55 °C | 55 °C and above | Hot | Critical (red) | flame with alert |
+| MOSFET temperature | middle | 64 °C and below | Normal | Normal (green) | leaf |
+| | ↑65 °C | 65–79 °C | Warm | Warning (amber) | flame |
+| | ↑80 °C | 80 °C and above | Hot | Critical (red) | flame with alert |
+
+So the default preview is all green except the current: 10 A is "Light"
+(blue).
+
+**What the edges depend on** (spec 0013). SOC, delta and both temperatures
+are the same for every pack. The voltage edges are volts per cell × the
+cells in series; the current edges are a C-rate × the full capacity:
+
+| Type | Volts per cell (↓Low, ↓Getting low, ↑Full, ↑High, ↑Very high) | Charge C-rates (↓Light, ↑High, ↑Very high) | Discharge C-rates |
+|---|---|---|---|
+| LiFePO4 | 3.00, 3.20, 3.45, 3.55, 3.65 | 0.2, 0.5, 0.8 | 0.2, 0.5, 0.8 |
+| Li-ion (NMC) | 3.40, 3.60, 4.10, 4.15, 4.20 | 0.2, 0.5, 0.8 | 0.4, 1.0, 1.3 |
+| LTO | 2.00, 2.20, 2.65, 2.70, 2.80 | 0.4, 1.0, 5.0 | 0.4, 1.0, 6.0 |
+
+- **Cells:** total voltage ÷ average cell voltage of the reading, rounded;
+  the typed cell count only when the reading cannot count them. Pack edges
+  are rounded to 2 decimals. No cell count: the voltage has one plain
+  "Normal" level, and the average cell pill is plain.
+- **Capacity:** the BMS capacity sensor when it reports more than 0 Ah,
+  else the capacity typed in the app. Current edges are rounded to 0.1 A.
+  No capacity: one level per direction, charging green and discharging
+  amber.
+- The type is the Pack setting "Type"; a type change gives new default
+  edges, and own levels stay as they are.
 
 Theme tokens (light / dark) are the same as in v4:
 
@@ -202,21 +300,19 @@ The app theme is green; no blue.
 - The app shows the real widget as its preview (Glance `compose()`, spec
   0006), so there is no second drawing to keep in sync.
 
-## Inverter strip — 3×1, 4×1, 5×1 (v6)
+## Inverter strip — 3×1, 4×1, 5×1
 
-Status: approved (v6 layout and v7 modes, 2026-11-19), for spec 0012; not
-built yet. A second widget with its own settings tab. On the canvas the v6
-row has one column per size and eight lines (both mode styles, light,
-dark, sync error); the v7 row shows every inverter mode at 4×1 (big icon
-light and dark, icon + word in English and Ukrainian) and at 3×1
-(Ukrainian words).
+Status: built (spec 0012; ↻ and the freshness dot spec 0016). A second
+widget with its own settings tab. On the canvas the section "Inverter strip"
+has the three sizes, light and dark, plus the sync error; "Inverter modes"
+shows every mode on the 4×1 strip.
 
 | File | What it is |
 |---|---|
-| `inverter-3x1.png` | 3×1, card 194 × 59 dp: eight frames (see the captions), with ↻ and the freshness dot (v14) |
+| `inverter-3x1.png` | 3×1, card 194 × 59 dp: eight frames (see the captions), with ↻ and the freshness dot |
 | `inverter-4x1.png` | 4×1, card 267 × 59 dp: the same eight frames |
 | `inverter-5x1.png` | 5×1, card 340 × 59 dp: the same eight frames |
-| `inverter-modes.png` | Every mode (rows) in five looks (columns), cards only; drawn before ↻ (v7): it shows the modes, not the layout |
+| `inverter-modes.png` | Every mode (rows) on the 4×1 strip with ↻: big icon light, icon + word light, big icon dark |
 
 Rendered at 2× scale, like the battery pictures.
 
@@ -278,14 +374,13 @@ The numbers were confirmed on the owner's phone on 2026-11-21 (3×1, 4×1,
 | Unknown mode text | `help` icon, grey; with "icon + word" the HA text as it is |
 | No data yet / setup needed | The tower icon and one line: "No data" or "Set up in the app"; no button |
 
-## Mode editor — Modes section of the Inverter tab (v9)
+## Mode editor — Modes section of the Inverter tab
 
 Status: approved by the owner (2026-11-21), for spec 0014. v9 reworks v8
 after the owner's phone check: the right side of the rows, type tags, the
 current mode, shorter "other" words. An app screen, not a widget: the
-Modes section on the Inverter tab, below Icons. On the canvas the v9 row
-("Mode editor · v9") also shows the option the owner did not pick (B: only
-the "now" badge, no ring). Git keeps v8 (three light frames) in the older
+Modes section on the Inverter tab, below Icons. On the canvas the section
+"Mode editor (app)" holds the picked option A. Git keeps v8 (three light frames) in the older
 `mode-editor.png`.
 
 | File | What it is |
@@ -328,7 +423,7 @@ behaviour; this picture shows the layout.
 - **New mode:** bell off, type Info, `help` icon, grey; a blank name shows
   its first text ("Utility").
 
-## App icon — House of tiles (v12, version A)
+## App icon — House of tiles (version A)
 
 Status: approved by the owner (2026-11-21), for spec 0015. Picked from 20
 ideas on the canvas: v10 (battery marks) and v11 (smart-home marks). The
@@ -365,13 +460,11 @@ Rendered at 2× scale from the canvas boards; 1 px of the design = 1 dp.
   and "~". Both are white 24-dp masks. The circle keeps its colour: the
   type colour for levels, the mode colour for modes.
 
-## Refresh — ↻ and freshness dot (v14)
+## Refresh — ↻ and freshness dot
 
-Status: approved by the owner (2026-11-22), for spec 0016; not built yet.
-On the canvas the row "Refresh · v14 · ↻ and freshness dot" holds the
-picked design only: battery 4×2, 5×2, 4×3, 5×3, strip 3×1, 4×1, 5×1 and a
-sync error of each widget, in a light and a dark line. The battery boards
-keep the v5 look: the level colours of specs 0010–0013 are not drawn there.
+Status: built (spec 0016). On the canvas it is part of the sections
+"Battery widget" and "Inverter strip" (every size, light and dark, plus a
+sync error of each widget).
 
 | File | What it is |
 |---|---|
