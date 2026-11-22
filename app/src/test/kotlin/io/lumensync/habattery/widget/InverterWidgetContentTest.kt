@@ -2,6 +2,10 @@ package io.lumensync.habattery.widget
 
 import android.content.ComponentName
 import android.content.Context
+import android.view.View
+import android.view.View.MeasureSpec
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
 import androidx.glance.AndroidResourceImageProvider
 import androidx.glance.EmittableImage
@@ -24,6 +28,7 @@ import androidx.glance.testing.unit.hasContentDescriptionEqualTo
 import androidx.glance.testing.unit.hasStartActivityClickAction
 import androidx.glance.testing.unit.hasTestTag
 import androidx.glance.testing.unit.hasTextEqualTo
+import androidx.core.view.children
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
@@ -37,6 +42,10 @@ import io.lumensync.habattery.domain.model.SyncError
 import io.lumensync.habattery.domain.model.ThemeChoice
 import io.lumensync.habattery.format.Formatters
 import io.lumensync.habattery.testing.configuredSettings
+import kotlin.math.roundToInt
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -123,6 +132,25 @@ class InverterWidgetContentTest {
         onNode(isColumn() and hasDescendant(alert) and hasDescendant(refresh)).assertExists()
         onNode(hasTextEqualTo(formatters.wholeVolts(230.0))).assertExists()
       }
+    }
+
+  /**
+   * ↻ stays centred on the card, in line with the pills, when the home screen draws the card lower
+   * or higher than the design's 59 dp. Its tap area spans the column's width; the ⚠ sits above it,
+   * outside the tap area, from 2.5 dp below the card's top at 59 dp.
+   */
+  @Test
+  fun refresh_centredOnTheCard_atEveryHeight() =
+    listOf(53f, 59f, 70f).forEach { height ->
+      val spec = InverterLayoutSpec.S3X1
+      val card = layOut(model(cache(error = SyncError.Unreachable)), spec, height)
+      val refresh = card.find(text(R.string.widget_refresh_age, 1))!!
+      val alert = card.find("Sync error: Home Assistant is unreachable")!!
+      val at = "at $height dp"
+      assertEquals(at, card.height / 2f, refresh.topIn(card) + refresh.height / 2f, 1f)
+      assertEquals(at, spec.design.refresh + spec.design.padding, refresh.width.toFloat(), 1f)
+      assertTrue(at, alert.topIn(card) + alert.height <= refresh.topIn(card))
+      if (height == 59f) assertEquals(2.5f, alert.topIn(card).toFloat(), 1f)
     }
 
   /** While a sync runs ↻ stays and says so, with the data's age. */
@@ -221,6 +249,44 @@ class InverterWidgetContentTest {
     GlanceNodeMatcher("has a matching descendant") { node ->
       node.children().any { matcher.matches(it) || hasDescendant(matcher).matches(it) }
     }
+
+  /** The strip as the home screen shows it: its views laid out at [heightDp] (density 1 here). */
+  private fun layOut(model: InverterWidgetModel, spec: InverterLayoutSpec, heightDp: Float): View {
+    val widget =
+      PreviewWidget {
+        InverterWidgetContent(
+          model,
+          spec,
+          WidgetColors(ThemeChoice.SYSTEM),
+          InverterFontPercents(),
+          hostScale = 1f,
+          openApp = actionStartActivity(openAppComponent),
+          refresh = actionRunCallback<NoOpRefresh>(),
+          measurer = FakeMeasurer,
+        )
+      }
+    val views = runBlocking { widget.views(context, spec.bucket) }!!
+    val card = views.apply(context, FrameLayout(context))
+    val w = spec.bucketWidthDp.roundToInt()
+    val h = heightDp.roundToInt()
+    card.measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY))
+    card.layout(0, 0, w, h)
+    return card
+  }
+
+  private fun View.find(description: String): View? =
+    if (contentDescription == description) this
+    else (this as? ViewGroup)?.children?.firstNotNullOfOrNull { it.find(description) }
+
+  private fun View.topIn(root: View): Int {
+    var view = this
+    var top = 0
+    while (view !== root) {
+      top += view.top
+      view = view.parent as View
+    }
+    return top
+  }
 
   private fun render(
     model: InverterWidgetModel,

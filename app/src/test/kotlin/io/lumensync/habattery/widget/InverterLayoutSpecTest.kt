@@ -58,8 +58,8 @@ class InverterLayoutSpecTest {
     d.forEach {
       assertEquals(listOf(8f, 20f, 2f), listOf(it.padding, it.corner, it.valueIconGap))
       assertEquals(
-        listOf(28f, 15f, 11f, 2.5f, 8f, 2f, 1f),
-        listOf(it.refresh, it.refreshIcon, it.alertIcon, it.alertTop, it.dot, it.dotRing, it.dotOverhang),
+        listOf(28f, 15f, 11f, 8f, 2f, 1f),
+        listOf(it.refresh, it.refreshIcon, it.alertIcon, it.dot, it.dotRing, it.dotOverhang),
       )
     }
   }
@@ -69,7 +69,6 @@ class InverterLayoutSpecTest {
     val s = InverterLayoutSpec.S3X1.design.scaled(1.28f)
     assertEquals(35.84f, s.refresh, 0.01f)
     assertEquals(14.08f, s.alertIcon, 0.01f)
-    assertEquals(3.2f, s.alertTop, 0.01f)
   }
 
   /** The home-screen scale: every dp size and font × k; the shape stays. */

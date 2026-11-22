@@ -31,11 +31,10 @@ data class StripSizes(
   val corner: Float = 20f,
   /** The mode pill is never narrower than the design pill is high. */
   val modeMinWidth: Float = 43f,
-  // ↻ at the right end, and on a sync error the ⚠ above it, [alertTop] below the card's top.
+  // ↻ at the right end, and on a sync error the ⚠ above it.
   val refresh: Float = 28f,
   val refreshIcon: Float = 15f,
   val alertIcon: Float = 11f,
-  val alertTop: Float = 2.5f,
   // The freshness dot on ↻, the card-coloured ring around it, and how far the dot's box reaches
   // past the circle's top and right edges.
   val dot: Float = 8f,
@@ -68,7 +67,6 @@ data class StripSizes(
       refresh = refresh * k,
       refreshIcon = refreshIcon * k,
       alertIcon = alertIcon * k,
-      alertTop = alertTop * k,
       dot = dot * k,
       dotRing = dotRing * k,
       dotOverhang = dotOverhang * k,
