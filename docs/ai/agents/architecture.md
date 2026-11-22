@@ -77,6 +77,10 @@ One `:app` module, package and app ID `io.lumensync.habattery`, manual DI.
   redraws both widgets, then runs `LateRedraw` (a live session redraws without `provideGlance`).
   The ↻ circle and its freshness dot are one drawing, `RefreshFace` in `WidgetParts`; the battery
   `RefreshButton` and the strip's `RefreshColumn` keep their own touch area and description.
+  A part the data shows or hides (arrows, ⚠, level icons) stays in the view tree and is only gone
+  (`shownIf`, `ShownIcon` in `WidgetContent`): Glance gives every new tree a new layout id, and the
+  home screen then builds the views anew instead of updating them, which HyperOS draws without its
+  widget scale. `WidgetShapeTest` checks each size keeps one layout id across data changes.
   `BatteryWidget` composes `BatteryWidgetContent`: settings → font percents,
   `WidgetColors(theme)`, `HomeScale.factor` and the open-app action with the tapped id.
   The home-screen scale (`Settings.homeScalePercent`, 80–200 %, default 100; spec 0007) goes

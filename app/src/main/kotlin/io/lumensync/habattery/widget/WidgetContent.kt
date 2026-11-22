@@ -16,6 +16,7 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
+import androidx.glance.Visibility
 import androidx.glance.action.Action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
@@ -28,6 +29,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.semantics.testTag
 import androidx.glance.text.FontWeight
@@ -35,6 +37,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import androidx.glance.visibility
 import io.lumensync.habattery.R
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.model.FontPercents
@@ -233,6 +236,34 @@ internal fun WidgetIcon(
     modifier = modifier.size(size),
     colorFilter = ColorFilter.tint(tint),
   )
+}
+
+/**
+ * Shows or hides a part without changing the widget's view tree. Glance gives every new tree its
+ * own layout id, and a home screen that gets a new layout id builds the views anew instead of
+ * updating them; HyperOS draws such views without its widget scale. So a part the data shows or
+ * hides stays in the tree.
+ */
+internal fun GlanceModifier.shownIf(shown: Boolean): GlanceModifier =
+  visibility(if (shown) Visibility.Visible else Visibility.Gone)
+
+/**
+ * An icon the data shows or hides ([shownIf]). Its box carries [description] while shown, and the
+ * icon none: Glance counts a described image and an undescribed one as different trees, but not
+ * a described box.
+ */
+@Composable
+internal fun ShownIcon(
+  shown: Boolean,
+  @DrawableRes id: Int,
+  size: Dp,
+  tint: ColorProvider,
+  description: String? = null,
+) {
+  val box = GlanceModifier.shownIf(shown)
+  Box(if (shown && description != null) box.semantics { contentDescription = description } else box) {
+    WidgetIcon(id, size, tint, null)
+  }
 }
 
 internal fun textStyle(

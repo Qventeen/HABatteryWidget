@@ -73,11 +73,13 @@ internal fun TopRow(d: DataLook, actions: WidgetActions?) {
       GlanceModifier.defaultWeight().padding(start = s.topGap.dp, end = s.toButtons.dp),
       contentAlignment = Alignment.CenterEnd,
     ) {
-      if (d.texts.showError) {
-        WidgetIcon(R.drawable.ic_alert, s.statusIcon.dp, c.bad, d.texts.errorDescription)
-      } else {
-        Text(d.texts.updatedAt, style = textStyle(small, c.sub), maxLines = 1)
-      }
+      ShownIcon(d.texts.showError, R.drawable.ic_alert, s.statusIcon.dp, c.bad, d.texts.errorDescription)
+      Text(
+        d.texts.updatedAt,
+        style = textStyle(small, c.sub),
+        maxLines = 1,
+        modifier = GlanceModifier.shownIf(!d.texts.showError),
+      )
     }
     // While a sync runs, ↻ stays in place and only dims; the dot still shows the data's age.
     RefreshButton(
@@ -262,15 +264,15 @@ private fun PackPill(
     contentAlignment = Alignment.Center,
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-      WidgetTexts.flowDescription(flow)?.let { description ->
-        WidgetIcon(
-          if (flow == Flow.UP) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
-          s.arrow.dp,
-          color,
-          if (describeArrow) context.getString(description) else null,
-        )
-        Spacer(GlanceModifier.width(s.arrowGap.dp))
-      }
+      val description = WidgetTexts.flowDescription(flow)
+      ShownIcon(
+        shown = description != null,
+        id = if (flow == Flow.DOWN) R.drawable.ic_arrow_down else R.drawable.ic_arrow_up,
+        size = s.arrow.dp,
+        tint = color,
+        description = if (describeArrow) description?.let(context::getString) else null,
+      )
+      Spacer(GlanceModifier.shownIf(description != null).width(s.arrowGap.dp))
       Text(text, style = textStyle(d.look.sp(sizeDp), color, FontWeight.Medium), maxLines = 1)
     }
   }
@@ -326,10 +328,9 @@ private fun CellPillView(d: DataLook, index: Int, pill: CellPill, modifier: Glan
         Spacer(GlanceModifier.width(s.tempIconGap.dp))
       }
       // Not described: TalkBack reads the temperature, which already tells the level.
-      pill.levelIcon?.let { level ->
-        WidgetIcon(levelIconRes(level), s.tempIcon.dp, color, null)
-        Spacer(GlanceModifier.width(s.tempIconGap.dp))
-      }
+      val level = pill.levelIcon
+      ShownIcon(level != null, levelIconRes(level ?: LevelIcon.LEAF), s.tempIcon.dp, color)
+      Spacer(GlanceModifier.shownIf(level != null).width(s.tempIconGap.dp))
       Text(
         pill.text,
         style = textStyle(d.look.sp(d.fonts.cells[index]), color, FontWeight.Medium),

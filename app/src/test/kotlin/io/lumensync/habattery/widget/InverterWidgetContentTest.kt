@@ -10,6 +10,8 @@ import androidx.annotation.DrawableRes
 import androidx.glance.AndroidResourceImageProvider
 import androidx.glance.EmittableImage
 import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.Visibility
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -29,6 +31,7 @@ import androidx.glance.testing.unit.hasStartActivityClickAction
 import androidx.glance.testing.unit.hasTestTag
 import androidx.glance.testing.unit.hasTextEqualTo
 import androidx.core.view.children
+import androidx.glance.visibility
 import androidx.test.core.app.ApplicationProvider
 import io.lumensync.habattery.MainActivity
 import io.lumensync.habattery.R
@@ -78,7 +81,7 @@ class InverterWidgetContentTest {
       onAllNodes(hasTextEqualTo(word)).assertCountEquals(0)
       onNode(hasTextEqualTo(formatters.wholeVolts(0.0))).assertExists()
       onNode(hasTextEqualTo(formatters.wholeVolts(230.0))).assertExists()
-      onAllNodes(hasImage(R.drawable.ic_alert)).assertCountEquals(0)
+      onNode(hasChild(hasImage(R.drawable.ic_alert))).assert(isGone())
       onAllNodes(hasContentDescription("Sync error")).assertCountEquals(0)
     }
 
@@ -124,7 +127,7 @@ class InverterWidgetContentTest {
       render(model(cache(error = SyncError.Unreachable)), spec) {
         val alert =
           hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable") and
-            hasImage(R.drawable.ic_alert)
+            hasChild(hasImage(R.drawable.ic_alert))
         val refresh = hasRunCallbackClickAction<NoOpRefresh>()
         onNode(alert).assertExists()
         onNode(refresh).assertExists()
@@ -237,6 +240,9 @@ class InverterWidgetContentTest {
       ((node.value.emittable as? EmittableImage)?.provider as? AndroidResourceImageProvider)?.resId == id
     }
 
+  private fun isGone() =
+    GlanceNodeMatcher<MappedNode>("is gone") { node -> node.value.emittable.modifier.any { it == GONE } }
+
   private fun isRow() = GlanceNodeMatcher<MappedNode>("is a Row") { it.value.emittable is EmittableRow }
 
   private fun isColumn() =
@@ -334,5 +340,8 @@ class InverterWidgetContentTest {
 
   private companion object {
     const val NOW = 1_800_000_000_000L
+
+    /** Equal to the element `visibility(Gone)` adds; its class is Glance-internal. */
+    val GONE = GlanceModifier.visibility(Visibility.Gone)
   }
 }

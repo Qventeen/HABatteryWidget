@@ -6,6 +6,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.Visibility
+import androidx.glance.visibility
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.action.ActionCallback
@@ -146,7 +149,7 @@ class WidgetContentTest {
       render(model(error = SyncError.Unreachable), spec.bucketWidth, spec.bucketHeight) {
         onNode(hasContentDescriptionEqualTo("Sync error: Home Assistant is unreachable")).assertExists()
         onAllNodes(hasText(text(R.string.error_unreachable))).assertCountEquals(0)
-        onAllNodes(hasTextEqualTo(formatters.updatedAt(UPDATED, NOW))).assertCountEquals(0)
+        onNode(hasTextEqualTo(formatters.updatedAt(UPDATED, NOW))).assert(isGone())
         onNode(hasTextEqualTo("55")).assertExists()
       }
     }
@@ -355,7 +358,9 @@ class WidgetContentTest {
     render(model(settings = settings(sensors = 0)), LayoutSpec.L4x3.bucketWidth, LayoutSpec.L4x3.bucketHeight) {
       val mosfet = hasContentDescriptionEqualTo(text(R.string.widget_mosfet_temperature))
       onNode(rowWithChildren(1) and hasAnyDescendant(mosfet)).assertExists()
-      onAllNodes(rowWithChildren(3) and hasAnyDescendant(hasText("mV"))).assertCountEquals(1)
+      val average = hasContentDescriptionEqualTo(text(R.string.widget_average_cell))
+      onAllNodes(rowWithChildren(3) and hasAnyDescendant(hasText("mV")) and hasAnyDescendant(average))
+        .assertCountEquals(1)
     }
 
   @Test
@@ -407,6 +412,9 @@ class WidgetContentTest {
       ((e as? EmittableWithChildren)?.children?.joinToString(",", "(", ")", transform = ::shapeOf) ?: "")
 
   /** A Row with [n] children (pills and the spacers between them). */
+  private fun isGone() =
+    GlanceNodeMatcher<MappedNode>("is gone") { node -> node.value.emittable.modifier.any { it == GONE } }
+
   private fun rowWithChildren(n: Int) =
     GlanceNodeMatcher<MappedNode>("row with $n children") { node ->
       (node.value.emittable as? EmittableRow)?.children?.size == n
@@ -497,5 +505,8 @@ class WidgetContentTest {
   private companion object {
     const val NOW = 1_800_000_000_000L
     const val UPDATED = NOW - 60_000L
+
+    /** Equal to the element `visibility(Gone)` adds; its class is Glance-internal. */
+    val GONE = GlanceModifier.visibility(Visibility.Gone)
   }
 }
