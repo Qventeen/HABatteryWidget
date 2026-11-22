@@ -169,6 +169,7 @@ class FakeWidgetRefresher : WidgetRefresher {
 
 class FakeSyncScheduler : SyncScheduler {
   val applied = mutableListOf<Pair<Settings, Boolean>>()
+  val redraws = mutableListOf<Long>()
   var syncNowCalls = 0
     private set
 
@@ -178,6 +179,17 @@ class FakeSyncScheduler : SyncScheduler {
 
   override fun syncNow() {
     syncNowCalls++
+  }
+
+  var syncWhenOnlineCalls = 0
+    private set
+
+  override fun syncWhenOnline() {
+    syncWhenOnlineCalls++
+  }
+
+  override fun redrawAt(atMillis: Long) {
+    redraws += atMillis
   }
 }
 

@@ -22,10 +22,10 @@
 
     <string name="widget_name">HA battery</string>
     <string name="widget_description">Charge, power, current, voltage and time left from Home Assistant</string>
-    <string name="widget_refreshing">Refreshing…</string>
+    <string name="widget_refreshing_age">Refreshing… Data is %1$d min old</string>
     <string name="widget_no_data">No data from Home Assistant</string>
     <string name="widget_error">Widget error. Open the app.</string>
-    <string name="widget_refresh_action">Refresh</string>
+    <string name="widget_refresh_age">Refresh. Data is %1$d min old</string>
     <string name="delta_label">Δ %1$s</string>
     <string name="widget_soc_label" translatable="false">SOC</string>
     <plurals name="widget_soc_description">
@@ -42,8 +42,6 @@
     <string name="widget_average_temperature">Average battery temperature</string>
     <string name="widget_mosfet_temperature">MOSFET temperature</string>
     <string name="widget_average_cell">Average cell voltage</string>
-    <string name="widget_auto_on">Auto refresh on</string>
-    <string name="widget_auto_off">Auto refresh off</string>
     <string name="widget_open_app">Open app</string>
 
     <string name="notification_channel_critical">Critical</string>
@@ -160,12 +158,14 @@
     <string name="refresh_title">Auto-refresh</string>
     <string name="refresh_auto">Refresh in the background</string>
     <string name="refresh_interval">Refresh interval (min)</string>
+    <string name="refresh_on_unlock">Refresh when the phone is unlocked</string>
+    <string name="refresh_on_unlock_hint">Gets fresh data when you look. Works while Android keeps the app running; opening the app or the next timed sync starts it again.</string>
     <string name="refresh_interval_range">From %1$d to %2$d min</string>
 
     <string name="notify_title">Notifications</string>
     <string name="notifications_switch">Notifications</string>
     <string name="notifications_hint">Choose the levels with the bells in Levels and alerts on the Battery and Inverter tabs. You also get a notification when the inverter mode changes.</string>
-    <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual refresh.</string>
+    <string name="notifications_no_auto_refresh">Auto refresh is off, so notifications come only after a manual or an unlock refresh.</string>
     <string name="notify_blocked">Notifications are turned off for this app.</string>
     <string name="notify_open_settings">Open settings</string>
 
@@ -340,6 +340,7 @@
     <string name="token_summary_with_type">%1$s · %2$s</string>
     <string name="entities_summary_manual">Set by hand</string>
     <string name="refresh_summary_off">Off</string>
+    <string name="refresh_summary_unlock">On unlock</string>
     <plurals name="refresh_summary_every">
         <item quantity="one">Every %d min</item>
         <item quantity="other">Every %d min</item>

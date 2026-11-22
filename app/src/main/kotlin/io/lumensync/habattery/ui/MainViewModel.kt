@@ -74,13 +74,14 @@ class MainViewModel(
   val uiState: StateFlow<MainUiState> =
     combine(settings.settings, tokens.savedTypes, cache.state, local) { s, saved, c, l ->
         val hasToken = s.connection.tokenType in saved
-        val overview = BatteryOverview.build(c, s, hasToken, clock())
+        val now = clock()
+        val overview = BatteryOverview.build(c, s, hasToken, now)
         MainUiState(
           settings = s,
           hasToken = hasToken,
           overview = overview,
           widget = WidgetModel.build(overview, s),
-          inverter = InverterWidgetModel.from(c, s, hasToken),
+          inverter = InverterWidgetModel.from(c, s, hasToken, now),
           syncing = l.running > 0,
           errors = l.errors,
         )
@@ -213,13 +214,13 @@ class MainViewModel(
       SensorSearch.Skipped
     }
 
-  fun saveRefresh(auto: Boolean, intervalText: String) {
+  fun saveRefresh(auto: Boolean, intervalText: String, onUnlock: Boolean) {
     val text = intervalText.trim()
     val minutes = if (text.isEmpty()) null else text.toIntOrNull()
     if (text.isNotEmpty() && minutes == null) {
       return fail(FieldError(Field.INTERVAL, Problem.INVALID))
     }
-    val refresh = RefreshSettings(auto, minutes)
+    val refresh = RefreshSettings(auto, minutes, onUnlock)
     save(Validation.refresh(refresh), syncAfter = false) { it.copy(refresh = refresh) }
   }
 

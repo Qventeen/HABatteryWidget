@@ -81,9 +81,10 @@ class WidgetModelTest {
     error: SyncError? = null,
     hasToken: Boolean = true,
     refreshingSince: Long? = null,
+    now: Long = 2_000L,
   ): WidgetModel =
     WidgetModel.build(
-      BatteryOverview.build(CacheState(reading, error, refreshingSince), settings, hasToken, 2_000L),
+      BatteryOverview.build(CacheState(reading, error, refreshingSince), settings, hasToken, now),
       settings,
     )
 
@@ -391,12 +392,23 @@ class WidgetModelTest {
   }
 
   @Test
-  fun `refreshing and auto refresh`() {
+  fun `refreshing`() {
     val on = build(settings = settings(refresh = RefreshSettings(true, 30)), refreshingSince = 1_500L) as Data
     assertTrue(on.refreshing)
-    assertTrue(on.autoRefresh)
     val off = data()
     assertFalse(off.refreshing)
-    assertFalse(off.autoRefresh)
+  }
+
+  @Test
+  fun data_lateAfter20Minutes_autoOff() {
+    val now = 1_800_000_000_000L
+    fun readAgo(minutes: Long) =
+      build(sample.copy(updatedAtMillis = now - minutes * 60_000L), now = now) as Data
+    val late = readAgo(21)
+    assertTrue(late.dataLate)
+    assertEquals(21L, late.dataAgeMinutes)
+    val fresh = readAgo(3)
+    assertFalse(fresh.dataLate)
+    assertEquals(3L, fresh.dataAgeMinutes)
   }
 }

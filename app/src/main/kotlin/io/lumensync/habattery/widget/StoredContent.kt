@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.first
 
 /**
  * Provides [content] from local data only (cache, settings, token presence), for every widget.
- * One place holds the token-presence rule and the recompose-on-config rule, so the widgets
- * cannot drift apart.
+ * One place holds the token-presence rule, the recompose-on-config rule and the amber redraw, so
+ * the widgets cannot drift apart.
  */
 internal suspend fun GlanceAppWidget.provideStoredContent(
   context: Context,
@@ -30,6 +30,9 @@ internal suspend fun GlanceAppWidget.provideStoredContent(
   val initialSettings = container.settingsRepository.settings.first()
   val initialSavedTypes = container.tokenStore.savedTypes.first()
   val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
+  // Asked here, not in the composition: Responsive mode composes once per size, and each new ask
+  // replaces the redraw work, even one that is running.
+  container.lateRedraw()
 
   provideContent {
     val cache by container.readingCache.state.collectAsState(initialCache)

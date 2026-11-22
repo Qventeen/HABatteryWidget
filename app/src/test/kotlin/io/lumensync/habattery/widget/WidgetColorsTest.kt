@@ -94,6 +94,14 @@ class WidgetColorsTest {
   }
 
   @Test
+  fun dotColours() {
+    fun dot(theme: ThemeChoice) =
+      WidgetColors(theme).let { listOf(it.fresh.getColor(context), it.late.getColor(context)) }
+    assertEquals(listOf(Color(0xFF43A047), Color(0xFFF59E0B)), dot(ThemeChoice.LIGHT))
+    assertEquals(listOf(Color(0xFF66BB6A), Color(0xFFFFB74D)), dot(ThemeChoice.DARK))
+  }
+
+  @Test
   fun plain_isTodaysPillAndRing() {
     assertEquals(
       Shades(Color(0xFF1B1D1C), Color(0xFFF1F4F1), Color(0xFF43A047)),

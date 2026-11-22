@@ -7,6 +7,7 @@ import io.lumensync.habattery.domain.SyncBattery
 import io.lumensync.habattery.domain.InverterWidgetModel
 import io.lumensync.habattery.domain.WidgetModel
 import io.lumensync.habattery.domain.WidgetModel.EmptyKind
+import io.lumensync.habattery.domain.model.RefreshSettings
 import io.lumensync.habattery.domain.model.AppearanceSettings
 import io.lumensync.habattery.domain.model.BatteryType
 import io.lumensync.habattery.domain.model.ColorLevel
@@ -276,19 +277,26 @@ class MainViewModelTest {
 
   @Test fun saveRefresh_requiresInterval() = runTest(dispatcher) {
     val vm = start()
-    vm.saveRefresh(true, "")
+    vm.saveRefresh(true, "", true)
     advanceUntilIdle()
     assertEquals(listOf(FieldError(Field.INTERVAL, Problem.REQUIRED)), state.errors)
-    vm.saveRefresh(true, "30")
+    vm.saveRefresh(true, "30", true)
     advanceUntilIdle()
     assertTrue(state.errors.isEmpty())
     assertEquals(30, state.settings.refresh.intervalMinutes)
     assertTrue(scheduler.applied.last().second)
   }
 
+  @Test fun saveRefresh_keepsUnlockChoice() = runTest(dispatcher) {
+    val vm = start()
+    vm.saveRefresh(auto = true, intervalText = "30", onUnlock = false)
+    advanceUntilIdle()
+    assertEquals(RefreshSettings(true, 30, onUnlock = false), state.settings.refresh)
+  }
+
   @Test fun saveRefresh_notANumber_isInvalid() = runTest(dispatcher) {
     val vm = start()
-    vm.saveRefresh(true, "abc")
+    vm.saveRefresh(true, "abc", true)
     advanceUntilIdle()
     assertEquals(listOf(FieldError(Field.INTERVAL, Problem.INVALID)), state.errors)
   }

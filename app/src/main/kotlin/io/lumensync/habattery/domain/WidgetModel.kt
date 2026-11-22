@@ -61,7 +61,9 @@ sealed interface WidgetModel {
     val updatedAtMillis: Long,
     val error: SyncError?,
     val refreshing: Boolean,
-    val autoRefresh: Boolean,
+    /** The freshness dot turns amber ([Freshness.isLate]). */
+    val dataLate: Boolean,
+    val dataAgeMinutes: Long,
     val averageCellVoltage: Double?,
     val averageCellLook: LevelLook,
     val deltaMv: Int?,
@@ -115,7 +117,8 @@ sealed interface WidgetModel {
         updatedAtMillis = r.updatedAtMillis,
         error = overview.error,
         refreshing = overview.refreshing,
-        autoRefresh = settings.refresh.auto,
+        dataLate = Freshness.isLate(r.updatedAtMillis, overview.nowMillis, overview.refresh),
+        dataAgeMinutes = Freshness.ageMinutes(r.updatedAtMillis, overview.nowMillis),
         averageCellVoltage = r.averageCellVoltageV,
         averageCellLook =
           averageCellLook(r.averageCellVoltageV, basis.cells, levels(LevelValue.VOLTAGE)),

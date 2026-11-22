@@ -54,12 +54,14 @@ class PreviewWidgetTest {
           CacheState(inverterReading = inverterReading()),
           configuredSettings(inverter = true),
           hasToken = true,
+          NOW,
         ),
         InverterLayoutSpec.S3X1,
         WidgetColors(ThemeChoice.SYSTEM),
         InverterFontPercents(),
         hostScale = 1f,
         openApp = null,
+        refresh = null,
       )
     }
 

@@ -1,5 +1,6 @@
 package io.lumensync.habattery.domain
 
+import io.lumensync.habattery.domain.model.CacheState
 import io.lumensync.habattery.domain.model.Settings
 
 object RefreshPolicy {
@@ -14,5 +15,24 @@ object RefreshPolicy {
     )
       minutes
     else null
+  }
+
+  /**
+   * Whether unlocking the phone should start a sync: the setting is on, a widget is placed, a part
+   * is configured, no sync runs now, and at least one configured part has no reading or one not
+   * read in the last minute. A reading dated in the future (the clock was set back) counts as not
+   * read in the last minute: else unlock refresh would stay off until the clock catches up.
+   */
+  fun unlockSyncWanted(
+    settings: Settings,
+    cache: CacheState,
+    hasToken: Boolean,
+    hasWidgets: Boolean,
+    nowMillis: Long,
+  ): Boolean {
+    if (!settings.refresh.onUnlock || !hasWidgets) return false
+    if (Freshness.isRefreshing(cache.refreshingSinceMillis, nowMillis)) return false
+    val times = Freshness.configuredUpdateTimes(cache, settings, hasToken)
+    return times.any { it == null || nowMillis - it !in 0 until Freshness.UNLOCK_MIN_AGE_MS }
   }
 }

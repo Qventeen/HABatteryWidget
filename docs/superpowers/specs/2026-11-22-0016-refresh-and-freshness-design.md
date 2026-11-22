@@ -205,6 +205,13 @@ Row limit of 10 children applies.
 - **Process killed → no unlock refresh** until the process starts again
   (timed sync, widget update, opening the app). With the timed sync off and
   a killed process, unlock refresh waits for the next widget update.
+- **Android 14 queues the unlock broadcast for a cached app:** since
+  Android 14 a broadcast to a runtime receiver waits while the app is cached
+  (idle in the background). A widget-only app is cached most of the time, so
+  the unlock refresh may run late: when the app next becomes active (a timed
+  sync, a widget update, opening the app). A queued unlock then may sync
+  right after the timed one. The owner's phone check decides whether the
+  hint text changes.
 - **OEM battery savers** (some brands kill background apps hard) can stop
   both paths; nothing in the app can fix that.
 - **Unlock without a lock screen:** with screen lock "None" some phones may

@@ -28,10 +28,20 @@ sealed interface InverterWidgetModel {
     val output: VoltageLook,
     val style: ModeStyle,
     override val error: SyncError?,
+    /** One sync serves both parts, so this is the battery widget's "refreshing" mark too. */
+    val refreshing: Boolean,
+    /** The freshness dot turns amber ([Freshness.isLate]): the inverter reading's age only. */
+    val dataLate: Boolean,
+    val dataAgeMinutes: Long,
   ) : InverterWidgetModel
 
   companion object {
-    fun from(cache: CacheState, settings: Settings, hasToken: Boolean): InverterWidgetModel {
+    fun from(
+      cache: CacheState,
+      settings: Settings,
+      hasToken: Boolean,
+      nowMillis: Long,
+    ): InverterWidgetModel {
       if (!Validation.isInverterConfigured(settings, hasToken)) return Empty(EmptyKind.SETUP, null)
       val r = cache.inverterReading ?: return Empty(EmptyKind.NO_DATA, cache.inverterError)
       return Data(
@@ -40,6 +50,9 @@ sealed interface InverterWidgetModel {
         output = voltageLook(LevelValue.OUTPUT_VOLTAGE, r, settings, IconSlot.OUTPUT_VOLTAGE),
         style = settings.inverter.modeStyle,
         error = cache.inverterError,
+        refreshing = Freshness.isRefreshing(cache.refreshingSinceMillis, nowMillis),
+        dataLate = Freshness.isLate(r.updatedAtMillis, nowMillis, settings.refresh),
+        dataAgeMinutes = Freshness.ageMinutes(r.updatedAtMillis, nowMillis),
       )
     }
 

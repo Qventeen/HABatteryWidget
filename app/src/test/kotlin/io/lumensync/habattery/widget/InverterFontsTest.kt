@@ -3,6 +3,8 @@ package io.lumensync.habattery.widget
 import io.lumensync.habattery.domain.model.InverterFontPercents
 import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.widget.InverterLayoutSpec.S3X1
+import io.lumensync.habattery.widget.InverterLayoutSpec.S4X1
+import io.lumensync.habattery.widget.InverterLayoutSpec.S5X1
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,12 +26,21 @@ class InverterFontsTest {
   ) = InverterFonts.data(style, texts, spec, hostScale = 1f, percents, fontScale = 1f, FakeMeasurer)
 
   @Test
-  fun fiftyPercent_shortTexts_showTheDesignSizes() =
+  fun fiftyPercent_shortWord_showsTheDesignSize() =
     InverterLayoutSpec.entries.forEach { spec ->
-      val f = fonts(spec = spec)
-      assertEquals(spec.name, spec.design.wordFont, f.word, 0f)
-      assertEquals(spec.name, spec.design.valueFont, f.value, 0f)
+      assertEquals(spec.name, spec.design.wordFont, fonts(spec = spec).word, 0f)
     }
+
+  /**
+   * Beside ↻ the pills are narrower: at 3×1, and at 4×1 with a word, short values shrink to fit,
+   * as the design draws them. Elsewhere they keep their design size.
+   */
+  @Test
+  fun fiftyPercent_shortValues_showTheDesignSizeWhereTheyFit() =
+    listOf(S4X1 to ModeStyle.BIG_ICON, S5X1 to ModeStyle.BIG_ICON, S5X1 to ModeStyle.ICON_WORD)
+      .forEach { (spec, style) ->
+        assertEquals("$spec $style", spec.design.valueFont, fonts(style, spec = spec).value, 0f)
+      }
 
   @Test
   fun bigIcon_modePillIsIconAndPadding() =
@@ -75,12 +86,18 @@ class InverterFontsTest {
     assertEquals(fonts(ModeStyle.BIG_ICON, texts("x", "230 V", "230 V"), percents = hundred).value, mixed, 0f)
   }
 
+  /** The sync error icon sits above ↻, so the values keep their room. */
   @Test
-  fun syncError_takesRoomFromTheValues() {
+  fun syncError_keepsTheValueSize() {
     val hundred = InverterFontPercents(value = 100)
     val withError = fonts(ModeStyle.BIG_ICON, texts(error = "Sync error: x"), percents = hundred).value
-    assertTrue(withError < fonts(ModeStyle.BIG_ICON, texts(), percents = hundred).value)
+    assertEquals(fonts(ModeStyle.BIG_ICON, texts(), percents = hundred).value, withError, 0f)
   }
+
+  /** 171 dp inside, less ↻ (28), three gaps (3) and a 44 dp mode pill, shared by two pills. */
+  @Test
+  fun pillWidth_3x1_leavesRoomForRefresh() =
+    assertEquals(45f, InverterFonts.pillWidth(S3X1, 1f, 44f), 0.01f)
 
   @Test
   fun empty_longTitle_shrinksBesideTheIcon() {

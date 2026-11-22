@@ -187,14 +187,14 @@ class WidgetFitTest {
     assertTrue("$latin vs $mixed", mixed.bottom - mixed.top > latin.bottom - latin.top)
   }
 
-  /** Glance drops the 11th child of a Row; both buttons and every pill must reach the RemoteViews. */
+  /** Glance drops the 11th child of a Row; the button and every pill must reach the RemoteViews. */
   @Test
   fun everyPart_reachesTheHomeScreen() {
     val context = context("en", 1f)
     val wanted =
       listOf(
-        context.getString(io.lumensync.habattery.R.string.widget_auto_on),
-        context.getString(io.lumensync.habattery.R.string.widget_refresh_action),
+        // The typical reading is 1 min old.
+        context.getString(io.lumensync.habattery.R.string.widget_refresh_age, 1),
         context.getString(io.lumensync.habattery.R.string.widget_balancing_off),
         context.getString(io.lumensync.habattery.R.string.widget_battery_temperature),
         context.getString(io.lumensync.habattery.R.string.widget_mosfet_temperature),
@@ -352,7 +352,6 @@ class WidgetFitTest {
   ): View {
     val actions =
       WidgetActions(
-        actionStartActivity<MainActivity>(),
         actionStartActivity<MainActivity>(),
         actionStartActivity<MainActivity>(),
       )

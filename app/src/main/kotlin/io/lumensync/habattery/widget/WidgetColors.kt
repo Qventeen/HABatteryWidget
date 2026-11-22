@@ -30,6 +30,10 @@ class WidgetColors(private val theme: ThemeChoice) {
   val okBg = of { okBg }
   val bad = of { bad }
 
+  // The freshness dot reuses the ring's green and amber, so the widget has one of each.
+  val fresh = of { shades(LevelColor.GREEN).ring }
+  val late = of { shades(LevelColor.AMBER).ring }
+
   fun pillBackground(color: LevelColor): ColorProvider = of { shades(color).background }
 
   fun pillText(color: LevelColor): ColorProvider = of { shades(color).text }

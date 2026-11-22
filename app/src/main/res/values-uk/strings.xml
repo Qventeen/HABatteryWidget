@@ -18,10 +18,10 @@
 
     <string name="widget_name">Батарея HA</string>
     <string name="widget_description">Заряд, потужність, струм, напруга та залишок часу з Home Assistant</string>
-    <string name="widget_refreshing">Оновлення…</string>
+    <string name="widget_refreshing_age">Оновлення… Дані %1$d хв тому</string>
     <string name="widget_no_data">Немає даних від Home Assistant</string>
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
-    <string name="widget_refresh_action">Оновити</string>
+    <string name="widget_refresh_age">Оновити. Дані %1$d хв тому</string>
     <plurals name="widget_soc_description">
         <item quantity="one">Рівень заряду %1$d відсоток</item>
         <item quantity="few">Рівень заряду %1$d відсотки</item>
@@ -38,8 +38,6 @@
     <string name="widget_average_temperature">Середня температура батареї</string>
     <string name="widget_mosfet_temperature">Температура MOSFET</string>
     <string name="widget_average_cell">Середня напруга комірки</string>
-    <string name="widget_auto_on">Автооновлення увімкнено</string>
-    <string name="widget_auto_off">Автооновлення вимкнено</string>
     <string name="widget_open_app">Відкрити застосунок</string>
     <string name="delta_label">Δ %1$s</string>
 
@@ -151,12 +149,14 @@
     <string name="refresh_title">Автооновлення</string>
     <string name="refresh_auto">Оновлювати у фоновому режимі</string>
     <string name="refresh_interval">Інтервал оновлення (хв)</string>
+    <string name="refresh_on_unlock">Оновлювати після розблокування</string>
+    <string name="refresh_on_unlock_hint">Свіжі дані, коли ви дивитеся. Працює, поки Android тримає застосунок запущеним; його знову запускає відкриття застосунку або наступне оновлення за таймером.</string>
     <string name="refresh_interval_range">Від %1$d до %2$d хв</string>
 
     <string name="notify_title">Сповіщення</string>
     <string name="notifications_switch">Сповіщення</string>
     <string name="notifications_hint">Рівні для сповіщень обирайте дзвіночками в розділі «Рівні та сповіщення» на вкладках «Батарея» та «Інвертор». Про зміни режиму інвертора теж надходять сповіщення.</string>
-    <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення надходять лише після ручного оновлення.</string>
+    <string name="notifications_no_auto_refresh">Автооновлення вимкнено, тому сповіщення надходять лише після ручного оновлення або оновлення після розблокування.</string>
     <string name="notify_blocked">Сповіщення для цього застосунку вимкнено.</string>
     <string name="notify_open_settings">Відкрити налаштування</string>
 
@@ -305,6 +305,7 @@
     <string name="token_summary_with_type">%1$s · %2$s</string>
     <string name="entities_summary_manual">Задано вручну</string>
     <string name="refresh_summary_off">Вимкнено</string>
+    <string name="refresh_summary_unlock">Після розблокування</string>
     <plurals name="refresh_summary_every">
         <item quantity="one">Кожну %d хв</item>
         <item quantity="few">Кожні %d хв</item>
