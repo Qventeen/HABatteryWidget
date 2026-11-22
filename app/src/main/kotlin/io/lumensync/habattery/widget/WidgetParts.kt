@@ -157,7 +157,7 @@ internal fun RefreshFace(
  * from the circle under it. It has no description: ↻ says the data's age.
  */
 @Composable
-internal fun FreshnessBadge(late: Boolean, dot: Float, ring: Float, colors: WidgetColors) {
+private fun FreshnessBadge(late: Boolean, dot: Float, ring: Float, colors: WidgetColors) {
   val outer = dot + 2 * ring
   Box(
     GlanceModifier.size(outer.dp).semantics { testTag = if (late) "dot_late" else "dot_fresh" },
