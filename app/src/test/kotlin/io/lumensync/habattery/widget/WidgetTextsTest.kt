@@ -38,25 +38,31 @@ class WidgetTextsTest {
 
   @Test
   @Config(qualifiers = "en")
-  fun refreshDescription_saysTheAgeInMinutesHoursOrDays() {
-    assertEquals("Refresh. Data is 3 min old", refresh(3))
-    assertEquals("Refresh. Data is 59 min old", refresh(59))
-    assertEquals("Refresh. Data is 1 h old", refresh(60))
-    assertEquals("Refresh. Data is 23 h old", refresh(23 * 60L + 59))
-    assertEquals("Refresh. Data is 1 d old", refresh(24 * 60L))
-    assertEquals("Refresh. Data is 2 d old", refresh(2880))
+  fun refreshDescription_saysTheAgeInFullWords() {
+    assertEquals("Refresh. Data is 3 minutes old", refresh(3))
+    assertEquals("Refresh. Data is 59 minutes old", refresh(59))
+    assertEquals("Refresh. Data is 1 hour old", refresh(60))
+    assertEquals("Refresh. Data is 23 hours old", refresh(23 * 60L + 59))
+    assertEquals("Refresh. Data is 1 day old", refresh(24 * 60L))
+    assertEquals("Refresh. Data is 2 days old", refresh(2880))
   }
 
   @Test
   @Config(qualifiers = "en")
   fun refreshDescription_refreshing_saysTheAge() =
-    assertEquals("Refreshing… Data is 2 h old", refresh(150, refreshing = true))
+    assertEquals("Refreshing… Data is 2 hours old", refresh(150, refreshing = true))
 
   @Test
   @Config(qualifiers = "uk")
-  fun refreshDescription_uk() {
-    assertEquals("Оновити. Дані 5 хв тому", refresh(5))
-    assertEquals("Оновлення… Дані 2 дн тому", refresh(2880, refreshing = true))
+  fun refreshDescription_uk_usesThePluralForm() {
+    assertEquals("Оновити. Дані 3 хвилини тому", refresh(3))
+    assertEquals("Оновити. Дані 59 хвилин тому", refresh(59))
+    assertEquals("Оновити. Дані 1 година тому", refresh(60))
+    assertEquals("Оновити. Дані 23 години тому", refresh(23 * 60L + 59))
+    assertEquals("Оновити. Дані 1 день тому", refresh(24 * 60L))
+    assertEquals("Оновити. Дані 2 дні тому", refresh(2880))
+    assertEquals("Оновити. Дані 5 днів тому", refresh(5 * 24 * 60L))
+    assertEquals("Оновлення… Дані 2 дні тому", refresh(2880, refreshing = true))
   }
 
   @Test

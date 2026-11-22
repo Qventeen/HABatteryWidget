@@ -167,11 +167,11 @@ class WidgetContentTest {
   fun refreshDescription_saysAge() {
     render(model(updated = NOW - 3 * 60_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription("Refresh. Data is 3 min old"))
+        .assert(hasContentDescription("Refresh. Data is 3 minutes old"))
     }
     render(model(updated = NOW - 3 * 60_000L, refreshingSince = NOW - 1_000L)) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescription("Refreshing… Data is 3 min old"))
+        .assert(hasContentDescription("Refreshing… Data is 3 minutes old"))
     }
   }
 

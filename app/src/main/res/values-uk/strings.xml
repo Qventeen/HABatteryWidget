@@ -22,9 +22,6 @@
     <string name="widget_no_data">Немає даних від Home Assistant</string>
     <string name="widget_error">Помилка віджета. Відкрийте застосунок.</string>
     <string name="widget_refresh_age">Оновити. Дані %1$s тому</string>
-    <string name="widget_age_minutes">%1$d хв</string>
-    <string name="widget_age_hours">%1$d год</string>
-    <string name="widget_age_days">%1$d дн</string>
     <plurals name="widget_soc_description">
         <item quantity="one">Рівень заряду %1$d відсоток</item>
         <item quantity="few">Рівень заряду %1$d відсотки</item>

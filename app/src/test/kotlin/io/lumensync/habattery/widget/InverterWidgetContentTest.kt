@@ -158,7 +158,7 @@ class InverterWidgetContentTest {
   fun refreshing_describedWithAge() =
     render(model(cache(updated = NOW - 3 * 60_000L).copy(refreshingSinceMillis = NOW - 1_000L))) {
       onNode(hasRunCallbackClickAction<NoOpRefresh>())
-        .assert(hasContentDescriptionEqualTo("Refreshing… Data is 3 min old"))
+        .assert(hasContentDescriptionEqualTo("Refreshing… Data is 3 minutes old"))
     }
 
   @Test
