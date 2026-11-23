@@ -34,9 +34,6 @@ import io.lumensync.habattery.domain.model.InverterFontPercents
 import io.lumensync.habattery.domain.model.ModeStyle
 import io.lumensync.habattery.format.Formatters
 
-/** Every strip pill is fully round; Android clamps the radius to half the pill's height. */
-private val PILL_RADIUS = 999.dp
-
 /**
  * The inverter strip (specs 0012, 0016), drawn from [model] and [colors] only, at the sizes of
  * [spec] × [hostScale]: the mode pill, grid input and output voltage, and ↻ with the freshness dot,
@@ -201,7 +198,7 @@ private fun ModePill(
     GlanceModifier.width(sizes.modeWidth.dp)
       .fillMaxHeight()
       .background(look.colors.pillBackground(mode.color))
-      .cornerRadius(PILL_RADIUS)
+      .cornerRadius(s.pillRadius.dp)
       .padding(horizontal = (if (bigIcon) s.bigPadding else s.wordPadding).dp),
     contentAlignment = Alignment.Center,
   ) {
@@ -243,7 +240,7 @@ private fun ValuePill(
     modifier
       .fillMaxHeight()
       .background(look.colors.pillBackground(voltage.color))
-      .cornerRadius(PILL_RADIUS)
+      .cornerRadius(s.pillRadius.dp)
       .padding(horizontal = s.valuePadding.dp),
     contentAlignment = Alignment.Center,
   ) {
