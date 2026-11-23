@@ -50,7 +50,7 @@ current, then cell details.
 | | 4×2 | 5×2 | 4×3 | 5×3 |
 |---|---|---|---|---|
 | Card | 267 × 132 | 340 × 132 | 267 × 205 | 340 × 205 |
-| Padding, corner | 10, 24 | 10, 24 | 10, 24 | 10, 24 |
+| Padding, corner | 10, 20 | 10, 20 | 10, 20 | 10, 20 |
 | Top row | 32 high, full width | 32 high, beside the ring | 44 high, full width | 48 high, full width |
 | Buttons (touch / circle / icon) | 32 / 30 / 16 | 32 / 30 / 16 | 44 / 36 / 18 | 48 / 40 / 20 |
 | Ring (size, stroke) | 76, 7 | 112, 8 — full card height, left | 86, 7 | 108, 8 |
@@ -335,8 +335,8 @@ All sizes in dp; the three columns are 3×1 / 4×1 / 5×1.
 | Voltage pills | icon 11, gap 2, value 12.5 | icon 13, gap 2, value 15 | icon 15, gap 2, value 18 |
 
 - Left to right: mode pill, grid input voltage, output voltage, and ↻ with
-  the freshness dot (spec 0016, see "Refresh"). Every pill is 43 high and
-  fully round; the mode pill keeps its content width (at least 43), the two
+  the freshness dot (spec 0016, see "Refresh"). Every pill is 43 high with
+  corner 16, as the battery pack pills; the mode pill keeps its content width (at least 43), the two
   voltage pills share the rest equally (weights). Text weight 500.
 - Voltages in whole volts ("230 V"). A long mode word ends with "…".
 - No update time on the strip. ↻ refreshes; a tap anywhere else opens the

@@ -53,7 +53,8 @@ data class LayoutSpec(
   val ringFullHeight: Boolean = false,
   val cellGrid: Boolean = false,
   val padding: Float = 10f,
-  val corner: Float = 24f,
+  /** The card's corner radius; the inverter strip's card has the same. */
+  val corner: Float = 20f,
   /** Corner radius of the central (pack) pills; owner, 2026-11-16. */
   val packRadius: Float = 16f,
   /** Between ring, pack column and cell column. */

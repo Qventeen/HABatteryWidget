@@ -56,7 +56,7 @@ class InverterLayoutSpecTest {
     assertEquals(listOf(11f, 13f, 15f), d.map { it.valueIcon })
     assertEquals(listOf(12.5f, 15f, 18f), d.map { it.valueFont })
     d.forEach {
-      assertEquals(listOf(8f, 20f, 2f), listOf(it.padding, it.corner, it.valueIconGap))
+      assertEquals(listOf(8f, 20f, 16f, 2f), listOf(it.padding, it.corner, it.pillRadius, it.valueIconGap))
       assertEquals(
         listOf(28f, 15f, 11f, 8f, 2f, 1f),
         listOf(it.refresh, it.refreshIcon, it.alertIcon, it.dot, it.dotRing, it.dotOverhang),

@@ -29,6 +29,8 @@ data class StripSizes(
   val valueIconGap: Float = 2f,
   val padding: Float = 8f,
   val corner: Float = 20f,
+  /** All three pills; the battery widget's pack pills have the same radius. */
+  val pillRadius: Float = 16f,
   /** The mode pill is never narrower than the design pill is high. */
   val modeMinWidth: Float = 43f,
   // ↻ at the right end, and on a sync error the ⚠ above it.
@@ -63,6 +65,7 @@ data class StripSizes(
       valueIconGap = valueIconGap * k,
       padding = padding * k,
       corner = corner * k,
+      pillRadius = pillRadius * k,
       modeMinWidth = modeMinWidth * k,
       refresh = refresh * k,
       refreshIcon = refreshIcon * k,
