@@ -49,7 +49,7 @@ voltage and the output voltage, read from the same HA. The app has three tabs:
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk   # any JDK 17 path
 ./gradlew :app:testDebugUnitTest                # unit tests
-./gradlew lint testDebugUnitTest assembleRelease  # full check
+./gradlew lint testDebugUnitTest assembleRelease :app:compileDebugAndroidTestKotlin  # full check
 ```
 
 Instrumented tests run on an emulator. They wipe the app's data, and Gradle
